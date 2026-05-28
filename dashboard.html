@@ -1,1 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BluPrint Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Nunito:wght@300;400;600&display=swap" rel="stylesheet" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --brown: #3b2a1a;
+            --brown-light: #7a5c3e;
+            --orange: #d4743a;
+            --orange-dark: #b05a25;
+            --cream: #fdf6ec;
+            --parchment: #f2e6d0;
+            --white: #ffffff;
+            --gray: #9e8c7a;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Nunito', sans-serif;
+            background: var(--cream);
+            color: var(--brown);
+        }
+
+        header {
+            height: 72px;
+            padding: 0 32px;
+            background: var(--brown);
+            color: var(--parchment);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-family: 'Lora', serif;
+            font-size: 26px;
+        }
+
+        .logo span {
+            color: var(--orange);
+        }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        #user-email {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 16px;
+            background: var(--orange);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--orange-dark);
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 56px 32px;
+        }
+
+        h1 {
+            font-family: 'Lora', serif;
+            font-size: 36px;
+            font-weight: 400;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: var(--brown-light);
+            font-size: 16px;
+            line-height: 1.7;
+            max-width: 620px;
+        }
+
+        @media (max-width: 640px) {
+            header {
+                height: auto;
+                padding: 20px 24px;
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .user-row {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            main {
+                padding: 40px 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo"><span>Blu</span>Print</div>
+        <div class="user-row">
+            <span id="user-email">Checking session...</span>
+            <button id="logout-button">Log out</button>
+        </div>
+    </header>
+
+    <main>
+        <h1>Your dashboard</h1>
+        <p>You are signed in with Firebase Auth. This page is ready for the room builder, saved designs, and profile data when you add those features.</p>
+    </main>
+
+    <script type="module">
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { auth, isFirebaseConfigured } from "./firebase.js";
+
+        var userEmail = document.getElementById('user-email');
+        var logoutButton = document.getElementById('logout-button');
+
+        if (!isFirebaseConfigured()) {
+            userEmail.textContent = 'Firebase config missing';
+            logoutButton.disabled = true;
+        }
+
+        onAuthStateChanged(auth, function(user) {
+            if (!isFirebaseConfigured()) return;
+
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            userEmail.textContent = user.email || user.displayName || 'Signed in';
+        });
+
+        logoutButton.addEventListener('click', async function() {
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

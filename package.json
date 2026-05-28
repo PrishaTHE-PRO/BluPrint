@@ -1,0 +1,27 @@
+{
+  "name": "bluprint",
+  "version": "1.0.0",
+  "description": "",
+  "main": "firebase.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PrishaTHE-PRO/BluPrint.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PrishaTHE-PRO/BluPrint/issues"
+  },
+  "homepage": "https://github.com/PrishaTHE-PRO/BluPrint#readme",
+  "devDependencies": {
+    "firebase": "^12.13.0",
+    "vite": "^8.0.14"
+  }
+}
