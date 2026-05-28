@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BluPrint</title>
+
+    <!-- google fonts - lora for headings, nunito for everything else -->
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Nunito:wght@300;400;600&display=swap" rel="stylesheet" />
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* all our colors in one place so its easy to change later */
+        :root {
+            --brown:       #3b2a1a;
+            --brown-light: #7a5c3e;
+            --orange:      #d4743a;
+            --orange-dark: #b05a25;
+            --cream:       #fdf6ec;
+            --parchment:   #f2e6d0;
+            --white:       #ffffff;
+            --red:         #c0392b;
+            --gray:        #9e8c7a;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--cream);
+            min-height: 100vh;
+            display: flex; /* this makes the two panels sit side by side */
+        }
+
+
+        /* ---- left panel ---- */
+
+        .left-panel {
+            flex: 1;
+            background-color: var(--brown);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* decorative circles in the background, purely visual */
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: rgba(212, 116, 58, 0.12);
+        }
+
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -60px;
+            left: -60px;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: rgba(212, 116, 58, 0.08);
+        }
+
+        .logo {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            color: var(--parchment);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* just the "Blu" part is orange */
+        .logo span {
+            color: var(--orange);
+        }
+
+        .tagline {
+            position: relative;
+            z-index: 1;
+        }
+
+        .tagline h2 {
+            font-family: 'Lora', serif;
+            font-size: 38px;
+            font-weight: 400;
+            color: var(--parchment);
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }
+
+        .tagline p {
+            font-size: 15px;
+            color: var(--gray);
+            line-height: 1.8;
+            max-width: 320px;
+        }
+
+        /* the little rounded tags at the bottom */
+        .pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pill {
+            background: rgba(212, 116, 58, 0.15);
+            border: 1px solid rgba(212, 116, 58, 0.30);
+            color: var(--parchment);
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-weight: 300;
+        }
+
+
+        /* ---- right panel (the form) ---- */
+
+        .right-panel {
+            width: 460px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 40px;
+        }
+
+        .form-box {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .form-title {
+            margin-bottom: 32px;
+        }
+
+        .form-title h1 {
+            font-family: 'Lora', serif;
+            font-size: 30px;
+            font-weight: 400;
+            color: var(--brown);
+            margin-bottom: 6px;
+        }
+
+        .form-title p {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--brown-light);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e0d5c5;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 15px;
+            color: var(--brown);
+            background: var(--cream);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        /* highlight orange when user clicks into the box */
+        input:focus {
+            border-color: var(--orange);
+            background: var(--white);
+        }
+
+        /* turns red if they submit with bad info */
+        input.error {
+            border-color: var(--red);
+        }
+
+        .error-text {
+            font-size: 12px;
+            color: var(--red);
+            margin-top: 5px;
+            display: none; /* hidden until there's actually an error */
+        }
+
+        .forgot {
+            text-align: right;
+            margin-bottom: 22px;
+        }
+
+        .forgot a {
+            font-size: 13px;
+            color: var(--orange);
+            text-decoration: none;
+        }
+
+        .forgot a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--orange);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-login:hover {
+            background: var(--orange-dark);
+        }
+
+        /* the "or" line between login and google */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0d5c5;
+        }
+
+        .divider span {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 12px;
+            background: var(--white);
+            border: 1.5px solid #e0d5c5;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 15px;
+            color: var(--brown);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-google:hover {
+            background: var(--cream);
+            border-color: var(--orange);
+        }
+
+        .btn-google img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .signup-link a {
+            color: var(--orange);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* little popup message that fades in at the bottom */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--brown);
+            color: var(--parchment);
+            font-size: 14px;
+            padding: 10px 24px;
+            border-radius: 999px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* on phones, hide the left panel and go full width */
+        @media (max-width: 780px) {
+            .left-panel { display: none; }
+            .right-panel { width: 100%; padding: 40px 24px; }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<!-- left side -->
+<div class="left-panel">
+
+    <div class="logo">
+        <span>Blu</span>Print
+    </div>
+
+    <div class="tagline">
+        <h2>Design your space,<br>your way.</h2>
+        <p>Upload your room, pick your vibe, and let AI find the perfect furniture — all in one cozy place.</p>
+    </div>
+
+    <div class="pills">
+        <div class="pill">🛋 Room Builder</div>
+        <div class="pill">✦ AI Stylist</div>
+        <div class="pill">📌 Pinterest Import</div>
+        <div class="pill">💸 Budget Finder</div>
+        <div class="pill">🪟 3D Preview</div>
+    </div>
+
+</div>
+
+
+<!-- right side - the actual login form -->
+<div class="right-panel">
+    <div class="form-box">
+
+        <div class="form-title">
+            <h1>Welcome back ☕</h1>
+            <p>Log in to continue designing your space.</p>
+        </div>
+
+        <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="you@example.com" />
+            <div class="error-text" id="email-error">Please enter a valid email.</div>
+        </div>
+
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="••••••••" />
+            <div class="error-text" id="password-error">Password must be at least 6 characters.</div>
+        </div>
+
+        <div class="forgot">
+            <a href="#">Forgot password?</a>
+        </div>
+
+        <button class="btn-login" onclick="handleLogin()">Log in</button>
+
+        <div class="divider">
+            <span>or</span>
+        </div>
+
+        <button class="btn-google" onclick="handleGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" />
+            Continue with Google
+        </button>
+
+        <div class="signup-link">
+            Don't have an account? <a href="#">Sign up</a>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+
+    function showToast(message) {
+        var toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        // hide it again after 3 seconds
+        setTimeout(function() {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    function isValidEmail(email) {
+        return email.includes('@') && email.includes('.');
+    }
+
+    function handleLogin() {
+        var email = document.getElementById('email').value;
+        var password = document.getElementById('password').value;
+
+        // clear any errors from last time they tried
+        document.getElementById('email').classList.remove('error');
+        document.getElementById('password').classList.remove('error');
+        document.getElementById('email-error').style.display = 'none';
+        document.getElementById('password-error').style.display = 'none';
+
+        var hasError = false;
+
+        if (!isValidEmail(email)) {
+            document.getElementById('email').classList.add('error');
+            document.getElementById('email-error').style.display = 'block';
+            hasError = true;
+        }
+
+        if (password.length < 6) {
+            document.getElementById('password').classList.add('error');
+            document.getElementById('password-error').style.display = 'block';
+            hasError = true;
+        }
+
+        if (hasError) return;
+
+        // TODO: Prisha connects Firebase here
+        // firebase.auth().signInWithEmailAndPassword(email, password)
+        showToast('Logging you in... Firebase coming soon!');
+    }
+
+    function handleGoogle() {
+        // TODO: Prisha connects Google OAuth here
+        showToast('Google sign-in coming soon!');
+    }
+
+    // let them press Enter to submit instead of clicking the button
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            handleLogin();
+        }
+    });
+
+</script>
+
+</body>
+</html>
