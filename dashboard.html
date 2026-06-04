@@ -1,1 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BluPrint - Room Capture</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Nunito:wght@300;400;600;800&display=swap" rel="stylesheet" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Using your exact team color palette */
+        :root {
+            --brown:       #3b2a1a;
+            --brown-light: #7a5c3e;
+            --orange:      #d4743a;
+            --orange-dark: #b05a25;
+            --cream:       #fdf6ec;
+            --parchment:   #f2e6d0;
+            --white:       #ffffff;
+            --red:         #c0392b;
+            --gray:        #9e8c7a;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--cream);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ---- left panel (consistent styling with index.html) ---- */
+        .left-panel {
+            flex: 1;
+            background-color: var(--brown);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* decorative circles in the background */
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: rgba(212, 116, 58, 0.12);
+        }
+
+        .logo {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            color: var(--parchment);
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo span {
+            color: var(--orange);
+        }
+
+        /* Preview Canvas Box inside Left Panel */
+        .preview-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            margin: 40px 0;
+        }
+
+        .preview-box {
+            width: 320px;
+            height: 320px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed rgba(242, 230, 208, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Inline SVG components matching theme */
+        svg {
+            background: transparent;
+        }
+
+        .room-rect {
+            fill: rgba(212, 116, 58, 0.12);
+            stroke: var(--orange);
+            stroke-width: 3;
+            rx: 6;
+        }
+
+        .label-text {
+            font-family: 'Nunito', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            fill: var(--parchment);
+        }
+
+        #fallback-text {
+            color: var(--gray);
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        .preview-title {
+            font-family: 'Lora', serif;
+            color: var(--parchment);
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+
+        /* ---- right panel (the inputs form) ---- */
+        .right-panel {
+            width: 460px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 40px;
+        }
+
+        .form-box {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .form-title {
+            margin-bottom: 32px;
+        }
+
+        .form-title h1 {
+            font-family: 'Lora', serif;
+            font-size: 30px;
+            font-weight: 400;
+            color: var(--brown);
+            margin-bottom: 6px;
+        }
+
+        .form-title p {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .row-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--brown-light);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e0d5c5;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 15px;
+            color: var(--brown);
+            background: var(--cream);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--orange);
+            background: var(--white);
+        }
+
+        /* Live SQFT Calculation styling */
+        .sqft-card {
+            background-color: var(--cream);
+            border: 1.5px solid #e0d5c5;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .sqft-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--brown-light);
+            font-weight: 700;
+        }
+
+        .sqft-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--orange-dark);
+            margin-top: 2px;
+        }
+
+        .btn-capture {
+            width: 100%;
+            padding: 14px;
+            background: var(--orange);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-capture:hover {
+            background: var(--orange-dark);
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--brown);
+            color: var(--parchment);
+            font-size: 14px;
+            padding: 10px 24px;
+            border-radius: 999px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 780px) {
+            body { flex-direction: column; }
+            .left-panel { min-height: 400px; }
+            .right-panel { width: 100%; padding: 40px 24px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="left-panel">
+    <div class="logo">
+        <span>Blu</span>Print
+    </div>
+
+    <div class="preview-container">
+        <div class="preview-title" id="dynamicTitle">My Bedroom Layout</div>
+        <div class="preview-box">
+            <svg id="blueprintSvg" width="280" height="280" style="display: block;">
+                <g>
+                    <rect id="roomFloorPlan" class="room-rect" x="0" y="0" width="0" height="0"></rect>
+                    <text id="widthLabel" class="label-text" text-anchor="middle">0 ft</text>
+                    <text id="lengthLabel" class="label-text" text-anchor="end" dominant-baseline="middle">0 ft</text>
+                </g>
+            </svg>
+            <div id="fallback-text" style="display: none;">Please specify layout measurements</div>
+        </div>
+    </div>
+
+    <div></div> </div>
+
+<div class="right-panel">
+    <div class="form-box">
+
+        <div class="form-title">
+            <h1>Capture Your Room 📐</h1>
+            <p>Specify dimensions to build an accurate floor plan canvas.</p>
+        </div>
+
+        <div class="field">
+            <label for="roomName">Room Setup Label</label>
+            <input type="text" id="roomName" value="My Bedroom" placeholder="e.g. Master Bedroom, Living Space" />
+        </div>
+
+        <div class="row-fields">
+            <div class="field">
+                <label for="roomWidth">Width (Feet)</label>
+                <input type="number" id="roomWidth" value="12" min="1" placeholder="12" />
+            </div>
+            <div class="field">
+                <label for="roomLength">Length (Feet)</label>
+                <input type="number" id="roomLength" value="15" min="1" placeholder="15" />
+            </div>
+        </div>
+
+        <div class="sqft-card">
+            <div class="sqft-label">Total Footprint Calculation</div>
+            <div class="sqft-number"><span id="sqftValue">180</span> <span style="font-size: 16px; font-weight: 400; color: var(--brown-light);">sq. ft.</span></div>
+        </div>
+
+        <button class="btn-capture" onclick="saveRoomLayout()">Save Room to Dashboard</button>
+
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // Link directly to DOM input elements
+    const roomNameInput = document.getElementById('roomName');
+    const widthInput = document.getElementById('roomWidth');
+    const lengthInput = document.getElementById('roomLength');
+
+    // Graphic DOM hooks
+    const sqftValue = document.getElementById('sqftValue');
+    const dynamicTitle = document.getElementById('dynamicTitle');
+    const roomFloorPlan = document.getElementById('roomFloorPlan');
+    const widthLabel = document.getElementById('widthLabel');
+    const lengthLabel = document.getElementById('lengthLabel');
+    const blueprintSvg = document.getElementById('blueprintSvg');
+    const fallbackText = document.getElementById('fallback-text');
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 3000);
+    }
+
+    // Listens and runs live calculation + scaling configurations
+    function renderLiveBlueprint() {
+        const width = parseFloat(widthInput.value) || 0;
+        const length = parseFloat(lengthInput.value) || 0;
+
+        // Dynamic Title assignment
+        dynamicTitle.textContent = roomNameInput.value ? roomNameInput.value + " Layout" : "Unnamed Layout";
+
+        // Calculate Area metrics instantly
+        const totalSqft = width * length;
+        sqftValue.textContent = totalSqft.toLocaleString();
+
+        // Valid dimension protection layers
+        if (width <= 0 || length <= 0) {
+            blueprintSvg.style.display = 'none';
+            fallbackText.style.display = 'block';
+            return;
+        } else {
+            blueprintSvg.style.display = 'block';
+            fallbackText.style.display = 'none';
+        }
+
+        // SVG Dynamic Layout Box Math (Max fitting width/height scale context is 280px)
+        const canvasConstraint = 280 - 40; // leaving structural label margins
+        const maximumDim = Math.max(width, length);
+        const dimensionScaleFactor = canvasConstraint / maximumDim;
+
+        const calculatedSvgW = width * dimensionScaleFactor;
+        const calculatedSvgL = length * dimensionScaleFactor;
+
+        // Centering spatial algorithms
+        const xCoordinateOffset = (280 - calculatedSvgW) / 2;
+        const yCoordinateOffset = (280 - calculatedSvgL) / 2;
+
+        // Modify SVG visual dimensions directly
+        roomFloorPlan.setAttribute('x', xCoordinateOffset);
+        roomFloorPlan.setAttribute('y', yCoordinateOffset);
+        roomFloorPlan.setAttribute('width', calculatedSvgW);
+        roomFloorPlan.setAttribute('height', calculatedSvgL);
+
+        // Map dimensions annotations perfectly on center parameters
+        widthLabel.setAttribute('x', xCoordinateOffset + (calculatedSvgW / 2));
+        widthLabel.setAttribute('y', yCoordinateOffset - 10);
+        widthLabel.textContent = width + " ft";
+
+        lengthLabel.setAttribute('x', xCoordinateOffset - 10);
+        lengthLabel.setAttribute('y', yCoordinateOffset + (calculatedSvgL / 2));
+        lengthLabel.textContent = length + " ft";
+    }
+
+    // Real-time tracking inputs (React-like responsive loop)
+    roomNameInput.addEventListener('input', renderLiveBlueprint);
+    widthInput.addEventListener('input', renderLiveBlueprint);
+    lengthInput.addEventListener('input', renderLiveBlueprint);
+
+    // Bootstrap initial execution loop
+    renderLiveBlueprint();
+
+    // Data packaging context for subsequent MongoDB route setups
+    function saveRoomLayout() {
+        const roomPayload = {
+            name: roomNameInput.value,
+            width: parseFloat(widthInput.value) || 0,
+            length: parseFloat(lengthInput.value) || 0,
+            calculatedSqft: (parseFloat(widthInput.value) || 0) * (parseFloat(lengthInput.value) || 0)
+        };
+
+        console.log("Ready for MongoDB API dispatch stringification:", roomPayload);
+        showToast(`Saved ${roomPayload.name} to console! Ready for MongoDB.`);
+    }
+</script>
+
+</body>
+</html>
