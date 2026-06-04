@@ -240,6 +240,12 @@
             background: var(--orange-dark);
         }
 
+        .btn-login:disabled,
+        .btn-google:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
         /* the "or" line between login and google */
         .divider {
             display: flex;
@@ -386,19 +392,19 @@
             <a href="#">Forgot password?</a>
         </div>
 
-        <button class="btn-login" onclick="handleLogin()">Log in</button>
+        <button class="btn-login" id="login-button" onclick="handleLogin()">Log in</button>
 
         <div class="divider">
             <span>or</span>
         </div>
 
-        <button class="btn-google" onclick="handleGoogle()">
+        <button class="btn-google" id="google-button" onclick="handleGoogle()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" />
             Continue with Google
         </button>
 
         <div class="signup-link">
-            Don't have an account? <a href="#">Sign up</a>
+            Don't have an account? <a href="#" onclick="handleSignup(event)">Sign up</a>
         </div>
 
     </div>
@@ -408,66 +414,7 @@
 <div class="toast" id="toast"></div>
 
 
-<script>
-
-    function showToast(message) {
-        var toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        // hide it again after 3 seconds
-        setTimeout(function() {
-            toast.classList.remove('show');
-        }, 3000);
-    }
-
-    function isValidEmail(email) {
-        return email.includes('@') && email.includes('.');
-    }
-
-    function handleLogin() {
-        var email = document.getElementById('email').value;
-        var password = document.getElementById('password').value;
-
-        // clear any errors from last time they tried
-        document.getElementById('email').classList.remove('error');
-        document.getElementById('password').classList.remove('error');
-        document.getElementById('email-error').style.display = 'none';
-        document.getElementById('password-error').style.display = 'none';
-
-        var hasError = false;
-
-        if (!isValidEmail(email)) {
-            document.getElementById('email').classList.add('error');
-            document.getElementById('email-error').style.display = 'block';
-            hasError = true;
-        }
-
-        if (password.length < 6) {
-            document.getElementById('password').classList.add('error');
-            document.getElementById('password-error').style.display = 'block';
-            hasError = true;
-        }
-
-        if (hasError) return;
-
-        // TODO: Prisha connects Firebase here
-        // firebase.auth().signInWithEmailAndPassword(email, password)
-        showToast('Logging you in... Firebase coming soon!');
-    }
-
-    function handleGoogle() {
-        // TODO: Prisha connects Google OAuth here
-        showToast('Google sign-in coming soon!');
-    }
-
-    // let them press Enter to submit instead of clicking the button
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            handleLogin();
-        }
-    });
-
-</script>
+<script type="module" src="./main.js"></script>
 
 </body>
 </html>
