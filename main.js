@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider, isFirebaseConfigured } from "./firebase.js";
 
-var loginButton = document.getElementById('login-button');
+var loginButton = document.getElementById('login-btn');
 var googleButton = document.getElementById('google-button');
 
 function showToast(message) {
@@ -32,8 +32,6 @@ function setLoading(isLoading) {
 function resetErrors() {
     document.getElementById('email').classList.remove('error');
     document.getElementById('password').classList.remove('error');
-    document.getElementById('email-error').style.display = 'none';
-    document.getElementById('password-error').style.display = 'none';
 }
 
 function getCredentials() {
@@ -42,21 +40,17 @@ function getCredentials() {
 
     resetErrors();
 
-    var hasError = false;
-
     if (!isValidEmail(email)) {
         document.getElementById('email').classList.add('error');
-        document.getElementById('email-error').style.display = 'block';
-        hasError = true;
+        showToast('Please enter a valid email.');
+        return null;
     }
 
     if (password.length < 6) {
         document.getElementById('password').classList.add('error');
-        document.getElementById('password-error').style.display = 'block';
-        hasError = true;
+        showToast('Password must be at least 6 characters.');
+        return null;
     }
-
-    if (hasError) return null;
 
     return { email, password };
 }
@@ -169,7 +163,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-document.querySelector('.forgot a').addEventListener('click', handleForgotPassword);
+document.getElementById('forgot-link').addEventListener('click', handleForgotPassword);
 
 window.handleLogin = handleLogin;
 window.handleGoogle = handleGoogle;
