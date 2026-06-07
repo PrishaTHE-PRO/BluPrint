@@ -1,107 +1,122 @@
 const express = require("express");
 const multer = require("multer");
-const InspoBoard = require("../models/InspoBoard");
+const mongoose = require("mongoose");
+const InspirationImage = require("../models/InspirationImage");
+const Style = require("../models/Style");
 const { scrapePinterestBoard } = require("../services/pinterestScraper");
 
 const router = express.Router();
 
-// Keep uploads in memory; we convert to base64 and store in Mongo.
-// 5MB per file cap so we stay well under the 16MB document limit.
+// Uploads kept in memory, stored as base64 in Mongo. 5MB/file cap.
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-/**
- * POST /api/inspo
- * Create a new inspo board (optionally linked to a room) OR update prefs.
- * Body: { roomId?, userId?, budget?, style?, colorPalette?, paletteId?, wildcard? }
+/* -------- Pinterest (priority) --------
+ * POST /api/rooms/:roomId/pinterest   body: { boardUrl }
  */
-router.post("/", async (req, res) => {
+router.post("/:roomId/pinterest", async (req, res) => {
   try {
-    const { id, ...fields } = req.body;
-    let board;
-    if (id) {
-      board = await InspoBoard.findByIdAndUpdate(id, fields, { new: true });
-      if (!board) return res.status(404).json({ error: "Board not found" });
-    } else {
-      board = await InspoBoard.create(fields);
-    }
-    res.json(board);
+    const urls = await scrapePinterestBoard(req.body.boardUrl, { limit: 8 });
+    const docs = await InspirationImage.insertMany(
+      urls.map((url) => ({ roomId: req.params.roomId, source: "pinterest", url }))
+    );
+    res.json(docs);
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Could not save inspo board" });
+    const status = e.code === "INVALID_URL" ? 400 : 502;
+    res.status(status).json({ error: e.message, code: e.code || "SCRAPE_FAILED" });
   }
 });
 
-/** GET /api/inspo/:id */
-router.get("/:id", async (req, res) => {
-  try {
-    const board = await InspoBoard.findById(req.params.id);
-    if (!board) return res.status(404).json({ error: "Board not found" });
-    res.json(board);
-  } catch (e) {
-    res.status(500).json({ error: "Could not load board" });
-  }
-});
-
-/**
- * POST /api/inspo/:id/images/upload  (multipart/form-data, field name "images")
- * Stores each uploaded file as a base64 data URI inside the document.
+/* -------- Direct upload (fallback) --------
+ * POST /api/rooms/:roomId/images   multipart/form-data, field "images" (<=5)
  */
-router.post("/:id/images/upload", upload.array("images", 12), async (req, res) => {
+router.post("/:roomId/images", upload.array("images", 5), async (req, res) => {
   try {
-    const board = await InspoBoard.findById(req.params.id);
-    if (!board) return res.status(404).json({ error: "Board not found" });
-
-    const added = (req.files || []).map((f) => ({
-      source: "upload",
-      mimeType: f.mimetype,
-      data: `data:${f.mimetype};base64,${f.buffer.toString("base64")}`,
-    }));
-
-    board.images.push(...added);
-    await board.save();
-    res.json(board);
+    const docs = await InspirationImage.insertMany(
+      (req.files || []).map((f) => ({
+        roomId: req.params.roomId,
+        source: "upload",
+        mimeType: f.mimetype,
+        data: `data:${f.mimetype};base64,${f.buffer.toString("base64")}`,
+      }))
+    );
+    res.json(docs);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Upload failed" });
   }
 });
 
-/**
- * POST /api/inspo/:id/images/pinterest
- * Body: { boardUrl }
- * Scrapes the public board and stores image CDN URLs.
- */
-router.post("/:id/images/pinterest", async (req, res) => {
-  try {
-    const board = await InspoBoard.findById(req.params.id);
-    if (!board) return res.status(404).json({ error: "Board not found" });
+/* GET /api/rooms/:roomId/images  — all inspo images for a room */
+router.get("/:roomId/images", async (req, res) => {
+  const docs = await InspirationImage.find({ roomId: req.params.roomId }).sort("createdAt");
+  res.json(docs);
+});
 
-    const urls = await scrapePinterestBoard(req.body.boardUrl, { limit: 24 });
-    const added = urls.map((url) => ({ source: "pinterest", url }));
-    board.images.push(...added);
-    await board.save();
-    res.json(board);
+/* DELETE /api/rooms/:roomId/images/:imageId */
+router.delete("/:roomId/images/:imageId", async (req, res) => {
+  await InspirationImage.deleteOne({ _id: req.params.imageId, roomId: req.params.roomId });
+  res.json({ ok: true });
+});
+
+/* -------- Style + palette (user pick) --------
+ * POST /api/rooms/:roomId/style   body: { styleTag, colorPalette }
+ * Upserts the source:"user" style doc for this room.
+ */
+router.post("/:roomId/style", async (req, res) => {
+  try {
+    const doc = await Style.findOneAndUpdate(
+      { roomId: req.params.roomId, source: "user" },
+      {
+        roomId: req.params.roomId,
+        source: "user",
+        styleTag: req.body.styleTag,
+        colorPalette: req.body.colorPalette || [],
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    res.json(doc);
   } catch (e) {
-    // Surface a friendly, specific message so the UI can tell the user to
-    // fall back to manual upload instead of just failing silently.
-    const status = e.code === "INVALID_URL" ? 400 : 502;
-    res.status(status).json({ error: e.message, code: e.code || "SCRAPE_FAILED" });
+    console.error(e);
+    res.status(500).json({ error: "Could not save style" });
   }
 });
 
-/** DELETE /api/inspo/:id/images/:imageId */
-router.delete("/:id/images/:imageId", async (req, res) => {
+/* GET /api/rooms/:roomId/style — returns user pick (and AI result if present) */
+router.get("/:roomId/style", async (req, res) => {
+  const docs = await Style.find({ roomId: req.params.roomId });
+  res.json(docs);
+});
+
+/* -------- Budget --------
+ * PATCH /api/rooms/:roomId/budget   body: { budgetTotal }
+ * Writes budgetTotal onto the ROOM document (Saanvi's `rooms` collection).
+ * NOTE: this depends on Saanvi's Room model being registered. If it isn't yet,
+ * you'll get a clear 501 below. Team decision: keep this here, or fold it into
+ * Saanvi's room-update route — either is fine, just pick one owner.
+ */
+router.patch("/:roomId/budget", async (req, res) => {
+  let Room;
   try {
-    const board = await InspoBoard.findById(req.params.id);
-    if (!board) return res.status(404).json({ error: "Board not found" });
-    board.images.id(req.params.imageId)?.deleteOne();
-    await board.save();
-    res.json(board);
+    Room = mongoose.model("Room");
+  } catch {
+    return res.status(501).json({
+      error:
+        "Room model isn't registered yet. Budget saves onto the room doc, so this needs Saanvi's Room model loaded first.",
+    });
+  }
+  try {
+    const room = await Room.findByIdAndUpdate(
+      req.params.roomId,
+      { budgetTotal: req.body.budgetTotal },
+      { new: true }
+    );
+    if (!room) return res.status(404).json({ error: "Room not found" });
+    res.json(room);
   } catch (e) {
-    res.status(500).json({ error: "Could not remove image" });
+    res.status(500).json({ error: "Could not save budget" });
   }
 });
 
