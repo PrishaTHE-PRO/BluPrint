@@ -18,6 +18,8 @@ Then open [http://localhost:5173](http://localhost:5173).
 | `/` | Login / Sign up |
 | `/dashboard.html` | Dashboard |
 | `/room-result.html` | Room planner (Prisha's section) |
+| `/inspo-upload.html` | Choose preferences (Nidhi's section) |
+
 
 ## Firebase
 
