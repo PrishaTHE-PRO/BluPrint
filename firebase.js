@@ -2,19 +2,17 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 export const firebaseConfig = {
-    apiKey: "AIzaSyB8ERTansDx8hHn43uxVdG_uS-Mt9-pNGI",
-    authDomain: "bluprint-e321b.firebaseapp.com",
-    projectId: "bluprint-e321b",
-    storageBucket: "bluprint-e321b.firebasestorage.app",
-    messagingSenderId: "142963881273",
-    appId: "1:142963881273:web:ca31b2abd3038511bfa4e8",
-    measurementId: "G-0LF278XKG3"
+    apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 export function isFirebaseConfigured() {
-    return !Object.values(firebaseConfig).some(function(value) {
-        return value.startsWith("PASTE_");
-    });
+    return Object.values(firebaseConfig).every(Boolean);
 }
 
 export const app = initializeApp(firebaseConfig);
