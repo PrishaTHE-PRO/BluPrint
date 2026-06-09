@@ -1,431 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BluPrint - Room Capture</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Nunito:wght@300;400;600;800&display=swap" rel="stylesheet" />
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BluPrint | Room Planning Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        /* Using your exact team color palette */
         :root {
-            --brown:       #3b2a1a;
-            --brown-light: #7a5c3e;
-            --orange:      #d4743a;
-            --orange-dark: #b05a25;
-            --cream:       #fdf6ec;
-            --parchment:   #f2e6d0;
-            --white:       #ffffff;
-            --red:         #c0392b;
-            --gray:        #9e8c7a;
+            --garden-dark: #0A3323;
+            --garden-moss: #839958;
+            --garden-beige: #F7F4D5;
+            --garden-rosy: #D3968C;
+            --garden-midnight: #105666;
+            --nav-pink: #f5a7b8;
         }
-
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: var(--cream);
-            min-height: 100vh;
-            display: flex;
+        body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); margin: 0; padding: 0; }
+        h1, h2, h3, h4 { font-family: 'Crimson Pro', serif; }
+        .grid-background {
+            background-image:
+                    linear-gradient(rgba(131,153,88,0.07) 1.5px, transparent 1.5px),
+                    linear-gradient(90deg, rgba(131,153,88,0.07) 1.5px, transparent 1.5px);
+            background-size: 50px 50px;
         }
-
-        /* ---- left panel (consistent styling with index.html) ---- */
-        .left-panel {
-            flex: 1;
-            background-color: var(--brown);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 50px 40px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* decorative circles in the background */
-        .left-panel::before {
-            content: '';
-            position: absolute;
-            top: -100px;
-            right: -100px;
-            width: 350px;
-            height: 350px;
-            border-radius: 50%;
-            background: rgba(212, 116, 58, 0.12);
-        }
-
-        .logo {
-            font-family: 'Lora', serif;
-            font-size: 28px;
-            color: var(--parchment);
-            position: relative;
-            z-index: 1;
-        }
-
-        .logo span {
-            color: var(--orange);
-        }
-
-        /* Preview Canvas Box inside Left Panel */
-        .preview-container {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-            margin: 40px 0;
-        }
-
-        .preview-box {
-            width: 320px;
-            height: 320px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px dashed rgba(242, 230, 208, 0.2);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        /* Inline SVG components matching theme */
-        svg {
-            background: transparent;
-        }
-
-        .room-rect {
-            fill: rgba(212, 116, 58, 0.12);
-            stroke: var(--orange);
-            stroke-width: 3;
-            rx: 6;
-        }
-
-        .label-text {
-            font-family: 'Nunito', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            fill: var(--parchment);
-        }
-
-        #fallback-text {
-            color: var(--gray);
-            font-style: italic;
-            font-size: 14px;
-        }
-
-        .preview-title {
-            font-family: 'Lora', serif;
-            color: var(--parchment);
-            font-size: 18px;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-
-        /* ---- right panel (the inputs form) ---- */
-        .right-panel {
-            width: 460px;
-            background: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 50px 40px;
-        }
-
-        .form-box {
-            width: 100%;
-            max-width: 360px;
-        }
-
-        .form-title {
-            margin-bottom: 32px;
-        }
-
-        .form-title h1 {
-            font-family: 'Lora', serif;
-            font-size: 30px;
-            font-weight: 400;
-            color: var(--brown);
-            margin-bottom: 6px;
-        }
-
-        .form-title p {
-            font-size: 14px;
-            color: var(--gray);
-        }
-
-        .field {
-            margin-bottom: 18px;
-        }
-
-        .row-fields {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 18px;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--brown-light);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1.5px solid #e0d5c5;
-            border-radius: 10px;
-            font-family: 'Nunito', sans-serif;
-            font-size: 15px;
-            color: var(--brown);
-            background: var(--cream);
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: var(--orange);
-            background: var(--white);
-        }
-
-        /* Live SQFT Calculation styling */
-        .sqft-card {
-            background-color: var(--cream);
-            border: 1.5px solid #e0d5c5;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .sqft-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--brown-light);
-            font-weight: 700;
-        }
-
-        .sqft-number {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--orange-dark);
-            margin-top: 2px;
-        }
-
-        .btn-capture {
-            width: 100%;
-            padding: 14px;
-            background: var(--orange);
-            color: var(--white);
-            border: none;
-            border-radius: 10px;
-            font-family: 'Nunito', sans-serif;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-capture:hover {
-            background: var(--orange-dark);
-        }
-
-        /* Toast notifications */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--brown);
-            color: var(--parchment);
-            font-size: 14px;
-            padding: 10px 24px;
-            border-radius: 999px;
-            opacity: 0;
-            transition: opacity 0.3s, transform 0.3s;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        @media (max-width: 780px) {
-            body { flex-direction: column; }
-            .left-panel { min-height: 400px; }
-            .right-panel { width: 100%; padding: 40px 24px; }
-        }
+        .noise-texture { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0.03; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+        .ghibli-border { border: 2px solid rgba(247,244,213,0.15); border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px; }
+        .garden-card { background: rgba(16,86,102,0.2); backdrop-filter: blur(12px); transition: all 0.5s cubic-bezier(0.23,1,0.32,1); border: 1px solid rgba(247,244,213,0.05); }
+        .garden-card:hover { transform: translateY(-8px) scale(1.02); background: rgba(16,86,102,0.3); border-color: rgba(211,150,140,0.4); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(2deg); } }
+        @keyframes sparkle-pulse { 0%,100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
+        .animate-reveal { animation: fadeInUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards; opacity: 0; }
+        .floating-avatar { animation: float 6s ease-in-out infinite; }
+        .sparkle-icon { animation: sparkle-pulse 4s ease-in-out infinite; }
+        .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: var(--garden-dark); transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        /* toast */
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(10,51,35,0.95); border: 1px solid rgba(247,244,213,0.15); color: var(--garden-beige); font-family: 'Quicksand', sans-serif; font-size: 14px; padding: 12px 28px; border-radius: 999px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 100; backdrop-filter: blur(8px); }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--garden-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
     </style>
 </head>
-
 <body>
+<div class="min-h-screen flex flex-col relative grid-background">
+    <div class="noise-texture"></div>
 
-<div class="left-panel">
-    <div class="logo">
-        <span>Blu</span>Print
-    </div>
-
-    <div class="preview-container">
-        <div class="preview-title" id="dynamicTitle">My Bedroom Layout</div>
-        <div class="preview-box">
-            <svg id="blueprintSvg" width="280" height="280" style="display: block;">
-                <g>
-                    <rect id="roomFloorPlan" class="room-rect" x="0" y="0" width="0" height="0"></rect>
-                    <text id="widthLabel" class="label-text" text-anchor="middle">0 ft</text>
-                    <text id="lengthLabel" class="label-text" text-anchor="end" dominant-baseline="middle">0 ft</text>
-                </g>
-            </svg>
-            <div id="fallback-text" style="display: none;">Please specify layout measurements</div>
-        </div>
-    </div>
-
-    <div></div> </div>
-
-<div class="right-panel">
-    <div class="form-box">
-
-        <div class="form-title">
-            <h1>Capture Your Room 📐</h1>
-            <p>Specify dimensions to build an accurate floor plan canvas.</p>
-        </div>
-
-        <div class="field">
-            <label for="roomName">Room Setup Label</label>
-            <input type="text" id="roomName" value="My Bedroom" placeholder="e.g. Master Bedroom, Living Space" />
-        </div>
-
-        <div class="row-fields">
-            <div class="field">
-                <label for="roomWidth">Width (Feet)</label>
-                <input type="number" id="roomWidth" value="12" min="1" placeholder="12" />
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--nav-pink);">
+        <div class="flex items-center gap-4 animate-reveal" style="animation-delay:0.1s;">
+            <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
+                <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
             </div>
-            <div class="field">
-                <label for="roomLength">Length (Feet)</label>
-                <input type="number" id="roomLength" value="15" min="1" placeholder="15" />
+            <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif;">BluPrint</span>
+        </div>
+
+        <div class="hidden md:flex items-center gap-12 text-[#0A3323] animate-reveal" style="animation-delay:0.2s;">
+            <a href="#" class="nav-link relative font-bold text-lg transition-all">Home</a>
+            <a href="#" class="nav-link relative font-bold text-lg transition-all">Discover</a>
+            <a href="#" class="nav-link relative font-bold text-lg transition-all">Community</a>
+            <!-- logout button styled as user avatar -->
+            <button id="logout-btn" title="Sign out" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
+                <iconify-icon icon="ph:sign-out-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="relative w-full overflow-hidden border-b border-[#F7F4D5]/5 py-20 px-8 lg:px-16">
+        <div class="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-16 md:gap-32">
+            <div class="flex flex-col gap-8 animate-reveal text-center md:text-left" style="animation-delay:0.3s;">
+                <div class="space-y-4">
+                    <h1 class="text-6xl md:text-8xl font-bold leading-tight drop-shadow-sm text-[#F7F4D5]">
+                        Welcome back, <br><span id="user-name" class="italic text-[#D3968C]">there!</span>
+                    </h1>
+                    <p class="text-xl text-[#F7F4D5]/80 font-medium max-w-md">
+                        Start designing your next serene living space or cozy room retreat. Your next project awaits your touch.
+                    </p>
+                </div>
+                <div class="flex justify-center md:justify-start">
+                    <div class="inline-flex items-center gap-3 bg-[#D3968C] px-6 py-3 rounded-full text-[#F7F4D5] font-bold shadow-xl border border-white/10">
+                        <iconify-icon icon="ph:shooting-star-duotone" class="text-2xl sparkle-icon"></iconify-icon>
+                        <span>Rank: Amateur</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- avatar -->
+            <div class="relative group animate-reveal" style="animation-delay:0.5s;">
+                <div class="absolute -top-16 left-1/2 -translate-x-1/2 bg-[#F7F4D5] text-[#105666] px-8 py-4 rounded-[2.5rem] border-2 border-[#105666] font-bold text-lg shadow-2xl whitespace-nowrap z-20 transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-4">
+                    Let's get started!
+                    <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#F7F4D5] border-b-2 border-r-2 border-[#105666] transform rotate-45"></div>
+                </div>
+                <div class="floating-avatar">
+                    <img src="https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/uploads/c8b9b493-90d2-48dc-beb9-1c448e14e0d2/1779936396285-b0204285/blueprintavatar.png" alt="Designer Avatar" class="relative z-10 object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.6)]" style="object-view-box:xywh(23.55% 14.37% 31.43% 47.54%);width:280px;height:320px;">
+                </div>
             </div>
         </div>
+    </header>
 
-        <div class="sqft-card">
-            <div class="sqft-label">Total Footprint Calculation</div>
-            <div class="sqft-number"><span id="sqftValue">180</span> <span style="font-size: 16px; font-weight: 400; color: var(--brown-light);">sq. ft.</span></div>
+    <!-- Main Dashboard -->
+    <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-[1600px] mx-auto w-full">
+        <div class="grid lg:grid-cols-12 gap-12">
+
+            <!-- Left Sidebar -->
+            <div class="lg:col-span-5 flex flex-col gap-12 animate-reveal" style="animation-delay:0.7s;">
+
+                <!-- Create Project CTA -->
+                <div class="garden-card ghibli-border p-12 overflow-hidden relative group cursor-pointer shadow-xl">
+                    <div class="absolute -top-12 -right-12 w-64 h-64 bg-[#D3968C]/10 rounded-full blur-[80px] group-hover:bg-[#D3968C]/20 transition-all"></div>
+                    <div class="relative z-10 space-y-8">
+                        <div class="w-20 h-20 bg-[#F7F4D5] rounded-[2.5rem] flex items-center justify-center shadow-2xl transform transition group-hover:rotate-12">
+                            <iconify-icon icon="ph:plus-bold" class="text-4xl text-[#0A3323]"></iconify-icon>
+                        </div>
+                        <div class="space-y-4">
+                            <h2 class="text-4xl font-bold text-[#F7F4D5]">Create a New Project</h2>
+                            <p class="text-xl text-[#F7F4D5]/70 leading-relaxed">
+                                Ready to start your next interior masterpiece? Click here to begin a fresh room template.
+                            </p>
+                        </div>
+                        <button id="cta-create-btn" class="w-full py-5 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-[1.02] shadow-xl border border-white/10">
+                            Get Started
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tip of the Day -->
+                <div class="garden-card ghibli-border p-10 bg-[#F7F4D5]/5">
+                    <div class="flex items-center gap-4 mb-6">
+                        <iconify-icon icon="ph:sparkle-duotone" class="text-4xl text-[#D3968C]"></iconify-icon>
+                        <h3 class="text-2xl font-bold tracking-wide">Tip of the Day</h3>
+                    </div>
+                    <p class="text-2xl font-medium text-[#F7F4D5]/90 leading-relaxed italic border-l-4 border-[#D3968C] pl-6">
+                        "Soft layered textures can turn any corner into an enchanted space. Try mixing different fabric weights for a hidden luxury look."
+                    </p>
+                    <div class="mt-8 flex justify-end opacity-20">
+                        <iconify-icon icon="ph:house-duotone" class="text-6xl"></iconify-icon>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Project Gallery -->
+            <div class="lg:col-span-7 flex flex-col gap-10 animate-reveal" style="animation-delay:0.9s;">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div class="flex bg-[#105666]/30 p-2 rounded-[2.5rem] border border-[#F7F4D5]/10">
+                        <button id="tab-recents" class="px-10 py-3 bg-[#D3968C] text-[#F7F4D5] rounded-[2rem] font-bold shadow-lg transition-all">Recents</button>
+                        <button id="tab-past" class="px-10 py-3 text-[#F7F4D5]/60 hover:text-[#F7F4D5] font-bold transition-all">Past Inspiration</button>
+                    </div>
+                    <a href="#" class="group flex items-center gap-3 text-[#D3968C] font-bold text-lg">
+                        View All <iconify-icon icon="ph:arrow-right-bold" class="transition-transform group-hover:translate-x-2"></iconify-icon>
+                    </a>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-10">
+                    <!-- Project Card 1 -->
+                    <div class="garden-card ghibli-border p-6 group cursor-pointer">
+                        <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner">
+                            <img src="https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&q=80&w=600" alt="The Bedroom" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110">
+                            <div class="absolute top-5 right-5">
+                                <span class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[#0A3323] text-sm font-bold shadow-lg">Working</span>
+                            </div>
+                        </div>
+                        <div class="px-2 space-y-2">
+                            <h3 class="text-3xl font-bold text-[#F7F4D5]">The Bedroom</h3>
+                            <p class="text-lg text-[#F7F4D5]/60">Dusky study with hanging vines and old parchment textures.</p>
+                            <div class="pt-6 flex items-center justify-between border-t border-[#F7F4D5]/10 mt-6">
+                                <span class="text-sm font-medium text-[#F7F4D5]/40">Updated 2h ago</span>
+                                <button class="p-3 rounded-full bg-[#105666]/50 hover:bg-[#D3968C] transition-all">
+                                    <iconify-icon icon="ph:pencil-circle-duotone" class="text-2xl text-white"></iconify-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Card 2 -->
+                    <div class="garden-card ghibli-border p-6 group cursor-pointer">
+                        <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner">
+                            <img src="https://images.unsplash.com/photo-1544601283-827a39c32977?auto=format&fit=crop&q=80&w=600" alt="The Study Room" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110">
+                            <div class="absolute top-5 right-5">
+                                <iconify-icon icon="ph:heart-fill" class="text-3xl text-[#D3968C] drop-shadow-lg"></iconify-icon>
+                            </div>
+                        </div>
+                        <div class="px-2 space-y-2">
+                            <h3 class="text-3xl font-bold text-[#F7F4D5]">The Study Room</h3>
+                            <p class="text-lg text-[#F7F4D5]/60">Open-air concept featuring lily-inspired seating and lotuses.</p>
+                            <div class="pt-6 flex items-center justify-between border-t border-[#F7F4D5]/10 mt-6">
+                                <span class="text-sm font-bold text-[#839958]">Completed ✨</span>
+                                <button class="p-3 rounded-full bg-[#105666]/50 hover:bg-[#D3968C] transition-all">
+                                    <iconify-icon icon="ph:eye-duotone" class="text-2xl text-white"></iconify-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
+    </main>
 
-        <button class="btn-capture" onclick="saveRoomLayout()">Save Room to Dashboard</button>
-
-    </div>
+    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center gap-4 opacity-40">
+        <iconify-icon icon="ph:plant-duotone" class="text-4xl text-[#839958]"></iconify-icon>
+        <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5]">Growing since 2026 • BluPrint</p>
+    </footer>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 
-<script>
-    // Link directly to DOM input elements
-    const roomNameInput = document.getElementById('roomName');
-    const widthInput = document.getElementById('roomWidth');
-    const lengthInput = document.getElementById('roomLength');
-
-    // Graphic DOM hooks
-    const sqftValue = document.getElementById('sqftValue');
-    const dynamicTitle = document.getElementById('dynamicTitle');
-    const roomFloorPlan = document.getElementById('roomFloorPlan');
-    const widthLabel = document.getElementById('widthLabel');
-    const lengthLabel = document.getElementById('lengthLabel');
-    const blueprintSvg = document.getElementById('blueprintSvg');
-    const fallbackText = document.getElementById('fallback-text');
-
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => { toast.classList.remove('show'); }, 3000);
-    }
-
-    // Listens and runs live calculation + scaling configurations
-    function renderLiveBlueprint() {
-        const width = parseFloat(widthInput.value) || 0;
-        const length = parseFloat(lengthInput.value) || 0;
-
-        // Dynamic Title assignment
-        dynamicTitle.textContent = roomNameInput.value ? roomNameInput.value + " Layout" : "Unnamed Layout";
-
-        // Calculate Area metrics instantly
-        const totalSqft = width * length;
-        sqftValue.textContent = totalSqft.toLocaleString();
-
-        // Valid dimension protection layers
-        if (width <= 0 || length <= 0) {
-            blueprintSvg.style.display = 'none';
-            fallbackText.style.display = 'block';
-            return;
-        } else {
-            blueprintSvg.style.display = 'block';
-            fallbackText.style.display = 'none';
-        }
-
-        // SVG Dynamic Layout Box Math (Max fitting width/height scale context is 280px)
-        const canvasConstraint = 280 - 40; // leaving structural label margins
-        const maximumDim = Math.max(width, length);
-        const dimensionScaleFactor = canvasConstraint / maximumDim;
-
-        const calculatedSvgW = width * dimensionScaleFactor;
-        const calculatedSvgL = length * dimensionScaleFactor;
-
-        // Centering spatial algorithms
-        const xCoordinateOffset = (280 - calculatedSvgW) / 2;
-        const yCoordinateOffset = (280 - calculatedSvgL) / 2;
-
-        // Modify SVG visual dimensions directly
-        roomFloorPlan.setAttribute('x', xCoordinateOffset);
-        roomFloorPlan.setAttribute('y', yCoordinateOffset);
-        roomFloorPlan.setAttribute('width', calculatedSvgW);
-        roomFloorPlan.setAttribute('height', calculatedSvgL);
-
-        // Map dimensions annotations perfectly on center parameters
-        widthLabel.setAttribute('x', xCoordinateOffset + (calculatedSvgW / 2));
-        widthLabel.setAttribute('y', yCoordinateOffset - 10);
-        widthLabel.textContent = width + " ft";
-
-        lengthLabel.setAttribute('x', xCoordinateOffset - 10);
-        lengthLabel.setAttribute('y', yCoordinateOffset + (calculatedSvgL / 2));
-        lengthLabel.textContent = length + " ft";
-    }
-
-    // Real-time tracking inputs (React-like responsive loop)
-    roomNameInput.addEventListener('input', renderLiveBlueprint);
-    widthInput.addEventListener('input', renderLiveBlueprint);
-    lengthInput.addEventListener('input', renderLiveBlueprint);
-
-    // Bootstrap initial execution loop
-    renderLiveBlueprint();
-
-    // Data packaging context for subsequent MongoDB route setups
-    function saveRoomLayout() {
-        const roomPayload = {
-            name: roomNameInput.value,
-            width: parseFloat(widthInput.value) || 0,
-            length: parseFloat(lengthInput.value) || 0,
-            calculatedSqft: (parseFloat(widthInput.value) || 0) * (parseFloat(lengthInput.value) || 0)
-        };
-
-        console.log("Ready for MongoDB API dispatch stringification:", roomPayload);
-        showToast(`Saved ${roomPayload.name} to console! Ready for MongoDB.`);
-    }
-</script>
-
+<script type="module" src="./dashboard.js"></script>
 </body>
 </html>
