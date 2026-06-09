@@ -23,6 +23,9 @@ Then open [http://localhost:5173](http://localhost:5173).
 
 Add your Firebase config to `firebase.js`. Then enable **Email/Password** and **Google** sign-in under **Firebase Console → Build → Authentication → Sign-in method**.
 
+## Backend
+Copy server/.env.example to server/.env and paste the shared MongoDB connection string into MONGODB_URI. Then `npm run dev` starts the frontend and backend together.
+
 ## Project Structure
 
 ```
