@@ -1,147 +1,420 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BluPrint | Enter Your Sanctuary</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --garden-dark: #0A3323;
-      --garden-moss: #839958;
-      --garden-beige: #F7F4D5;
-      --garden-rosy: #D3968C;
-      --garden-midnight: #105666;
-      --garden-accent: #f5a7b8;
-    }
-    body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); overflow: hidden; }
-    h1, h2, h3 { font-family: 'Crimson Pro', serif; }
-    .grid-background {
-      background-image: linear-gradient(rgba(131,153,88,0.1) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(131,153,88,0.1) 1.5px, transparent 1.5px);
-      background-size: 50px 50px;
-    }
-    .ghibli-border {
-      border: 2px solid rgba(247,244,213,0.15);
-      border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px;
-      transition: border-color 0.4s ease;
-    }
-    .garden-card {
-      background: rgba(16,86,102,0.25);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(247,244,213,0.1);
-      box-shadow: 0 40px 100px -20px rgba(0,0,0,0.5);
-    }
-    @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(5deg); } }
-    @keyframes float-slow { 0%,100% { transform: translate(0,0); } 33% { transform: translate(30px,-20px); } 66% { transform: translate(-20px,40px); } }
-    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes pulse-soft { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
-    @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .floating-particle { position: absolute; background: var(--garden-beige); border-radius: 50%; pointer-events: none; filter: blur(2px); animation: float-slow 15s infinite ease-in-out; }
-    .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; opacity: 0; }
-    .input-field { background: rgba(247,244,213,0.05); border: 1px solid rgba(247,244,213,0.1); color: var(--garden-beige); transition: all 0.3s ease; }
-    .input-field:focus { background: rgba(247,244,213,0.1); border-color: var(--garden-rosy); outline: none; box-shadow: 0 0 0 4px rgba(211,150,140,0.1); }
-    .input-field.error { border-color: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,0.1); }
-    .btn-bounce { transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
-    .btn-bounce:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 20px 40px -10px rgba(211,150,140,0.4); }
-    .btn-bounce:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
-    .noise-texture { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-    /* toast */
-    #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(10,51,35,0.95); border: 1px solid rgba(247,244,213,0.15); color: var(--garden-beige); font-family: 'Quicksand', sans-serif; font-size: 14px; padding: 12px 28px; border-radius: 999px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 100; backdrop-filter: blur(8px); }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BluPrint</title>
+
+    <!-- google fonts - lora for headings, nunito for everything else -->
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Nunito:wght@300;400;600&display=swap" rel="stylesheet" />
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* all our colors in one place so its easy to change later */
+        :root {
+            --brown:       #3b2a1a;
+            --brown-light: #7a5c3e;
+            --orange:      #d4743a;
+            --orange-dark: #b05a25;
+            --cream:       #fdf6ec;
+            --parchment:   #f2e6d0;
+            --white:       #ffffff;
+            --red:         #c0392b;
+            --gray:        #9e8c7a;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--cream);
+            min-height: 100vh;
+            display: flex; /* this makes the two panels sit side by side */
+        }
+
+
+        /* ---- left panel ---- */
+
+        .left-panel {
+            flex: 1;
+            background-color: var(--brown);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* decorative circles in the background, purely visual */
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: rgba(212, 116, 58, 0.12);
+        }
+
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -60px;
+            left: -60px;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: rgba(212, 116, 58, 0.08);
+        }
+
+        .logo {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            color: var(--parchment);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* just the "Blu" part is orange */
+        .logo span {
+            color: var(--orange);
+        }
+
+        .tagline {
+            position: relative;
+            z-index: 1;
+        }
+
+        .tagline h2 {
+            font-family: 'Lora', serif;
+            font-size: 38px;
+            font-weight: 400;
+            color: var(--parchment);
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }
+
+        .tagline p {
+            font-size: 15px;
+            color: var(--gray);
+            line-height: 1.8;
+            max-width: 320px;
+        }
+
+        /* the little rounded tags at the bottom */
+        .pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pill {
+            background: rgba(212, 116, 58, 0.15);
+            border: 1px solid rgba(212, 116, 58, 0.30);
+            color: var(--parchment);
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-weight: 300;
+        }
+
+
+        /* ---- right panel (the form) ---- */
+
+        .right-panel {
+            width: 460px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 40px;
+        }
+
+        .form-box {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .form-title {
+            margin-bottom: 32px;
+        }
+
+        .form-title h1 {
+            font-family: 'Lora', serif;
+            font-size: 30px;
+            font-weight: 400;
+            color: var(--brown);
+            margin-bottom: 6px;
+        }
+
+        .form-title p {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--brown-light);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e0d5c5;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 15px;
+            color: var(--brown);
+            background: var(--cream);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        /* highlight orange when user clicks into the box */
+        input:focus {
+            border-color: var(--orange);
+            background: var(--white);
+        }
+
+        /* turns red if they submit with bad info */
+        input.error {
+            border-color: var(--red);
+        }
+
+        .error-text {
+            font-size: 12px;
+            color: var(--red);
+            margin-top: 5px;
+            display: none; /* hidden until there's actually an error */
+        }
+
+        .forgot {
+            text-align: right;
+            margin-bottom: 22px;
+        }
+
+        .forgot a {
+            font-size: 13px;
+            color: var(--orange);
+            text-decoration: none;
+        }
+
+        .forgot a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--orange);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-login:hover {
+            background: var(--orange-dark);
+        }
+
+        .btn-login:disabled,
+        .btn-google:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        /* the "or" line between login and google */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0d5c5;
+        }
+
+        .divider span {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 12px;
+            background: var(--white);
+            border: 1.5px solid #e0d5c5;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 15px;
+            color: var(--brown);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-google:hover {
+            background: var(--cream);
+            border-color: var(--orange);
+        }
+
+        .btn-google img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .signup-link a {
+            color: var(--orange);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* little popup message that fades in at the bottom */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--brown);
+            color: var(--parchment);
+            font-size: 14px;
+            padding: 10px 24px;
+            border-radius: 999px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* on phones, hide the left panel and go full width */
+        @media (max-width: 780px) {
+            .left-panel { display: none; }
+            .right-panel { width: 100%; padding: 40px 24px; }
+        }
+
+    </style>
 </head>
+
+
 <body>
-  <div class="noise-texture"></div>
 
-  <div class="min-h-screen relative flex items-center justify-center overflow-hidden grid-background">
+<!-- left side -->
+<div class="left-panel">
 
-    <!-- background decorations -->
-    <div class="absolute inset-0 z-0">
-      <div class="floating-particle w-2 h-2" style="top:20%;left:10%;animation-delay:0s;"></div>
-      <div class="floating-particle w-3 h-3" style="top:60%;left:15%;animation-delay:2s;opacity:0.4;"></div>
-      <div class="floating-particle w-2 h-2" style="top:80%;left:80%;animation-delay:4s;"></div>
-      <div class="floating-particle w-4 h-4" style="top:15%;left:85%;animation-delay:1s;opacity:0.2;"></div>
-      <div class="floating-particle w-2 h-2" style="top:40%;left:90%;animation-delay:3s;"></div>
-      <div class="absolute top-[-10%] left-[-5%] w-[40rem] h-[40rem] bg-emerald-900/20 blur-[120px] rounded-full animate-pulse-soft"></div>
-      <div class="absolute bottom-[-10%] right-[-5%] w-[50rem] h-[50rem] bg-emerald-800/20 blur-[150px] rounded-full animate-pulse-soft" style="animation-delay:2s;"></div>
-      <div class="absolute top-1/4 left-1/4 animate-[spin-slow_20s_linear_infinite] opacity-10 pointer-events-none">
-        <iconify-icon icon="ph:sparkle-duotone" class="text-[300px]"></iconify-icon>
-      </div>
+    <div class="logo">
+        <span>Blu</span>Print
     </div>
 
-    <!-- main card -->
-    <div class="relative z-10 w-full max-w-lg px-6 animate-reveal">
-      <div class="garden-card ghibli-border p-10 md:p-14 relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-rosy-500/5 rounded-full blur-3xl"></div>
+    <div class="tagline">
+        <h2>Design your space,<br>your way.</h2>
+        <p>Upload your room, pick your vibe, and let AI find the perfect furniture — all in one cozy place.</p>
+    </div>
 
-        <!-- header -->
-        <div class="flex flex-col items-center text-center gap-4 mb-10">
-          <div class="w-16 h-16 bg-[#0A3323] rounded-2xl flex items-center justify-center shadow-2xl mb-2 animate-[float_4s_infinite_ease-in-out]">
-            <iconify-icon icon="ph:sparkle-duotone" class="text-4xl text-[#F7F4D5]"></iconify-icon>
-          </div>
-          <h1 class="text-5xl font-bold tracking-tight text-[#F7F4D5]">Welcome Back</h1>
-          <p class="text-lg text-[#F7F4D5]/60 font-medium">Enter your sanctuary and resume designing</p>
+    <div class="pills">
+        <div class="pill">🛋 Room Builder</div>
+        <div class="pill">✦ AI Stylist</div>
+        <div class="pill">📌 Pinterest Import</div>
+        <div class="pill">💸 Budget Finder</div>
+        <div class="pill">🪟 3D Preview</div>
+    </div>
+
+</div>
+
+
+<!-- right side - the actual login form -->
+<div class="right-panel">
+    <div class="form-box">
+
+        <div class="form-title">
+            <h1>Welcome back ☕</h1>
+            <p>Log in to continue designing your space.</p>
         </div>
 
-        <!-- form -->
-        <div class="flex flex-col gap-6">
-          <div class="animate-reveal" style="animation-delay:0.2s;">
-            <label class="block text-sm font-bold text-[#F7F4D5]/70 mb-2 ml-1" for="email">Email Address</label>
-            <input type="email" id="email" placeholder="your@email.com" class="input-field w-full px-5 py-4 rounded-2xl font-medium">
-          </div>
-
-          <div class="animate-reveal" style="animation-delay:0.3s;">
-            <div class="flex justify-between mb-2 ml-1">
-              <label class="block text-sm font-bold text-[#F7F4D5]/70" for="password">Password</label>
-              <a href="#" id="forgot-link" class="text-sm font-bold text-[#D3968C] hover:text-[#f5a7b8] transition-colors">Forgot?</a>
-            </div>
-            <input type="password" id="password" placeholder="••••••••" class="input-field w-full px-5 py-4 rounded-2xl font-medium">
-          </div>
-
-          <div class="flex items-center gap-3 ml-1 animate-reveal" style="animation-delay:0.4s;">
-            <input type="checkbox" id="remember" class="h-5 w-5 accent-[#D3968C] cursor-pointer rounded">
-            <label for="remember" class="text-sm font-semibold text-[#F7F4D5]/60 cursor-pointer">Keep me signed in</label>
-          </div>
-
-          <button type="button" id="login-btn" onclick="handleLogin()" class="btn-bounce w-full py-5 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl shadow-xl mt-4 animate-reveal" style="animation-delay:0.5s;">
-            Enter BluPrint
-          </button>
+        <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="you@example.com" />
+            <div class="error-text" id="email-error">Please enter a valid email.</div>
         </div>
 
-        <!-- signup link -->
-        <div class="mt-10 text-center animate-reveal" style="animation-delay:0.6s;">
-          <p class="text-[#F7F4D5]/50 font-medium">
-            New to the sanctuary?
-            <a href="#" id="signup-link" onclick="handleSignup(event)" class="text-[#D3968C] font-bold hover:underline decoration-2 underline-offset-4 ml-1">Start a journey</a>
-          </p>
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="••••••••" />
+            <div class="error-text" id="password-error">Password must be at least 6 characters.</div>
         </div>
 
-        <!-- leaf decoration -->
-        <div class="absolute bottom-[-2rem] left-[-2rem] opacity-10 animate-[float_6s_infinite_ease-in-out]">
-          <iconify-icon icon="ph:leaf-duotone" class="text-8xl rotate-[45deg]"></iconify-icon>
+        <div class="forgot">
+            <a href="#">Forgot password?</a>
         </div>
-      </div>
 
-      <!-- social sign-in row -->
-      <div class="mt-8 flex justify-center gap-10 animate-reveal" style="animation-delay:0.8s;">
-        <button type="button" id="google-button" onclick="handleGoogle()" class="flex items-center gap-2 text-[#F7F4D5]/30 hover:text-[#F7F4D5]/80 cursor-pointer transition-colors bg-transparent border-none font-bold">
-          <iconify-icon icon="ph:google-logo-duotone" class="text-2xl"></iconify-icon>
-          <span class="text-sm font-bold">Google</span>
+        <button class="btn-login" id="login-button" onclick="handleLogin()">Log in</button>
+
+        <div class="divider">
+            <span>or</span>
+        </div>
+
+        <button class="btn-google" id="google-button" onclick="handleGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" />
+            Continue with Google
         </button>
-        <div class="flex items-center gap-2 text-[#F7F4D5]/30 cursor-not-allowed">
-          <iconify-icon icon="ph:apple-logo-duotone" class="text-2xl"></iconify-icon>
-          <span class="text-sm font-bold">Apple</span>
+
+        <div class="signup-link">
+            Don't have an account? <a href="#" onclick="handleSignup(event)">Sign up</a>
         </div>
-      </div>
+
     </div>
-  </div>
+</div>
 
-  <div id="toast"></div>
 
-  <script type="module" src="./main.js"></script>
+<div class="toast" id="toast"></div>
+
+
+<script type="module" src="./main.js"></script>
+
 </body>
 </html>
