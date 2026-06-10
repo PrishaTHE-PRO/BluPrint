@@ -6,6 +6,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+const imageUrls = images.map(img => {
+  if (img.source === "pin") return img.url;
+  // if stored as base64, prefix it correctly
+  return img.data.startsWith("data:") ? img.data : `data:image/jpeg;base64,${img.data}`;
+});
+
 function buildPrompt() {
   return `
 Analyze these room inspiration images.
@@ -55,8 +61,9 @@ confidence:
 export async function analyzeImages(imageUrls) {
   const prompt = buildPrompt();
 
-  export async function analyzeImages(imageUrls) {
-  const prompt = buildPrompt();
+  if (!imageUrls || imageUrls.length === 0) {
+    throw new Error("No images provided for analysis");
+  }
 
   const imageContent = imageUrls.map(url => ({
     type: "image_url",
