@@ -1,313 +1,703 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Inspo Upload | BluPrint</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analyze Style | BluPrint</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--garden-dark:#0A3323;--garden-moss:#839958;--garden-beige:#F7F4D5;--garden-rosy:#D3968C;--garden-midnight:#105666;--garden-accent:#f5a7b8}
-    body{font-family:'Quicksand',sans-serif;background-color:var(--garden-dark);color:var(--garden-beige);overflow-x:hidden}
-    h1,h2,h3,h4{font-family:'Crimson Pro',serif}
-    .grid-background{background-image:linear-gradient(rgba(131,153,88,.07) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(131,153,88,.07) 1.5px,transparent 1.5px);background-size:50px 50px}
-    .ghibli-border{border:2px solid rgba(247,244,213,.15);border-radius:40px 60px 45px 70px / 65px 45px 75px 45px}
-    .garden-card{background:rgba(16,86,102,.2);backdrop-filter:blur(12px);border:1px solid rgba(247,244,213,.05)}
-    .option-btn{padding:12px 16px;border:1px solid rgba(247,244,213,.1);background:rgba(247,244,213,.03);border-radius:18px;cursor:pointer;transition:all .3s ease;text-align:left}
-    .option-btn:hover{background:rgba(247,244,213,.1)}
-    .option-btn.selected{background:rgba(211,150,140,.3);border-color:var(--garden-rosy)}
-    input[type=range]{accent-color:var(--garden-rosy)}
-    .pill{padding:6px 14px;border:1px solid rgba(247,244,213,.1);border-radius:999px;cursor:pointer;font-size:.85rem;transition:all .3s ease}
-    .pill.selected{background:rgba(211,150,140,.3);border-color:var(--garden-rosy)}
+    :root {
+      --garden-dark: #0A3323;
+      --garden-moss: #839958;
+      --garden-beige: #F7F4D5;
+      --garden-rosy: #D3968C;
+      --garden-midnight: #105666;
+      --garden-accent: #f5a7b8;
+    }
+    body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); overflow-x: hidden; }
+    h1, h2, h3, h4 { font-family: 'Crimson Pro', serif; }
+    .noise-texture { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .03; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-reveal { animation: fadeInUp .8s cubic-bezier(.22,1,.36,1) forwards; opacity: 0; }
+    .grid-background { background-image: linear-gradient(rgba(131,153,88,.07) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(131,153,88,.07) 1.5px, transparent 1.5px); background-size: 50px 50px; }
+    .ghibli-border { border: 2px solid rgba(247,244,213,.15); border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px; transition: border-color .4s ease; }
+    .garden-card { background: rgba(16,86,102,0.2); backdrop-filter: blur(12px); transition: all 0.5s cubic-bezier(0.23,1,0.32,1); border: 1px solid rgba(247,244,213,0.05); }
+    .garden-card:hover { transform: translateY(-4px); background: rgba(16,86,102,0.3); border-color: rgba(211,150,140,0.4); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4); }
+    .option-btn { padding: 12px 16px; border: 1px solid rgba(247,244,213,0.1); background: rgba(247,244,213,0.03); border-radius: 18px; cursor: pointer; transition: all 0.3s ease; text-align: left; }
+    .option-btn:hover { background: rgba(247,244,213,0.1); }
+    .option-btn.selected { background: rgba(211,150,140,0.3); border-color: var(--garden-rosy); }
+    .option-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+    .step-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; transition: all 0.4s ease; border: 2px solid rgba(247,244,213,0.2); }
+    .step-circle.active { background: var(--garden-rosy); color: #fff; border-color: var(--garden-rosy); box-shadow: 0 0 15px rgba(211,150,140,0.4); }
+    .step-circle.done { background: var(--garden-moss); color: #fff; border-color: var(--garden-moss); }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--garden-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
   </style>
 </head>
 <body>
-<div class="min-h-screen relative flex flex-col grid-background">
-  <!-- Nav -->
-  <nav class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--garden-accent);">
-    <div class="flex items-center gap-4">
-      <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center">
-        <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
+  <div class="noise-texture"></div>
+  <div class="min-h-screen relative flex flex-col grid-background">
+
+    <!-- Nav -->
+    <nav class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--garden-accent);">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
+          <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
+        </div>
+        <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif">BluPrint</span>
       </div>
-      <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif">BluPrint</span>
-    </div>
-  </nav>
-
-  <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-4xl mx-auto w-full flex flex-col gap-10">
-    <header class="text-center space-y-4">
-      <h1 class="text-5xl md:text-6xl font-bold text-[#F7F4D5]">Inspiration Upload</h1>
-      <p class="text-lg text-[#F7F4D5]/70 max-w-2xl mx-auto">Add a Pinterest board or your own photos, set a budget, and pick the vibe for your room.</p>
-    </header>
-
-    <!-- status banner -->
-    <div id="status" class="hidden p-4 rounded-2xl text-center font-medium"></div>
-
-    <!-- Pinterest -->
-    <div class="garden-card ghibli-border p-8 space-y-4">
-      <h2 class="text-2xl font-bold">Pinterest board link</h2>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <input id="pin-url" type="url" placeholder="https://pinterest.com/you/dream-room/"
-          class="flex-1 px-5 py-3 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50" />
-        <button id="pin-btn" class="px-6 py-3 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold hover:bg-[#c1867b] transition-all disabled:opacity-40">Fetch board</button>
+      <div class="hidden md:flex items-center gap-12 text-[#0A3323]">
+        <a href="dashboard.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="#" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Discover<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="#" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Community<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <div class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
+          <iconify-icon icon="ph:user-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+        </div>
       </div>
-      <p class="text-xs text-[#F7F4D5]/40">Board must be public. If nothing comes through, upload images below instead.</p>
-    </div>
+    </nav>
 
-    <!-- Upload -->
-    <div id="dropzone" class="garden-card ghibli-border p-8 text-center cursor-pointer hover:border-[#D3968C]/40 transition-all">
-      <input id="file-input" type="file" accept="image/*" multiple class="hidden" />
-      <iconify-icon icon="ph:upload-simple-duotone" class="text-4xl text-[#D3968C]"></iconify-icon>
-      <p class="mt-2 text-[#F7F4D5]/60">Drag images here or click to upload</p>
-    </div>
+    <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-5xl mx-auto w-full flex flex-col gap-12">
 
-    <!-- Image grid -->
-    <div id="image-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+      <!-- Header -->
+      <header class="animate-reveal text-center space-y-4">
+        <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Analyze Style</h1>
+        <p class="text-xl text-[#F7F4D5]/70 max-w-2xl mx-auto">Tell us your preferences and share a vision — we'll build your style profile and recommend furniture for your room retreat.</p>
+      </header>
 
-    <!-- Budget -->
-    <div class="garden-card ghibli-border p-8 space-y-4">
-      <div class="flex items-baseline justify-between">
-        <h2 class="text-2xl font-bold">Budget</h2>
-        <span id="budget-val" class="text-2xl font-bold text-[#D3968C]" style="font-family:'Crimson Pro',serif">$1,500</span>
+      <!-- Stepper -->
+      <div class="stepper animate-reveal flex items-center justify-center gap-4 md:gap-12" style="animation-delay:0.2s">
+        <div class="flex items-center gap-3">
+          <div class="step-circle active" id="circle-1">1</div>
+          <span class="font-bold text-[#F7F4D5]" id="label-1">Vision</span>
+        </div>
+        <div class="w-12 md:w-24 h-px bg-[#F7F4D5]/20"></div>
+        <div class="flex items-center gap-3">
+          <div class="step-circle" id="circle-2">2</div>
+          <span class="font-bold text-[#F7F4D5]/40" id="label-2">Your Picks</span>
+        </div>
+        <div class="w-12 md:w-24 h-px bg-[#F7F4D5]/20"></div>
+        <div class="flex items-center gap-3">
+          <div class="step-circle" id="circle-3">3</div>
+          <span class="font-bold text-[#F7F4D5]/40" id="label-3">Results</span>
+        </div>
       </div>
-      <input id="budget" type="range" min="0" max="10000" step="100" value="1500" class="w-full" />
-      <div id="budget-stops" class="flex flex-wrap gap-2"></div>
-    </div>
 
-    <!-- Style -->
-    <div class="garden-card ghibli-border p-8 space-y-4">
-      <h2 class="text-2xl font-bold">Pick a style</h2>
-      <div id="style-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"></div>
-    </div>
+      <!-- ── STEP 1: Vision ── -->
+      <div id="step-1" class="animate-reveal space-y-8" style="animation-delay:0.4s">
+        <div class="flex justify-center mb-4">
+          <button id="wild-card-btn" class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl flex items-center gap-2">
+            <iconify-icon icon="ph:dice-five-duotone" class="text-2xl"></iconify-icon> Wild Card Mode
+          </button>
+        </div>
 
-    <!-- Palette -->
-    <div class="garden-card ghibli-border p-8 space-y-4">
-      <h2 class="text-2xl font-bold">Color palette</h2>
-      <div id="palette-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
-    </div>
+        <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
+          <h2 class="text-4xl font-bold">Step 1: Visual Inspiration</h2>
+          <p class="text-lg text-[#F7F4D5]/60">Upload a photo or paste a Pinterest image URL that captures your room vision.</p>
 
-    <!-- Wildcard + Save -->
-    <div class="flex flex-col sm:flex-row justify-between gap-4 pb-12">
-      <button disabled title="Coming soon"
-        class="px-6 py-4 rounded-2xl font-bold border-2 border-dashed border-[#F7F4D5]/20 text-[#F7F4D5]/40 cursor-not-allowed">
-        <iconify-icon icon="ph:shuffle-bold" class="mr-2"></iconify-icon>Wild card — coming soon
-      </button>
-      <button id="save-btn" class="px-10 py-4 bg-[#839958] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#728548] transition-all disabled:opacity-40">
-        Save style &amp; budget
-      </button>
-    </div>
-  </main>
-</div>
+          <div class="grid gap-6">
+            <!-- File drop -->
+            <div id="file-drop-area" class="p-12 border-2 border-dashed border-[#F7F4D5]/20 rounded-3xl bg-white/5 text-center cursor-pointer hover:bg-white/10 transition-all flex flex-col items-center gap-3">
+              <iconify-icon icon="ph:cloud-arrow-up-duotone" class="text-5xl text-[#D3968C]"></iconify-icon>
+              <p class="font-bold">Click to upload an image</p>
+              <p class="text-xs text-[#F7F4D5]/40">PNG, JPG, WEBP up to 5MB</p>
+              <input type="file" id="file-input" class="hidden" accept="image/*">
+            </div>
 
-<script>
-  /* ============================================================
-     CONFIG
-     - ROOM_ID: a room must exist for budget to save. Until Saanvi's
-       room step is ready, this is a placeholder 24-char id. Swap it
-       for a real room id (from the dashboard / her create-room flow).
-     - API: relative path. Vite's proxy forwards /api -> localhost:5000.
-     ============================================================ */
-  const ROOM_ID = "507f1f77bcf86cd799439011";
-  const API = "/api/rooms/" + ROOM_ID;
+            <div class="relative flex items-center gap-4">
+              <div class="flex-1 h-px bg-[#F7F4D5]/10"></div>
+              <span class="text-[#F7F4D5]/20 font-bold uppercase text-xs">or use a link</span>
+              <div class="flex-1 h-px bg-[#F7F4D5]/10"></div>
+            </div>
 
-  const STYLES = ["minimalist","modern","boho","industrial","scandinavian","maximalist","coastal","rustic","transitional","art-deco"];
-  const PALETTES = [
-    { id:"warm-neutrals", label:"Warm Neutrals", colors:["#E7DECD","#C9B79C","#8A7968","#4A4039"] },
-    { id:"earthy",        label:"Earthy",        colors:["#DCD2BE","#A8B59A","#7A6A53","#3C3326"] },
-    { id:"coastal",       label:"Coastal",       colors:["#EAF1F2","#B7D3D6","#5E97A3","#2E4A52"] },
-    { id:"moody",         label:"Moody Dark",    colors:["#D9CFC4","#7C7A78","#3A3B3C","#1B1B1D"] },
-    { id:"pastel",        label:"Soft Pastel",   colors:["#F6E6E8","#E7D6F0","#CFE3E0","#F2EAD8"] },
-    { id:"mono",          label:"Monochrome",    colors:["#F2F0EC","#C2BFB8","#6E6B66","#2A2825"] },
-  ];
-  const BUDGET_STOPS = [500, 1000, 2500, 5000, 10000];
+            <input type="text" id="pinterest-url"
+              class="w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg"
+              placeholder="https://i.pinimg.com/originals/...  or a Pinterest board URL">
+          </div>
 
-  const state = { images: [], budget: 1500, styleTag: null, paletteId: null };
+          <!-- Image preview -->
+          <div id="pinterest-preview-wrap" class="hidden pt-2 flex justify-center">
+            <div class="relative inline-block">
+              <img id="pinterest-preview" class="max-w-xs rounded-3xl shadow-2xl border-4 border-[#F7F4D5]/10" alt="Inspiration preview">
+              <div class="absolute -top-3 -right-3 p-2 bg-[#D3968C] rounded-full shadow-lg animate-bounce">
+                <iconify-icon icon="ph:magic-wand-duotone" class="text-2xl text-white"></iconify-icon>
+              </div>
+            </div>
+          </div>
 
-  const $ = (id) => document.getElementById(id);
-  const dollars = (n) => "$" + Number(n).toLocaleString();
+          <!-- Status -->
+          <div id="vision-status" class="hidden p-6 rounded-2xl text-lg font-medium"></div>
 
-  function setStatus(msg, ok) {
-    const box = $("status");
-    box.textContent = msg;
-    box.className = "p-4 rounded-2xl text-center font-medium " +
-      (ok ? "bg-[#839958]/20 text-[#839958]" : "bg-[#D3968C]/20 text-[#D3968C]");
-    box.classList.remove("hidden");
-  }
+          <div class="flex justify-end pt-4">
+            <button id="step1-next" disabled
+              class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
+              Next: Your Picks <iconify-icon icon="ph:arrow-right-bold" class="ml-2"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
 
-  /* ---------- IMAGES ---------- */
-  async function loadImages() {
-    try {
-      const res = await fetch(API + "/images");
-      state.images = await res.json();
-      renderImages();
-    } catch (e) { /* backend not running yet — ignore on load */ }
-  }
+      <!-- ── STEP 2: Your Picks ── -->
+      <div id="step-2" class="hidden animate-reveal space-y-8">
+        <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
+          <div>
+            <h2 class="text-3xl font-bold mb-2">Step 2: Refine Your Picks</h2>
+            <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
+          </div>
 
-  function renderImages() {
-    const grid = $("image-grid");
-    grid.innerHTML = "";
-    state.images.forEach((img) => {
-      const src = img.source === "upload" ? img.data : img.url;
-      const cell = document.createElement("figure");
-      cell.className = "relative aspect-[3/4] overflow-hidden rounded-2xl bg-[#0A3323]/40";
-      cell.innerHTML =
-        '<img src="' + src + '" class="w-full h-full object-cover" alt="">' +
-        '<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/60">' +
-          (img.source === "upload" ? "Upload" : "Pin") + '</span>' +
-        '<button data-id="' + img._id + '" class="del absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 text-[#0A3323] font-bold">×</button>';
-      grid.appendChild(cell);
-    });
-    grid.querySelectorAll(".del").forEach((b) =>
-      b.addEventListener("click", () => removeImage(b.dataset.id))
-    );
-  }
+          <div class="space-y-4">
+            <h3 class="text-2xl font-bold">Style Profile</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="style-grid"></div>
+          </div>
 
-  async function removeImage(id) {
-    await fetch(API + "/images/" + id, { method: "DELETE" });
-    state.images = state.images.filter((i) => i._id !== id);
-    renderImages();
-  }
+          <div class="space-y-4">
+            <h3 class="text-2xl font-bold">The Mood</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="mood-grid"></div>
+          </div>
 
-  /* ---------- PINTEREST ---------- */
-  $("pin-btn").addEventListener("click", async () => {
-    const url = $("pin-url").value.trim();
-    if (!url) return setStatus("Paste a Pinterest board link first.", false);
-    $("pin-btn").disabled = true;
-    $("pin-btn").textContent = "Fetching…";
-    try {
-      const res = await fetch(API + "/pinterest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ boardUrl: url }),
+          <div class="space-y-4">
+            <h3 class="text-2xl font-bold">Color Palette</h3>
+            <p class="text-[#F7F4D5]/60">Choose up to 3 tones. <span class="text-[#D3968C]" id="color-limit-note"></span></p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" id="color-grid"></div>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-2xl font-bold">Room Features</h3>
+            <p class="text-[#F7F4D5]/60">Select up to 3 essential features. <span class="text-[#D3968C]" id="feature-limit-note"></span></p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="feature-grid"></div>
+          </div>
+
+          <div class="pt-8 flex justify-between items-center">
+            <button id="step2-back" class="px-8 py-3 bg-white/5 text-[#F7F4D5] rounded-2xl font-bold border border-[#F7F4D5]/10 hover:bg-white/10 transition-all">
+              <iconify-icon icon="ph:arrow-left-bold" class="mr-2"></iconify-icon> Back
+            </button>
+            <button id="step2-analyze" disabled
+              class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
+              Analyze with AI <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: Results ── -->
+      <div id="step-3" class="hidden space-y-12">
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Manual picks -->
+          <div class="garden-card ghibli-border p-10 space-y-6">
+            <h2 class="text-3xl font-bold text-[#D3968C]">Your Selections</h2>
+            <div class="space-y-4">
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Style</p>
+                <p id="res-style-manual" class="text-xl font-bold"></p>
+              </div>
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Mood</p>
+                <div id="res-mood-manual" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Colors</p>
+                <div id="res-colors-manual" class="flex flex-wrap gap-3"></div>
+              </div>
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Features</p>
+                <div id="res-features-manual" class="flex flex-wrap gap-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI analysis -->
+          <div class="garden-card ghibli-border p-10 space-y-6">
+            <h2 class="text-3xl font-bold text-[#839958]">AI Vision Analysis</h2>
+            <div class="space-y-4">
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Detected Style</p>
+                <p id="res-style-ai" class="text-xl font-bold"></p>
+              </div>
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Mood Tags</p>
+                <div id="res-mood-ai" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">AI Palette</p>
+                <div id="res-colors-ai" class="flex flex-wrap gap-3"></div>
+              </div>
+              <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-2">AI Confidence</p>
+                <div class="flex items-center gap-4">
+                  <div class="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                    <div id="confidence-bar" class="h-full bg-[#839958] transition-all duration-1000" style="width:0%"></div>
+                  </div>
+                  <span id="confidence-pct" class="font-bold"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Furniture -->
+        <div class="garden-card ghibli-border p-10">
+          <h2 class="text-4xl font-bold mb-8">Recommended Pieces</h2>
+          <div id="furniture-status" class="hidden mb-6 p-4 rounded-xl bg-white/5 text-center text-[#F7F4D5]/60"></div>
+          <div id="furniture-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
+
+        <!-- Export -->
+        <div class="garden-card ghibli-border p-10 space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-3xl font-bold">Data Export</h2>
+            <button id="copy-btn" class="px-6 py-2 bg-[#105666] text-white rounded-xl font-bold hover:bg-[#1a8ba5] transition-all">Copy JSON</button>
+          </div>
+          <div id="json-block" class="p-6 bg-[#0A3323]/60 rounded-2xl font-mono text-sm border border-[#F7F4D5]/10 overflow-x-auto max-h-96 whitespace-pre"></div>
+          <div id="mongo-save-status" class="text-sm font-medium"></div>
+          <div class="pt-4">
+            <button id="start-over" class="text-[#D3968C] font-bold hover:underline">
+              <iconify-icon icon="ph:arrows-clockwise-bold" class="mr-1"></iconify-icon> Start New Analysis
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center gap-4 opacity-40">
+      <iconify-icon icon="ph:house-duotone" class="text-4xl text-[#839958]"></iconify-icon>
+      <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5]">BluPrint Interior Studio • 2024</p>
+    </footer>
+  </div>
+
+  <script>
+    // ── Backend ───────────────────────────────────────────────────────
+    const ROOM_ID = "507f1f77bcf86cd799439011";
+    const API     = "/api/rooms/" + ROOM_ID;
+
+    // ── Data ──────────────────────────────────────────────────────────
+    const STYLES = [
+      { label: 'Modern',             desc: 'Clean, sleek spaces' },
+      { label: 'Scandinavian',       desc: 'Cozy minimalism' },
+      { label: 'Bohemian',           desc: 'Creative, expressive' },
+      { label: 'Industrial',         desc: 'Urban loft aesthetic' },
+      { label: 'Traditional',        desc: 'Elegant, timeless' },
+      { label: 'Coastal',            desc: 'Light, relaxing' },
+      { label: 'Farmhouse',          desc: 'Warm, rustic comfort' },
+      { label: 'Mid-Century Modern', desc: 'Retro sophistication' },
+    ];
+    const MOODS = [
+      'Calm & Relaxing', 'Cozy & Warm', 'Natural & Refreshing',
+      'Luxurious & Elegant', 'Creative & Artistic', 'Modern & Energetic',
+    ];
+    const COLORS = [
+      { name: 'White',          hex: '#FFFFFF' },
+      { name: 'Beige',          hex: '#E8DCCB' },
+      { name: 'Gray',           hex: '#9CA3AF' },
+      { name: 'Black',          hex: '#1F1F1F' },
+      { name: 'Navy Blue',      hex: '#1E3A5F' },
+      { name: 'Sage Green',     hex: '#A3B18A' },
+      { name: 'Terracotta',     hex: '#C96A4A' },
+      { name: 'Blush Pink',     hex: '#E8B4B8' },
+      { name: 'Mustard Yellow', hex: '#D4A017' },
+      { name: 'Lavender',       hex: '#B8A9D9' },
+    ];
+    const FEATURES = [
+      'Reading Nook', 'Smart Lighting', 'Floating Shelves', 'Indoor Plants',
+      'Full-Length Mirror', 'Wall Art / Gallery Wall', 'Accent Chair',
+      'Workspace Desk', 'Vanity Station', 'Bookcase / Bookshelves',
+    ];
+
+    // ── State ─────────────────────────────────────────────────────────
+    const state = {
+      selectedStyle:    null,
+      selectedMood:     null,
+      selectedColors:   [],
+      selectedFeatures: [],
+      visionUrl:        '',
+      uploadedFile:     null,
+      aiResult:         null,
+    };
+
+    // ── Step navigation ───────────────────────────────────────────────
+    function showStep(n) {
+      [1, 2, 3].forEach(i => {
+        const el = document.getElementById('step-' + i);
+        if (el) el.style.display = i === n ? 'block' : 'none';
+        const circle = document.getElementById('circle-' + i);
+        const lbl    = document.getElementById('label-' + i);
+        if (circle) {
+          circle.className    = 'step-circle ' + (i === n ? 'active' : i < n ? 'done' : '');
+          circle.textContent  = i < n ? '✓' : i;
+        }
+        if (lbl) {
+          lbl.textContent = ['Vision', 'Your Picks', 'Results'][i - 1];
+          lbl.className   = 'font-bold ' + (i === n ? 'text-[#F7F4D5]' : 'text-[#F7F4D5]/40');
+        }
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Couldn't fetch that board.");
-      state.images.push(...data);
-      renderImages();
-      $("pin-url").value = "";
-      setStatus("Pulled " + data.length + " pin(s) in.", true);
-    } catch (e) {
-      setStatus(e.message + " Try uploading directly.", false);
-    } finally {
-      $("pin-btn").disabled = false;
-      $("pin-btn").textContent = "Fetch board";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  });
 
-  /* ---------- UPLOAD ---------- */
-  $("dropzone").addEventListener("click", () => $("file-input").click());
-  $("dropzone").addEventListener("dragover", (e) => e.preventDefault());
-  $("dropzone").addEventListener("drop", (e) => { e.preventDefault(); uploadFiles(e.dataTransfer.files); });
-  $("file-input").addEventListener("change", (e) => uploadFiles(e.target.files));
-
-  async function uploadFiles(fileList) {
-    const files = Array.from(fileList || []);
-    if (!files.length) return;
-    const form = new FormData();
-    files.forEach((f) => form.append("images", f));
-    try {
-      const res = await fetch(API + "/images", { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed.");
-      state.images.push(...data);
-      renderImages();
-      setStatus("Uploaded " + data.length + " image(s).", true);
-    } catch (e) {
-      setStatus(e.message, false);
+    function setVisionStatus(msg, type) {
+      const box = document.getElementById('vision-status');
+      box.textContent = msg;
+      box.className   = 'p-6 rounded-2xl text-lg font-medium ' +
+        (type === 'success'
+          ? 'bg-[#839958]/20 border border-[#839958]/40 text-[#839958]'
+          : 'bg-[#D3968C]/10 border border-[#D3968C]/30 text-[#D3968C]');
+      box.classList.remove('hidden');
     }
-  }
 
-  /* ---------- BUDGET ---------- */
-  $("budget").addEventListener("input", (e) => {
-    state.budget = Number(e.target.value);
-    $("budget-val").textContent = dollars(state.budget);
-  });
-  function buildBudgetStops() {
-    const wrap = $("budget-stops");
-    BUDGET_STOPS.forEach((s) => {
-      const b = document.createElement("button");
-      b.className = "pill";
-      b.textContent = s === 10000 ? "$10,000+" : dollars(s);
-      b.addEventListener("click", () => {
-        state.budget = s;
-        $("budget").value = s;
-        $("budget-val").textContent = dollars(s);
-      });
-      wrap.appendChild(b);
-    });
-  }
-
-  /* ---------- STYLE ---------- */
-  function buildStyleGrid() {
-    const grid = $("style-grid");
-    STYLES.forEach((s) => {
-      const b = document.createElement("button");
-      b.className = "option-btn text-center capitalize";
-      b.textContent = s;
-      b.addEventListener("click", () => {
-        grid.querySelectorAll(".option-btn").forEach((x) => x.classList.remove("selected"));
-        b.classList.add("selected");
-        state.styleTag = s;
-      });
-      grid.appendChild(b);
-    });
-  }
-
-  /* ---------- PALETTE ---------- */
-  function buildPaletteGrid() {
-    const grid = $("palette-grid");
-    PALETTES.forEach((p) => {
-      const b = document.createElement("button");
-      b.className = "option-btn";
-      b.innerHTML =
-        '<div class="flex h-9 rounded-lg overflow-hidden mb-2">' +
-        p.colors.map((c) => '<span style="flex:1;background:' + c + '"></span>').join("") +
-        '</div><p class="text-xs text-center text-[#F7F4D5]/60">' + p.label + "</p>";
-      b.addEventListener("click", () => {
-        grid.querySelectorAll(".option-btn").forEach((x) => x.classList.remove("selected"));
-        b.classList.add("selected");
-        state.paletteId = p.id;
-      });
-      grid.appendChild(b);
-    });
-  }
-
-  /* ---------- SAVE ---------- */
-  $("save-btn").addEventListener("click", async () => {
-    $("save-btn").disabled = true;
-    try {
-      const palette = PALETTES.find((p) => p.id === state.paletteId);
-      const styleRes = await fetch(API + "/style", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ styleTag: state.styleTag, colorPalette: palette ? palette.colors : [] }),
-      });
-      if (!styleRes.ok) throw new Error("Couldn't save style.");
-
-      // Budget writes onto the room doc; if Saanvi's Room model isn't loaded
-      // yet the backend returns 501 — that's fine, we just note it.
-      const budgetRes = await fetch(API + "/budget", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ budgetTotal: state.budget }),
-      });
-
-      if (budgetRes.ok) setStatus("Saved style, palette, and budget ✓", true);
-      else setStatus("Style + palette saved. Budget needs a real room (Saanvi's room step).", true);
-    } catch (e) {
-      setStatus(e.message, false);
-    } finally {
-      $("save-btn").disabled = false;
+    function checkStep1Valid() {
+      document.getElementById('step1-next').disabled = !state.visionUrl;
     }
-  });
 
-  /* ---------- INIT ---------- */
-  buildBudgetStops();
-  buildStyleGrid();
-  buildPaletteGrid();
-  loadImages();
-</script>
+    // ── File upload ───────────────────────────────────────────────────
+    const fileDrop  = document.getElementById('file-drop-area');
+    const fileInput = document.getElementById('file-input');
+
+    fileDrop.addEventListener('click', () => fileInput.click());
+    fileDrop.addEventListener('dragover',  e => { e.preventDefault(); fileDrop.classList.add('bg-white/10'); });
+    fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('bg-white/10'));
+    fileDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      fileDrop.classList.remove('bg-white/10');
+      if (e.dataTransfer.files.length) handleFileChosen(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => {
+      if (e.target.files.length) handleFileChosen(e.target.files[0]);
+    });
+
+    function handleFileChosen(file) {
+      state.uploadedFile = file;
+      state.visionUrl    = URL.createObjectURL(file);
+      showPreview(state.visionUrl);
+      setVisionStatus('Image ready. Click "Next: Your Picks" to continue.', 'success');
+      checkStep1Valid();
+    }
+
+    // ── Pinterest / image URL ─────────────────────────────────────────
+    document.getElementById('pinterest-url').addEventListener('input', function () {
+      const url = this.value.trim();
+      state.visionUrl = url;
+      checkStep1Valid();
+      if (url.match(/\.(jpg|jpeg|png|webp)/i) || url.includes('pinimg.com')) {
+        showPreview(url);
+      } else {
+        document.getElementById('pinterest-preview-wrap').classList.add('hidden');
+      }
+    });
+
+    function showPreview(src) {
+      const img  = document.getElementById('pinterest-preview');
+      const wrap = document.getElementById('pinterest-preview-wrap');
+      img.src     = src;
+      img.onerror = () => wrap.classList.add('hidden');
+      wrap.classList.remove('hidden');
+    }
+
+    document.getElementById('step1-next').addEventListener('click', () => showStep(2));
+
+    // ── Step 2 grids ──────────────────────────────────────────────────
+    function buildStyleGrid() {
+      const grid = document.getElementById('style-grid');
+      grid.innerHTML = '';
+      STYLES.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn' + (state.selectedStyle === s.label ? ' selected' : '');
+        btn.innerHTML = `<p class="font-bold text-lg">${s.label}</p><p class="text-xs text-[#F7F4D5]/40">${s.desc}</p>`;
+        btn.addEventListener('click', () => {
+          grid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.selectedStyle = s.label;
+          checkStep2Valid();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    function buildMoodGrid() {
+      const grid = document.getElementById('mood-grid');
+      grid.innerHTML = '';
+      MOODS.forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn text-center' + (state.selectedMood === m ? ' selected' : '');
+        btn.innerHTML = `<p class="font-bold">${m}</p>`;
+        btn.addEventListener('click', () => {
+          grid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.selectedMood = m;
+          checkStep2Valid();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    function buildColorGrid() {
+      const grid = document.getElementById('color-grid');
+      grid.innerHTML = '';
+      COLORS.forEach(c => {
+        const isSelected = state.selectedColors.some(x => x.hex === c.hex);
+        const btn = document.createElement('button');
+        btn.className = 'option-btn flex flex-col items-center gap-2' + (isSelected ? ' selected' : '');
+        btn.innerHTML = `<span class="w-10 h-10 rounded-full border border-white/20" style="background:${c.hex}"></span><p class="text-xs font-bold">${c.name}</p>`;
+        btn.addEventListener('click', () => {
+          const idx = state.selectedColors.findIndex(x => x.hex === c.hex);
+          if (idx > -1) {
+            state.selectedColors.splice(idx, 1);
+            btn.classList.remove('selected');
+          } else {
+            if (state.selectedColors.length >= 3) return;
+            state.selectedColors.push({ name: c.name, hex: c.hex });
+            btn.classList.add('selected');
+          }
+          updateColorLimit();
+          checkStep2Valid();
+        });
+        grid.appendChild(btn);
+      });
+      updateColorLimit();
+    }
+
+    function updateColorLimit() {
+      const rem = 3 - state.selectedColors.length;
+      document.getElementById('color-limit-note').textContent =
+        rem > 0 ? `(${rem} remaining)` : '(maximum reached)';
+      document.querySelectorAll('#color-grid .option-btn:not(.selected)').forEach(b =>
+        b.classList.toggle('disabled', state.selectedColors.length >= 3));
+    }
+
+    function buildFeatureGrid() {
+      const grid = document.getElementById('feature-grid');
+      grid.innerHTML = '';
+      FEATURES.forEach(f => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn text-center' + (state.selectedFeatures.includes(f) ? ' selected' : '');
+        btn.innerHTML = `<p class="font-bold text-sm">${f}</p>`;
+        btn.addEventListener('click', () => {
+          const idx = state.selectedFeatures.indexOf(f);
+          if (idx > -1) {
+            state.selectedFeatures.splice(idx, 1);
+            btn.classList.remove('selected');
+          } else {
+            if (state.selectedFeatures.length >= 3) return;
+            state.selectedFeatures.push(f);
+            btn.classList.add('selected');
+          }
+          updateFeatureLimit();
+          checkStep2Valid();
+        });
+        grid.appendChild(btn);
+      });
+      updateFeatureLimit();
+    }
+
+    function updateFeatureLimit() {
+      const rem = 3 - state.selectedFeatures.length;
+      document.getElementById('feature-limit-note').textContent =
+        rem > 0 ? `(${rem} remaining)` : '(maximum reached)';
+      document.querySelectorAll('#feature-grid .option-btn:not(.selected)').forEach(b =>
+        b.classList.toggle('disabled', state.selectedFeatures.length >= 3));
+    }
+
+    function checkStep2Valid() {
+      document.getElementById('step2-analyze').disabled =
+        !state.selectedStyle || !state.selectedMood ||
+        state.selectedColors.length === 0 || state.selectedFeatures.length === 0;
+    }
+
+    document.getElementById('step2-back').addEventListener('click', () => showStep(1));
+
+    // ── Analyze ───────────────────────────────────────────────────────
+    document.getElementById('step2-analyze').addEventListener('click', async () => {
+      const btn = document.getElementById('step2-analyze');
+      btn.disabled    = true;
+      btn.textContent = 'Analyzing...';
+
+      await new Promise(r => setTimeout(r, 1500));
+
+      state.aiResult = {
+        styleTag:     state.selectedStyle,
+        moodTags:     [state.selectedMood],
+        colorPalette: state.selectedColors,
+        roomFeatures: state.selectedFeatures,
+        confidence:   96,
+      };
+
+      await saveToBackend();
+      buildStep3();
+      showStep(3);
+    });
+
+    // ── Save to MongoDB ───────────────────────────────────────────────
+    async function saveToBackend() {
+      const statusEl = document.getElementById('mongo-save-status');
+      try {
+        if (state.uploadedFile) {
+          const form = new FormData();
+          form.append('images', state.uploadedFile);
+          await fetch(API + '/images', { method: 'POST', body: form });
+        }
+
+        const res = await fetch(API + '/style', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            styleTag:     state.selectedStyle,
+            colorPalette: state.selectedColors,
+            moodTags:     [state.selectedMood],
+            roomFeatures: state.selectedFeatures,
+          }),
+        });
+
+        statusEl.textContent = res.ok ? '✓ Saved to database' : '⚠ Could not save — working offline';
+        statusEl.className   = 'text-sm font-medium ' + (res.ok ? 'text-[#839958]' : 'text-[#D3968C]');
+      } catch {
+        statusEl.textContent = '⚠ Could not reach backend — working offline';
+        statusEl.className   = 'text-sm font-medium text-[#D3968C]';
+      }
+    }
+
+    // ── Build step 3 ──────────────────────────────────────────────────
+    function buildStep3() {
+      const ai = state.aiResult;
+
+      document.getElementById('res-style-manual').textContent = state.selectedStyle;
+      document.getElementById('res-mood-manual').innerHTML =
+        `<span class="px-3 py-1 bg-[#D3968C]/20 text-[#D3968C] rounded-full text-sm font-bold">${state.selectedMood}</span>`;
+      document.getElementById('res-colors-manual').innerHTML = state.selectedColors.map(c =>
+        `<div class="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg">
+          <span class="w-4 h-4 rounded-full" style="background:${c.hex}"></span>
+          <span class="text-sm font-medium">${c.name}</span>
+        </div>`).join('');
+      document.getElementById('res-features-manual').innerHTML = state.selectedFeatures.map(f =>
+        `<span class="px-3 py-1 bg-[#105666]/40 text-[#F7F4D5] rounded-full text-sm font-bold">${f}</span>`).join('');
+
+      document.getElementById('res-style-ai').textContent = ai.styleTag || '—';
+      document.getElementById('res-mood-ai').innerHTML = ai.moodTags.map(m =>
+        `<span class="px-3 py-1 bg-[#839958]/20 text-[#839958] rounded-full text-sm font-bold">${m}</span>`).join('');
+      document.getElementById('res-colors-ai').innerHTML = ai.colorPalette.map(c =>
+        `<div class="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg">
+          <span class="w-4 h-4 rounded-full" style="background:${c.hex}"></span>
+          <span class="text-sm font-medium">${c.name}</span>
+        </div>`).join('');
+
+      setTimeout(() => {
+        document.getElementById('confidence-bar').style.width = ai.confidence + '%';
+      }, 100);
+      document.getElementById('confidence-pct').textContent = ai.confidence + '%';
+
+      document.getElementById('json-block').textContent = JSON.stringify({
+        analyzedAt:  new Date().toISOString(),
+        visionImage: state.visionUrl,
+        userPicks: {
+          styleTag:     state.selectedStyle,
+          moodTag:      state.selectedMood,
+          colorPalette: state.selectedColors,
+          roomFeatures: state.selectedFeatures,
+        },
+        aiAnalysis: ai,
+      }, null, 2);
+
+      fetchFurniture();
+    }
+
+    // ── Furniture (mock — swap for real AI later) ─────────────────────
+    function fetchFurniture() {
+      const statusEl = document.getElementById('furniture-status');
+      const grid     = document.getElementById('furniture-grid');
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = 'Curating your design pieces...';
+
+      const mockItems = [
+        { name: 'Oak Finish Floating Shelves',    category: 'Shelving',    price: '$85–$140',  why: 'Matches the natural grain of Scandinavian styles.' },
+        { name: 'Velvet Accent Lounge Chair',     category: 'Seating',     price: '$280–$450', why: 'Adds the luxurious mood detected in your palette.' },
+        { name: 'Dimmable Smart Floor Lamp',      category: 'Lighting',    price: '$120–$180', why: 'Functional tech that fits industrial minimalism.' },
+        { name: 'Wool Woven Hand-Tufted Rug',     category: 'Flooring',    price: '$210–$600', why: 'Provides warmth for cozy room retreats.' },
+        { name: 'Curated Gallery Wall Frames',    category: 'Decor',       price: '$45–$90',   why: 'Enables the Creative & Artistic vibe from your picks.' },
+        { name: 'Ceramic Earth-Tone Planter Set', category: 'Accessories', price: '$35–$70',   why: 'Pairs perfectly with your selected color tones.' },
+      ];
+
+      setTimeout(() => {
+        statusEl.classList.add('hidden');
+        grid.innerHTML = '';
+        mockItems.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'garden-card p-6 rounded-3xl space-y-4';
+          card.innerHTML = `
+            <div class="p-4 bg-white/5 rounded-2xl flex items-center justify-center">
+              <iconify-icon icon="ph:couch-duotone" class="text-4xl text-[#D3968C]"></iconify-icon>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-[#D3968C] uppercase tracking-widest">${item.category}</p>
+              <h3 class="text-2xl font-bold">${item.name}</h3>
+            </div>
+            <p class="text-sm text-[#F7F4D5]/60">${item.why}</p>
+            <div class="flex items-center justify-between pt-4">
+              <span class="text-lg font-bold">${item.price}</span>
+              <button class="p-2 bg-white/10 rounded-full hover:bg-[#D3968C] transition-all">
+                <iconify-icon icon="ph:shopping-cart-bold"></iconify-icon>
+              </button>
+            </div>`;
+          grid.appendChild(card);
+        });
+      }, 1500);
+    }
+
+    // ── Wild Card ─────────────────────────────────────────────────────
+    document.getElementById('wild-card-btn').addEventListener('click', () => {
+      state.selectedStyle    = STYLES[Math.floor(Math.random() * STYLES.length)].label;
+      state.selectedMood     = MOODS[Math.floor(Math.random() * MOODS.length)];
+      state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
+      state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
+      state.visionUrl        = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop';
+      state.aiResult = {
+        styleTag:     state.selectedStyle,
+        moodTags:     [state.selectedMood],
+        colorPalette: state.selectedColors,
+        roomFeatures: state.selectedFeatures,
+        confidence:   100,
+      };
+      buildStep3();
+      showStep(3);
+    });
+
+    // ── Copy JSON ─────────────────────────────────────────────────────
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(document.getElementById('json-block').textContent).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy JSON', 2000);
+      });
+    });
+
+    // ── Start over ────────────────────────────────────────────────────
+    document.getElementById('start-over').addEventListener('click', () => {
+      state.selectedStyle    = null;
+      state.selectedMood     = null;
+      state.selectedColors   = [];
+      state.selectedFeatures = [];
+      state.visionUrl        = '';
+      state.uploadedFile     = null;
+      state.aiResult         = null;
+      document.getElementById('pinterest-url').value = '';
+      document.getElementById('pinterest-preview-wrap').classList.add('hidden');
+      document.getElementById('vision-status').classList.add('hidden');
+      document.getElementById('mongo-save-status').textContent = '';
+      document.getElementById('step1-next').disabled = true;
+      buildStyleGrid();
+      buildMoodGrid();
+      buildColorGrid();
+      buildFeatureGrid();
+      showStep(1);
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────
+    buildStyleGrid();
+    buildMoodGrid();
+    buildColorGrid();
+    buildFeatureGrid();
+    showStep(1);
+  </script>
 </body>
 </html>
