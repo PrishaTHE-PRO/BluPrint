@@ -1,0 +1,123 @@
+const express = require("express");
+const multer = require("multer");
+const mongoose = require("mongoose");
+const InspirationImage = require("../models/InspirationImage");
+const Style = require("../models/Style");
+const { scrapePinterestBoard } = require("../services/pinterestScraper");
+
+const router = express.Router();
+
+// Uploads kept in memory, stored as base64 in Mongo. 5MB/file cap.
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+/* -------- Pinterest (priority) --------
+ * POST /api/rooms/:roomId/pinterest   body: { boardUrl }
+ */
+router.post("/:roomId/pinterest", async (req, res) => {
+  try {
+    const urls = await scrapePinterestBoard(req.body.boardUrl, { limit: 8 });
+    const docs = await InspirationImage.insertMany(
+      urls.map((url) => ({ roomId: req.params.roomId, source: "pinterest", url }))
+    );
+    res.json(docs);
+  } catch (e) {
+    const status = e.code === "INVALID_URL" ? 400 : 502;
+    res.status(status).json({ error: e.message, code: e.code || "SCRAPE_FAILED" });
+  }
+});
+
+/* -------- Direct upload (fallback) --------
+ * POST /api/rooms/:roomId/images   multipart/form-data, field "images" (<=5)
+ */
+router.post("/:roomId/images", upload.array("images", 5), async (req, res) => {
+  try {
+    const docs = await InspirationImage.insertMany(
+      (req.files || []).map((f) => ({
+        roomId: req.params.roomId,
+        source: "upload",
+        mimeType: f.mimetype,
+        data: `data:${f.mimetype};base64,${f.buffer.toString("base64")}`,
+      }))
+    );
+    res.json(docs);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
+/* GET /api/rooms/:roomId/images  — all inspo images for a room */
+router.get("/:roomId/images", async (req, res) => {
+  const docs = await InspirationImage.find({ roomId: req.params.roomId }).sort("createdAt");
+  res.json(docs);
+});
+
+/* DELETE /api/rooms/:roomId/images/:imageId */
+router.delete("/:roomId/images/:imageId", async (req, res) => {
+  await InspirationImage.deleteOne({ _id: req.params.imageId, roomId: req.params.roomId });
+  res.json({ ok: true });
+});
+
+/* -------- Style + palette (user pick) --------
+ * POST /api/rooms/:roomId/style   body: { styleTag, colorPalette }
+ * Upserts the source:"user" style doc for this room.
+ */
+router.post("/:roomId/style", async (req, res) => {
+  try {
+    const doc = await Style.findOneAndUpdate(
+      { roomId: req.params.roomId, source: "user" },
+      {
+        roomId: req.params.roomId,
+        source: "user",
+        styleTag: req.body.styleTag,
+        colorPalette: req.body.colorPalette || [],
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    res.json(doc);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Could not save style" });
+  }
+});
+
+/* GET /api/rooms/:roomId/style — returns user pick (and AI result if present) */
+router.get("/:roomId/style", async (req, res) => {
+  const docs = await Style.find({ roomId: req.params.roomId });
+  res.json(docs);
+});
+
+/* -------- Budget --------
+ * PATCH /api/rooms/:roomId/budget   body: { budgetTotal }
+ * Writes budgetTotal onto the ROOM document (Saanvi's `rooms` collection).
+ * NOTE: this depends on Saanvi's Room model being registered. If it isn't yet,
+ * you'll get a clear 501 below. Team decision: keep this here, or fold it into
+ * Saanvi's room-update route — either is fine, just pick one owner.
+ */
+router.patch("/:roomId/budget", async (req, res) => {
+  let Room;
+  try {
+    Room = mongoose.model("Room");
+  } catch {
+    return res.status(501).json({
+      error:
+        "Room model isn't registered yet. Budget saves onto the room doc, so this needs Saanvi's Room model loaded first.",
+    });
+  }
+  try {
+    const room = await Room.findByIdAndUpdate(
+      req.params.roomId,
+      { budgetTotal: req.body.budgetTotal },
+      { new: true }
+    );
+    if (!room) return res.status(404).json({ error: "Room not found" });
+    res.json(room);
+  } catch (e) {
+    res.status(500).json({ error: "Could not save budget" });
+  }
+});
+
+module.exports = router;

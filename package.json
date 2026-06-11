@@ -5,7 +5,9 @@
   "main": "firebase.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"node server/index.js\"",
+    "dev:client": "vite",
+    "dev:server": "node server/index.js",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -21,14 +23,22 @@
   },
   "homepage": "https://github.com/PrishaTHE-PRO/BluPrint#readme",
   "devDependencies": {
-    "@types/react": "^19.2.16",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^10.0.3",
     "firebase": "^12.13.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.2",
+    "axios": "^1.17.0",
+    "cheerio": "^1.2.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.6.3",
+    "multer": "^2.1.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   }
