@@ -7,9 +7,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main:       'index.html',
-        dashboard:  'dashboard.html',
-        roomResult: 'room-result.html',
+        main:           'index.html',
+        dashboard:      'dashboard.html',
+        roomResult:     'room-result.html',
+        roomDimensions: 'room-dimensions.html',
       },
     },
   },
