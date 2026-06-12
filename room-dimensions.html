@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Dimensions | BluPrint</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --garden-dark: #0A3323;
+      --garden-moss: #839958;
+      --garden-beige: #F7F4D5;
+      --garden-rosy: #D3968C;
+      --garden-midnight: #105666;
+      --garden-accent: #f5a7b8;
+    }
+    body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); overflow-x: hidden; }
+    h1, h2, h3, h4 { font-family: 'Crimson Pro', serif; }
+    .noise-texture { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .03; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-reveal { animation: fadeInUp .8s cubic-bezier(.22,1,.36,1) forwards; opacity: 0; }
+    .grid-background { background-image: linear-gradient(rgba(131,153,88,.07) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(131,153,88,.07) 1.5px, transparent 1.5px); background-size: 50px 50px; }
+    .ghibli-border { border: 2px solid rgba(247,244,213,.15); border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px; transition: border-color .4s ease; }
+    .garden-card { background: rgba(16,86,102,.2); backdrop-filter: blur(12px); transition: all .5s cubic-bezier(.23,1,.32,1); border: 1px solid rgba(247,244,213,.05); }
+    .garden-card:hover { transform: translateY(-4px); background: rgba(16,86,102,.3); border-color: rgba(211,150,140,.4); box-shadow: 0 30px 60px -15px rgba(0,0,0,.4); }
+    .dimension-input { background: rgba(10,51,35,0.4); border: 2px solid rgba(247,244,213,0.1); border-radius: 18px; padding: 16px; color: var(--garden-beige); font-size: 1.25rem; font-weight: 700; transition: all 0.3s ease; width: 100%; }
+    .dimension-input:focus { outline: none; border-color: var(--garden-rosy); background: rgba(10,51,35,0.6); box-shadow: 0 0 15px rgba(211,150,140,0.2); }
+    .preview-canvas { background: rgba(247,244,213,0.03); border-radius: 32px; border: 1px dashed rgba(247,244,213,0.2); display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 400px; }
+    .room-outline { fill: rgba(211,150,140,0.1); stroke: var(--garden-rosy); stroke-width: 3; stroke-linejoin: round; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    #save-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(10,51,35,0.95); border: 1px solid rgba(247,244,213,0.15); color: var(--garden-beige); font-family: 'Quicksand', sans-serif; font-size: 14px; padding: 12px 28px; border-radius: 999px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 200; backdrop-filter: blur(8px); }
+    #save-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--garden-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="noise-texture"></div>
+  <div id="save-toast"></div>
+
+  <div class="min-h-screen relative flex flex-col grid-background">
+
+    <!-- Nav -->
+    <nav class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--garden-accent);">
+      <div class="flex items-center gap-4">
+        <a href="dashboard.html" class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
+            <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
+          </div>
+          <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif">BluPrint</span>
+        </a>
+      </div>
+      <div class="hidden md:flex items-center gap-12 text-[#0A3323]">
+        <a href="dashboard.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="#" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Discover<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="#" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Community<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <div class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
+          <iconify-icon icon="ph:user-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+        </div>
+      </div>
+    </nav>
+
+    <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-7xl mx-auto w-full flex flex-col gap-12">
+
+      <!-- Header -->
+      <header class="animate-reveal text-center space-y-4">
+        <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Define Your Space</h1>
+        <p class="text-xl text-[#F7F4D5]/70 max-w-2xl mx-auto">Let's set the foundation. Input your room's dimensions to generate your live floor plan blueprint.</p>
+      </header>
+
+      <div class="grid lg:grid-cols-2 gap-12 items-start">
+
+        <!-- LEFT: Input form -->
+        <section class="animate-reveal space-y-8" style="animation-delay:0.2s">
+          <div class="garden-card ghibli-border p-10 space-y-10">
+
+            <div>
+              <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
+                <iconify-icon icon="ph:ruler-duotone" class="text-[#D3968C]"></iconify-icon> Room Dimensions
+              </h2>
+
+              <div class="space-y-8">
+                <!-- Room name -->
+                <div class="space-y-3">
+                  <label for="room-name" class="block text-sm font-bold uppercase tracking-widest text-[#F7F4D5]/40">Room Name</label>
+                  <input type="text" id="room-name" placeholder="e.g. Living Room"
+                    class="dimension-input placeholder:text-[#F7F4D5]/20">
+                </div>
+
+                <!-- Width + Length -->
+                <div class="grid grid-cols-2 gap-6">
+                  <div class="space-y-3">
+                    <label for="room-width" class="block text-sm font-bold uppercase tracking-widest text-[#F7F4D5]/40">Width</label>
+                    <div class="relative">
+                      <input type="number" id="room-width" value="12" step="0.1" class="dimension-input pr-12">
+                      <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#F7F4D5]/30 unit-label">ft</span>
+                    </div>
+                  </div>
+                  <div class="space-y-3">
+                    <label for="room-length" class="block text-sm font-bold uppercase tracking-widest text-[#F7F4D5]/40">Length</label>
+                    <div class="relative">
+                      <input type="number" id="room-length" value="15" step="0.1" class="dimension-input pr-12">
+                      <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#F7F4D5]/30 unit-label">ft</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Height -->
+                <div class="space-y-3">
+                  <label for="room-height" class="block text-sm font-bold uppercase tracking-widest text-[#F7F4D5]/40">Ceiling Height</label>
+                  <div class="relative">
+                    <input type="number" id="room-height" value="8" step="0.1" class="dimension-input pr-12">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#F7F4D5]/30 unit-label">ft</span>
+                  </div>
+                </div>
+
+                <!-- Unit toggle -->
+                <div class="space-y-3">
+                  <label class="block text-sm font-bold uppercase tracking-widest text-[#F7F4D5]/40 mb-3">Measurement Unit</label>
+                  <div class="flex bg-[#0A3323]/40 p-1.5 rounded-2xl border border-white/5">
+                    <button id="unit-ft" class="flex-1 py-3 rounded-xl font-bold transition-all bg-[#D3968C] text-white shadow-lg">Feet (ft)</button>
+                    <button id="unit-m"  class="flex-1 py-3 rounded-xl font-bold transition-all text-[#F7F4D5]/40 hover:text-[#F7F4D5]">Meters (m)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tip -->
+            <div class="p-6 rounded-2xl bg-[#D3968C]/5 border border-[#D3968C]/10 space-y-3">
+              <div class="flex items-center gap-2 text-[#D3968C]">
+                <iconify-icon icon="ph:info-duotone" class="text-xl"></iconify-icon>
+                <span class="font-bold">Pro Tip</span>
+              </div>
+              <p class="text-[#F7F4D5]/60 text-sm italic">"Measure from baseboard to baseboard for the most accurate floor plan results."</p>
+            </div>
+
+            <!-- Save button -->
+            <div class="pt-4">
+              <button id="save-dimensions" class="w-full py-5 bg-[#D3968C] text-white rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-3">
+                Save &amp; Continue <iconify-icon icon="ph:arrow-right-bold"></iconify-icon>
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- RIGHT: Blueprint preview -->
+        <section class="animate-reveal space-y-8" style="animation-delay:0.4s">
+          <div class="garden-card ghibli-border p-10 space-y-6 flex flex-col h-full">
+            <div class="flex items-center justify-between">
+              <h2 class="text-3xl font-bold flex items-center gap-3">
+                <iconify-icon icon="ph:layout-duotone" class="text-[#839958]"></iconify-icon> Blueprint Preview
+              </h2>
+              <div id="area-badge" class="px-4 py-1.5 bg-[#839958]/20 text-[#839958] rounded-full text-sm font-bold border border-[#839958]/30">
+                Area: 180 sq ft
+              </div>
+            </div>
+
+            <div class="preview-canvas flex-1 relative min-h-[500px]">
+              <svg id="room-svg" viewBox="0 0 400 400" class="w-full h-full">
+                <defs>
+                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(247,244,213,0.05)" stroke-width="1"></path>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)"></rect>
+                <rect id="room-rect" class="room-outline" x="50" y="50" width="300" height="300"></rect>
+              </svg>
+
+              <!-- Width label (bottom center) -->
+              <div id="width-label-viz" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-[#D3968C] font-bold text-sm tracking-widest">
+                12.0 ft
+              </div>
+              <!-- Length label (left center, rotated) -->
+              <div id="length-label-viz" class="absolute left-4 top-1/2 -translate-y-1/2 text-[#D3968C] font-bold text-sm tracking-widest" style="writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg);">
+                15.0 ft
+              </div>
+            </div>
+
+            <p class="text-center text-[#F7F4D5]/30 text-xs uppercase tracking-widest font-medium">Floor plan visualization scales dynamically</p>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center gap-4 opacity-40">
+      <iconify-icon icon="ph:house-duotone" class="text-4xl text-[#839958]"></iconify-icon>
+      <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5]">BluPrint Interior Studio • 2026</p>
+    </footer>
+  </div>
+
+  <script>
+    const widthInput  = document.getElementById('room-width');
+    const lengthInput = document.getElementById('room-length');
+    const heightInput = document.getElementById('room-height');
+    const nameInput   = document.getElementById('room-name');
+    const roomRect    = document.getElementById('room-rect');
+    const areaBadge   = document.getElementById('area-badge');
+    const widthLabel  = document.getElementById('width-label-viz');
+    const lengthLabel = document.getElementById('length-label-viz');
+    const ftBtn       = document.getElementById('unit-ft');
+    const mBtn        = document.getElementById('unit-m');
+    const unitLabels  = document.querySelectorAll('.unit-label');
+    const toast       = document.getElementById('save-toast');
+
+    let currentUnit = 'ft';
+
+    // ── Live blueprint preview ─────────────────────────────────────────
+    function updateRoomPreview() {
+      const w = parseFloat(widthInput.value)  || 0;
+      const l = parseFloat(lengthInput.value) || 0;
+      const area = w * l;
+
+      areaBadge.textContent  = `Area: ${area.toFixed(1)} sq ${currentUnit}`;
+      widthLabel.textContent  = `${w.toFixed(1)} ${currentUnit}`;
+      lengthLabel.textContent = `${l.toFixed(1)} ${currentUnit}`;
+
+      const maxDim   = Math.max(w, l) || 1;
+      const canvas   = 300;
+      const scaledW  = (w / maxDim) * canvas;
+      const scaledL  = (l / maxDim) * canvas;
+      const x = (400 - scaledW) / 2;
+      const y = (400 - scaledL) / 2;
+
+      roomRect.setAttribute('width',  scaledW);
+      roomRect.setAttribute('height', scaledL);
+      roomRect.setAttribute('x', x);
+      roomRect.setAttribute('y', y);
+    }
+
+    widthInput.addEventListener('input',  updateRoomPreview);
+    lengthInput.addEventListener('input', updateRoomPreview);
+
+    // ── Unit toggle ───────────────────────────────────────────────────
+    ftBtn.addEventListener('click', () => {
+      currentUnit = 'ft';
+      ftBtn.className = 'flex-1 py-3 rounded-xl font-bold transition-all bg-[#D3968C] text-white shadow-lg';
+      mBtn.className  = 'flex-1 py-3 rounded-xl font-bold transition-all text-[#F7F4D5]/40 hover:text-[#F7F4D5]';
+      unitLabels.forEach(el => el.textContent = 'ft');
+      updateRoomPreview();
+    });
+
+    mBtn.addEventListener('click', () => {
+      currentUnit = 'm';
+      mBtn.className  = 'flex-1 py-3 rounded-xl font-bold transition-all bg-[#D3968C] text-white shadow-lg';
+      ftBtn.className = 'flex-1 py-3 rounded-xl font-bold transition-all text-[#F7F4D5]/40 hover:text-[#F7F4D5]';
+      unitLabels.forEach(el => el.textContent = 'm');
+      updateRoomPreview();
+    });
+
+    // ── Toast helper ──────────────────────────────────────────────────
+    function showToast(msg, ok = true) {
+      toast.textContent = msg;
+      toast.style.borderColor = ok ? 'rgba(131,153,88,0.4)' : 'rgba(211,150,140,0.4)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ── Save & Continue ───────────────────────────────────────────────
+    document.getElementById('save-dimensions').addEventListener('click', async () => {
+      const name   = nameInput.value.trim();
+      const width  = parseFloat(widthInput.value);
+      const length = parseFloat(lengthInput.value);
+      const height = parseFloat(heightInput.value) || 8;
+
+      if (!name) { showToast('Please enter a room name.', false); nameInput.focus(); return; }
+      if (!width || width <= 0 || !length || length <= 0) {
+        showToast('Width and length must be greater than 0.', false); return;
+      }
+
+      const btn = document.getElementById('save-dimensions');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/rooms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId:   'saanvi_demo',
+            name,
+            widthFt:  width,
+            lengthFt: length,
+            heightFt: height,
+          }),
+        });
+
+        if (!res.ok) throw new Error('Server error');
+        const saved = await res.json();
+        showToast(`✓ "${saved.name}" saved — ${saved.sqft} sq ft`);
+
+        // Clear form for next room
+        nameInput.value   = '';
+        widthInput.value  = '';
+        lengthInput.value = '';
+        heightInput.value = '';
+        updateRoomPreview();
+      } catch {
+        showToast('Could not reach server — check that it\'s running.', false);
+      } finally {
+        btn.disabled     = false;
+        btn.innerHTML    = 'Save &amp; Continue <iconify-icon icon="ph:arrow-right-bold"></iconify-icon>';
+      }
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────
+    updateRoomPreview();
+  </script>
+</body>
+</html>
