@@ -40,11 +40,19 @@ export default function RoomPlanner({ userId = "saanvi_demo" }) {
             heightFt: parseFloat(height) || 8
         };
 
-        console.log("Sending this room data to the waiter:", roomData);
-        alert(`🎉 Success! Saved ${roomName} (${calculatedSqft} sqft) to the database layout sandbox!`);
-
-        // Clear the form fields for the next one
-        setRoomName(''); setWidth(''); setLength(''); setHeight('');
+        try {
+            const res = await fetch('/api/rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(roomData),
+            });
+            if (!res.ok) throw new Error('Save failed');
+            const saved = await res.json();
+            alert(`🎉 Saved "${saved.name}" (${saved.sqft} sqft) to the database!`);
+            setRoomName(''); setWidth(''); setLength(''); setHeight('');
+        } catch (err) {
+            alert('❌ Could not save room. Is the server running?');
+        }
     };
 
     return (

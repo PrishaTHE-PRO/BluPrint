@@ -1,19 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Room = require('../models/Room'); // This grabs our blueprint file!
+const Room = require('../models/Room');
 
-// 1. This tells the waiter how to SAVE a room
-router.post('/api/rooms', async (req, res) => {
+// POST / — save a new room
+router.post('/', async (req, res) => {
     try {
         const { userId, name, widthFt, lengthFt, heightFt } = req.body;
-
-        // Live calculation: Width x Length = Square Footage!
         const sqft = widthFt * lengthFt;
-
-        // Create the room document
         const newRoom = new Room({ userId, name, widthFt, lengthFt, heightFt, sqft });
-
-        // Save it to MongoDB
         const savedRoom = await newRoom.save();
         res.status(201).json(savedRoom);
     } catch (error) {
@@ -21,8 +15,8 @@ router.post('/api/rooms', async (req, res) => {
     }
 });
 
-// 2. This tells the waiter how to FETCH all rooms for a user
-router.get('/api/rooms', async (req, res) => {
+// GET / — fetch all rooms for a user
+router.get('/', async (req, res) => {
     try {
         const { userId } = req.query;
         const rooms = await Room.find({ userId }).sort({ createdAt: -1 });
