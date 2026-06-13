@@ -292,14 +292,8 @@
 
         if (!res.ok) throw new Error('Server error');
         const saved = await res.json();
-        showToast(`✓ "${saved.name}" saved — ${saved.sqft} sq ft`);
-
-        // Clear form for next room
-        nameInput.value   = '';
-        widthInput.value  = '';
-        lengthInput.value = '';
-        heightInput.value = '';
-        updateRoomPreview();
+        showToast(`✓ "${saved.name}" saved — redirecting...`);
+        setTimeout(() => { window.location.href = 'inspo-upload.html'; }, 1200);
       } catch {
         showToast('Could not reach server — check that it\'s running.', false);
       } finally {
