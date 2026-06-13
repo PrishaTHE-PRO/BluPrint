@@ -278,11 +278,12 @@
       btn.textContent = 'Saving...';
 
       try {
+        const userId = localStorage.getItem('blueprintUserId') || 'demo_user';
         const res = await fetch('/api/rooms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId:   'saanvi_demo',
+            userId,
             name,
             widthFt:  width,
             lengthFt: length,
@@ -292,6 +293,7 @@
 
         if (!res.ok) throw new Error('Server error');
         const saved = await res.json();
+        localStorage.setItem('blueprintCurrentRoomId', saved._id);
         showToast(`✓ "${saved.name}" saved — redirecting...`);
         setTimeout(() => { window.location.href = 'inspo-upload.html'; }, 1200);
       } catch {

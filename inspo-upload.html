@@ -272,7 +272,7 @@
 
   <script>
     // ── Backend ───────────────────────────────────────────────────────
-    const ROOM_ID = "507f1f77bcf86cd799439011";
+    const ROOM_ID = localStorage.getItem('blueprintCurrentRoomId') || "507f1f77bcf86cd799439011";
     const API     = "/api/rooms/" + ROOM_ID;
 
     // ── Data ──────────────────────────────────────────────────────────
