@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 app.use("/api/rooms", require("./routes/inspo"));
-app.use("/api/rooms", require("../practice_bluprint/routes/roomRoutes"));
+app.use("/api/rooms", require("./routes/rooms"));
 
 mongoose
   .connect(process.env.MONGODB_URI)
