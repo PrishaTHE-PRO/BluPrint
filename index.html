@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BluPrint | Enter Your Sanctuary</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --garden-dark: #0A3323;
+      --garden-moss: #839958;
+      --garden-beige: #F7F4D5;
+      --garden-rosy: #D3968C;
+      --garden-midnight: #105666;
+      --garden-accent: #f5a7b8;
+    }
+    body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); overflow: hidden; }
+    h1, h2, h3 { font-family: 'Crimson Pro', serif; }
+    .grid-background {
+      background-image: linear-gradient(rgba(131,153,88,0.1) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(131,153,88,0.1) 1.5px, transparent 1.5px);
+      background-size: 50px 50px;
+    }
+    .ghibli-border {
+      border: 2px solid rgba(247,244,213,0.15);
+      border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px;
+      transition: border-color 0.4s ease;
+    }
+    .garden-card {
+      background: rgba(16,86,102,0.25);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(247,244,213,0.1);
+      box-shadow: 0 40px 100px -20px rgba(0,0,0,0.5);
+    }
+    @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(5deg); } }
+    @keyframes float-slow { 0%,100% { transform: translate(0,0); } 33% { transform: translate(30px,-20px); } 66% { transform: translate(-20px,40px); } }
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes pulse-soft { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
+    @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .floating-particle { position: absolute; background: var(--garden-beige); border-radius: 50%; pointer-events: none; filter: blur(2px); animation: float-slow 15s infinite ease-in-out; }
+    .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; opacity: 0; }
+    .input-field { background: rgba(247,244,213,0.05); border: 1px solid rgba(247,244,213,0.1); color: var(--garden-beige); transition: all 0.3s ease; }
+    .input-field:focus { background: rgba(247,244,213,0.1); border-color: var(--garden-rosy); outline: none; box-shadow: 0 0 0 4px rgba(211,150,140,0.1); }
+    .input-field.error { border-color: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,0.1); }
+    .btn-bounce { transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .btn-bounce:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 20px 40px -10px rgba(211,150,140,0.4); }
+    .btn-bounce:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+    .noise-texture { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    /* toast */
+    #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(10,51,35,0.95); border: 1px solid rgba(247,244,213,0.15); color: var(--garden-beige); font-family: 'Quicksand', sans-serif; font-size: 14px; padding: 12px 28px; border-radius: 999px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 100; backdrop-filter: blur(8px); }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="noise-texture"></div>
+
+  <div class="min-h-screen relative flex items-center justify-center overflow-hidden grid-background">
+
+    <!-- background decorations -->
+    <div class="absolute inset-0 z-0">
+      <div class="floating-particle w-2 h-2" style="top:20%;left:10%;animation-delay:0s;"></div>
+      <div class="floating-particle w-3 h-3" style="top:60%;left:15%;animation-delay:2s;opacity:0.4;"></div>
+      <div class="floating-particle w-2 h-2" style="top:80%;left:80%;animation-delay:4s;"></div>
+      <div class="floating-particle w-4 h-4" style="top:15%;left:85%;animation-delay:1s;opacity:0.2;"></div>
+      <div class="floating-particle w-2 h-2" style="top:40%;left:90%;animation-delay:3s;"></div>
+      <div class="absolute top-[-10%] left-[-5%] w-[40rem] h-[40rem] bg-emerald-900/20 blur-[120px] rounded-full animate-pulse-soft"></div>
+      <div class="absolute bottom-[-10%] right-[-5%] w-[50rem] h-[50rem] bg-emerald-800/20 blur-[150px] rounded-full animate-pulse-soft" style="animation-delay:2s;"></div>
+      <div class="absolute top-1/4 left-1/4 animate-[spin-slow_20s_linear_infinite] opacity-10 pointer-events-none">
+        <iconify-icon icon="ph:sparkle-duotone" class="text-[300px]"></iconify-icon>
+      </div>
+    </div>
+
+    <!-- main card -->
+    <div class="relative z-10 w-full max-w-lg px-6 animate-reveal">
+      <div class="garden-card ghibli-border p-10 md:p-14 relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-rosy-500/5 rounded-full blur-3xl"></div>
+
+        <!-- header -->
+        <div class="flex flex-col items-center text-center gap-4 mb-10">
+          <div class="w-16 h-16 bg-[#0A3323] rounded-2xl flex items-center justify-center shadow-2xl mb-2 animate-[float_4s_infinite_ease-in-out]">
+            <iconify-icon icon="ph:sparkle-duotone" class="text-4xl text-[#F7F4D5]"></iconify-icon>
+          </div>
+          <h1 class="text-5xl font-bold tracking-tight text-[#F7F4D5]">Welcome Back</h1>
+          <p class="text-lg text-[#F7F4D5]/60 font-medium">Enter your sanctuary and resume designing</p>
+        </div>
+
+        <!-- form -->
+        <div class="flex flex-col gap-6">
+          <div class="animate-reveal" style="animation-delay:0.2s;">
+            <label class="block text-sm font-bold text-[#F7F4D5]/70 mb-2 ml-1" for="email">Email Address</label>
+            <input type="email" id="email" placeholder="your@email.com" class="input-field w-full px-5 py-4 rounded-2xl font-medium">
+          </div>
+
+          <div class="animate-reveal" style="animation-delay:0.3s;">
+            <div class="flex justify-between mb-2 ml-1">
+              <label class="block text-sm font-bold text-[#F7F4D5]/70" for="password">Password</label>
+              <a href="#" id="forgot-link" class="text-sm font-bold text-[#D3968C] hover:text-[#f5a7b8] transition-colors">Forgot?</a>
+            </div>
+            <input type="password" id="password" placeholder="••••••••" class="input-field w-full px-5 py-4 rounded-2xl font-medium">
+          </div>
+
+          <div class="flex items-center gap-3 ml-1 animate-reveal" style="animation-delay:0.4s;">
+            <input type="checkbox" id="remember" class="h-5 w-5 accent-[#D3968C] cursor-pointer rounded">
+            <label for="remember" class="text-sm font-semibold text-[#F7F4D5]/60 cursor-pointer">Keep me signed in</label>
+          </div>
+
+          <button type="button" id="login-btn" onclick="handleLogin()" class="btn-bounce w-full py-5 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl shadow-xl mt-4 animate-reveal" style="animation-delay:0.5s;">
+            Enter BluPrint
+          </button>
+        </div>
+
+        <!-- signup link -->
+        <div class="mt-10 text-center animate-reveal" style="animation-delay:0.6s;">
+          <p class="text-[#F7F4D5]/50 font-medium">
+            New to the sanctuary?
+            <a href="#" id="signup-link" onclick="handleSignup(event)" class="text-[#D3968C] font-bold hover:underline decoration-2 underline-offset-4 ml-1">Start a journey</a>
+          </p>
+        </div>
+
+        <!-- leaf decoration -->
+        <div class="absolute bottom-[-2rem] left-[-2rem] opacity-10 animate-[float_6s_infinite_ease-in-out]">
+          <iconify-icon icon="ph:leaf-duotone" class="text-8xl rotate-[45deg]"></iconify-icon>
+        </div>
+      </div>
+
+      <!-- social sign-in row -->
+      <div class="mt-8 flex justify-center gap-10 animate-reveal" style="animation-delay:0.8s;">
+        <button type="button" id="google-button" onclick="handleGoogle()" class="flex items-center gap-2 text-[#F7F4D5]/30 hover:text-[#F7F4D5]/80 cursor-pointer transition-colors bg-transparent border-none font-bold">
+          <iconify-icon icon="ph:google-logo-duotone" class="text-2xl"></iconify-icon>
+          <span class="text-sm font-bold">Google</span>
+        </button>
+        <div class="flex items-center gap-2 text-[#F7F4D5]/30 cursor-not-allowed">
+          <iconify-icon icon="ph:apple-logo-duotone" class="text-2xl"></iconify-icon>
+          <span class="text-sm font-bold">Apple</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

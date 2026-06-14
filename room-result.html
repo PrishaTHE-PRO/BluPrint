@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BluPrint | Room Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --garden-dark: #0A3323;
+      --garden-moss: #839958;
+      --garden-beige: #F7F4D5;
+      --garden-rosy: #D3968C;
+      --garden-midnight: #105666;
+      --nav-pink: #f5a7b8;
+    }
+    body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); margin: 0; padding: 0; overflow-x: hidden; }
+    h1, h2, h3, h4 { font-family: 'Crimson Pro', serif; }
+    .grid-background {
+      background-image:
+        linear-gradient(rgba(131,153,88,0.08) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(131,153,88,0.08) 1.5px, transparent 1.5px);
+      background-size: 40px 40px;
+    }
+    .noise-texture { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    .ghibli-border { border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px; }
+    .garden-card { background: rgba(16,86,102,0.25); backdrop-filter: blur(12px); transition: all 0.5s cubic-bezier(0.23,1,0.32,1); border: 1px solid rgba(247,244,213,0.08); }
+    .garden-card:hover { transform: translateY(-5px) scale(1.01); background: rgba(16,86,102,0.35); border-color: rgba(211,150,140,0.3); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); }
+    @keyframes float-particle { 0%,100% { transform: translate(0,0); opacity: 0.2; } 50% { transform: translate(20px,-40px); opacity: 0.5; } }
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-reveal { animation: reveal-up 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; opacity: 0; }
+    .particle { position: absolute; pointer-events: none; animation: float-particle var(--d, 6s) infinite ease-in-out; }
+    .map-furniture { transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); cursor: pointer; }
+    .map-furniture:hover { filter: brightness(1.2); transform: scale(1.05); outline: 2px solid var(--garden-rosy); }
+    .mood-tag { transition: all 0.3s ease; cursor: pointer; }
+    .mood-tag:hover { background: var(--garden-rosy); color: white; transform: scale(1.05); }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--garden-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./src/main.tsx"></script>
+</body>
+</html>

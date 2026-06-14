@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/BluPrint.iml" filepath="$PROJECT_DIR$/.idea/BluPrint.iml" />
+      <module fileurl="file://$PROJECT_DIR$/practice_bluprint/practice_bluprint.iml" filepath="$PROJECT_DIR$/practice_bluprint/practice_bluprint.iml" />
     </modules>
   </component>
 </project>

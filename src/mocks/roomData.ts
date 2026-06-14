@@ -1,0 +1,88 @@
+// DELETE THIS FILE when teammates finish their sections
+// Replace each value with a real API call
+
+export const MOCK_ROOM = {
+  roomId:   'mock-room-001',
+  name:     'Living Room',
+  widthFt:  14,
+  lengthFt: 16,
+  heightFt: 9,
+  sqft:     224,
+};
+
+export const MOCK_STYLE = {
+  styleTag:     'scandinavian',
+  moodTags:     ['airy', 'minimal', 'warm', 'clean'],
+  colorPalette: ['#F9F7F4', '#EDE8E0', '#C8BFB0', '#8B7D6B', '#3D3530'],
+  roomFeatures: ['natural wood floors', 'linen textiles', 'low furniture'],
+  confidence:   0.91,
+  budgetTotal:  1500,
+};
+
+export const MOCK_FURNITURE = [
+  {
+    id:       'f001',
+    name:     'IKEA KIVIK Sofa',
+    category: 'sofa',
+    style:    ['scandinavian', 'minimalist'],
+    price:    599,
+    widthIn:  90,
+    depthIn:  37,
+    heightIn: 32,
+    imageUrl: 'https://www.ikea.com/us/en/images/products/kivik-sofa__0727420_pe735588_s5.jpg',
+    buyUrl:   'https://www.ikea.com/us/en/p/kivik-sofa/',
+    brand:    'IKEA',
+  },
+  {
+    id:       'f002',
+    name:     'IKEA LACK Coffee Table',
+    category: 'coffee_table',
+    style:    ['scandinavian', 'minimalist', 'modern'],
+    price:    149,
+    widthIn:  46,
+    depthIn:  22,
+    heightIn: 18,
+    imageUrl: 'https://www.ikea.com/us/en/images/products/lack-coffee-table__0702194_pe724017_s5.jpg',
+    buyUrl:   'https://www.ikea.com/us/en/p/lack-coffee-table/',
+    brand:    'IKEA',
+  },
+  {
+    id:       'f003',
+    name:     'Wayfair Jute Area Rug 8x10',
+    category: 'rug',
+    style:    ['scandinavian', 'boho', 'coastal'],
+    price:    289,
+    widthIn:  120,
+    depthIn:  96,
+    heightIn: 1,
+    imageUrl: 'https://assets.wfcdn.com/im/sample-rug.jpg',
+    buyUrl:   'https://www.wayfair.com/rugs',
+    brand:    'Wayfair',
+  },
+  {
+    id:       'f004',
+    name:     'IKEA HEKTAR Floor Lamp',
+    category: 'floor_lamp',
+    style:    ['scandinavian', 'industrial', 'modern'],
+    price:    79,
+    widthIn:  15,
+    depthIn:  15,
+    heightIn: 74,
+    imageUrl: 'https://www.ikea.com/us/en/images/products/hektar-floor-lamp__0713279_pe729490_s5.jpg',
+    buyUrl:   'https://www.ikea.com/us/en/p/hektar-floor-lamp/',
+    brand:    'IKEA',
+  },
+  {
+    id:       'f005',
+    name:     'IKEA HEMNES Side Table',
+    category: 'side_table',
+    style:    ['scandinavian', 'rustic'],
+    price:    129,
+    widthIn:  22,
+    depthIn:  22,
+    heightIn: 28,
+    imageUrl: 'https://www.ikea.com/us/en/images/products/hemnes-side-table__0713021_pe729251_s5.jpg',
+    buyUrl:   'https://www.ikea.com/us/en/p/hemnes-side-table/',
+    brand:    'IKEA',
+  },
+];
