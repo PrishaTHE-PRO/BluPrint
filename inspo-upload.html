@@ -510,23 +510,35 @@
 
     // ── Analyze ───────────────────────────────────────────────────────
     document.getElementById('step2-analyze').addEventListener('click', async () => {
+      const ROOM_ID = localStorage.getItem('blueprintCurrentRoomId');
       const btn = document.getElementById('step2-analyze');
+      if (!ROOM_ID) {
+        btn.textContent = 'No room found — go back and create a room first';
+        return;
+      }
       btn.disabled    = true;
       btn.textContent = 'Analyzing...';
-
-      await new Promise(r => setTimeout(r, 1500));
-
-      state.aiResult = {
-        styleTag:     state.selectedStyle,
-        moodTags:     [state.selectedMood],
-        colorPalette: state.selectedColors,
-        roomFeatures: state.selectedFeatures,
-        confidence:   96,
-      };
-
-      await saveToBackend();
-      buildStep3();
-      showStep(3);
+      try {
+        await saveToBackend();
+        const res = await fetch(`/api/rooms/${ROOM_ID}/analyze-style`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ imageUrl: state.visionUrl || undefined }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Analysis failed');
+        }
+        const ai = await res.json();
+        localStorage.setItem('blueprintStyleResult', JSON.stringify(ai));
+        btn.textContent = 'Done! Redirecting...';
+        setTimeout(() => { window.location.href = 'room-result.html'; }, 800);
+      } catch (e) {
+        btn.disabled    = false;
+        btn.textContent = 'Analyze with AI';
+        const statusEl  = document.getElementById('mongo-save-status');
+        if (statusEl) { statusEl.textContent = e.message || 'Analysis failed. Try again.'; statusEl.className = 'text-sm font-medium text-[#D3968C]'; }
+      }
     });
 
     // ── Save to MongoDB ───────────────────────────────────────────────
@@ -651,15 +663,14 @@
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
       state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
       state.visionUrl        = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop';
-      state.aiResult = {
+      localStorage.setItem('blueprintStyleResult', JSON.stringify({
         styleTag:     state.selectedStyle,
         moodTags:     [state.selectedMood],
-        colorPalette: state.selectedColors,
+        colorPalette: state.selectedColors.map(c => c.hex || c),
         roomFeatures: state.selectedFeatures,
-        confidence:   100,
-      };
-      buildStep3();
-      showStep(3);
+        confidence:   1,
+      }));
+      window.location.href = 'room-result.html';
     });
 
     // ── Copy JSON ─────────────────────────────────────────────────────
