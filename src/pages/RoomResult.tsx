@@ -1,48 +1,95 @@
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
-import { MOCK_FURNITURE, MOCK_ROOM, MOCK_STYLE } from '../mocks/roomData';
+import type { Room, Style } from '../types';
+import { MOCK_FURNITURE } from '../mocks/roomData';
 import RoomSVG from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 
 export default function RoomResult() {
-  const [room,      setRoom]      = useState(MOCK_ROOM);
-  const [style,     setStyle]     = useState(MOCK_STYLE);
+  const [room,    setRoom]    = useState<Room | null>(null);
+  const [style,   setStyle]   = useState<Style | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState('');
+
   const furniture = MOCK_FURNITURE;
 
   useEffect(() => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    const userId = localStorage.getItem('blueprintUserId');
     const raw    = localStorage.getItem('blueprintStyleResult');
 
-    if (raw) {
-      try {
-        const saved = JSON.parse(raw);
-        setStyle({
-          styleTag:     saved.styleTag     ?? MOCK_STYLE.styleTag,
-          moodTags:     saved.moodTags     ?? MOCK_STYLE.moodTags,
-          colorPalette: saved.colorPalette ?? MOCK_STYLE.colorPalette,
-          roomFeatures: saved.roomFeatures ?? MOCK_STYLE.roomFeatures,
-          confidence:   saved.confidence   ?? MOCK_STYLE.confidence,
-          budgetTotal:  MOCK_STYLE.budgetTotal,
-        });
-      } catch { /* keep mock */ }
+    if (!raw) {
+      setError('No style analysis found. Go back and analyze your room first.');
+      setLoading(false);
+      return;
     }
 
-    if (roomId) {
-      fetch(`/api/rooms?userId=${localStorage.getItem('blueprintUserId') ?? ''}`)
-        .then(r => r.json())
-        .then((rooms: any[]) => {
-          const match = rooms.find((r: any) => r._id === roomId);
-          if (match) setRoom({ ...MOCK_ROOM, ...match, roomId: match._id });
-        })
-        .catch(() => { /* keep mock */ });
+    try {
+      const ai = JSON.parse(raw);
+      setStyle({
+        styleTag:     ai.styleTag     ?? '',
+        moodTags:     ai.moodTags     ?? [],
+        colorPalette: ai.colorPalette ?? [],
+        roomFeatures: ai.roomFeatures ?? [],
+        confidence:   ai.confidence   ?? 0,
+        budgetTotal:  0,
+      });
+    } catch {
+      setError('Style data is corrupted. Please re-analyze your room.');
+      setLoading(false);
+      return;
     }
+
+    if (!roomId || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    fetch(`/api/rooms?userId=${userId}`)
+      .then(r => r.json())
+      .then((rooms: any[]) => {
+        const match = rooms.find(r => r._id === roomId);
+        if (match) {
+          setRoom({
+            roomId:   match._id,
+            name:     match.name,
+            widthFt:  match.widthFt,
+            lengthFt: match.lengthFt,
+            heightFt: match.heightFt,
+            sqft:     match.sqft,
+          });
+        }
+      })
+      .catch(() => { /* room data unavailable, style still shows */ })
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen grid-background flex items-center justify-center">
+        <p className="text-[#F7F4D5]/60 text-xl font-medium animate-pulse">Loading your room...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen grid-background flex flex-col items-center justify-center gap-6 p-8">
+        <p className="text-[#D3968C] text-xl font-medium text-center">{error}</p>
+        <a href="/analyze-style.html" className="px-8 py-4 bg-[#D3968C] text-white rounded-2xl font-bold hover:bg-[#c1867b] transition-all">
+          Analyze Style
+        </a>
+      </div>
+    );
+  }
+
+  // style is guaranteed non-null here (error would have been set otherwise)
+  const s = style!;
 
   return (
     <div className="relative min-h-screen grid-background">
       <div className="noise-texture" />
 
-      {/* floating particles */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {([
           { top: '20%', left: '10%', d: '7s',  size: 'w-2 h-2', color: 'bg-[#F7F4D5]/20' },
@@ -58,7 +105,6 @@ export default function RoomResult() {
         ))}
       </div>
 
-      {/* nav */}
       <nav className="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style={{ backgroundColor: 'var(--nav-pink)' }}>
         <div className="flex items-center gap-4 animate-reveal" style={{ animationDelay: '0.1s' }}>
           <a href="/dashboard.html" className="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
@@ -78,19 +124,22 @@ export default function RoomResult() {
 
       <main className="relative z-10 max-w-[1600px] mx-auto p-8 lg:p-12">
 
-        {/* page header */}
         <header className="mb-12 animate-reveal" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-baseline gap-4 mb-2">
-            <span className="text-[#D3968C] font-bold tracking-widest uppercase text-sm">{style.styleTag} Style</span>
+            <span className="text-[#D3968C] font-bold tracking-widest uppercase text-sm">{s.styleTag} Style</span>
             <span className="text-[#F7F4D5]/40 text-sm font-medium">•</span>
-            <span className="text-[#839958] font-bold text-sm">{Math.round(style.confidence * 100)}% AI Confidence</span>
+            <span className="text-[#839958] font-bold text-sm">{Math.round(s.confidence * 100)}% AI Confidence</span>
           </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2">
-              <h1 className="text-6xl md:text-7xl font-bold text-[#F7F4D5] tracking-tight">{room.name}</h1>
-              <p className="text-xl text-[#F7F4D5]/60 font-medium">
-                {room.widthFt}' x {room.lengthFt}' <span className="mx-2 opacity-30">|</span> {room.sqft} sqft
-              </p>
+              <h1 className="text-6xl md:text-7xl font-bold text-[#F7F4D5] tracking-tight">
+                {room ? room.name : 'Your Room'}
+              </h1>
+              {room && (
+                <p className="text-xl text-[#F7F4D5]/60 font-medium">
+                  {room.widthFt}' x {room.lengthFt}' <span className="mx-2 opacity-30">|</span> {room.sqft} sqft
+                </p>
+              )}
             </div>
             <div className="flex gap-3">
               <button className="px-8 py-4 bg-[#105666] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#156a7d] transition-all">
@@ -106,13 +155,10 @@ export default function RoomResult() {
 
         <div className="grid lg:grid-cols-12 gap-12">
 
-          {/* left column */}
           <div className="lg:col-span-5 flex flex-col gap-10">
 
-            {/* 2D floor map */}
-            <RoomSVG room={room} style={style} furniture={furniture} />
+            {room && <RoomSVG room={room} style={s} furniture={furniture} />}
 
-            {/* color palette + mood row */}
             <div className="grid md:grid-cols-2 gap-8">
               <div className="garden-card ghibli-border p-8 animate-reveal" style={{ animationDelay: '0.5s' }}>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -120,7 +166,7 @@ export default function RoomResult() {
                   Color Palette
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {style.colorPalette.map((hex) => (
+                  {s.colorPalette.map((hex) => (
                     <div
                       key={hex}
                       className="w-12 h-12 rounded-2xl shadow-lg transform hover:scale-110 transition-all cursor-help"
@@ -137,7 +183,7 @@ export default function RoomResult() {
                   Mood
                 </h3>
                 <div className="flex flex-wrap gap-3">
-                  {style.moodTags.map((tag) => (
+                  {s.moodTags.map((tag) => (
                     <span key={tag} className="mood-tag px-4 py-2 bg-[#105666]/30 rounded-full text-xs font-bold">
                       {tag}
                     </span>
@@ -146,14 +192,13 @@ export default function RoomResult() {
               </div>
             </div>
 
-            {/* room features */}
             <div className="garden-card ghibli-border p-8 animate-reveal" style={{ animationDelay: '0.7s' }}>
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <iconify-icon icon="ph:list-checks-duotone" class="text-[#D3968C]" />
                 Room Features
               </h3>
               <ul className="space-y-4">
-                {style.roomFeatures.map((feat) => (
+                {s.roomFeatures.map((feat) => (
                   <li key={feat} className="flex items-center gap-3 text-[#F7F4D5]/80 font-medium group">
                     <iconify-icon icon="ph:dot-bold" class="text-[#D3968C] transition-transform group-hover:scale-150" />
                     {feat}
@@ -163,8 +208,7 @@ export default function RoomResult() {
             </div>
           </div>
 
-          {/* right column — furniture panel */}
-          <FurniturePanel items={furniture} style={style} />
+          <FurniturePanel items={furniture} style={s} />
         </div>
       </main>
 
