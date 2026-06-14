@@ -17,8 +17,10 @@ Then open [http://localhost:5173](http://localhost:5173).
 |-----|------|
 | `/` | Login / Sign up |
 | `/dashboard.html` | Dashboard |
-| `/room-result.html` | Room planner (Prisha's section) |
-| `/inspo-upload.html` | Choose preferences (Nidhi's section) |
+| `/room-dimensions.html` | Room dimensions + blueprint (Saanvi) |
+| `/inspo-upload.html` | Inspiration upload + style picker (Nidhi) |
+| `/analyze-style.html` | AI style analysis (Aditi) |
+| `/room-result.html` | 2D room result + furniture (Prisha) |
 
 
 ## Firebase
@@ -26,7 +28,27 @@ Then open [http://localhost:5173](http://localhost:5173).
 Add your Firebase config to `firebase.js`. Then enable **Email/Password** and **Google** sign-in under **Firebase Console → Build → Authentication → Sign-in method**.
 
 ## Backend
-Copy server/.env.example to server/.env and paste the shared MongoDB connection string into MONGODB_URI. Then `npm run dev` starts the frontend and backend together.
+
+Copy `server/.env.example` to `server/.env` and fill in the values below. Then `npm run dev` starts the frontend and backend together.
+
+```
+MONGODB_URI=          # MongoDB Atlas connection string
+PORT=3001
+CLOUDINARY_CLOUD_NAME=   # from cloudinary.com → Dashboard
+CLOUDINARY_API_KEY=      # from cloudinary.com → Dashboard
+CLOUDINARY_API_SECRET=   # from cloudinary.com → Dashboard
+OPENAI_API_KEY=          # from platform.openai.com → API keys
+```
+
+### Getting Cloudinary credentials
+1. Sign up at [cloudinary.com](https://cloudinary.com) (free tier is enough)
+2. After login, your **Dashboard** shows Cloud Name, API Key, and API Secret at the top
+
+### Getting the OpenAI API key
+1. Go to [platform.openai.com](https://platform.openai.com) and sign in
+2. Click your profile icon (top right) → **API keys** → **Create new secret key**
+3. Copy the key — you won't be able to see it again
+4. Add a payment method under **Billing** (GPT-4o Vision costs ~$0.01–0.05 per analysis call)
 
 ## Project Structure
 

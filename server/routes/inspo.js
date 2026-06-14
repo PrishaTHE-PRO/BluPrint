@@ -1,13 +1,34 @@
 const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
+const cloudinary = require("cloudinary").v2;
 const InspirationImage = require("../models/InspirationImage");
 const Style = require("../models/Style");
 const { scrapePinterestBoard } = require("../services/pinterestScraper");
 
 const router = express.Router();
 
-// Uploads kept in memory, stored as base64 in Mongo. 5MB/file cap.
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Upload a file buffer to Cloudinary, returns the secure URL
+function uploadToCloudinary(buffer, mimetype) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: "image", folder: "bluprint" },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+// Files held in memory only long enough to upload to Cloudinary. 5MB/file cap.
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -34,12 +55,14 @@ router.post("/:roomId/pinterest", async (req, res) => {
  */
 router.post("/:roomId/images", upload.array("images", 5), async (req, res) => {
   try {
+    const urls = await Promise.all(
+      (req.files || []).map((f) => uploadToCloudinary(f.buffer, f.mimetype))
+    );
     const docs = await InspirationImage.insertMany(
-      (req.files || []).map((f) => ({
+      urls.map((url) => ({
         roomId: req.params.roomId,
         source: "upload",
-        mimeType: f.mimetype,
-        data: `data:${f.mimetype};base64,${f.buffer.toString("base64")}`,
+        url,
       }))
     );
     res.json(docs);

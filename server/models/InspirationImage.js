@@ -9,9 +9,7 @@ const InspirationImageSchema = new mongoose.Schema(
       index: true,
     },
     source: { type: String, enum: ["pinterest", "upload"], required: true },
-    url: { type: String }, // pinterest CDN url
-    data: { type: String }, // base64 data URI (uploads only)
-    mimeType: { type: String },
+    url: { type: String, required: true },
   },
   { timestamps: true }
 );
