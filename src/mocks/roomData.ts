@@ -1,24 +1,4 @@
-// DELETE THIS FILE when teammates finish their sections
-// Replace each value with a real API call
-
-export const MOCK_ROOM = {
-  roomId:   'mock-room-001',
-  name:     'Living Room',
-  widthFt:  14,
-  lengthFt: 16,
-  heightFt: 9,
-  sqft:     224,
-};
-
-export const MOCK_STYLE = {
-  styleTag:     'scandinavian',
-  moodTags:     ['airy', 'minimal', 'warm', 'clean'],
-  colorPalette: ['#F9F7F4', '#EDE8E0', '#C8BFB0', '#8B7D6B', '#3D3530'],
-  roomFeatures: ['natural wood floors', 'linen textiles', 'low furniture'],
-  confidence:   0.91,
-  budgetTotal:  1500,
-};
-
+// Placeholder furniture until a real furniture API is built (Prisha's section)
 export const MOCK_FURNITURE = [
   {
     id:       'f001',
