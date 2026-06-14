@@ -171,6 +171,8 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="feature-grid"></div>
           </div>
 
+          <div id="analysis-status" class="hidden p-5 rounded-2xl text-base font-medium"></div>
+
           <div class="pt-8 flex justify-between items-center">
             <button id="step2-back" class="px-8 py-3 bg-white/5 text-[#F7F4D5] rounded-2xl font-bold border border-[#F7F4D5]/10 hover:bg-white/10 transition-all">
               <iconify-icon icon="ph:arrow-left-bold" class="mr-2"></iconify-icon> Back
@@ -349,6 +351,18 @@
       box.classList.remove('hidden');
     }
 
+    function setAnalysisStatus(msg, type) {
+      const box = document.getElementById('analysis-status');
+      box.textContent = msg;
+      box.className = 'p-5 rounded-2xl text-base font-medium ' +
+        (type === 'success'
+          ? 'bg-[#839958]/20 border border-[#839958]/40 text-[#839958]'
+          : type === 'error'
+            ? 'bg-[#D3968C]/10 border border-[#D3968C]/30 text-[#D3968C]'
+            : 'bg-white/5 border border-[#F7F4D5]/10 text-[#F7F4D5]/70');
+      box.classList.remove('hidden');
+    }
+
     function checkStep1Valid() {
       document.getElementById('step1-next').disabled = !state.visionUrl;
     }
@@ -520,20 +534,20 @@
       btn.innerHTML = 'Analyzing...';
 
       try {
-        setVisionStatus('Saving your inspiration image...', '');
+        setAnalysisStatus('Saving your inspiration image...', '');
         await saveVisionToBackend();
 
-        setVisionStatus('Saving your style picks...', '');
+        setAnalysisStatus('Saving your style picks...', '');
         await saveManualPicks();
 
-        setVisionStatus('Analyzing with AI...', '');
+        setAnalysisStatus('Analyzing with AI...', '');
         state.aiResult = normalizeAnalysisForUi(await requestAiAnalysis());
 
-        setVisionStatus('Blueprint analyzed and saved.', 'success');
+        setAnalysisStatus('Blueprint analyzed and saved.', 'success');
         buildStep3();
         showStep(3);
       } catch (error) {
-        setVisionStatus(error.message || 'Could not analyze this room. Check the backend and try again.', 'error');
+        setAnalysisStatus(error.message || 'Could not analyze this room. Check the backend and try again.', 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Analyze with AI <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>';
@@ -777,6 +791,7 @@
       document.getElementById('pinterest-url').value = '';
       document.getElementById('pinterest-preview-wrap').classList.add('hidden');
       document.getElementById('vision-status').classList.add('hidden');
+      document.getElementById('analysis-status').classList.add('hidden');
       document.getElementById('mongo-save-status').textContent = '';
       document.getElementById('step1-next').disabled = true;
       buildStyleGrid();
