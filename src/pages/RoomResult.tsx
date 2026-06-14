@@ -1,13 +1,42 @@
+import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { MOCK_FURNITURE, MOCK_ROOM, MOCK_STYLE } from '../mocks/roomData';
 import RoomSVG from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 
 export default function RoomResult() {
-  // Later: replace with real API calls
-  const room      = MOCK_ROOM;
-  const style     = MOCK_STYLE;
+  const [room,      setRoom]      = useState(MOCK_ROOM);
+  const [style,     setStyle]     = useState(MOCK_STYLE);
   const furniture = MOCK_FURNITURE;
+
+  useEffect(() => {
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    const raw    = localStorage.getItem('blueprintStyleResult');
+
+    if (raw) {
+      try {
+        const saved = JSON.parse(raw);
+        setStyle({
+          styleTag:     saved.styleTag     ?? MOCK_STYLE.styleTag,
+          moodTags:     saved.moodTags     ?? MOCK_STYLE.moodTags,
+          colorPalette: saved.colorPalette ?? MOCK_STYLE.colorPalette,
+          roomFeatures: saved.roomFeatures ?? MOCK_STYLE.roomFeatures,
+          confidence:   saved.confidence   ?? MOCK_STYLE.confidence,
+          budgetTotal:  MOCK_STYLE.budgetTotal,
+        });
+      } catch { /* keep mock */ }
+    }
+
+    if (roomId) {
+      fetch(`/api/rooms?userId=${localStorage.getItem('blueprintUserId') ?? ''}`)
+        .then(r => r.json())
+        .then((rooms: any[]) => {
+          const match = rooms.find((r: any) => r._id === roomId);
+          if (match) setRoom({ ...MOCK_ROOM, ...match, roomId: match._id });
+        })
+        .catch(() => { /* keep mock */ });
+    }
+  }, []);
 
   return (
     <div className="relative min-h-screen grid-background">
