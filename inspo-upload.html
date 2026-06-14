@@ -316,6 +316,7 @@
       selectedFeatures: [],
       visionUrl:        '',
       uploadedFile:     null,
+      savedVisionKey:   null,
       aiResult:         null,
     };
 
@@ -371,6 +372,8 @@
     function handleFileChosen(file) {
       state.uploadedFile = file;
       state.visionUrl    = URL.createObjectURL(file);
+      state.savedVisionKey = null;
+      document.getElementById('pinterest-url').value = '';
       showPreview(state.visionUrl);
       setVisionStatus('Image ready. Click "Next: Your Picks" to continue.', 'success');
       checkStep1Valid();
@@ -380,6 +383,8 @@
     document.getElementById('pinterest-url').addEventListener('input', function () {
       const url = this.value.trim();
       state.visionUrl = url;
+      state.uploadedFile = null;
+      state.savedVisionKey = null;
       checkStep1Valid();
       if (url.match(/\.(jpg|jpeg|png|webp)/i) || url.includes('pinimg.com')) {
         showPreview(url);
@@ -511,51 +516,138 @@
     // ── Analyze ───────────────────────────────────────────────────────
     document.getElementById('step2-analyze').addEventListener('click', async () => {
       const btn = document.getElementById('step2-analyze');
-      btn.disabled    = true;
-      btn.textContent = 'Analyzing...';
+      btn.disabled = true;
+      btn.innerHTML = 'Analyzing...';
 
-      await new Promise(r => setTimeout(r, 1500));
+      try {
+        setVisionStatus('Saving your inspiration image...', '');
+        await saveVisionToBackend();
 
-      state.aiResult = {
-        styleTag:     state.selectedStyle,
-        moodTags:     [state.selectedMood],
-        colorPalette: state.selectedColors,
-        roomFeatures: state.selectedFeatures,
-        confidence:   96,
-      };
+        setVisionStatus('Saving your style picks...', '');
+        await saveManualPicks();
 
-      await saveToBackend();
-      buildStep3();
-      showStep(3);
+        setVisionStatus('Analyzing with AI...', '');
+        state.aiResult = normalizeAnalysisForUi(await requestAiAnalysis());
+
+        setVisionStatus('Blueprint analyzed and saved.', 'success');
+        buildStep3();
+        showStep(3);
+      } catch (error) {
+        setVisionStatus(error.message || 'Could not analyze this room. Check the backend and try again.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Analyze with AI <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>';
+        checkStep2Valid();
+      }
     });
 
-    // ── Save to MongoDB ───────────────────────────────────────────────
-    async function saveToBackend() {
-      const statusEl = document.getElementById('mongo-save-status');
-      try {
-        if (state.uploadedFile) {
-          const form = new FormData();
-          form.append('images', state.uploadedFile);
-          await fetch(API + '/images', { method: 'POST', body: form });
-        }
+    // ── Save + Analyze with backend ───────────────────────────────────
+    function selectedColorHexes() {
+      return state.selectedColors.map(c => c.hex).filter(Boolean);
+    }
 
-        const res = await fetch(API + '/style', {
+    function isDirectImageUrl(url) {
+      return /\.(jpg|jpeg|png|webp)(\?.*)?$/i.test(url) ||
+        url.includes('pinimg.com') ||
+        url.includes('images.unsplash.com');
+    }
+
+    async function readJsonResponse(res) {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || 'Backend request failed');
+      return data;
+    }
+
+    async function saveVisionToBackend() {
+      const statusEl = document.getElementById('mongo-save-status');
+      if (!state.visionUrl) throw new Error('Add an inspiration image before analyzing.');
+
+      if (state.uploadedFile) {
+        const key = `${state.uploadedFile.name}:${state.uploadedFile.size}:${state.uploadedFile.lastModified}`;
+        if (state.savedVisionKey === key) return;
+
+        const form = new FormData();
+        form.append('images', state.uploadedFile);
+        await readJsonResponse(await fetch(API + '/images', { method: 'POST', body: form }));
+        state.savedVisionKey = key;
+        statusEl.textContent = 'Image saved to database';
+        statusEl.className = 'text-sm font-medium text-[#839958]';
+        return;
+      }
+
+      const url = state.visionUrl.trim();
+      if (state.savedVisionKey === url) return;
+
+      if (isDirectImageUrl(url)) {
+        await readJsonResponse(await fetch(API + '/images/url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            styleTag:     state.selectedStyle,
-            colorPalette: state.selectedColors,
-            moodTags:     [state.selectedMood],
-            roomFeatures: state.selectedFeatures,
-          }),
-        });
-
-        statusEl.textContent = res.ok ? '✓ Saved to database' : '⚠ Could not save — working offline';
-        statusEl.className   = 'text-sm font-medium ' + (res.ok ? 'text-[#839958]' : 'text-[#D3968C]');
-      } catch {
-        statusEl.textContent = '⚠ Could not reach backend — working offline';
-        statusEl.className   = 'text-sm font-medium text-[#D3968C]';
+          body: JSON.stringify({ url }),
+        }));
+      } else {
+        await readJsonResponse(await fetch(API + '/pinterest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ boardUrl: url }),
+        }));
       }
+
+      state.savedVisionKey = url;
+      statusEl.textContent = 'Inspiration saved to database';
+      statusEl.className = 'text-sm font-medium text-[#839958]';
+    }
+
+    async function saveManualPicks() {
+      const payload = {
+        styleTag:     state.selectedStyle,
+        colorPalette: selectedColorHexes(),
+        moodTags:     [state.selectedMood],
+        roomFeatures: state.selectedFeatures,
+      };
+
+      await readJsonResponse(await fetch(API + '/style', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }));
+    }
+
+    async function requestAiAnalysis() {
+      return readJsonResponse(await fetch(API + '/analyze-style', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userPicks: {
+            styleTag:     state.selectedStyle,
+            moodTag:      state.selectedMood,
+            colorPalette: selectedColorHexes(),
+            roomFeatures: state.selectedFeatures,
+          },
+        }),
+      }));
+    }
+
+    function colorForUi(color) {
+      if (typeof color === 'string') return { name: color.toUpperCase(), hex: color };
+      if (color && color.hex) return { name: color.name || color.hex.toUpperCase(), hex: color.hex };
+      return null;
+    }
+
+    function normalizeAnalysisForUi(analysis) {
+      return {
+        styleTag: analysis.styleTag || '—',
+        moodTags: Array.isArray(analysis.moodTags) ? analysis.moodTags : [],
+        colorPalette: Array.isArray(analysis.colorPalette) ? analysis.colorPalette.map(colorForUi).filter(Boolean) : [],
+        roomFeatures: Array.isArray(analysis.roomFeatures) ? analysis.roomFeatures : [],
+        confidence: Number(analysis.confidence) || 0,
+        analyzedAt: analysis.analyzedAt,
+        id: analysis._id,
+      };
+    }
+
+    function confidencePercent(confidence) {
+      const value = Number(confidence) || 0;
+      return Math.round(value <= 1 ? value * 100 : value);
     }
 
     // ── Build step 3 ──────────────────────────────────────────────────
@@ -582,18 +674,19 @@
           <span class="text-sm font-medium">${c.name}</span>
         </div>`).join('');
 
+      const confidence = confidencePercent(ai.confidence);
       setTimeout(() => {
-        document.getElementById('confidence-bar').style.width = ai.confidence + '%';
+        document.getElementById('confidence-bar').style.width = confidence + '%';
       }, 100);
-      document.getElementById('confidence-pct').textContent = ai.confidence + '%';
+      document.getElementById('confidence-pct').textContent = confidence + '%';
 
       document.getElementById('json-block').textContent = JSON.stringify({
-        analyzedAt:  new Date().toISOString(),
+        analyzedAt:  ai.analyzedAt || new Date().toISOString(),
         visionImage: state.visionUrl,
         userPicks: {
           styleTag:     state.selectedStyle,
           moodTag:      state.selectedMood,
-          colorPalette: state.selectedColors,
+          colorPalette: selectedColorHexes(),
           roomFeatures: state.selectedFeatures,
         },
         aiAnalysis: ai,
@@ -679,6 +772,7 @@
       state.selectedFeatures = [];
       state.visionUrl        = '';
       state.uploadedFile     = null;
+      state.savedVisionKey   = null;
       state.aiResult         = null;
       document.getElementById('pinterest-url').value = '';
       document.getElementById('pinterest-preview-wrap').classList.add('hidden');
