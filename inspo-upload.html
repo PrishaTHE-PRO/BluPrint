@@ -457,8 +457,9 @@
           body:    JSON.stringify({ imageUrl: (state.visionUrl && !state.visionUrl.startsWith('blob:')) ? state.visionUrl : undefined }),
         });
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || 'Analysis failed');
+          let msg = `Server error (${res.status})`;
+          try { const err = await res.json(); msg = err.error || msg; } catch {}
+          throw new Error(msg);
         }
         const ai = await res.json();
         localStorage.setItem('blueprintStyleResult', JSON.stringify(ai));
