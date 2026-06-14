@@ -1,5 +1,10 @@
 node_modules/
 dist/
 .env
+.env.*
+server/.env
+server/.env.*
+!.env.example
+!server/.env.example
 .idea/
 test.http
