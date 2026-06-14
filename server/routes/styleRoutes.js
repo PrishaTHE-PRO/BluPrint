@@ -10,13 +10,17 @@ router.post("/:roomId/analyze-style", async (req, res) => {
   try {
     const { roomId } = req.params;
 
+    const { imageUrl } = req.body; // optional direct URL from analyze-style page
+
     const images = await InspirationImage.find({ roomId });
-
-    if (images.length === 0) {
-      return res.status(404).json({ error: "No images found for this room" });
-    }
-
     const imageUrls = images.map(img => img.url).filter(Boolean);
+
+    // include URL pasted directly on the analyze-style page
+    if (imageUrl) imageUrls.unshift(imageUrl);
+
+    if (imageUrls.length === 0) {
+      return res.status(404).json({ error: "No images found. Upload images on the inspiration page first, or paste an image URL." });
+    }
 
     const analysis = await analyzeImages(imageUrls);
 
