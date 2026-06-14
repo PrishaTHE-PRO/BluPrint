@@ -18,9 +18,8 @@ Then open [http://localhost:5173](http://localhost:5173).
 | `/` | Login / Sign up |
 | `/dashboard.html` | Dashboard |
 | `/room-dimensions.html` | Room dimensions + blueprint (Saanvi) |
-| `/inspo-upload.html` | Inspiration upload + style picker (Nidhi) |
-| `/analyze-style.html` | AI style analysis (Aditi) |
-| `/room-result.html` | 2D room result + furniture (Prisha) |
+| `/inspo-upload.html` | 2-step: upload inspiration image → refine style picks → AI analysis (Nidhi + Aditi) |
+| `/room-result.html` | 2D room result + furniture with real AI data (Prisha) |
 
 
 ## Firebase
