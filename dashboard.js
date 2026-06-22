@@ -78,11 +78,43 @@ async function loadProjects(userId) {
                     </div>
                 </div>`;
             grid.appendChild(card);
-            card.querySelector('.delete-btn').addEventListener('click', async (e) => {
+            const deleteBtn = card.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (!confirm('Delete this room? This can\'t be undone.')) return;
-                const res = await fetch('/api/rooms/' + room._id, { method: 'DELETE' });
-                if (res.ok) card.remove();
+                e.preventDefault();
+                if (deleteBtn.dataset.confirming) {
+                    deleteBtn.textContent = '...';
+                    deleteBtn.disabled = true;
+                    try {
+                        const res = await fetch('/api/rooms/' + room._id, { method: 'DELETE' });
+                        if (res.ok) {
+                            card.style.transition = 'opacity 0.3s';
+                            card.style.opacity = '0';
+                            setTimeout(() => card.remove(), 300);
+                        } else {
+                            alert('Delete failed (' + res.status + ')');
+                            deleteBtn.disabled = false;
+                            deleteBtn.innerHTML = '<iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>';
+                        }
+                    } catch (err) {
+                        alert('Delete failed: ' + err.message);
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>';
+                    }
+                } else {
+                    deleteBtn.dataset.confirming = '1';
+                    deleteBtn.style.background = '#D3968C';
+                    deleteBtn.title = 'Click again to confirm delete';
+                    deleteBtn.innerHTML = '<iconify-icon icon="ph:trash-duotone" class="text-lg"></iconify-icon>';
+                    setTimeout(() => {
+                        if (deleteBtn.dataset.confirming) {
+                            delete deleteBtn.dataset.confirming;
+                            deleteBtn.style.background = '';
+                            deleteBtn.title = 'Delete room';
+                            deleteBtn.innerHTML = '<iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>';
+                        }
+                    }, 3000);
+                }
             });
         });
     } catch {
