@@ -450,7 +450,7 @@
       btn.textContent = 'Analyzing...';
 
       try {
-        await saveToBackend();
+        await saveToBackend(ROOM_ID);
         const res = await fetch(`/api/rooms/${ROOM_ID}/analyze-style`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -471,15 +471,21 @@
     });
 
     // ── Save to MongoDB ───────────────────────────────────────────────
-    async function saveToBackend() {
+    async function saveToBackend(roomId) {
+      const base = '/api/rooms/' + roomId;
       try {
         if (state.uploadedFile) {
           const form = new FormData();
           form.append('images', state.uploadedFile);
-          await fetch(API + '/images', { method: 'POST', body: form });
+          const r = await fetch(base + '/images', { method: 'POST', body: form });
+          if (!r.ok) {
+            let msg = 'Image upload failed';
+            try { const e = await r.json(); msg = e.error || msg; } catch {}
+            throw new Error(msg);
+          }
         }
 
-        await fetch(API + '/style', {
+        await fetch(base + '/style', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -489,7 +495,9 @@
             roomFeatures: state.selectedFeatures,
           }),
         });
-      } catch { /* silent — analyze will still proceed */ }
+      } catch (e) {
+        throw e;
+      }
     }
 
     // ── Wild Card ─────────────────────────────────────────────────────

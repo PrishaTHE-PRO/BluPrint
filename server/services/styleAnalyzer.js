@@ -1,6 +1,10 @@
 const OpenAI = require("openai");
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai;
+function getClient() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 function buildPrompt() {
   return `
@@ -32,7 +36,7 @@ async function analyzeImages(imageUrls) {
     image_url: { url, detail: "high" },
   }));
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: "gpt-4o",
     max_tokens: 1000,
     messages: [{
