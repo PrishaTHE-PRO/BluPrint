@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BluPrint | Past Inspiration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --garden-dark: #0A3323;
+            --garden-moss: #839958;
+            --garden-beige: #F7F4D5;
+            --garden-rosy: #D3968C;
+            --garden-midnight: #105666;
+            --nav-pink: #f5a7b8;
+        }
+        body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); margin: 0; padding: 0; }
+        h1, h2, h3, h4 { font-family: 'Crimson Pro', serif; }
+        .grid-background {
+            background-image:
+                    linear-gradient(rgba(131,153,88,0.07) 1.5px, transparent 1.5px),
+                    linear-gradient(90deg, rgba(131,153,88,0.07) 1.5px, transparent 1.5px);
+            background-size: 50px 50px;
+        }
+        .noise-texture { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0.03; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+        .ghibli-border { border: 2px solid rgba(247,244,213,0.15); border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px; }
+        .garden-card { background: rgba(16,86,102,0.2); backdrop-filter: blur(12px); transition: all 0.5s cubic-bezier(0.23,1,0.32,1); border: 1px solid rgba(247,244,213,0.05); }
+        .garden-card:hover { transform: translateY(-8px) scale(1.02); background: rgba(16,86,102,0.3); border-color: rgba(211,150,140,0.4); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-reveal { animation: fadeInUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards; opacity: 0; }
+        .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: var(--garden-dark); transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--garden-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
+    </style>
+</head>
+<body>
+<div class="min-h-screen flex flex-col relative grid-background">
+    <div class="noise-texture"></div>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--nav-pink);">
+        <div class="flex items-center gap-4">
+            <a href="dashboard.html" class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
+                    <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
+                </div>
+                <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif;">BluPrint</span>
+            </a>
+        </div>
+        <div class="hidden md:flex items-center gap-12 text-[#0A3323]">
+            <a href="dashboard.html" class="nav-link relative font-bold text-lg transition-all">Home</a>
+            <a href="#" class="nav-link relative font-bold text-lg transition-all">Discover</a>
+            <a href="#" class="nav-link relative font-bold text-lg transition-all">Community</a>
+            <button id="logout-btn" title="Sign out" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
+                <iconify-icon icon="ph:sign-out-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="px-8 lg:px-16 py-16 border-b border-[#F7F4D5]/5 animate-reveal">
+        <div class="max-w-7xl mx-auto flex items-center gap-6">
+            <a href="dashboard.html" class="flex items-center gap-2 text-[#D3968C] font-bold hover:opacity-70 transition-opacity">
+                <iconify-icon icon="ph:arrow-left-bold"></iconify-icon>
+                Back
+            </a>
+            <div>
+                <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Past Inspiration</h1>
+                <p class="text-lg text-[#F7F4D5]/60 mt-2">All your projects, newest to oldest</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-[1600px] mx-auto w-full">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10 animate-reveal" style="animation-delay:0.2s;" id="all-projects-grid">
+            <p class="text-[#F7F4D5]/40 text-center col-span-3 py-12">Loading your projects...</p>
+        </div>
+    </main>
+
+    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center gap-4 opacity-40">
+        <iconify-icon icon="ph:plant-duotone" class="text-4xl text-[#839958]"></iconify-icon>
+        <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5]">Growing since 2026 • BluPrint</p>
+    </footer>
+</div>
+
+<script type="module">
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { auth } from "./firebase.js";
+
+    const logoutBtn = document.getElementById('logout-btn');
+    const grid = document.getElementById('all-projects-grid');
+
+    onAuthStateChanged(auth, function(user) {
+        if (!user) { window.location.href = 'index.html'; return; }
+        loadAllProjects(user.uid);
+    });
+
+    async function loadAllProjects(userId) {
+        try {
+            const res = await fetch('/api/rooms?userId=' + encodeURIComponent(userId));
+            if (!res.ok) throw new Error();
+            const rooms = await res.json();
+
+            if (!rooms.length) {
+                grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-3 py-12">No projects yet — click "Get Started" on the dashboard to create your first room!</p>';
+                return;
+            }
+
+            // Sort newest to oldest
+            rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            // Fetch styles in parallel
+            const withStyles = await Promise.all(rooms.map(async room => {
+                try {
+                    const sr = await fetch('/api/rooms/' + room._id + '/style');
+                    const styles = sr.ok ? await sr.json() : [];
+                    const userStyle = styles.find(s => s.source === 'user') || null;
+                    return { ...room, style: userStyle };
+                } catch {
+                    return { ...room, style: null };
+                }
+            }));
+
+            grid.innerHTML = '';
+            withStyles.forEach(room => {
+                const hasStyle = !!room.style;
+                const statusLabel = hasStyle ? 'Style Analyzed ✨' : 'Dimensions Set';
+                const statusColor = hasStyle ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
+                const tag = room.style?.styleTag || '';
+                const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                const card = document.createElement('div');
+                card.className = 'garden-card ghibli-border p-6 group cursor-pointer';
+                card.innerHTML = `
+                    <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner bg-[#105666]/30 flex items-center justify-center">
+                        <iconify-icon icon="ph:floor-plan-duotone" class="text-7xl text-[#D3968C]/40"></iconify-icon>
+                        <div class="absolute top-5 right-5">
+                            <span class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[#0A3323] text-sm font-bold shadow-lg">${hasStyle ? 'Complete' : 'In Progress'}</span>
+                        </div>
+                    </div>
+                    <div class="px-2 space-y-2">
+                        <h3 class="text-3xl font-bold text-[#F7F4D5]">${room.name}</h3>
+                        <p class="text-lg text-[#F7F4D5]/60">${room.sqft} sq ft${tag ? ' · ' + tag : ''}</p>
+                        <div class="pt-6 flex items-center justify-between border-t border-[#F7F4D5]/10 mt-6">
+                            <span class="text-sm ${statusColor}">${statusLabel}</span>
+                            <span class="text-xs text-[#F7F4D5]/30">${date}</span>
+                        </div>
+                    </div>`;
+                grid.appendChild(card);
+            });
+
+        } catch {
+            grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-3 py-12">Could not load projects — is the server running?</p>';
+        }
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
+    }
+</script>
+</body>
+</html>
