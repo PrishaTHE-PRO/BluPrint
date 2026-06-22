@@ -62,6 +62,9 @@ async function loadProjects(userId) {
             card.innerHTML = `
                 <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner bg-[#105666]/30 flex items-center justify-center">
                     <iconify-icon icon="ph:floor-plan-duotone" class="text-7xl text-[#D3968C]/40"></iconify-icon>
+                    <button class="delete-btn absolute top-5 left-5 w-9 h-9 rounded-full bg-[#0A3323]/70 hover:bg-[#D3968C] text-[#F7F4D5] flex items-center justify-center transition-all backdrop-blur z-10" title="Delete room">
+                        <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
+                    </button>
                     <div class="absolute top-5 right-5">
                         <span class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[#0A3323] text-sm font-bold shadow-lg">${hasStyle ? 'Complete' : 'In Progress'}</span>
                     </div>
@@ -75,6 +78,12 @@ async function loadProjects(userId) {
                     </div>
                 </div>`;
             grid.appendChild(card);
+            card.querySelector('.delete-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!confirm('Delete this room? This can\'t be undone.')) return;
+                const res = await fetch('/api/rooms/' + room._id, { method: 'DELETE' });
+                if (res.ok) card.remove();
+            });
         });
     } catch {
         grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-2 py-12">Could not load projects — is the server running?</p>';

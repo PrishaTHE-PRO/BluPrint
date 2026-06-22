@@ -26,4 +26,14 @@ router.get('/', async (req, res) => {
     }
 });
 
+// DELETE /:roomId — remove a room
+router.delete('/:roomId', async (req, res) => {
+    try {
+        await Room.findByIdAndDelete(req.params.roomId);
+        res.status(200).json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete room.' });
+    }
+});
+
 module.exports = router;
