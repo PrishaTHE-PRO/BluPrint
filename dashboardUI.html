@@ -1,0 +1,272 @@
+Page: Sanctuary Studio - Homey Banner Evolution
+
+```html
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garden Sanctuary Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&amp;family=Quicksand:wght@400;500;600&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --garden-dark: #0A3323;
+            --garden-moss: #839958;
+            --garden-beige: #F7F4D5;
+            --garden-rosy: #D3968C;
+            --garden-midnight: #105666;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--garden-dark);
+            color: var(--garden-beige);
+        }
+
+        h1, h2, h3 {
+            font-family: 'Crimson Pro', serif;
+            color: var(--garden-beige);
+        }
+
+        .grid-background {
+            background-image:
+                    linear-gradient(rgba(131, 153, 88, 0.2) 1.5px, transparent 1.5px),
+                    linear-gradient(90deg, rgba(131, 153, 88, 0.2) 1.5px, transparent 1.5px);
+            background-size: 40px 40px;
+        }
+
+        .ghibli-border {
+            border: 3px solid rgba(10, 51, 35, 0.12);
+            border-radius: 40px 60px 40px 70px / 60px 40px 70px 40px;
+            position: relative;
+        }
+
+        .garden-card {
+            background-color: rgba(16, 86, 102, 0.25);
+            box-shadow: 0 12px 48px -8px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(8px);
+        }
+
+        .garden-card:hover {
+            transform: translateY(-8px) rotate(1deg);
+            box-shadow: 0 20px 60px -12px rgba(16, 86, 102, 0.5);
+            border-color: var(--garden-midnight);
+        }
+
+        .ribbon-banner {
+            background: var(--garden-rosy);
+            color: white;
+            padding: 6px 24px;
+            border-radius: 14px 4px 14px 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            box-shadow: 3px 3px 0 rgba(10, 51, 35, 0.1);
+        }
+
+        .sticker-hover {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+        }
+        .sticker-hover:hover {
+            transform: scale(1.15) rotate(5deg) translateY(-5px);
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+        }
+
+        .nav-pill {
+            padding: 8px 24px;
+            border-radius: 99px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .nav-pill.active {
+            background-color: var(--garden-dark);
+            color: var(--garden-beige);
+            box-shadow: 0 4px 12px rgba(10, 51, 35, 0.2);
+        }
+
+        .nav-pill:not(.active) {
+            color: var(--garden-beige); opacity: 0.6;
+        }
+
+        .nav-pill:not(.active):hover {
+            background-color: rgba(131, 153, 88, 0.1);
+        }
+
+        .ghibli-spirit {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="relative">
+<div class="min-h-screen relative overflow-hidden grid-background flex flex-col">
+    <!-- Persistent Navigation Bar -->
+    <nav class="sticky top-0 z-40 border-b border-[#F7F4D5]/10 px-8 py-4 flex items-center justify-between" style="background-color: rgb(245, 167, 184);">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#0A3323] rounded-2xl flex items-center justify-center">
+                <iconify-icon icon="ph:sparkle-duotone" class="text-2xl text-[#F7F4D5]"></iconify-icon>
+            </div>
+            <span class="text-2xl font-bold tracking-tight text-[#0A3323]">BluPrint</span>
+        </div>
+        <div class="flex items-center gap-10 text-[#0A3323]">
+            <a href="#" id="nav-home" class="font-semibold hover:text-[#D3968C] transition-colors">Home</a>
+            <a href="#" id="nav-discover" class="font-semibold hover:text-[#D3968C] transition-colors">Discover</a>
+            <a href="#" id="nav-community" class="font-semibold hover:text-[#D3968C] transition-colors">Community</a>
+            <div class="w-10 h-10 rounded-full bg-[#839958]/20 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/10">
+                <iconify-icon icon="ph:user-duotone" class="text-xl text-[#0A3323]"></iconify-icon>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Full-Width Homey Banner -->
+    <header class="relative w-full overflow-hidden border-b border-[#F7F4D5]/10">
+        <!-- String Lights Banner Image (Full Length) -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/uploads/c8b9b493-90d2-48dc-beb9-1c448e14e0d2/1779941058177-4ccfad19/bluprintbckd.png" alt="Banner Background" class="w-full h-full object-cover opacity-80">
+        </div>
+
+        <!-- Content Overlay -->
+        <div class="relative z-10 max-w-7xl mx-auto px-8 lg:px-12 pt-12 pb-16 flex flex-col md:flex-row items-center justify-between gap-12">
+            <div class="flex flex-col gap-4">
+                <div>
+                    <h1 class="text-5xl md:text-6xl font-bold mb-2" style="height: 93px;">Welcome back, User!</h1>
+                    <p class="text-lg text-[#F7F4D5]/90">A house is not a home without our website ;)</p>
+                </div>
+                <div class="flex">
+                    <div class="ribbon-banner">
+                        <iconify-icon icon="ph:shooting-star-duotone"></iconify-icon>
+                        <span>Rank: Amateur</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prominent Avatar with Speech Bubble -->
+            <div class="relative group">
+                <!-- Speech Bubble -->
+                <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#F7F4D5] text-[#105666] px-6 py-3 rounded-2xl border-2 border-[#105666] font-bold text-base shadow-xl shadow-black/30 whitespace-nowrap z-20 transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-2">
+                    Let's get started!
+                    <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#F7F4D5] border-b-2 border-r-2 border-[#105666] transform rotate-45"></div>
+                </div>
+                <!-- Character Image with fixed user styling -->
+                <div class="ghibli-spirit">
+                    <img src="https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/uploads/c8b9b493-90d2-48dc-beb9-1c448e14e0d2/1779936396285-b0204285/blueprintavatar.png" alt="Designer Avatar" class="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]" style="object-view-box: xywh(23.55% 14.37% 31.43% 47.54%); width: 253px; height: 288px;">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-10 flex-1 flex flex-col p-8 lg:p-12 gap-12">
+        <!-- Dashboard Content Grid -->
+        <div class="grid lg:grid-cols-12 gap-10">
+
+            <!-- Left Sidebar CTA & Tips -->
+            <div class="lg:col-span-5 flex flex-col gap-10">
+                <!-- Create Project CTA Card -->
+                <div class="relative p-12 bg-[#105666]/30 ghibli-border shadow-xl shadow-black/20 border-[#F7F4D5]/10 overflow-hidden group garden-card">
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#839958]/10 rounded-full blur-3xl"></div>
+
+                    <div class="relative z-10 flex flex-col items-start gap-6">
+                        <div class="p-4 bg-[#0A3323] rounded-3xl shadow-lg">
+                            <iconify-icon icon="ph:plus-bold" class="text-3xl text-white"></iconify-icon>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-bold mb-3">Create a New Project</h2>
+                            <p class="text-lg text-[#F7F4D5]/60 max-w-sm mb-6">Start designing your next serene living space or cozy room retreat.</p>
+                            <button class="px-8 py-3 bg-[#0A3323] text-white rounded-2xl font-bold hover:bg-[#105666] transition-all transform hover:scale-105">
+                                Get Started
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ghibli Sticker: Sparkles -->
+                    <div class="absolute bottom-4 right-4 sticker-hover">
+                        <iconify-icon icon="ph:sparkles-duotone" class="text-8xl text-[#105666]"></iconify-icon>
+                    </div>
+                    <div class="absolute top-6 right-10 opacity-30 sticker-hover">
+                        <iconify-icon icon="ph:star-duotone" class="text-6xl text-[#D3968C]"></iconify-icon>
+                    </div>
+                </div>
+
+                <!-- Tip of the Day Card -->
+                <div class="p-10 ghibli-border garden-card relative overflow-hidden bg-[#F7F4D5]/60">
+                    <div class="absolute top-3 right-3 ghibli-spirit">
+                        <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#D3968C]"></iconify-icon>
+                    </div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-[#0A3323]">Tip of the Day</h3>
+                    </div>
+                    <p class="text-[#0A3323]/80 leading-relaxed italic font-medium">
+                        "Soft layered textures can turn any corner into an enchanted space. Try mixing different fabric weights for a hidden luxury look."
+                    </p>
+                    <!-- Sticker: Moon -->
+                    <div class="absolute -bottom-4 -left-4 sticker-hover opacity-20 rotate-45">
+                        <iconify-icon icon="ph:moon-duotone" class="text-8xl text-[#F7F4D5]/10"></iconify-icon>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Main Content: Project Gallery -->
+            <div class="lg:col-span-7 flex flex-col gap-8">
+                <!-- Content Tabs -->
+                <div class="flex items-center justify-between">
+                    <div class="flex bg-[#839958]/10 p-1.5 rounded-[2rem] border border-[#839958]/20">
+                        <button class="nav-pill active">Recents</button>
+                        <button class="nav-pill">Past Inspiration</button>
+                    </div>
+                    <button class="flex items-center gap-2 text-[#F7F4D5]/60 font-semibold hover:text-[#F7F4D5]">
+                        View All <iconify-icon icon="ph:arrow-right"></iconify-icon>
+                    </button>
+                </div>
+
+                <!-- Project Grid -->
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Project Card 1 -->
+                    <div class="garden-card ghibli-border p-6 group">
+                        <div class="aspect-video rounded-3xl overflow-hidden mb-5 bg-[#839958]/10 relative">
+                            <img src="https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&amp;fit=crop&amp;q=80&amp;w=400" alt="Forest Study" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <div class="absolute top-3 right-3">
+                                <span class="px-3 py-1 bg-[#F7F4D5]/90 backdrop-blur-sm rounded-full text-xs font-bold text-[#0A3323]">Working</span>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">The Bedroom</h3>
+                        <p class="text-[#0A3323]/60 mb-4" style="color: rgba(248, 201, 213, 0.6);">Dusky study with hanging vines and old parchment textures.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium">Updated 2h ago</span>
+                            <iconify-icon icon="ph:pencil-circle-duotone" class="text-3xl text-[#F7F4D5] hover:text-[#D3968C] transition-colors cursor-pointer"></iconify-icon>
+                        </div>
+                    </div>
+
+                    <!-- Project Card 2 -->
+                    <div class="garden-card ghibli-border p-6 group">
+                        <div class="aspect-video rounded-3xl overflow-hidden mb-5 bg-[#D3968C]/10 relative">
+                            <img src="https://images.unsplash.com/photo-1544601283-827a39c32977?auto=format&amp;fit=crop&amp;q=80&amp;w=400" alt="Meadow Balcony" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <div class="absolute top-3 right-3">
+                                <iconify-icon icon="ph:heart-fill" class="text-2xl text-[#D3968C]"></iconify-icon>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">The Study Room</h3>
+                        <p class="text-[#0A3323]/60 mb-4">Open-air concept featuring lily-inspired seating and lotuses.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-[#D3968C] font-bold">Completed ✨</span>
+                            <iconify-icon icon="ph:eye-duotone" class="text-3xl text-[#F7F4D5] hover:text-[#D3968C] transition-colors cursor-pointer"></iconify-icon>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+</body></html>
+```

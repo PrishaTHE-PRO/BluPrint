@@ -14,7 +14,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Upload a file buffer to Cloudinary, returns the secure URL
 function uploadToCloudinary(buffer, mimetype) {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -28,7 +27,22 @@ function uploadToCloudinary(buffer, mimetype) {
   });
 }
 
-// Files held in memory only long enough to upload to Cloudinary. 5MB/file cap.
+function normalizeColorPalette(palette) {
+  if (!Array.isArray(palette)) return [];
+  return palette
+    .map((item) => {
+      const raw = typeof item === "string" ? item : item && item.hex;
+      if (!raw) return null;
+      const match = String(raw).trim().match(/^#?[0-9a-f]{6}$/i);
+      return match ? (match[0].startsWith("#") ? match[0] : `#${match[0]}`).toUpperCase() : null;
+    })
+    .filter(Boolean);
+}
+
+function normalizeStringArray(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item || "").trim()).filter(Boolean);
+}
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -72,6 +86,33 @@ router.post("/:roomId/images", upload.array("images", 5), async (req, res) => {
   }
 });
 
+/* POST /api/rooms/:roomId/images/url  body: { url } */
+router.post("/:roomId/images/url", async (req, res) => {
+  try {
+    const url = String(req.body.url || "").trim();
+    if (!/^https?:\/\/\S+/i.test(url)) {
+      return res.status(400).json({ error: "A valid image URL is required" });
+    }
+
+    const doc = await InspirationImage.findOneAndUpdate(
+      { roomId: req.params.roomId, url },
+      {
+        $setOnInsert: {
+          roomId: req.params.roomId,
+          source: "url",
+          url,
+        },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json(doc);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Could not save image URL" });
+  }
+});
+
 /* GET /api/rooms/:roomId/images  — all inspo images for a room */
 router.get("/:roomId/images", async (req, res) => {
   const docs = await InspirationImage.find({ roomId: req.params.roomId }).sort("createdAt");
@@ -96,7 +137,9 @@ router.post("/:roomId/style", async (req, res) => {
         roomId: req.params.roomId,
         source: "user",
         styleTag: req.body.styleTag,
-        colorPalette: req.body.colorPalette || [],
+        colorPalette: normalizeColorPalette(req.body.colorPalette),
+        moodTags: normalizeStringArray(req.body.moodTags),
+        roomFeatures: normalizeStringArray(req.body.roomFeatures),
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );

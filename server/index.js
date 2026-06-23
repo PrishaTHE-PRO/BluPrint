@@ -9,15 +9,18 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 app.use("/api/rooms", require("./routes/inspo"));
+app.use("/api/rooms", require("./routes/styleRoutes"));
 app.use("/api/rooms", require("./routes/rooms"));
 app.use("/api/rooms", require("./routes/styleRoutes"));
+
+const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
   .then(() =>
-    app.listen(process.env.PORT, () =>
-      console.log(`Server on http://localhost:${process.env.PORT}`)
+    app.listen(PORT, () =>
+      console.log(`Server on http://localhost:${PORT}`)
     )
   )
   .catch((err) => console.error("DB connection error:", err));

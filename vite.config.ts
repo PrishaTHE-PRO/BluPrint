@@ -11,8 +11,8 @@ export default defineConfig({
         dashboard:      'dashboard.html',
         roomResult:     'room-result.html',
         roomDimensions: 'room-dimensions.html',
+        inspoUpload:    'inspo-upload.html',
       },
     },
   },
 });
-
