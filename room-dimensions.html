@@ -146,7 +146,7 @@
 <div class="noise-texture"></div>
 <div id="custom-toast"><iconify-icon icon="ph:info-duotone" class="text-xl"></iconify-icon> <span id="toast-msg">Element added</span></div>
 
-<div class="min-h-screen relative flex flex-col grid-background">
+<div class="h-screen relative flex flex-col grid-background">
   <!-- Nav Bar -->
   <nav id="main-nav" class="sticky top-0 z-50 px-8 py-3 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-md" style="background-color: var(--garden-accent);">
     <div class="flex items-center gap-4">
@@ -216,8 +216,8 @@
     </section>
 
     <!-- Right: Panel -->
-    <section class="w-[30%] animate-slide-right opacity-0 flex flex-col gap-6" style="animation-delay: 0.3s">
-      <div class="garden-card ghibli-border p-6 pb-32 h-full flex flex-col gap-6 overflow-y-auto">
+    <section class="w-[30%] animate-slide-right opacity-0 flex flex-col gap-6 min-h-0 overflow-hidden" style="animation-delay: 0.3s">
+      <div class="garden-card ghibli-border p-6 pb-32 flex-1 flex flex-col gap-6 overflow-y-auto">
         <!-- Section: Tools & History -->
         <div class="space-y-4">
           <h2 class="text-xl font-bold flex items-center gap-2">
