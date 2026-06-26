@@ -166,9 +166,9 @@
     </div>
   </nav>
 
-  <main class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full">
+  <main class="flex-1 flex overflow-hidden p-4 gap-4 w-full">
     <!-- Left: SVG Canvas -->
-    <section class="w-[70%] relative flex flex-col gap-4">
+    <section class="flex-1 min-w-0 relative flex flex-col gap-3">
       <header class="animate-slide-right opacity-0" style="animation-delay: 0.1s">
         <h1 class="text-4xl font-bold text-[#F7F4D5]">Architectural Studio</h1>
         <p class="text-md text-[#F7F4D5]/60">Customize your footprint. Drag elements to walls, or vertices to reshape.</p>
@@ -178,11 +178,11 @@
         <svg id="editor-svg" viewBox="0 0 800 600" class="w-full h-full p-8 select-none">
           <defs>
             <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(247,244,213,0.03)" stroke-width="1"></path>
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(247,244,213,0.06)" stroke-width="0.5"></path>
             </pattern>
             <pattern id="largeGrid" width="100" height="100" patternUnits="userSpaceOnUse">
               <rect width="100" height="100" fill="url(#smallGrid)"></rect>
-              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(247,244,213,0.08)" stroke-width="1.5"></path>
+              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(247,244,213,0.12)" stroke-width="1"></path>
             </pattern>
             <symbol id="door-template">
               <path d="M 0 0 L 40 0" stroke="#F7F4D5" stroke-width="4" />
@@ -216,49 +216,58 @@
     </section>
 
     <!-- Right: Panel -->
-    <section class="w-[30%] animate-slide-right opacity-0 flex flex-col gap-6 min-h-0 overflow-hidden" style="animation-delay: 0.3s">
+    <section class="w-80 shrink-0 animate-slide-right opacity-0 flex flex-col min-h-0 overflow-hidden" style="animation-delay: 0.3s">
       <div class="garden-card ghibli-border p-6 pb-32 flex-1 flex flex-col gap-6 overflow-y-auto">
         <!-- Section: Tools & History -->
-        <div class="space-y-4">
-          <h2 class="text-xl font-bold flex items-center gap-2">
-            <iconify-icon icon="ph:pencil-circle-duotone" class="text-2xl text-rosy"></iconify-icon> Customize your room
-          </h2>
-
-          <div class="space-y-3">
-            <div class="flex justify-between items-center bg-white/5 p-3 rounded-2xl">
-              <span class="text-[10px] font-bold uppercase tracking-widest text-[#F7F4D5]/30 ml-1">History</span>
-              <div class="flex gap-2">
-                <button id="btn-undo" class="toolbar-btn !w-9 !h-9 text-[#F7F4D5]/60 hover:text-white disabled:opacity-20" disabled>
-                  <iconify-icon icon="ph:arrow-u-up-left-duotone" class="text-lg"></iconify-icon>
-                </button>
-                <button id="btn-redo" class="toolbar-btn !w-9 !h-9 text-[#F7F4D5]/60 hover:text-white disabled:opacity-20" disabled>
-                  <iconify-icon icon="ph:arrow-u-up-right-duotone" class="text-lg"></iconify-icon>
-                </button>
-              </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <iconify-icon icon="ph:pencil-circle-duotone" class="text-xl text-[#D3968C]"></iconify-icon> Add to Room
+            </h2>
+            <div class="flex gap-1.5">
+              <button id="btn-undo" class="toolbar-btn !w-8 !h-8 text-[#F7F4D5]/60 hover:text-white disabled:opacity-20" disabled title="Undo">
+                <iconify-icon icon="ph:arrow-u-up-left-duotone" class="text-base"></iconify-icon>
+              </button>
+              <button id="btn-redo" class="toolbar-btn !w-8 !h-8 text-[#F7F4D5]/60 hover:text-white disabled:opacity-20" disabled title="Redo">
+                <iconify-icon icon="ph:arrow-u-up-right-duotone" class="text-base"></iconify-icon>
+              </button>
             </div>
-            <div class="grid grid-cols-1 gap-2.5">
-              <div class="flex items-center gap-3 bg-white/5 p-2 rounded-2xl hover:bg-white/10 transition-colors cursor-pointer group">
-                <div draggable="true" data-type="door" class="toolbar-btn !w-10 !h-10">
-                  <iconify-icon icon="ph:door-duotone" class="text-xl"></iconify-icon>
-                </div>
-                <span class="text-[11px] font-bold text-[#F7F4D5]/60 uppercase tracking-widest">Door</span>
+          </div>
+
+          <p class="text-[11px] text-[#F7F4D5]/40 font-medium">Drag any card onto a wall of the floor plan</p>
+
+          <div class="flex flex-col gap-2">
+            <div draggable="true" data-type="door" class="drag-card flex items-center gap-3 p-3 rounded-2xl bg-[#D3968C]/10 border border-[#D3968C]/20 cursor-grab hover:bg-[#D3968C]/20 hover:border-[#D3968C]/50 transition-all active:cursor-grabbing active:scale-95 select-none">
+              <div class="w-10 h-10 rounded-xl bg-[#D3968C]/20 flex items-center justify-center shrink-0">
+                <iconify-icon icon="ph:door-duotone" class="text-2xl text-[#D3968C]"></iconify-icon>
               </div>
-              <div class="flex items-center gap-3 bg-white/5 p-2 rounded-2xl hover:bg-white/10 transition-colors cursor-pointer group">
-                <div draggable="true" data-type="window" class="toolbar-btn !w-10 !h-10">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="12" y1="7" x2="12" y2="17"></line>
-                    <line x1="7" y1="12" x2="17" y2="12"></line>
-                  </svg>
-                </div>
-                <span class="text-[11px] font-bold text-[#F7F4D5]/60 uppercase tracking-widest">Window</span>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-[#F7F4D5] text-sm">Door</p>
+                <p class="text-[10px] text-[#F7F4D5]/40">Drag onto any wall</p>
               </div>
-              <div class="flex items-center gap-3 bg-white/5 p-2 rounded-2xl hover:bg-white/10 transition-colors cursor-pointer group">
-                <div draggable="true" data-type="cutout" class="toolbar-btn !w-10 !h-10 border-dashed">
-                  <iconify-icon icon="ph:square-duotone" class="text-xl"></iconify-icon>
-                </div>
-                <span class="text-[11px] font-bold text-[#F7F4D5]/60 uppercase tracking-widest">Cutout</span>
+              <iconify-icon icon="ph:dots-six-vertical-bold" class="text-[#F7F4D5]/20 text-lg shrink-0"></iconify-icon>
+            </div>
+
+            <div draggable="true" data-type="window" class="drag-card flex items-center gap-3 p-3 rounded-2xl bg-[#105666]/30 border border-[#105666]/40 cursor-grab hover:bg-[#105666]/50 hover:border-[#105666]/70 transition-all active:cursor-grabbing active:scale-95 select-none">
+              <div class="w-10 h-10 rounded-xl bg-[#105666]/40 flex items-center justify-center shrink-0">
+                <iconify-icon icon="ph:browsers-duotone" class="text-2xl text-[#83d4e0]"></iconify-icon>
               </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-[#F7F4D5] text-sm">Window</p>
+                <p class="text-[10px] text-[#F7F4D5]/40">Drag onto any wall</p>
+              </div>
+              <iconify-icon icon="ph:dots-six-vertical-bold" class="text-[#F7F4D5]/20 text-lg shrink-0"></iconify-icon>
+            </div>
+
+            <div draggable="true" data-type="cutout" class="drag-card flex items-center gap-3 p-3 rounded-2xl bg-[#839958]/10 border border-[#839958]/20 border-dashed cursor-grab hover:bg-[#839958]/20 hover:border-[#839958]/50 transition-all active:cursor-grabbing active:scale-95 select-none">
+              <div class="w-10 h-10 rounded-xl bg-[#839958]/20 flex items-center justify-center shrink-0">
+                <iconify-icon icon="ph:crop-duotone" class="text-2xl text-[#839958]"></iconify-icon>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-[#F7F4D5] text-sm">Cutout / Nook</p>
+                <p class="text-[10px] text-[#F7F4D5]/40">Cuts a notch in the wall</p>
+              </div>
+              <iconify-icon icon="ph:dots-six-vertical-bold" class="text-[#F7F4D5]/20 text-lg shrink-0"></iconify-icon>
             </div>
           </div>
         </div>
@@ -360,8 +369,8 @@
 
   let state = {
     roomPoints: [
-      {x: 200, y: 150}, {x: 600, y: 150},
-      {x: 600, y: 450}, {x: 200, y: 450}
+      {x: 200, y: 140}, {x: 600, y: 140},
+      {x: 600, y: 440}, {x: 200, y: 440}
     ],
     elements: [],
     cutouts: []
@@ -558,10 +567,14 @@
   }
 
   // Interactions
-  document.querySelectorAll('.toolbar-btn[draggable="true"]').forEach(btn => {
-    btn.addEventListener('dragstart', (e) => {
-      draggingFromToolbar = btn.dataset.type;
+  document.querySelectorAll('.drag-card[draggable="true"]').forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      draggingFromToolbar = card.dataset.type;
       e.dataTransfer.setData('text/plain', draggingFromToolbar);
+      card.style.opacity = '0.5';
+    });
+    card.addEventListener('dragend', () => {
+      card.style.opacity = '';
     });
   });
 
