@@ -814,6 +814,48 @@
   widthInput.addEventListener('input', updateBlueprintRealtime);
   lengthInput.addEventListener('input', updateBlueprintRealtime);
 
+  // Nav links
+  const navBrand   = document.getElementById('nav-brand-link');
+  const navHome    = document.getElementById('nav-home-link');
+  const navDiscover = document.getElementById('nav-discover-link');
+  if (navBrand)    navBrand.href    = 'dashboard.html';
+  if (navHome)     navHome.href     = 'dashboard.html';
+  if (navDiscover) navDiscover.href = 'dashboard.html';
+
+  // Save & Continue
+  document.getElementById('cta-save-continue').addEventListener('click', async () => {
+    const btn = document.getElementById('cta-save-continue');
+    const userId = localStorage.getItem('blueprintUserId');
+    if (!userId) {
+      showToast('Please log in first');
+      return;
+    }
+
+    const name     = document.getElementById('room-name')?.value?.trim() || 'My Room';
+    const widthFt  = parseFloat(widthInput.value)  || 15;
+    const lengthFt = parseFloat(lengthInput.value) || 12;
+    const heightFt = parseFloat(document.getElementById('room-height')?.value || '9') || 9;
+
+    btn.textContent = 'Saving...';
+    btn.disabled    = true;
+
+    try {
+      const res = await fetch('/api/rooms', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ userId, name, widthFt, lengthFt, heightFt }),
+      });
+      if (!res.ok) throw new Error('Server error ' + res.status);
+      const room = await res.json();
+      localStorage.setItem('blueprintCurrentRoomId', room._id);
+      window.location.href = 'inspo-upload.html';
+    } catch (e) {
+      showToast('Save failed — is the server running?');
+      btn.textContent = 'Save & Continue →';
+      btn.disabled    = false;
+    }
+  });
+
   // Init
   saveState();
   renderAll();
