@@ -1,0 +1,196 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze Style | BluPrint</title>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>:root{--garden-dark:#0A3323;--garden-moss:#839958;--garden-beige:#F7F4D5;--garden-rosy:#D3968C;--garden-midnight:#105666;--garden-accent:#f5a7b8}body{font-family:'Quicksand',sans-serif;background-color:var(--garden-dark);color:var(--garden-beige);overflow-x:hidden}h1,h2,h3,h4{font-family:'Crimson Pro',serif}.noise-texture{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")}@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}.animate-reveal{animation:fadeInUp .8s cubic-bezier(.22,1,.36,1) forwards;opacity:0}.grid-background{background-image:linear-gradient(rgba(131,153,88,.07) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(131,153,88,.07) 1.5px,transparent 1.5px);background-size:50px 50px}.ghibli-border{border:2px solid rgba(247,244,213,.15);border-radius:40px 60px 45px 70px / 65px 45px 75px 45px;transition:border-color .4s ease}.garden-card{background:rgba(16,86,102,.2);backdrop-filter:blur(12px);transition:all .5s cubic-bezier(.23,1,.32,1);border:1px solid rgba(247,244,213,.05)}.garden-card:hover{transform:translateY(-4px);background:rgba(16,86,102,.3);border-color:rgba(211,150,140,.4);box-shadow:0 30px 60px -15px rgba(0,0,0,.4)}.option-btn{padding:12px 16px;border:1px solid rgba(247,244,213,.1);background:rgba(247,244,213,.03);border-radius:18px;cursor:pointer;transition:all .3s ease;text-align:left}.option-btn:hover{background:rgba(247,244,213,.1)}.option-btn.selected{background:rgba(211,150,140,.3);border-color:var(--garden-rosy)}.option-btn.disabled{opacity:.4;cursor:not-allowed}.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .4s ease;border:2px solid rgba(247,244,213,.2)}.step-circle.active{background:var(--garden-rosy);color:#fff;border-color:var(--garden-rosy);box-shadow:0 0 15px rgba(211,150,140,.4)}.step-circle.done{background:var(--garden-moss);color:#fff;border-color:var(--garden-moss)}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--garden-dark)}::-webkit-scrollbar-thumb{background:var(--garden-moss);border-radius:10px}</style>
+</head>
+<body>
+<div class="noise-texture"></div>
+<div class="min-h-screen relative flex flex-col grid-background">
+    <nav id="main-nav" class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--garden-accent);">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center shadow-inner-lg transform transition hover:rotate-12 cursor-pointer">
+                <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
+            </div>
+            <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif">BluPrint</span>
+        </div>
+        <div class="hidden md:flex items-center gap-12 text-[#0A3323]">
+            <a href="#" id="nav-home-link" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a><a href="#" id="nav-discover-link" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Discover<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a><a href="#" id="nav-community-link" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Community<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+            <div class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
+                <iconify-icon icon="ph:user-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+            </div>
+        </div>
+    </nav>
+    <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-5xl mx-auto w-full flex flex-col gap-12">
+        <header class="animate-reveal text-center space-y-4">
+            <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Analyze Style</h1>
+            <p class="text-xl text-[#F7F4D5]/70 max-w-2xl mx-auto">Tell us your preferences and share a Pinterest image — we'll build your style profile and recommend furniture for your room retreat.</p>
+        </header>
+        <div class="stepper animate-reveal flex items-center justify-center gap-4 md:gap-12" style="animation-delay:0.2s">
+            <div class="flex items-center gap-3">
+                <div class="step-circle active" id="circle-1">1</div>
+                <span class="font-bold text-[#F7F4D5]" id="label-1">Your Picks</span>
+            </div>
+            <div class="w-12 md:w-24 h-px bg-[#F7F4D5]/20"></div>
+            <div class="flex items-center gap-3">
+                <div class="step-circle" id="circle-2">2</div>
+                <span class="font-bold text-[#F7F4D5]/40" id="label-2">Vision</span>
+            </div>
+            <div class="w-12 md:w-24 h-px bg-[#F7F4D5]/20"></div>
+            <div class="flex items-center gap-3">
+                <div class="step-circle" id="circle-3">3</div>
+                <span class="font-bold text-[#F7F4D5]/40" id="label-3">Results</span>
+            </div>
+        </div>
+        <div id="step-1" class="animate-reveal space-y-8" style="animation-delay:0.4s">
+            <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
+                <div class="space-y-6">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-2">Style Profile</h2>
+                        <p class="text-[#F7F4D5]/60">Choose the interior style that speaks to you.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="style-grid"></div>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-2">The Mood</h2>
+                        <p class="text-[#F7F4D5]/60">What atmosphere should your room have?</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="mood-grid"></div>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-2">Color Palette</h2>
+                        <p class="text-[#F7F4D5]/60">Choose up to 3 tones. <span class="text-[#D3968C]" id="color-limit-note"></span></p>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" id="color-grid"></div>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-2">Room Features</h2>
+                        <p class="text-[#F7F4D5]/60">Select up to 3 essential features. <span class="text-[#D3968C]" id="feature-limit-note"></span></p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="feature-grid"></div>
+                </div>
+                <div class="pt-8 flex justify-end">
+                    <button class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30 disabled:hover:scale-100" id="step1-next" disabled>
+                        Next: Pinterest Image
+                        <iconify-icon icon="ph:arrow-right-bold" class="ml-2"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="step-2" class="hidden space-y-8">
+            <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
+                <div class="space-y-4">
+                    <h2 class="text-4xl font-bold">Pinterest Vision</h2>
+                    <p class="text-lg text-[#F7F4D5]/60">Paste a direct URL to a Pinterest image that inspires your dream space.</p>
+                    <input type="text" id="pinterest-url" class="w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg" placeholder="https://i.pinimg.com/originals/...">
+                    <div id="pinterest-preview-wrap" class="hidden pt-6">
+                        <div class="relative inline-block">
+                            <img id="pinterest-preview" class="max-w-xs rounded-3xl shadow-2xl border-4 border-[#F7F4D5]/10" alt="Pinterest preview">
+                            <div class="absolute -top-3 -right-3 p-2 bg-[#D3968C] rounded-full shadow-lg animate-bounce">
+                                <iconify-icon icon="ph:magic-wand-duotone" class="text-2xl text-white"></iconify-icon>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="vision-status" class="hidden p-6 rounded-2xl bg-[#D3968C]/10 border border-[#D3968C]/30 text-lg font-medium"></div>
+                </div>
+                <div class="flex justify-between items-center pt-8">
+                    <button id="step2-back" class="px-8 py-3 bg-white/5 text-[#F7F4D5] rounded-2xl font-bold border border-[#F7F4D5]/10 hover:bg-white/10 transition-all">
+                        <iconify-icon icon="ph:arrow-left-bold" class="mr-2"></iconify-icon>
+                        Back
+                    </button>
+                    <button class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30" id="step2-analyze" disabled>
+                        Analyze with AI
+                        <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="step-3" class="hidden space-y-12">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="garden-card ghibli-border p-10 space-y-6">
+                    <h2 class="text-3xl font-bold text-[#D3968C]">Your Selections</h2>
+                    <div class="space-y-4">
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Style</p>
+                            <p id="res-style-manual" class="text-xl font-bold"></p>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Mood</p>
+                            <div id="res-mood-manual" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Colors</p>
+                            <div id="res-colors-manual" class="flex flex-wrap gap-3"></div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Features</p>
+                            <div id="res-features-manual" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="garden-card ghibli-border p-10 space-y-6">
+                    <h2 class="text-3xl font-bold text-[#839958]">AI Vision Analysis</h2>
+                    <div class="space-y-4">
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Detected Style</p>
+                            <p id="res-style-ai" class="text-xl font-bold"></p>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">Mood Tags</p>
+                            <div id="res-mood-ai" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-1">AI Palette</p>
+                            <div id="res-colors-ai" class="flex flex-wrap gap-3"></div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <p class="text-xs uppercase tracking-widest text-[#F7F4D5]/40 mb-2">AI Confidence</p>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                                    <div id="confidence-bar" class="h-full bg-[#839958] transition-all duration-1000"></div>
+                                </div>
+                                <span id="confidence-pct" class="font-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="garden-card ghibli-border p-10">
+                <h2 class="text-4xl font-bold mb-8">Recommended Pieces</h2>
+                <div id="furniture-status" class="hidden mb-6 p-4 rounded-xl bg-white/5 text-center"></div>
+                <div id="furniture-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            </div>
+            <div class="garden-card ghibli-border p-10 space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-3xl font-bold">Data Export</h2>
+                    <button id="copy-btn" class="px-6 py-2 bg-[#105666] text-white rounded-xl font-bold hover:bg-[#1a8ba5] transition-all">Copy JSON</button>
+                </div>
+                <div id="json-block" class="p-6 bg-[#0A3323]/60 rounded-2xl font-mono text-sm border border-[#F7F4D5]/10 overflow-x-auto max-h-96"></div>
+                <div id="mongo-save-status" class="text-sm font-medium"></div>
+                <div class="pt-4">
+                    <button id="start-over" class="text-[#D3968C] font-bold hover:underline">
+                        <iconify-icon icon="ph:arrows-clockwise-bold" class="mr-1"></iconify-icon>
+                        Start New Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center gap-4 opacity-40">
+        <iconify-icon icon="ph:house-duotone" class="text-4xl text-[#839958]"></iconify-icon>
+        <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5]">BluPrint Interior Studio • 2024</p>
+    </footer>
+</div>
+<script>const STYLES=[{label:'Modern',desc:'Clean, sleek spaces'},{label:'Scandinavian',desc:'Cozy minimalism'},{label:'Bohemian',desc:'Creative, expressive'},{label:'Industrial',desc:'Urban loft aesthetic'},{label:'Traditional',desc:'Elegant, timeless'},{label:'Coastal',desc:'Light, relaxing'},{label:'Farmhouse',desc:'Warm, rustic comfort'},{label:'Mid-Century Modern',desc:'Retro sophistication'}];const MOODS=['Calm & Relaxing','Cozy & Warm','Natural & Refreshing','Luxurious & Elegant','Creative & Artistic','Modern & Energetic'];const COLORS=[{name:'White',hex:'#FFFFFF'},{name:'Beige',hex:'#E8DCCB'},{name:'Gray',hex:'#9CA3AF'},{name:'Black',hex:'#1F1F1F'},{name:'Navy Blue',hex:'#1E3A5F'},{name:'Sage Green',hex:'#A3B18A'},{name:'Terracotta',hex:'#C96A4A'},{name:'Blush Pink',hex:'#E8B4B8'},{name:'Mustard Yellow',hex:'#D4A017'},{name:'Lavender',hex:'#B8A9D9'}];const FEATURES=['Reading Nook','Smart Lighting','Floating Shelves','Indoor Plants','Full-Length Mirror','Wall Art / Gallery Wall','Accent Chair','Workspace Desk','Vanity Station','Bookcase / Bookshelves'];const state={selectedStyle:null,selectedMood:null,selectedColors:[],selectedFeatures:[],pinterestUrl:'',aiResult:null};let currentStep=1;function showStep(n){[1,2,3].forEach(i=>{const stepEl=document.getElementById('step-'+i);if(stepEl)stepEl.style.display=i===n?'block':'none';const circle=document.getElementById('circle-'+i);const label=document.getElementById('label-'+i);if(circle){circle.className='step-circle '+(i===n?'active':i<n?'done':'');circle.textContent=i<n?'✓':i}if(label)label.className='font-bold '+(i===n?'text-[#F7F4D5]':'text-[#F7F4D5]/40')});currentStep=n;window.scrollTo({top:0,behavior:'smooth'})}function buildStyleGrid(){const grid=document.getElementById('style-grid');STYLES.forEach(s=>{const btn=document.createElement('button');btn.className='option-btn';btn.innerHTML=`<p class="font-bold text-lg">${s.label}</p><p class="text-xs text-[#F7F4D5]/40">${s.desc}</p>`;btn.addEventListener('click',()=>{grid.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');state.selectedStyle=s.label;checkStep1Valid()});grid.appendChild(btn)})}function buildMoodGrid(){const grid=document.getElementById('mood-grid');MOODS.forEach(m=>{const btn=document.createElement('button');btn.className='option-btn text-center';btn.innerHTML=`<p class="font-bold">${m}</p>`;btn.addEventListener('click',()=>{grid.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');state.selectedMood=m;checkStep1Valid()});grid.appendChild(btn)})}function buildColorGrid(){const grid=document.getElementById('color-grid');COLORS.forEach(c=>{const btn=document.createElement('button');btn.className='option-btn flex flex-col items-center gap-2';btn.innerHTML=`<span class="w-10 h-10 rounded-full border border-white/20" style="background:${c.hex}"></span><p class="text-xs font-bold">${c.name}</p>`;btn.addEventListener('click',()=>{const already=state.selectedColors.find(x=>x.hex===c.hex);if(already){state.selectedColors=state.selectedColors.filter(x=>x.hex!==c.hex);btn.classList.remove('selected')}else{if(state.selectedColors.length>=3)return;state.selectedColors.push({name:c.name,hex:c.hex});btn.classList.add('selected')}updateColorLimit();checkStep1Valid()});grid.appendChild(btn)})}function updateColorLimit(){const remaining=3-state.selectedColors.length;document.getElementById('color-limit-note').textContent=remaining>0?`(${remaining} remaining)`:'(maximum reached)';document.querySelectorAll('#color-grid .option-btn:not(.selected)').forEach(b=>b.classList.toggle('disabled',state.selectedColors.length>=3))}function buildFeatureGrid(){const grid=document.getElementById('feature-grid');FEATURES.forEach(f=>{const btn=document.createElement('button');btn.className='option-btn text-center';btn.innerHTML=`<p class="font-bold text-sm">${f}</p>`;btn.addEventListener('click',()=>{const already=state.selectedFeatures.includes(f);if(already){state.selectedFeatures=state.selectedFeatures.filter(x=>x!==f);btn.classList.remove('selected')}else{if(state.selectedFeatures.length>=3)return;state.selectedFeatures.push(f);btn.classList.add('selected')}updateFeatureLimit();checkStep1Valid()});grid.appendChild(btn)})}function updateFeatureLimit(){const remaining=3-state.selectedFeatures.length;document.getElementById('feature-limit-note').textContent=remaining>0?`(${remaining} remaining)`:'(maximum reached)';document.querySelectorAll('#feature-grid .option-btn:not(.selected)').forEach(b=>b.classList.toggle('disabled',state.selectedFeatures.length>=3))}function checkStep1Valid(){document.getElementById('step1-next').disabled=!state.selectedStyle||!state.selectedMood||state.selectedColors.length===0||state.selectedFeatures.length===0}document.getElementById('step1-next').addEventListener('click',()=>showStep(2));const pinterestInput=document.getElementById('pinterest-url');const analyzeBtn=document.getElementById('step2-analyze');pinterestInput.addEventListener('input',()=>{const url=pinterestInput.value.trim();state.pinterestUrl=url;analyzeBtn.disabled=!url;const preview=document.getElementById('pinterest-preview');const previewWrap=document.getElementById('pinterest-preview-wrap');if(url.match(/\.(jpg|jpeg|png|webp)/i)||url.includes('pinimg.com')){preview.src=url;previewWrap.classList.remove('hidden');preview.onerror=()=>previewWrap.classList.add('hidden')}else{previewWrap.classList.add('hidden')}});document.getElementById('step2-back').addEventListener('click',()=>showStep(1));analyzeBtn.addEventListener('click',async()=>{analyzeBtn.disabled=true;setVisionStatus('Architecting vision profile...','');setTimeout(()=>{state.aiResult={styleTag:state.selectedStyle||"Modern",moodTags:[state.selectedMood||"Cozy"],colorPalette:state.selectedColors.length?state.selectedColors:[{name:"Beige",hex:"#E8DCCB"}],roomFeatures:state.selectedFeatures.length?state.selectedFeatures:["Smart Lighting"],confidence:94};setVisionStatus('Blueprint analyzed successfully!','success');setTimeout(async()=>{await buildStep3();showStep(3)},800)},1500)});function setVisionStatus(msg,type){const box=document.getElementById('vision-status');box.textContent=msg;box.className='p-6 rounded-2xl text-lg font-medium '+(type==='success'?'bg-[#839958]/20 border-[#839958]/40 text-[#839958]':'bg-[#D3968C]/10 border-[#D3968C]/30 text-[#D3968C]');box.classList.remove('hidden')}async function buildStep3(){const ai=state.aiResult;document.getElementById('res-style-manual').textContent=state.selectedStyle;document.getElementById('res-mood-manual').innerHTML=`<span class="px-3 py-1 bg-[#D3968C]/20 text-[#D3968C] rounded-full text-sm font-bold">${state.selectedMood}</span>`;document.getElementById('res-colors-manual').innerHTML=state.selectedColors.map(c=>`<div class="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg"><span class="w-4 h-4 rounded-full" style="background:${c.hex}"></span><span class="text-sm font-medium">${c.name}</span></div>`).join('');document.getElementById('res-features-manual').innerHTML=state.selectedFeatures.map(f=>`<span class="px-3 py-1 bg-[#105666]/20 text-[#105666] rounded-full text-sm font-bold">${f}</span>`).join('');document.getElementById('res-style-ai').textContent=ai.styleTag||'—';document.getElementById('res-mood-ai').innerHTML=(ai.moodTags||[]).map(m=>`<span class="px-3 py-1 bg-[#839958]/20 text-[#839958] rounded-full text-sm font-bold">${m}</span>`).join('');document.getElementById('res-colors-ai').innerHTML=(ai.colorPalette||[]).map(c=>`<div class="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg"><span class="w-4 h-4 rounded-full" style="background:${c.hex}"></span><span class="text-sm font-medium">${c.name}</span></div>`).join('');const conf=ai.confidence||0;document.getElementById('confidence-bar').style.width=conf+'%';document.getElementById('confidence-pct').textContent=conf+'%';const doc={analyzedAt:new Date().toISOString(),pinterestImage:state.pinterestUrl,userPicks:{styleTag:state.selectedStyle,moodTag:state.selectedMood,colorPalette:state.selectedColors,roomFeatures:state.selectedFeatures},aiAnalysis:ai};document.getElementById('json-block').textContent=JSON.stringify(doc,null,2);fetchFurniture()}async function fetchFurniture(){const statusEl=document.getElementById('furniture-status');const grid=document.getElementById('furniture-grid');statusEl.classList.remove('hidden');statusEl.textContent='Curating your design pieces...';const mockItems=[{name:"Oak Finish Floating Shelves",category:"Shelving",price:"$85–$140",why:"Matches the natural grain of Scandinavian styles."},{name:"Velvet Accent Lounge Chair",category:"Seating",price:"$280–$450",why:"Adds the luxurious mood detected in your palette."},{name:"Dimmable Smart Floor Lamp",category:"Lighting",price:"$120–$180",why:"Functional tech that fits industrial minimalism."},{name:"Wool Woven Hand-Tufted Rug",category:"Flooring",price:"$210–$600",why:"Provides essential warmth for cozy room retreats."},{name:"Curated Gallery Wall Frames",category:"Decor",price:"$45–$90",why:"Enables the Creative & Artistic vibe from your picks."},{name:"Ceramic Earth-Tone Planter Set",category:"Accessories",price:"$35–$70",why:"Pairs perfectly with your selected color tones."}];setTimeout(()=>{statusEl.classList.add('hidden');grid.innerHTML='';mockItems.forEach(item=>{const card=document.createElement('div');card.className='garden-card p-6 rounded-3xl space-y-4';card.innerHTML=`<div class="p-4 bg-white/5 rounded-2xl flex items-center justify-center"><iconify-icon icon="ph:couch-duotone" class="text-4xl text-[#D3968C]"></iconify-icon></div><div><p class="text-xs font-bold text-[#D3968C] uppercase tracking-widest">${item.category}</p><h3 class="text-2xl font-bold">${item.name}</h3></div><p class="text-sm text-[#F7F4D5]/60">${item.why}</p><div class="flex items-center justify-between pt-4"><span class="text-lg font-bold">${item.price}</span><button class="p-2 bg-white/10 rounded-full hover:bg-[#D3968C] transition-all"><iconify-icon icon="ph:shopping-cart-bold"></iconify-icon></button></div>`;grid.appendChild(card)})},1500)}document.getElementById('copy-btn').addEventListener('click',()=>{const text=document.getElementById('json-block').textContent;navigator.clipboard.writeText(text).then(()=>{const btn=document.getElementById('copy-btn');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy JSON',2000)})});document.getElementById('start-over').addEventListener('click',()=>{state.selectedStyle=null;state.selectedMood=null;state.selectedColors=[];state.selectedFeatures=[];state.pinterestUrl='';state.aiResult=null;document.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('selected','disabled'));document.getElementById('pinterest-url').value='';document.getElementById('pinterest-preview-wrap').classList.add('hidden');document.getElementById('vision-status').classList.add('hidden');document.getElementById('step2-analyze').disabled=true;checkStep1Valid();showStep(1)});buildStyleGrid();buildMoodGrid();buildColorGrid();buildFeatureGrid();showStep(1);</script>
+</body>
+</html>
