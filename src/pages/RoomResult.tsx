@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, Style } from '../types';
-import { MOCK_FURNITURE } from '../mocks/roomData';
+import type { Room, Style, FurnitureItem } from '../types';
 import RoomSVG from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 
 export default function RoomResult() {
-  const [room,    setRoom]    = useState<Room | null>(null);
-  const [style,   setStyle]   = useState<Style | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
-
-  const furniture = MOCK_FURNITURE;
+  const [room,             setRoom]             = useState<Room | null>(null);
+  const [style,            setStyle]            = useState<Style | null>(null);
+  const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
+  const [furnitureLoading, setFurnitureLoading] = useState(false);
+  const [loading,          setLoading]          = useState(true);
+  const [error,            setError]            = useState('');
 
   useEffect(() => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
@@ -24,16 +23,18 @@ export default function RoomResult() {
       return;
     }
 
+    let parsedStyle: Style;
     try {
       const ai = JSON.parse(raw);
-      setStyle({
+      parsedStyle = {
         styleTag:     ai.styleTag     ?? '',
         moodTags:     ai.moodTags     ?? [],
         colorPalette: ai.colorPalette ?? [],
         roomFeatures: ai.roomFeatures ?? [],
         confidence:   ai.confidence   ?? 0,
         budgetTotal:  0,
-      });
+      };
+      setStyle(parsedStyle);
     } catch {
       setError('Style data is corrupted. Please re-analyze your room.');
       setLoading(false);
@@ -42,27 +43,41 @@ export default function RoomResult() {
 
     if (!roomId || !userId) {
       setLoading(false);
+      // still fetch furniture even without room metadata
+      fetchFurniture(roomId ?? 'unknown', parsedStyle.styleTag);
       return;
     }
 
-    fetch(`/api/rooms?userId=${userId}`)
-      .then(r => r.json())
-      .then((rooms: any[]) => {
-        const match = rooms.find(r => r._id === roomId);
-        if (match) {
-          setRoom({
-            roomId:   match._id,
-            name:     match.name,
-            widthFt:  match.widthFt,
-            lengthFt: match.lengthFt,
-            heightFt: match.heightFt,
-            sqft:     match.sqft,
-          });
-        }
-      })
-      .catch(() => { /* room data unavailable, style still shows */ })
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/rooms?userId=${userId}`)
+        .then(r => r.json())
+        .then((rooms: any[]) => {
+          const match = rooms.find(r => r._id === roomId);
+          if (match) {
+            setRoom({
+              roomId:   match._id,
+              name:     match.name,
+              widthFt:  match.widthFt,
+              lengthFt: match.lengthFt,
+              heightFt: match.heightFt,
+              sqft:     match.sqft,
+            });
+          }
+        })
+        .catch(() => {}),
+    ]).finally(() => setLoading(false));
+
+    fetchFurniture(roomId, parsedStyle.styleTag);
   }, []);
+
+  function fetchFurniture(roomId: string, styleTag: string) {
+    setFurnitureLoading(true);
+    fetch(`/api/rooms/${roomId}/furniture?styleTag=${encodeURIComponent(styleTag)}`)
+      .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+      .then((items: FurnitureItem[]) => { setFurniture(items); })
+      .catch((err) => { console.error('[furniture]', err); setFurniture([]); })
+      .finally(() => setFurnitureLoading(false));
+  }
 
   if (loading) {
     return (
@@ -208,7 +223,7 @@ export default function RoomResult() {
             </div>
           </div>
 
-          <FurniturePanel items={furniture} style={s} />
+          <FurniturePanel items={furniture} style={s} loading={furnitureLoading} />
         </div>
       </main>
 

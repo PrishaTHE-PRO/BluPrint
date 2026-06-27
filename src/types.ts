@@ -20,11 +20,11 @@ export interface FurnitureItem {
   id:       string;
   name:     string;
   category: string;
-  style:    string[];
+  style?:   string[];
   price:    number;
-  widthIn:  number;
-  depthIn:  number;
-  heightIn: number;
+  widthIn?: number;
+  depthIn?: number;
+  heightIn?: number;
   imageUrl: string;
   buyUrl:   string;
   brand:    string;

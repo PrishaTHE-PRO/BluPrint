@@ -11,7 +11,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use("/api/rooms", require("./routes/inspo"));
 app.use("/api/rooms", require("./routes/styleRoutes"));
 app.use("/api/rooms", require("./routes/rooms"));
-app.use("/api/rooms", require("./routes/styleRoutes"));
+app.use("/api/rooms", require("./routes/furniture"));
 
 const PORT = process.env.PORT || 5000;
 
