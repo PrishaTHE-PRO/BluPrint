@@ -34,8 +34,9 @@
     @keyframes reveal-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .animate-reveal { animation: reveal-up 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; opacity: 0; }
     .particle { position: absolute; pointer-events: none; animation: float-particle var(--d, 6s) infinite ease-in-out; }
-    .map-furniture { transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); cursor: pointer; }
-    .map-furniture:hover { filter: brightness(1.2); transform: scale(1.05); outline: 2px solid var(--garden-rosy); }
+    .map-furniture { transition: box-shadow 0.2s ease, filter 0.2s ease; cursor: grab; touch-action: none; }
+    .map-furniture:hover:not(.dragging) { filter: brightness(1.08); outline: 2px solid var(--garden-rosy); }
+    .map-furniture.dragging { cursor: grabbing; transition: none; filter: brightness(1.12); outline: 2px solid var(--garden-rosy); }
     .mood-tag { transition: all 0.3s ease; cursor: pointer; }
     .mood-tag:hover { background: var(--garden-rosy); color: white; transform: scale(1.05); }
     ::-webkit-scrollbar { width: 8px; }

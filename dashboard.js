@@ -4,9 +4,10 @@ import { auth, isFirebaseConfigured } from "./firebase.js";
 var logoutBtn = document.getElementById('logout-btn');
 var userNameEl = document.getElementById('user-name');
 
+if (!isFirebaseConfigured() || !auth) {
+    window.location.href = 'index.html';
+} else {
 onAuthStateChanged(auth, function(user) {
-    if (!isFirebaseConfigured()) return;
-
     if (!user) {
         window.location.href = 'index.html';
         return;
@@ -20,6 +21,7 @@ onAuthStateChanged(auth, function(user) {
 
     loadProjects(user.uid);
 });
+}
 
 async function loadProjects(userId) {
     const grid = document.getElementById('projects-grid');

@@ -92,12 +92,14 @@
 
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { auth } from "./firebase.js";
+    import { auth, isFirebaseConfigured } from "./firebase.js";
 
     const logoutBtn = document.getElementById('logout-btn');
     const grid = document.getElementById('all-projects-grid');
 
-    onAuthStateChanged(auth, function(user) {
+    if (!isFirebaseConfigured() || !auth) {
+        window.location.href = 'index.html';
+    } else onAuthStateChanged(auth, function(user) {
         if (!user) { window.location.href = 'index.html'; return; }
         loadAllProjects(user.uid);
     });

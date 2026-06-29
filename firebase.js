@@ -11,10 +11,27 @@ export const firebaseConfig = {
     measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+const REQUIRED_KEYS = [
+    'apiKey',
+    'authDomain',
+    'projectId',
+    'storageBucket',
+    'messagingSenderId',
+    'appId',
+];
+
 export function isFirebaseConfigured() {
-    return Object.values(firebaseConfig).every(Boolean);
+    return REQUIRED_KEYS.every((key) => Boolean(firebaseConfig[key]));
 }
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+let app = null;
+let auth = null;
+let googleProvider = null;
+
+if (isFirebaseConfigured()) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
+}
+
+export { app, auth, googleProvider };

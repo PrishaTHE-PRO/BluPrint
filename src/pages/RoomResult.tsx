@@ -1,16 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import type { Room, Style, FurnitureItem } from '../types';
 import RoomSVG from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
+import { orderedFurniture } from '../utils/furnitureLayout';
+
+const FALLBACK_ROOM: Room = {
+  roomId:   'fallback',
+  name:     'Your Room',
+  widthFt:  12,
+  lengthFt: 14,
+  heightFt: 8,
+  sqft:     168,
+};
 
 export default function RoomResult() {
   const [room,             setRoom]             = useState<Room | null>(null);
   const [style,            setStyle]            = useState<Style | null>(null);
   const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
+  const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
+  const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState('');
+
+  useEffect(() => {
+    const init: Record<string, FurnitureItem> = {};
+    furniture.forEach((item) => { if (!init[item.category]) init[item.category] = item; });
+    setFurnitureSlots(init);
+  }, [furniture]);
+
+  const handleSwap = useCallback((category: string) => {
+    const inCategory = furniture.filter((i) => i.category === category);
+    if (inCategory.length < 2) return;
+    setFurnitureSlots((prev) => {
+      const current = prev[category];
+      const idx     = inCategory.findIndex((i) => i.id === current?.id);
+      const next    = inCategory[(idx + 1) % inCategory.length];
+      return { ...prev, [category]: next };
+    });
+  }, [furniture]);
 
   useEffect(() => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
@@ -43,7 +72,6 @@ export default function RoomResult() {
 
     if (!roomId || !userId) {
       setLoading(false);
-      // still fetch furniture even without room metadata
       fetchFurniture(roomId ?? 'unknown', parsedStyle.styleTag);
       return;
     }
@@ -91,15 +119,18 @@ export default function RoomResult() {
     return (
       <div className="min-h-screen grid-background flex flex-col items-center justify-center gap-6 p-8">
         <p className="text-[#D3968C] text-xl font-medium text-center">{error}</p>
-        <a href="/analyze-style.html" className="px-8 py-4 bg-[#D3968C] text-white rounded-2xl font-bold hover:bg-[#c1867b] transition-all">
+        <a href="/inspo-upload.html" className="px-8 py-4 bg-[#D3968C] text-white rounded-2xl font-bold hover:bg-[#c1867b] transition-all">
           Analyze Style
         </a>
       </div>
     );
   }
 
-  // style is guaranteed non-null here (error would have been set otherwise)
   const s = style!;
+  const layoutRoom = room ?? FALLBACK_ROOM;
+  const layoutFurniture = orderedFurniture(furnitureSlots).length > 0
+    ? orderedFurniture(furnitureSlots)
+    : orderedFurniture(Object.fromEntries(furniture.map((item) => [item.category, item])));
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -139,91 +170,96 @@ export default function RoomResult() {
 
       <main className="relative z-10 max-w-[1600px] mx-auto p-8 lg:p-12">
 
-        <header className="mb-12 animate-reveal" style={{ animationDelay: '0.3s' }}>
+        <header className="mb-8 animate-reveal" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-baseline gap-4 mb-2">
             <span className="text-[#D3968C] font-bold tracking-widest uppercase text-sm">{s.styleTag} Style</span>
-            <span className="text-[#F7F4D5]/40 text-sm font-medium">•</span>
-            <span className="text-[#839958] font-bold text-sm">{Math.round(s.confidence * 100)}% AI Confidence</span>
           </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2">
-              <h1 className="text-6xl md:text-7xl font-bold text-[#F7F4D5] tracking-tight">
-                {room ? room.name : 'Your Room'}
+              <h1 className="text-5xl md:text-6xl font-bold text-[#F7F4D5] tracking-tight">
+                {layoutRoom.name}
               </h1>
-              {room && (
-                <p className="text-xl text-[#F7F4D5]/60 font-medium">
-                  {room.widthFt}' x {room.lengthFt}' <span className="mx-2 opacity-30">|</span> {room.sqft} sqft
-                </p>
-              )}
+              <p className="text-lg text-[#F7F4D5]/60 font-medium">
+                {layoutRoom.widthFt}' x {layoutRoom.lengthFt}' <span className="mx-2 opacity-30">|</span> {layoutRoom.sqft} sqft
+              </p>
             </div>
             <div className="flex gap-3">
-              <button className="px-8 py-4 bg-[#105666] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#156a7d] transition-all">
+              <button className="px-6 py-3 bg-[#105666] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#156a7d] transition-all text-sm">
                 <iconify-icon icon="ph:floppy-disk-duotone" />
                 Save Layout
               </button>
-              <button className="p-4 bg-white/5 border border-white/10 text-white rounded-2xl hover:bg-white/10 transition-all">
-                <iconify-icon icon="ph:export-duotone" class="text-2xl" />
+              <button className="p-3 bg-white/5 border border-white/10 text-white rounded-2xl hover:bg-white/10 transition-all">
+                <iconify-icon icon="ph:export-duotone" class="text-xl" />
               </button>
             </div>
           </div>
         </header>
 
-        <div className="grid lg:grid-cols-12 gap-12">
+        <FurniturePanel
+          items={furniture}
+          slots={furnitureSlots}
+          onSwap={handleSwap}
+          style={s}
+          loading={furnitureLoading}
+          linkedCategory={linkedCategory}
+          onLinkCategory={setLinkedCategory}
+          centerContent={
+            <RoomSVG
+              room={layoutRoom}
+              style={s}
+              furniture={layoutFurniture}
+              linkedCategory={linkedCategory}
+              onLinkCategory={setLinkedCategory}
+            />
+          }
+        />
 
-          <div className="lg:col-span-5 flex flex-col gap-10">
-
-            {room && <RoomSVG room={room} style={s} furniture={furniture} />}
-
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="garden-card ghibli-border p-8 animate-reveal" style={{ animationDelay: '0.5s' }}>
-                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <iconify-icon icon="ph:palette-duotone" class="text-[#D3968C]" />
-                  Color Palette
-                </h3>
-                <div className="flex flex-wrap gap-4">
-                  {s.colorPalette.map((hex) => (
-                    <div
-                      key={hex}
-                      className="w-12 h-12 rounded-2xl shadow-lg transform hover:scale-110 transition-all cursor-help"
-                      style={{ background: hex }}
-                      title={hex}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="garden-card ghibli-border p-8 animate-reveal" style={{ animationDelay: '0.6s' }}>
-                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <iconify-icon icon="ph:cloud-sun-duotone" class="text-[#D3968C]" />
-                  Mood
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {s.moodTags.map((tag) => (
-                    <span key={tag} className="mood-tag px-4 py-2 bg-[#105666]/30 rounded-full text-xs font-bold">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="garden-card ghibli-border p-8 animate-reveal" style={{ animationDelay: '0.7s' }}>
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <iconify-icon icon="ph:list-checks-duotone" class="text-[#D3968C]" />
-                Room Features
-              </h3>
-              <ul className="space-y-4">
-                {s.roomFeatures.map((feat) => (
-                  <li key={feat} className="flex items-center gap-3 text-[#F7F4D5]/80 font-medium group">
-                    <iconify-icon icon="ph:dot-bold" class="text-[#D3968C] transition-transform group-hover:scale-150" />
-                    {feat}
-                  </li>
-                ))}
-              </ul>
+        <div className="grid md:grid-cols-3 gap-4 animate-reveal" style={{ animationDelay: '0.6s' }}>
+          <div className="garden-card ghibli-border p-6">
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2">
+              <iconify-icon icon="ph:palette-duotone" class="text-[#D3968C]" />
+              Color Palette
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {s.colorPalette.map((hex) => (
+                <div
+                  key={hex}
+                  className="w-10 h-10 rounded-xl shadow transform hover:scale-110 transition-all cursor-help"
+                  style={{ background: hex }}
+                  title={hex}
+                />
+              ))}
             </div>
           </div>
 
-          <FurniturePanel items={furniture} style={s} loading={furnitureLoading} />
+          <div className="garden-card ghibli-border p-6">
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2">
+              <iconify-icon icon="ph:cloud-sun-duotone" class="text-[#D3968C]" />
+              Mood
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {s.moodTags.map((tag) => (
+                <span key={tag} className="mood-tag px-3 py-1.5 bg-[#105666]/30 rounded-full text-xs font-bold">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="garden-card ghibli-border p-6">
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2">
+              <iconify-icon icon="ph:list-checks-duotone" class="text-[#D3968C]" />
+              Room Features
+            </h3>
+            <ul className="space-y-2">
+              {s.roomFeatures.map((feat) => (
+                <li key={feat} className="flex items-center gap-2 text-[#F7F4D5]/80 text-sm font-medium">
+                  <iconify-icon icon="ph:dot-bold" class="text-[#D3968C] flex-shrink-0" />
+                  <span>{feat}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </main>
 

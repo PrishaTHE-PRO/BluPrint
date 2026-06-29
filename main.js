@@ -61,6 +61,7 @@ function getAuthErrorMessage(error) {
     var messages = {
         'auth/configuration-not-found': 'Firebase Auth is not enabled for this project yet.',
         'auth/email-already-in-use': 'An account already exists for this email.',
+        'auth/invalid-api-key': 'Firebase API key is invalid. Check your .env file.',
         'auth/invalid-credential': 'Email or password is incorrect.',
         'auth/invalid-email': 'Please enter a valid email.',
         'auth/popup-closed-by-user': 'Google sign-in was closed before finishing.',
@@ -73,8 +74,8 @@ function getAuthErrorMessage(error) {
 }
 
 function ensureConfigured() {
-    if (isFirebaseConfigured()) return true;
-    showToast('Add your Firebase config in firebase.js first.');
+    if (isFirebaseConfigured() && auth) return true;
+    showToast('Firebase is not configured. Copy .env.example to .env and add your Firebase keys.');
     return false;
 }
 
@@ -151,11 +152,15 @@ async function handleForgotPassword(event) {
     }
 }
 
-onAuthStateChanged(auth, function(user) {
-    if (user && isFirebaseConfigured()) {
-        window.location.href = 'dashboard.html';
-    }
-});
+if (auth) {
+    onAuthStateChanged(auth, function(user) {
+        if (user && isFirebaseConfigured()) {
+            window.location.href = 'dashboard.html';
+        }
+    });
+} else {
+    showToast('Firebase is not configured. Copy .env.example to .env and add your Firebase keys.');
+}
 
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') {

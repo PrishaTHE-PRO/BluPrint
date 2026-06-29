@@ -24,7 +24,17 @@ Then open [http://localhost:5173](http://localhost:5173).
 
 ## Firebase
 
-Add your Firebase config to `firebase.js`. Then enable **Email/Password** and **Google** sign-in under **Firebase Console → Build → Authentication → Sign-in method**.
+Copy `.env.example` to `.env` in the project root and fill in your Firebase web app config:
+
+```bash
+cp .env.example .env
+```
+
+Get the values from **Firebase Console → Project settings → Your apps → Web app → Config**.
+
+Then enable **Email/Password** and **Google** sign-in under **Firebase Console → Build → Authentication → Sign-in method**.
+
+Restart the dev server after updating `.env` (`npm run dev`).
 
 ## Backend
 
@@ -53,7 +63,6 @@ OPENAI_API_KEY=          # from platform.openai.com → API keys
 
 ```
 src/
-  mocks/roomData.ts       mock data (delete when teammates finish)
   components/
     RoomSVG.tsx           2D floor plan
     FurnitureCard.tsx     furniture item card
