@@ -7,11 +7,12 @@ import { orderedFurniture } from '../utils/furnitureLayout';
 
 const FALLBACK_ROOM: Room = {
   roomId:   'fallback',
-  name:     'Your Room',
-  widthFt:  12,
-  lengthFt: 14,
+  name:     localStorage.getItem('blueprintCurrentRoomName') ?? 'My Room',
+  widthFt:  Number(localStorage.getItem('blueprintCurrentRoomWidth'))  || 12,
+  lengthFt: Number(localStorage.getItem('blueprintCurrentRoomLength')) || 14,
   heightFt: 8,
-  sqft:     168,
+  sqft:     (Number(localStorage.getItem('blueprintCurrentRoomWidth')) || 12) *
+            (Number(localStorage.getItem('blueprintCurrentRoomLength')) || 14),
 };
 
 export default function RoomResult() {

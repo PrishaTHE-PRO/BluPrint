@@ -884,6 +884,44 @@
     widthInput.addEventListener('input', updateBlueprintRealtime);
     lengthInput.addEventListener('input', updateBlueprintRealtime);
 
+    // Save & Continue
+    document.getElementById('cta-save-continue').addEventListener('click', async () => {
+      const userId = localStorage.getItem('blueprintUserId');
+      if (!userId) { window.location.href = 'index.html'; return; }
+
+      const widthFt  = parseFloat(widthInput.value)  || 12;
+      const lengthFt = parseFloat(lengthInput.value) || 14;
+      const roomName = document.getElementById('room-name')?.value?.trim() || 'My Room';
+
+      // Persist dimensions immediately so result page shows correct values before API responds
+      localStorage.setItem('blueprintCurrentRoomName',   roomName);
+      localStorage.setItem('blueprintCurrentRoomWidth',  String(widthFt));
+      localStorage.setItem('blueprintCurrentRoomLength', String(lengthFt));
+
+      try {
+        const res = await fetch('/api/rooms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            name:     roomName,
+            widthFt,
+            lengthFt,
+            heightFt: 8,
+            sqft:     Math.round(widthFt * lengthFt),
+          }),
+        });
+        if (!res.ok) throw new Error('save failed');
+        const room = await res.json();
+        localStorage.setItem('blueprintCurrentRoomId', room._id);
+      } catch (err) {
+        console.warn('[save room]', err);
+        // continue even if save fails — roomId stays whatever it was
+      }
+
+      window.location.href = 'inspo-upload.html';
+    });
+
     // Initial state
     saveState();
     renderAll();

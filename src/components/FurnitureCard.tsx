@@ -46,42 +46,40 @@ export default function FurnitureCard({
   };
 
   const shellClass = [
-    'garden-card ghibli-border group animate-reveal h-full transition-all duration-200',
+    'garden-card rounded-2xl border border-[#F7F4D5]/10 group animate-reveal transition-all duration-200',
     isLinked ? 'ring-2 ring-[#D3968C] ring-offset-2 ring-offset-[#0A3323] scale-[1.02]' : '',
     isDimmed ? 'opacity-40' : 'opacity-100',
   ].join(' ');
 
   if (variant === 'compact') {
     return (
-      <div className={`${shellClass} p-3 flex gap-3`} style={{ animationDelay: animDelay }} {...linkProps}>
-        <div className="w-16 h-16 bg-[#F7F4D5]/10 rounded-xl overflow-hidden shadow-inner flex-shrink-0 relative">
+      <div className={`${shellClass} p-2.5 flex gap-2.5`} style={{ animationDelay: animDelay }} {...linkProps}>
+        <div className="w-14 h-14 bg-[#F7F4D5]/10 rounded-lg overflow-hidden shadow-inner flex-shrink-0 relative">
           <img
             src={imgSrc}
             alt={item.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={() => setImgSrc(CATEGORY_FALLBACK[item.category] ?? '')}
           />
-          <div className="absolute inset-0 bg-[#0A3323]/10" />
         </div>
-        <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
-          <div>
-            <span className="text-[#839958] font-bold text-[10px] uppercase tracking-widest">{categoryLabel}</span>
-            {item.brand && (
-              <span className="text-[#D3968C] font-bold text-[10px] uppercase tracking-widest ml-2">{item.brand}</span>
-            )}
-            <h3 className="text-sm font-bold leading-snug line-clamp-2">{item.name}</h3>
+        <div className="flex-1 flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#839958] truncate">
+              {categoryLabel}{item.brand ? ` · ${item.brand}` : ''}
+            </p>
+            <h3 className="text-xs font-bold leading-tight line-clamp-2 mt-0.5">{item.name}</h3>
           </div>
-          <div className="flex items-center justify-between gap-2 mt-2">
-            <span className="text-base font-bold">
+          <div className="flex items-center justify-between gap-1 mt-1.5">
+            <span className="text-sm font-bold text-[#F7F4D5] flex-shrink-0">
               {item.price > 0 ? `$${item.price.toLocaleString()}` : '—'}
             </span>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1 flex-shrink-0">
               {canSwap && (
-                <button onClick={onSwap} className="px-2.5 py-1 border border-white/10 rounded-lg text-[11px] font-bold hover:bg-white/5 transition-all">
+                <button onClick={onSwap} className="px-2 py-0.5 border border-white/10 rounded text-[10px] font-bold hover:bg-white/5 transition-all">
                   Swap
                 </button>
               )}
-              <a href={item.buyUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-[#D3968C] text-white rounded-lg text-[11px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap">
+              <a href={item.buyUrl} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap">
                 Buy
               </a>
             </div>
@@ -92,13 +90,13 @@ export default function FurnitureCard({
   }
 
   return (
-    <div className={`${shellClass} p-3.5 flex flex-col`} style={{ animationDelay: animDelay }} {...linkProps}>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[#839958] font-bold text-[10px] uppercase tracking-widest">{categoryLabel}</span>
-        <span className="text-[9px] text-[#F7F4D5]/40 font-medium">↔ floor plan</span>
+    <div className={`${shellClass} p-3 flex flex-col`} style={{ animationDelay: animDelay }} {...linkProps}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[#839958] font-bold text-[9px] uppercase tracking-widest truncate">{categoryLabel}</span>
+        <span className="text-[8px] text-[#F7F4D5]/30 font-medium flex-shrink-0 ml-1">↔ floor plan</span>
       </div>
 
-      <div className="w-full aspect-[5/3] bg-[#F7F4D5]/10 rounded-xl overflow-hidden shadow-inner relative mb-2.5">
+      <div className="w-full aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg overflow-hidden shadow-inner relative mb-2">
         <img
           src={imgSrc}
           alt={item.name}
@@ -108,21 +106,21 @@ export default function FurnitureCard({
         <div className="absolute inset-0 bg-[#0A3323]/10" />
       </div>
 
-      <div className="flex-1 flex flex-col gap-1.5">
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
         {item.brand && (
-          <span className="text-[#D3968C] font-bold text-[10px] uppercase tracking-widest">{item.brand}</span>
+          <span className="text-[#D3968C] font-bold text-[9px] uppercase tracking-widest truncate">{item.brand}</span>
         )}
-        <h3 className="text-sm font-bold leading-snug line-clamp-2">{item.name}</h3>
+        <h3 className="text-xs font-bold leading-snug line-clamp-2 overflow-hidden">{item.name}</h3>
 
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-[#F7F4D5]/10">
-          <span className="text-base font-bold">
+        <div className="mt-auto pt-1.5 flex items-center justify-between gap-1 border-t border-[#F7F4D5]/10">
+          <span className="text-sm font-bold flex-shrink-0">
             {item.price > 0 ? `$${item.price.toLocaleString()}` : '—'}
           </span>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1 flex-shrink-0">
             {canSwap && (
               <button
                 onClick={onSwap}
-                className="px-2.5 py-1 border border-white/10 rounded-lg text-[11px] font-bold hover:bg-white/5 transition-all"
+                className="px-2 py-0.5 border border-white/10 rounded text-[10px] font-bold hover:bg-white/5 transition-all"
               >
                 Swap
               </button>
@@ -131,7 +129,7 @@ export default function FurnitureCard({
               href={item.buyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-2.5 py-1 bg-[#D3968C] text-white rounded-lg text-[11px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap"
+              className="px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap"
             >
               Buy
             </a>

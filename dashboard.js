@@ -51,8 +51,12 @@ async function loadProjects(userId) {
             }
         }));
 
+        // Newest first, cap at 4 on dashboard
+        withStyles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const recent = withStyles.slice(0, 4);
+
         grid.innerHTML = '';
-        withStyles.forEach(room => {
+        recent.forEach(room => {
             const hasStyle = !!room.style;
             const statusLabel = hasStyle ? 'Style Analyzed ✨' : 'Dimensions Set';
             const statusColor = hasStyle ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
@@ -80,6 +84,28 @@ async function loadProjects(userId) {
                     </div>
                 </div>`;
             grid.appendChild(card);
+
+            // Click card body → revisit project
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-btn')) return; // don't navigate on delete
+                localStorage.setItem('blueprintCurrentRoomId',     room._id);
+                localStorage.setItem('blueprintCurrentRoomName',   room.name);
+                localStorage.setItem('blueprintCurrentRoomWidth',  String(room.widthFt));
+                localStorage.setItem('blueprintCurrentRoomLength', String(room.lengthFt));
+                if (room.style) {
+                    localStorage.setItem('blueprintStyleResult', JSON.stringify({
+                        styleTag:     room.style.styleTag     ?? '',
+                        moodTags:     room.style.moodTags     ?? [],
+                        colorPalette: room.style.colorPalette ?? [],
+                        roomFeatures: room.style.roomFeatures ?? [],
+                        confidence:   room.style.confidence   ?? 0,
+                    }));
+                    window.location.href = 'room-result.html';
+                } else {
+                    window.location.href = 'inspo-upload.html';
+                }
+            });
+
             const deleteBtn = card.querySelector('.delete-btn');
             deleteBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();

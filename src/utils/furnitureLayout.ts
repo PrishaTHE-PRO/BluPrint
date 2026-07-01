@@ -10,10 +10,13 @@ export const CATEGORY_ORDER = [
   'side_table',
 ] as const;
 
-/** Side columns aligned with where pieces sit on the floor plan */
-export const LEFT_LAYOUT_CATEGORIES  = ['sofa', 'side_table', 'coffee_table'] as const;
-export const RIGHT_LAYOUT_CATEGORIES = ['floor_lamp', 'accent_chair'] as const;
-export const BOTTOM_LAYOUT_CATEGORIES = ['rug'] as const;
+/**
+ * 2-left | floor plan | 2-right layout, with 2 cards centered below.
+ * Left + right always have the same count so the floor plan stays balanced.
+ */
+export const LEFT_LAYOUT_CATEGORIES   = ['sofa',       'coffee_table'] as const;
+export const RIGHT_LAYOUT_CATEGORIES  = ['floor_lamp',  'accent_chair'] as const;
+export const BOTTOM_LAYOUT_CATEGORIES = ['rug',         'side_table']   as const;
 
 export function orderedFurniture(slots: Record<string, FurnitureItem>): FurnitureItem[] {
   return CATEGORY_ORDER
@@ -29,14 +32,11 @@ export function groupFurnitureForLayout(slots: Record<string, FurnitureItem>) {
   const right  = pick(RIGHT_LAYOUT_CATEGORIES);
   const bottom = pick(BOTTOM_LAYOUT_CATEGORIES);
 
-  const placed = new Set([...left, ...right, ...bottom].map((i) => i.category));
+  // Any category not already placed goes to bottom
+  const placed = new Set<string>([...LEFT_LAYOUT_CATEGORIES, ...RIGHT_LAYOUT_CATEGORIES, ...BOTTOM_LAYOUT_CATEGORIES]);
   const extras = orderedFurniture(slots).filter((i) => !placed.has(i.category));
 
-  return {
-    left,
-    right,
-    bottom: [...bottom, ...extras],
-  };
+  return { left, right, bottom: [...bottom, ...extras] };
 }
 
 export const CATEGORY_LABELS: Record<string, string> = {

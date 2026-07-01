@@ -9,6 +9,7 @@ const CATEGORIES = [
   { key: "rug",           label: "area rug",      query: (s) => `${s} area rug` },
   { key: "floor_lamp",    label: "floor lamp",    query: (s) => `${s} floor lamp` },
   { key: "accent_chair",  label: "accent chair",  query: (s) => `${s} accent chair` },
+  { key: "side_table",    label: "side table",    query: (s) => `${s} side table` },
 ];
 
 function parsePrice(raw) {
