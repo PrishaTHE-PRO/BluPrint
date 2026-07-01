@@ -14,23 +14,23 @@ interface Props {
   onLinkCategory?:  (category: string | null) => void;
 }
 
+// Use item.category as key (not item.id) so the card is never unmounted on swap —
+// this prevents the animate-reveal glitch that replays the entrance animation.
 function renderCard(
-  item: FurnitureItem,
-  items: FurnitureItem[],
-  onSwap: (category: string) => void,
-  i: number,
+  item:           FurnitureItem,
+  items:          FurnitureItem[],
+  onSwap:         (category: string) => void,
+  animIndex:      number,
   linkedCategory: string | null | undefined,
   onLinkCategory: ((category: string | null) => void) | undefined,
-  variant: 'featured' | 'compact' = 'featured',
 ) {
   return (
     <FurnitureCard
-      key={`${item.category}-${item.id}`}
+      key={item.category}
       item={item}
-      variant={variant}
       canSwap={items.filter((x) => x.category === item.category).length > 1}
       onSwap={() => onSwap(item.category)}
-      animDelay={`${0.45 + i * 0.06}s`}
+      animDelay={`${0.45 + animIndex * 0.07}s`}
       linkedCategory={linkedCategory}
       onLinkCategory={onLinkCategory}
     />
@@ -72,25 +72,26 @@ export default function FurniturePanel({
     return (
       <section className="mb-10">
         {header}
-        <div className="grid lg:grid-cols-12 gap-5 items-start">
-          <div className="lg:col-span-3 flex flex-col gap-4">
+        {/* Skeleton: 3+6+3 columns */}
+        <div className="grid lg:grid-cols-12 gap-4 items-start">
+          <div className="lg:col-span-3 flex flex-col gap-3">
             {[0, 1].map((i) => (
-              <div key={i} className="garden-card ghibli-border p-5 animate-pulse">
-                <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-2xl mb-4" />
-                <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4 mb-2" />
-                <div className="h-4 bg-[#F7F4D5]/10 rounded w-1/2" />
+              <div key={i} className="garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
+                <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg mb-2" />
+                <div className="h-2.5 bg-[#F7F4D5]/10 rounded w-1/3 mb-1.5" />
+                <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4" />
               </div>
             ))}
           </div>
           <div className="lg:col-span-6">
-            <div className="garden-card ghibli-border p-6 animate-pulse aspect-square max-w-md mx-auto rounded-3xl" />
+            <div className="garden-card rounded-2xl border border-[#F7F4D5]/10 aspect-square animate-pulse" />
           </div>
-          <div className="lg:col-span-3 flex flex-col gap-4">
+          <div className="lg:col-span-3 flex flex-col gap-3">
             {[2, 3].map((i) => (
-              <div key={i} className="garden-card ghibli-border p-5 animate-pulse">
-                <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-2xl mb-4" />
-                <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4 mb-2" />
-                <div className="h-4 bg-[#F7F4D5]/10 rounded w-1/2" />
+              <div key={i} className="garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
+                <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg mb-2" />
+                <div className="h-2.5 bg-[#F7F4D5]/10 rounded w-1/3 mb-1.5" />
+                <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4" />
               </div>
             ))}
           </div>
@@ -106,9 +107,7 @@ export default function FurniturePanel({
     return (
       <section className="mb-10">
         {header}
-        {centerContent && (
-          <div className="max-w-md mx-auto mb-8">{centerContent}</div>
-        )}
+        {centerContent && <div className="max-w-xl mx-auto mb-8">{centerContent}</div>}
         <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found — try re-analyzing your room.</p>
       </section>
     );
@@ -118,32 +117,46 @@ export default function FurniturePanel({
     <section className="mb-10">
       {header}
 
-      <div className="lg:hidden flex flex-col gap-5">
+      {/* Mobile: floor plan then stacked cards */}
+      <div className="lg:hidden flex flex-col gap-4">
         {centerContent && <div className="max-w-md mx-auto w-full">{centerContent}</div>}
         <div className="grid sm:grid-cols-2 gap-3">
           {displayed.map((item, i) => renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory))}
         </div>
       </div>
 
+      {/* Desktop: 3 | 6 | 3 grid */}
       <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-start">
-        <div className="col-span-2 flex flex-col gap-3">
-          {left.map((item, i) => renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory))}
-        </div>
-
-        <div className="col-span-8 flex justify-center">
-          {centerContent && (
-            <div className="w-full max-w-xl">{centerContent}</div>
+        {/* Left column — 2 cards, stacked */}
+        <div className="col-span-3 flex flex-col gap-3">
+          {left.map((item, i) =>
+            renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory)
           )}
         </div>
 
-        <div className="col-span-2 flex flex-col gap-3">
-          {right.map((item, i) => renderCard(item, items, onSwap, i + left.length, linkedCategory, onLinkCategory))}
+        {/* Center — floor plan */}
+        <div className="col-span-6">
+          {centerContent && <div className="w-full">{centerContent}</div>}
+        </div>
+
+        {/* Right column — 2 cards, stacked */}
+        <div className="col-span-3 flex flex-col gap-3">
+          {right.map((item, i) =>
+            renderCard(item, items, onSwap, i + left.length, linkedCategory, onLinkCategory)
+          )}
         </div>
       </div>
 
+      {/* Bottom row — centered under the floor plan (col 4–9 in the same 12-col grid) */}
       {bottom.length > 0 && (
-        <div className="hidden lg:grid sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-5 max-w-3xl mx-auto">
-          {bottom.map((item, i) => renderCard(item, items, onSwap, i + left.length + right.length, linkedCategory, onLinkCategory))}
+        <div className="hidden lg:grid lg:grid-cols-12 gap-4 mt-3">
+          <div
+            className={`col-start-4 col-span-6 grid gap-3 ${bottom.length >= 2 ? 'grid-cols-2' : 'grid-cols-1'}`}
+          >
+            {bottom.map((item, i) =>
+              renderCard(item, items, onSwap, i + left.length + right.length, linkedCategory, onLinkCategory)
+            )}
+          </div>
         </div>
       )}
     </section>

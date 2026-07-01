@@ -72,7 +72,7 @@
             </a>
             <div>
                 <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Past Inspiration</h1>
-                <p class="text-lg text-[#F7F4D5]/60 mt-2">All your projects, newest to oldest</p>
+                <p class="text-lg text-[#F7F4D5]/60 mt-2">Older projects — your 4 most recent are on the dashboard</p>
             </div>
         </div>
     </header>
@@ -115,7 +115,7 @@
                 return;
             }
 
-            // Sort newest to oldest
+            // Sort newest to oldest, then drop the 4 most recent (shown on dashboard)
             rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             // Fetch styles in parallel
@@ -130,8 +130,15 @@
                 }
             }));
 
+            const older = withStyles.slice(4);
+
+            if (!older.length) {
+                grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-3 py-12">No older projects yet — your 4 most recent are on the dashboard.</p>';
+                return;
+            }
+
             grid.innerHTML = '';
-            withStyles.forEach(room => {
+            older.forEach(room => {
                 const hasStyle = !!room.style;
                 const statusLabel = hasStyle ? 'Style Analyzed ✨' : 'Dimensions Set';
                 const statusColor = hasStyle ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
@@ -156,6 +163,26 @@
                         </div>
                     </div>`;
                 grid.appendChild(card);
+
+                // Click to revisit
+                card.addEventListener('click', () => {
+                    localStorage.setItem('blueprintCurrentRoomId',     room._id);
+                    localStorage.setItem('blueprintCurrentRoomName',   room.name);
+                    localStorage.setItem('blueprintCurrentRoomWidth',  String(room.widthFt));
+                    localStorage.setItem('blueprintCurrentRoomLength', String(room.lengthFt));
+                    if (room.style) {
+                        localStorage.setItem('blueprintStyleResult', JSON.stringify({
+                            styleTag:     room.style.styleTag     ?? '',
+                            moodTags:     room.style.moodTags     ?? [],
+                            colorPalette: room.style.colorPalette ?? [],
+                            roomFeatures: room.style.roomFeatures ?? [],
+                            confidence:   room.style.confidence   ?? 0,
+                        }));
+                        window.location.href = 'room-result.html';
+                    } else {
+                        window.location.href = 'inspo-upload.html';
+                    }
+                });
             });
 
         } catch {
