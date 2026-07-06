@@ -1,22 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, Style, FurnitureItem } from '../types';
-import RoomSVG from '../components/RoomSVG';
+import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
+import RoomBlueprintPreview from '../components/RoomBlueprintPreview';
 import FurniturePanel from '../components/FurniturePanel';
-import { orderedFurniture } from '../utils/furnitureLayout';
+import { buildRoomFromLayout, readSavedRoomLayout } from '../utils/roomLayout';
 
 const FALLBACK_ROOM: Room = {
   roomId:   'fallback',
   name:     localStorage.getItem('blueprintCurrentRoomName') ?? 'My Room',
   widthFt:  Number(localStorage.getItem('blueprintCurrentRoomWidth'))  || 12,
   lengthFt: Number(localStorage.getItem('blueprintCurrentRoomLength')) || 14,
-  heightFt: 8,
+  heightFt: Number(localStorage.getItem('blueprintCurrentRoomHeight')) || 8,
   sqft:     (Number(localStorage.getItem('blueprintCurrentRoomWidth')) || 12) *
             (Number(localStorage.getItem('blueprintCurrentRoomLength')) || 14),
 };
 
 export default function RoomResult() {
   const [room,             setRoom]             = useState<Room | null>(null);
+  const [savedLayout]      = useState<RoomArchitectureLayout | null>(() => readSavedRoomLayout());
   const [style,            setStyle]            = useState<Style | null>(null);
   const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
@@ -128,10 +129,7 @@ export default function RoomResult() {
   }
 
   const s = style!;
-  const layoutRoom = room ?? FALLBACK_ROOM;
-  const layoutFurniture = orderedFurniture(furnitureSlots).length > 0
-    ? orderedFurniture(furnitureSlots)
-    : orderedFurniture(Object.fromEntries(furniture.map((item) => [item.category, item])));
+  const layoutRoom = buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM);
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -205,12 +203,9 @@ export default function RoomResult() {
           linkedCategory={linkedCategory}
           onLinkCategory={setLinkedCategory}
           centerContent={
-            <RoomSVG
+            <RoomBlueprintPreview
               room={layoutRoom}
-              style={s}
-              furniture={layoutFurniture}
-              linkedCategory={linkedCategory}
-              onLinkCategory={setLinkedCategory}
+              layout={savedLayout}
             />
           }
         />
