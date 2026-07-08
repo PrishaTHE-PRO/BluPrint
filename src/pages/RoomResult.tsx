@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, Style, FurnitureItem } from '../types';
+import type { Room, Style, FurnitureItem, RoomLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 import { orderedFurniture } from '../utils/furnitureLayout';
@@ -22,6 +22,7 @@ export default function RoomResult() {
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
+  const [roomLayout,       setRoomLayout]       = useState<RoomLayout | null>(null);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState('');
 
@@ -43,6 +44,12 @@ export default function RoomResult() {
   }, [furniture]);
 
   useEffect(() => {
+    // Load room layout (doors, windows, cutouts) from the architecture editor
+    const rawLayout = localStorage.getItem('blueprintRoomLayout');
+    if (rawLayout) {
+      try { setRoomLayout(JSON.parse(rawLayout)); } catch { /* ignore malformed data */ }
+    }
+
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
     const userId = localStorage.getItem('blueprintUserId');
     const raw    = localStorage.getItem('blueprintStyleResult');
@@ -209,6 +216,7 @@ export default function RoomResult() {
               room={layoutRoom}
               style={s}
               furniture={layoutFurniture}
+              roomLayout={roomLayout}
               linkedCategory={linkedCategory}
               onLinkCategory={setLinkedCategory}
             />

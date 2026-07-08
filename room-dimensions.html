@@ -898,6 +898,16 @@
       localStorage.setItem('blueprintCurrentRoomWidth',  String(widthFt));
       localStorage.setItem('blueprintCurrentRoomLength', String(lengthFt));
 
+      // Persist full layout (polygon, doors, windows, cutouts) for the 2D floor plan
+      const roomLayout = {
+        roomPoints: state.roomPoints,
+        elements:   state.elements,
+        cutouts:    state.cutouts,
+        widthFt,
+        lengthFt,
+      };
+      localStorage.setItem('blueprintRoomLayout', JSON.stringify(roomLayout));
+
       try {
         const res = await fetch('/api/rooms', {
           method: 'POST',
