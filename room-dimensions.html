@@ -1,6 +1,6 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,14 +19,9 @@
       --garden-midnight: #105666;
       --garden-accent: #f5a7b8;
     }
-
-    h1,
-    h2,
-    h3,
-    h4 {
+    h1, h2, h3, h4 {
       font-family: 'Crimson Pro', serif;
     }
-
     .noise-texture {
       position: fixed;
       inset: 0;
@@ -35,31 +30,26 @@
       opacity: 0.03;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     }
-
     .grid-background {
       background-image: linear-gradient(rgba(131, 153, 88, 0.07) 1.5px, transparent 1.5px),
       linear-gradient(90deg, rgba(131, 153, 88, 0.07) 1.5px, transparent 1.5px);
       background-size: 50px 50px;
     }
-
     .ghibli-border {
       border: 2px solid rgba(247, 244, 213, 0.15);
       border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px;
     }
-
     .garden-card {
       background: rgba(16, 86, 102, 0.2);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(247, 244, 213, 0.05);
     }
-
     .canvas-area {
       background: rgba(10, 51, 35, 0.4);
       border: 2px dashed rgba(247, 244, 213, 0.1);
       border-radius: 3rem;
       cursor: crosshair;
     }
-
     .toolbar-btn {
       width: 52px;
       height: 52px;
@@ -72,19 +62,16 @@
       transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
       cursor: grab;
     }
-
     .toolbar-btn:active {
       cursor: grabbing;
       transform: scale(0.95);
     }
-
     .toolbar-btn:hover:not(:disabled) {
       background: var(--garden-rosy);
       color: white;
       border-color: var(--garden-rosy);
       box-shadow: 0 10px 20px -5px rgba(211, 150, 140, 0.4);
     }
-
     .dimension-input {
       background: rgba(10, 51, 35, 0.4);
       border: 2px solid rgba(247, 244, 213, 0.1);
@@ -96,13 +83,11 @@
       transition: all 0.3s ease;
       width: 100%;
     }
-
     .dimension-input:focus {
       outline: none;
       border-color: var(--garden-rosy);
       background: rgba(10, 51, 35, 0.6);
     }
-
     .room-path {
       fill: rgba(211, 150, 140, 0.05);
       stroke: var(--garden-rosy);
@@ -110,17 +95,14 @@
       transition: stroke 0.3s ease;
       transform-origin: center;
     }
-
     .flip-anim {
       animation: roomFlip 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     @keyframes roomFlip {
       0% { transform: perspective(1000px) rotateY(0deg); }
       50% { transform: perspective(1000px) rotateY(180deg); opacity: 0.7; }
       100% { transform: perspective(1000px) rotateY(360deg); }
     }
-
     .edge-highlight {
       stroke: #4ADE80;
       stroke-width: 6;
@@ -129,11 +111,9 @@
       transition: opacity 0.2s ease;
       pointer-events: none;
     }
-
     .edge-highlight.active {
       opacity: 1;
     }
-
     #custom-toast {
       position: fixed;
       bottom: 40px;
@@ -151,29 +131,24 @@
       align-items: center;
       gap: 10px;
     }
-
     #custom-toast.visible {
       transform: translateX(-50%) translateY(0);
     }
-
     .vertex-handle {
       cursor: crosshair;
       transition: r 0.2s ease, fill 0.2s ease;
       pointer-events: all;
     }
-
     .vertex-handle:hover {
       r: 8;
       fill: #4ADE80;
       filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.6));
     }
-
     .vertex-handle.dragging {
       fill: #4ADE80;
       r: 9;
       filter: drop-shadow(0 0 12px rgba(74, 222, 128, 0.8));
     }
-
     .coord-tooltip {
       pointer-events: none;
       font-size: 9px;
@@ -181,30 +156,25 @@
       fill: #4ADE80;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     }
-
     .element-hoverable {
       cursor: pointer;
       transition: filter 0.2s ease;
     }
-
     .element-hoverable:hover {
       filter: drop-shadow(0 0 5px #4ADE80);
     }
-
     .animate-slide-right {
       animation: slideInRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
       opacity: 0;
     }
-
     @keyframes slideInRight {
       from { opacity: 0; transform: translateX(30px); }
       to { opacity: 1; transform: translateX(0); }
     }
-
     kbd {
       font-family: ui-monospace, monospace;
     }
-      .custom-scrollbar::-webkit-scrollbar {
+    .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
@@ -219,22 +189,18 @@
     }
   </style>
 </head>
-
 <body>
-  <div class="h-screen relative flex flex-col grid-background bg-[#0A3323] font-['Quicksand',sans-serif] text-[#F7F4D5] overflow-hidden">
+  <div class="min-h-screen relative flex flex-col grid-background bg-[#0A3323] font-['Quicksand',sans-serif] text-[#F7F4D5] overflow-hidden">
     <div class="noise-texture"></div>
-
     <div id="custom-toast">
       <iconify-icon icon="ph:info-duotone" class="text-xl"></iconify-icon>
       <span id="toast-msg">Element added</span>
     </div>
-
-    <!-- Navigation -->
     <nav id="main-nav" class="flex-shrink-0 sticky top-0 z-40 px-8 py-3 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-md bg-[#D3968C]">
       <div class="flex items-center gap-4">
         <a href="#" id="nav-brand-link" class="flex items-center gap-4">
           <div class="w-10 h-10 bg-[#0A3323] rounded-[1rem] flex items-center justify-center shadow-inner transform transition hover:rotate-12 cursor-pointer">
-            <iconify-icon icon="ph:sparkle-duotone" class="text-2xl text-[#F7F4D5]"></iconify-icon>
+            <iconify-icon icon="ph:sparkle-duotone" class="text-2xl text-[#F7F4D5] "></iconify-icon>
           </div>
           <span class="text-2xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif">BluPrint</span>
         </a>
@@ -247,10 +213,7 @@
         </div>
       </div>
     </nav>
-
-    <!-- Main Workspace -->
     <main class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full">
-      <!-- Editor Area -->
       <section class="w-[70%] relative flex flex-col gap-4 overflow-hidden h-full">
         <header class="animate-slide-right flex-shrink-0">
           <h1 class="text-4xl font-bold text-[#F7F4D5]">Architectural Studio</h1>
@@ -264,7 +227,6 @@
             </button>
           </div>
         </header>
-
         <div id="canvas-container" class="flex-1 canvas-area relative flex items-center justify-center overflow-hidden garden-card ghibli-border">
           <svg id="editor-svg" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet" class="w-full h-full p-2 select-none">
             <defs>
@@ -275,8 +237,6 @@
                 <rect width="100" height="100" fill="url(#smallGrid)"></rect>
                 <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(247,244,213,0.08)" stroke-width="1.5"></path>
               </pattern>
-
-              <!-- Reusable symbols -->
               <symbol id="door-template">
                 <path d="M 0 0 L 40 0" stroke="#F7F4D5" stroke-width="3" />
                 <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#F7F4D5" stroke-width="1.5" stroke-dasharray="4 4" fill="none" />
@@ -288,33 +248,22 @@
                 <line x1="5" y1="1.5" x2="45" y2="1.5" stroke="#F7F4D5" stroke-width="1" />
               </symbol>
             </defs>
-
-            <!-- Background Grid -->
             <rect width="100%" height="100%" fill="url(#largeGrid)"></rect>
-
-            <!-- Room Polygon -->
             <path id="room-polygon" class="room-path" />
-
-            <!-- Interaction layers -->
             <g id="edge-highlights"></g>
             <g id="placed-elements">
               <g id="elements-only"></g>
             </g>
             <g id="ghost-element" class="hidden"></g>
             <text id="coord-tooltip" class="coord-tooltip hidden" x="0" y="0">0, 0</text>
-
-            <!-- Dimension Labels -->
             <text id="label-width" x="400" y="135" text-anchor="middle" fill="var(--garden-rosy)" class="font-bold text-[10px] uppercase tracking-widest">15.0 ft</text>
             <text id="label-length" x="185" y="300" text-anchor="middle" transform="rotate(-90, 185, 300)" fill="var(--garden-rosy)" class="font-bold text-[10px] uppercase tracking-widest">12.0 ft</text>
           </svg>
-
           <div class="absolute bottom-8 right-8">
             <div id="area-badge" class="px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-xs font-bold text-white/60 uppercase tracking-widest">Total Area: 180 SQ FT</div>
           </div>
         </div>
       </section>
-
-      <!-- Sidebar Controls -->
       <section class="w-[30%] animate-slide-right flex flex-col h-full" style="animation-delay: 0.3s">
         <div class="garden-card ghibli-border p-6 flex-1 overflow-y-auto flex flex-col gap-6 custom-scrollbar">
           <div class="space-y-4">
@@ -334,7 +283,6 @@
                 </div>
                 <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
               </div>
-
               <div draggable="true" data-type="window" id="draggable-window" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-[#105666]/30 border border-[#105666]/40 hover:bg-[#105666]/50 transition-all cursor-grab active:cursor-grabbing group">
                 <div class="w-16 h-16 bg-[#105666]/40 rounded-2xl flex items-center justify-center shrink-0">
                   <iconify-icon icon="ph:square-duotone" class="text-3xl text-[#83d4e0]"></iconify-icon>
@@ -345,20 +293,18 @@
                 </div>
                 <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
               </div>
-
               <div draggable="true" data-type="cutout" id="draggable-cutout" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-transparent border-2 border-[#839958]/30 border-dashed hover:bg-[#839958]/10 transition-all cursor-grab active:cursor-grabbing group">
                 <div class="w-16 h-16 bg-[#839958]/20 rounded-2xl flex items-center justify-center shrink-0">
                   <iconify-icon icon="ph:scissors-duotone" class="text-3xl text-[#839958]"></iconify-icon>
                 </div>
                 <div class="flex-1 text-left">
                   <h4 class="font-bold text-white text-base">Wall Cutout</h4>
-                  <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-widest">USED FOR CLOSET SPACE, UNUSUAL LAYOUT, ETC</p>
+                  <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-widest">CLOSET OR NOOK SPACE</p>
                 </div>
                 <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
               </div>
             </div>
           </div>
-
           <div class="space-y-8 pt-4 border-t border-[#F7F4D5]/10">
             <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]">
               <iconify-icon icon="ph:ruler-duotone" class="text-3xl text-[#D3968C]"></iconify-icon>
@@ -392,7 +338,6 @@
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase">ft</span>
                 </div>
               </div>
-
               <div class="pt-4">
                 <button id="cta-save-continue" class="w-full py-5 bg-[#D3968C] text-white rounded-2xl font-bold shadow-lg hover:bg-[#c1867b] transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
                   Save & Continue <iconify-icon icon="ph:arrow-right-bold" class="text-xl"></iconify-icon>
@@ -400,8 +345,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Shortcuts -->
           <div class="mt-auto p-4 rounded-xl bg-[#D3968C]/5 border border-[#D3968C]/10 space-y-2">
             <div class="flex items-center gap-2 text-[#D3968C] text-xs font-bold">
               <iconify-icon icon="ph:command-bold"></iconify-icon>
@@ -417,7 +360,6 @@
       </section>
     </main>
   </div>
-
   <script>
     const svg = document.getElementById('editor-svg');
     const roomPath = document.getElementById('room-polygon');
@@ -428,7 +370,6 @@
     const coordTooltip = document.getElementById('coord-tooltip');
     const toast = document.getElementById('custom-toast');
     const toastMsg = document.getElementById('toast-msg');
-
     const btnUndo = document.getElementById('btn-undo');
     const btnRedo = document.getElementById('btn-redo');
     const widthInput = document.getElementById('room-width');
@@ -436,17 +377,12 @@
     const areaBadge = document.getElementById('area-badge');
     const labelWidth = document.getElementById('label-width');
     const labelLength = document.getElementById('label-length');
-
-    let state = {
-      roomPoints: [
-        { x: 250, y: 100 },
-        { x: 550, y: 100 },
-        { x: 550, y: 350 },
-        { x: 250, y: 350 }
-      ],
-      elements: [],
-      cutouts: []
-    };
+    const roomNameInput = document.getElementById('room-name');
+    const heightInput = document.getElementById('room-height');
+    const ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
+    const ROOM_LAYOUT_VERSION = 1;
+    const ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
+    const ROOM_LAYOUT_SCALE = 20;
 
     let history = [];
     let historyIndex = -1;
@@ -456,6 +392,31 @@
 
     function cloneObj(obj) { return JSON.parse(JSON.stringify(obj)); }
 
+    function createDefaultState() {
+      return {
+        roomPoints: [
+          { x: 250, y: 100 },
+          { x: 550, y: 100 },
+          { x: 550, y: 340 },
+          { x: 250, y: 340 }
+        ],
+        elements: [],
+        cutouts: []
+      };
+    }
+
+    function loadSavedLayout() {
+      const raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY);
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed;
+      } catch { return null; }
+    }
+
+    const saved = loadSavedLayout();
+    let state = saved ? (saved.roomPoints ? saved : createDefaultState()) : createDefaultState();
+
     function saveState() {
       if (historyIndex < history.length - 1) {
         history = history.slice(0, historyIndex + 1);
@@ -463,6 +424,7 @@
       history.push(cloneObj(state));
       historyIndex++;
       updateHistoryUI();
+      persistRoomLayout();
     }
 
     function updateHistoryUI() {
@@ -490,95 +452,58 @@
       }
     }
 
-    function showToast(msg) {
-      toastMsg.innerText = msg;
-      toast.classList.add('visible');
-      setTimeout(() => toast.classList.remove('visible'), 2000);
+    function persistRoomLayout() {
+      localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(state));
     }
 
-    // Helper: Convert Viewport coordinates to SVG units
     function getSVGPoint(e) {
       const pt = svg.createSVGPoint();
-      pt.x = e.clientX;
-      pt.y = e.clientY;
-      
+      pt.x = e.clientX; pt.y = e.clientY;
       const matrix = svg.getScreenCTM();
-      if (!matrix) {
-        console.error("SVG Screen CTM not available. Falling back to bounding client rect.");
-        const bcr = svg.getBoundingClientRect();
-        return {
-          x: (e.clientX - bcr.left) * (800 / bcr.width),
-          y: (e.clientY - bcr.top) * (500 / bcr.height)
-        };
-      }
-      
+      if (!matrix) return { x: 0, y: 0 };
       const transformed = pt.matrixTransform(matrix.inverse());
       return { x: transformed.x, y: transformed.y };
     }
 
     function getClosestPointOnPerimeter(x, y) {
-      let minDist = Infinity;
-      let closest = null;
-      let edgeIndex = -1;
-
+      let minDist = Infinity; let closest = null; let edgeIndex = -1;
       for (let i = 0; i < state.roomPoints.length; i++) {
         const p1 = state.roomPoints[i];
         const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
-
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const lenSq = dx * dx + dy * dy;
-
+        const dx = p2.x - p1.x; const dy = p2.y - p1.y; const lenSq = dx * dx + dy * dy;
         let t = ((x - p1.x) * dx + (y - p1.y) * dy) / lenSq;
         t = Math.max(0, Math.min(1, t));
-
-        const px = p1.x + t * dx;
-        const py = p1.y + t * dy;
-        
-        // Dist in SVG units
+        const px = p1.x + t * dx; const py = p1.y + t * dy;
         const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
-
         if (dist < minDist) {
-          minDist = dist;
-          closest = {
-            x: px,
-            y: py,
-            angle: Math.atan2(dy, dx) * 180 / Math.PI
-          };
-          edgeIndex = i;
+          minDist = dist; closest = { x: px, y: py, angle: Math.atan2(dy, dx) * 180 / Math.PI }; edgeIndex = i;
         }
       }
       return { point: closest, dist: minDist, edgeIndex };
     }
 
+    function showToast(msg) {
+      toastMsg.innerText = msg; toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
     function renderAll() {
-      renderRoom();
-      renderElements();
-      renderCutouts();
-      updateDimensionsFromState();
+      renderRoom(); renderElements(); renderCutouts(); updateDimensionsDisplay();
     }
 
     function renderRoom() {
       let d = state.roomPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
-
       state.cutouts.forEach(c => {
         const p = c.points;
         d += ` M ${p[0].x} ${p[0].y} L ${p[1].x} ${p[1].y} L ${p[2].x} ${p[2].y} L ${p[3].x} ${p[3].y} Z`;
       });
-
-      roomPath.setAttribute('d', d);
-      roomPath.setAttribute('fill-rule', 'evenodd');
-
+      roomPath.setAttribute('d', d); roomPath.setAttribute('fill-rule', 'evenodd');
       highlightsGroup.innerHTML = '';
       state.roomPoints.forEach((p, i) => {
         const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute('x1', p.x);
-        line.setAttribute('y1', p.y);
-        line.setAttribute('x2', p2.x);
-        line.setAttribute('y2', p2.y);
-        line.classList.add('edge-highlight');
-        line.id = `edge-${i}`;
+        line.setAttribute('x1', p.x); line.setAttribute('y1', p.y); line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+        line.classList.add('edge-highlight'); line.id = `edge-${i}`;
         highlightsGroup.appendChild(line);
       });
     }
@@ -589,353 +514,220 @@
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         const offset = el.type === 'door' ? -20 : -25;
         g.innerHTML = `<use href="#${el.type}-template" transform="translate(${el.x},${el.y}) rotate(${el.angle}) translate(${offset}, 0)" />`;
-        g.setAttribute('pointer-events', 'all');
         g.classList.add('element-hoverable');
-        g.addEventListener('mouseenter', () => {
-          hoveredElementId = el.id;
-          hoveredElementType = 'element';
-        });
-        g.addEventListener('mouseleave', () => {
-          if (hoveredElementId === el.id) hoveredElementId = null;
-        });
+        g.setAttribute('style', 'cursor: grab');
+
+        g.addEventListener('mouseenter', () => { hoveredElementId = el.id; hoveredElementType = 'element'; });
+        g.addEventListener('mouseleave', () => { if (hoveredElementId === el.id) hoveredElementId = null; });
+
+        g.onmousedown = (e) => {
+          e.stopPropagation();
+          let hasMoved = false;
+          g.setAttribute('style', 'cursor: grabbing');
+          
+          const onMouseMove = (mv) => {
+            hasMoved = true;
+            const svgP = getSVGPoint(mv);
+            const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+            
+            // Visual feedback
+            document.querySelectorAll('.edge-highlight').forEach(h => h.classList.remove('active'));
+            const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+            if (edgeEl) edgeEl.classList.add('active');
+
+            // Update temporary state for real-time visual
+            el.x = snap.point.x;
+            el.y = snap.point.y;
+            el.angle = snap.point.angle;
+            
+            const useEl = g.querySelector('use');
+            useEl.setAttribute('transform', `translate(${el.x},${el.y}) rotate(${el.angle}) translate(${offset}, 0)`);
+          };
+
+          const onMouseUp = () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            document.querySelectorAll('.edge-highlight').forEach(h => h.classList.remove('active'));
+            g.setAttribute('style', 'cursor: grab');
+            
+            if (hasMoved) {
+              saveState();
+              showToast(`${el.type} repositioned`);
+            }
+          };
+
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+        };
+
         elementsOnlyGroup.appendChild(g);
       });
     }
 
     function renderCutouts() {
-      // Clear only cutout groups to preserve the 'elements-only' container for doors and windows
       placedGroup.querySelectorAll('.cutout-group').forEach(el => el.remove());
-
       state.cutouts.forEach((c) => {
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.classList.add('cutout-group');
-        g.setAttribute('data-id', c.id);
-        placedGroup.appendChild(g);
-
         const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
         const d = `M ${c.points[0].x} ${c.points[0].y} L ${c.points[1].x} ${c.points[1].y} L ${c.points[2].x} ${c.points[2].y} L ${c.points[3].x} ${c.points[3].y} Z`;
-        outline.setAttribute('d', d);
-        outline.setAttribute('fill', 'rgba(211, 150, 140, 0.15)');
-        outline.setAttribute('stroke', 'var(--garden-rosy)');
-        outline.setAttribute('stroke-width', '1.5');
-        outline.setAttribute('stroke-dasharray', '4 4');
-        g.appendChild(outline);
+        outline.setAttribute('d', d); outline.setAttribute('fill', 'rgba(211, 150, 140, 0.15)');
+        outline.setAttribute('stroke', 'var(--garden-rosy)'); outline.setAttribute('stroke-width', '6'); outline.setAttribute('stroke-opacity', '0.1');
+        outline.setAttribute('class', 'element-hoverable');
+        outline.setAttribute('style', 'cursor: grab');
+        
+        const visualOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        visualOutline.setAttribute('d', d); visualOutline.setAttribute('fill', 'none');
+        visualOutline.setAttribute('stroke', 'var(--garden-rosy)'); visualOutline.setAttribute('stroke-width', '1.5'); visualOutline.setAttribute('stroke-dasharray', '4 4');
+        visualOutline.setAttribute('pointer-events', 'none');
 
+        outline.onmousedown = (e) => {
+          e.stopPropagation();
+          let hasMoved = false;
+          outline.setAttribute('style', 'cursor: grabbing');
+          const startSvgP = getSVGPoint(e);
+          const originalPoints = c.points.map(p => ({...p}));
+
+          const onMouseMove = (mv) => {
+            hasMoved = true;
+            const currentSvgP = getSVGPoint(mv);
+            const snap = getClosestPointOnPerimeter(currentSvgP.x, currentSvgP.y);
+            
+            // Visual edge feedback
+            document.querySelectorAll('.edge-highlight').forEach(h => h.classList.remove('active'));
+            const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+            if (edgeEl) edgeEl.classList.add('active');
+
+            // Calculate move offset from initial click to current snapped position
+            const dx = snap.point.x - originalPoints[0].x;
+            const dy = snap.point.y - originalPoints[0].y;
+
+            c.points.forEach((p, idx) => {
+              p.x = originalPoints[idx].x + dx;
+              p.y = originalPoints[idx].y + dy;
+            });
+            renderAll();
+          };
+
+          const onMouseUp = () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            document.querySelectorAll('.edge-highlight').forEach(h => h.classList.remove('active'));
+            outline.setAttribute('style', 'cursor: grab');
+            if (hasMoved) {
+              saveState();
+              showToast("Cutout repositioned");
+            }
+          };
+
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+        };
+
+        g.appendChild(outline);
+        g.appendChild(visualOutline);
         c.points.forEach((p, pIdx) => {
           const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          circle.setAttribute('cx', p.x);
-          circle.setAttribute('cy', p.y);
-          circle.setAttribute('r', '4');
-          circle.setAttribute('fill', 'var(--garden-rosy)');
-          circle.setAttribute('stroke', 'white');
-          circle.setAttribute('class', 'vertex-handle');
-
+          circle.setAttribute('cx', p.x); circle.setAttribute('cy', p.y); circle.setAttribute('r', '4');
+          circle.setAttribute('fill', 'var(--garden-rosy)'); circle.setAttribute('stroke', 'white'); circle.setAttribute('class', 'vertex-handle');
           circle.onmousedown = (e) => {
-            e.stopPropagation();
-            circle.classList.add('dragging');
-            coordTooltip.classList.remove('hidden');
+            e.stopPropagation(); circle.classList.add('dragging'); coordTooltip.classList.remove('hidden');
             const onMove = (mv) => {
-              const svgP = getSVGPoint(mv);
-              const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-              if (snap.dist < 20) {
-                c.points[pIdx].x = snap.point.x;
-                c.points[pIdx].y = snap.point.y;
-              } else {
-                c.points[pIdx].x = Math.round(svgP.x);
-                c.points[pIdx].y = Math.round(svgP.y);
-              }
-              coordTooltip.setAttribute('x', c.points[pIdx].x + 10);
-              coordTooltip.setAttribute('y', c.points[pIdx].y - 10);
-              coordTooltip.textContent = `${Math.round(c.points[pIdx].x)}, ${Math.round(c.points[pIdx].y)}`;
+              const svgP = getSVGPoint(mv); const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+              if (snap.dist < 20) { p.x = snap.point.x; p.y = snap.point.y; } else { p.x = Math.round(svgP.x); p.y = Math.round(svgP.y); }
+              coordTooltip.setAttribute('x', p.x + 10); coordTooltip.setAttribute('y', p.y - 10); coordTooltip.textContent = `${p.x}, ${p.y}`;
               renderAll();
             };
-            const onUp = () => {
-              circle.classList.remove('dragging');
-              coordTooltip.classList.add('hidden');
-              window.removeEventListener('mousemove', onMove);
-              window.removeEventListener('mouseup', onUp);
-              saveState();
-              renderAll();
-            };
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', onUp);
+            const onUp = () => { circle.classList.remove('dragging'); coordTooltip.classList.add('hidden'); window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); saveState(); };
+            window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
           };
           g.appendChild(circle);
         });
+        g.onmouseenter = () => { hoveredElementId = c.id; hoveredElementType = 'cutout'; };
+        g.onmouseleave = () => { if (hoveredElementId === c.id) hoveredElementId = null; };
+        placedGroup.appendChild(g);
       });
     }
 
-    function calculateCutoutArea() {
-      let totalCutoutAreaSVG = 0;
-      state.cutouts.forEach(c => {
-        const pts = c.points;
-        let area = 0;
-        for (let i = 0; i < pts.length; i++) {
-          const j = (i + 1) % pts.length;
-          area += pts[i].x * pts[j].y;
-          area -= pts[j].x * pts[i].y;
-        }
-        totalCutoutAreaSVG += Math.abs(area) / 2;
-      });
-      // Convert SVG square units to square feet (20 units = 1ft, so 400 sq units = 1 sq ft)
-      return totalCutoutAreaSVG / 400;
-    }
-
-    function updateDimensionsFromState() {
-      const p1 = state.roomPoints[0];
-      const p2 = state.roomPoints[1];
-      const p3 = state.roomPoints[2];
+    function updateDimensionsDisplay() {
+      const p1 = state.roomPoints[0]; const p2 = state.roomPoints[1]; const p3 = state.roomPoints[2];
       const width = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2) / 20;
       const length = Math.sqrt((p3.x - p2.x) ** 2 + (p3.y - p2.y) ** 2) / 20;
-
-      if (document.activeElement !== widthInput) widthInput.value = width.toFixed(1);
-      if (document.activeElement !== lengthInput) lengthInput.value = length.toFixed(1);
-
+      widthInput.value = width.toFixed(1); lengthInput.value = length.toFixed(1);
       const totalArea = width * length;
-      const cutoutArea = calculateCutoutArea();
-      const usableArea = totalArea - cutoutArea;
-
-      areaBadge.innerHTML = `Total Area: ${totalArea.toFixed(1)} SQ FT <span class="mx-2 opacity-30">|</span> Usable Area: ${usableArea.toFixed(1)} SQ FT`;
-
-      const minX = Math.min(...state.roomPoints.map(p => p.x));
-      const maxX = Math.max(...state.roomPoints.map(p => p.x));
-      const minY = Math.min(...state.roomPoints.map(p => p.y));
-      const maxY = Math.max(...state.roomPoints.map(p => p.y));
-      const midX = (minX + maxX) / 2;
-      const midY = (minY + maxY) / 2;
-
-      labelWidth.setAttribute('x', midX);
-      labelWidth.setAttribute('y', minY - 15);
-      labelWidth.innerHTML = `${width.toFixed(1)} ft`;
-
-      labelLength.setAttribute('x', minX - 15);
-      labelLength.setAttribute('y', midY);
-      labelLength.innerHTML = `${length.toFixed(1)} ft`;
+      areaBadge.innerHTML = `Total Area: ${totalArea.toFixed(1)} SQ FT`;
+      const minX = Math.min(...state.roomPoints.map(p => p.x)); const maxX = Math.max(...state.roomPoints.map(p => p.x));
+      const minY = Math.min(...state.roomPoints.map(p => p.y)); const maxY = Math.max(...state.roomPoints.map(p => p.y));
+      const midX = (minX + maxX) / 2; const midY = (minY + maxY) / 2;
+      labelWidth.setAttribute('x', midX); labelWidth.setAttribute('y', minY - 15); labelWidth.textContent = `${width.toFixed(1)} ft`;
+      labelLength.setAttribute('x', minX - 15); labelLength.setAttribute('y', midY); labelLength.textContent = `${length.toFixed(1)} ft`;
       labelLength.setAttribute('transform', `rotate(-90, ${minX - 15}, ${midY})`);
     }
 
     function createSnappingCutout(targetX, targetY, size = 30) {
-      const snap = getClosestPointOnPerimeter(targetX, targetY);
-      const angleRad = snap.point.angle * Math.PI / 180;
-      const nx = Math.cos(angleRad + Math.PI / 2);
-      const ny = Math.sin(angleRad + Math.PI / 2);
-
-      const halfSize = size / 2;
+      const snap = getClosestPointOnPerimeter(targetX, targetY); const angleRad = snap.point.angle * Math.PI / 180;
+      const nx = Math.cos(angleRad + Math.PI / 2); const ny = Math.sin(angleRad + Math.PI / 2); const halfSize = size / 2;
       const p0 = { x: snap.point.x - Math.cos(angleRad) * halfSize, y: snap.point.y - Math.sin(angleRad) * halfSize };
       const p1 = { x: snap.point.x + Math.cos(angleRad) * halfSize, y: snap.point.y + Math.sin(angleRad) * halfSize };
-      const p2 = { x: p1.x + nx * size, y: p1.y + ny * size };
-      const p3 = { x: p0.x + nx * size, y: p0.y + ny * size };
-
+      const p2 = { x: p1.x + nx * size, y: p1.y + ny * size }; const p3 = { x: p0.x + nx * size, y: p0.y + ny * size };
       return [p0, p1, p2, p3];
     }
 
-    // Listeners for Library Items
     document.querySelectorAll('[draggable="true"]').forEach(btn => {
-      btn.addEventListener('dragstart', (e) => {
-        draggingFromToolbar = btn.getAttribute('data-type');
-        console.log("Drag started for type:", draggingFromToolbar);
-        e.dataTransfer.setData('text/plain', draggingFromToolbar);
-        btn.style.opacity = '0.5';
-      });
-      btn.addEventListener('dragend', () => {
-        btn.style.opacity = '1';
-      });
+      btn.addEventListener('dragstart', (e) => { draggingFromToolbar = btn.getAttribute('data-type'); e.dataTransfer.setData('text/plain', draggingFromToolbar); });
     });
 
     svg.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      if (!draggingFromToolbar) {
-        console.warn("NO_DRAGGING_TYPE - dragover ignored");
-        return;
-      }
-      
-      const svgP = getSVGPoint(e);
-      const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-      
-      console.log("Snap dist:", Math.round(snap.dist), "SVG Coord:", Math.round(svgP.x), Math.round(svgP.y));
-
+      e.preventDefault(); if (!draggingFromToolbar) return;
+      const svgP = getSVGPoint(e); const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
       if (snap.dist < 200) {
-        console.log("THRESHOLD_CHECK: snap.dist < 200 - TRUE");
         document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active'));
-        const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-        if (edgeEl) {
-          console.log("GLOW_EDGE_" + snap.edgeIndex);
-          edgeEl.classList.add('active');
-        }
-
+        const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`); if (edgeEl) edgeEl.classList.add('active');
         ghost.classList.remove('hidden');
         if (draggingFromToolbar === 'cutout') {
           const pts = createSnappingCutout(svgP.x, svgP.y, 35);
-          const d = `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z`;
-          ghost.innerHTML = `<path d="${d}" fill="rgba(211, 150, 140, 0.4)" stroke="white" stroke-dasharray="2 2" />`;
-          console.log("GHOST_CREATED - type: cutout");
+          ghost.innerHTML = `<path d="M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z" fill="rgba(211, 150, 140, 0.4)" stroke="white" stroke-dasharray="2 2" />`;
         } else {
           const offset = draggingFromToolbar === 'door' ? -20 : -25;
           ghost.innerHTML = `<use href="#${draggingFromToolbar}-template" transform="translate(${snap.point.x},${snap.point.y}) rotate(${snap.point.angle}) translate(${offset}, 0)" />`;
-          console.log("GHOST_CREATED - type:", draggingFromToolbar);
         }
-      } else {
-        ghost.classList.add('hidden');
-        document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active'));
-      }
+      } else { ghost.classList.add('hidden'); document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active')); }
     });
 
     svg.addEventListener('drop', (e) => {
-      e.preventDefault();
-      if (!draggingFromToolbar) return;
-      
-      const svgP = getSVGPoint(e);
-      const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-
+      e.preventDefault(); if (!draggingFromToolbar) return;
+      const svgP = getSVGPoint(e); const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
       if (snap.dist < 200) {
-        console.log("DROP_VALID: snap.dist < 200 - TRUE");
         if (draggingFromToolbar === 'cutout') {
-          const points = createSnappingCutout(svgP.x, svgP.y, 35);
-          state.cutouts.push({ id: Date.now(), type: 'cutout', points });
-          showToast("Snapping cutout added");
+          state.cutouts.push({ id: Date.now(), type: 'cutout', points: createSnappingCutout(svgP.x, svgP.y, 35) });
         } else {
           state.elements.push({ id: Date.now(), type: draggingFromToolbar, x: snap.point.x, y: snap.point.y, angle: snap.point.angle });
-          showToast(`${draggingFromToolbar} snapped to wall`);
         }
-        saveState();
-        renderAll();
-      } else {
-        console.warn("DROP_INVALID - snap distance too high:", snap.dist);
+        saveState(); renderAll(); showToast(`${draggingFromToolbar} added`);
       }
-      ghost.classList.add('hidden');
-      document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active'));
+      ghost.classList.add('hidden'); document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active')); draggingFromToolbar = null;
     });
-
-    svg.addEventListener('dragleave', () => {
-      ghost.classList.add('hidden');
-      document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active'));
-    });
-
-    btnUndo.onclick = undo;
-    btnRedo.onclick = redo;
 
     window.addEventListener('keydown', (e) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && hoveredElementId) {
-        if (hoveredElementType === 'element') {
-          state.elements = state.elements.filter(el => el.id !== hoveredElementId);
-        } else {
-          state.cutouts = state.cutouts.filter(c => c.id !== hoveredElementId);
-        }
-        hoveredElementId = null;
-        saveState();
-        renderAll();
-        showToast("Element deleted");
+        if (hoveredElementType === 'element') { state.elements = state.elements.filter(el => el.id !== hoveredElementId); }
+        else { state.cutouts = state.cutouts.filter(c => c.id !== hoveredElementId); }
+        hoveredElementId = null; saveState(); renderAll(); showToast("Element deleted");
       }
     });
 
-    const updateBlueprintRealtime = () => {
-      const w = parseFloat(widthInput.value) * 20;
-      const l = parseFloat(lengthInput.value) * 20;
+    widthInput.oninput = lengthInput.oninput = () => {
+      const w = parseFloat(widthInput.value) * 20; const l = parseFloat(lengthInput.value) * 20;
       if (isNaN(w) || isNaN(l)) return;
-
-      // (1) Calculate old bounds and dimensions
-      const oldMinX = Math.min(...state.roomPoints.map(p => p.x));
-      const oldMaxX = Math.max(...state.roomPoints.map(p => p.x));
-      const oldMinY = Math.min(...state.roomPoints.map(p => p.y));
-      const oldMaxY = Math.max(...state.roomPoints.map(p => p.y));
-      const oldW = oldMaxX - oldMinX;
-      const oldL = oldMaxY - oldMinY;
-
-      // (2) Set new room points
-      const centerX = 400, centerY = 250;
-      state.roomPoints = [
-        { x: centerX - w / 2, y: centerY - l / 2 },
-        { x: centerX + w / 2, y: centerY - l / 2 },
-        { x: centerX + w / 2, y: centerY + l / 2 },
-        { x: centerX - w / 2, y: centerY + l / 2 }
-      ];
-
-      // (3) Calculate new bounds and dimensions
-      const newMinX = centerX - w / 2;
-      const newMinY = centerY - l / 2;
-
-      // (4) Reposition elements proportionally
-      if (oldW > 0 && oldL > 0) {
-        state.elements.forEach(el => {
-          const propX = (el.x - oldMinX) / oldW;
-          const propY = (el.y - oldMinY) / oldL;
-          el.x = newMinX + propX * w;
-          el.y = newMinY + propY * l;
-        });
-
-        state.cutouts.forEach(c => {
-          c.points.forEach(p => {
-            const propX = (p.x - oldMinX) / oldW;
-            const propY = (p.y - oldMinY) / oldL;
-            p.x = newMinX + propX * w;
-            p.y = newMinY + propY * l;
-          });
-        });
-      }
-
-      roomPath.classList.remove('flip-anim');
-      void roomPath.offsetWidth;
-      roomPath.classList.add('flip-anim');
-
-      renderAll();
-      saveState();
+      const cx = 400; const cy = 250;
+      state.roomPoints = [{ x: cx - w/2, y: cy - l/2 }, { x: cx + w/2, y: cy - l/2 }, { x: cx + w/2, y: cy + l/2 }, { x: cx - w/2, y: cy + l/2 }];
+      roomPath.classList.remove('flip-anim'); void roomPath.offsetWidth; roomPath.classList.add('flip-anim');
+      renderAll(); saveState();
     };
 
-    widthInput.addEventListener('input', updateBlueprintRealtime);
-    lengthInput.addEventListener('input', updateBlueprintRealtime);
-
-    // Save & Continue
-    document.getElementById('cta-save-continue').addEventListener('click', async () => {
-      const userId = localStorage.getItem('blueprintUserId');
-      if (!userId) { window.location.href = 'index.html'; return; }
-
-      const widthFt  = parseFloat(widthInput.value)  || 12;
-      const lengthFt = parseFloat(lengthInput.value) || 14;
-      const roomName = document.getElementById('room-name')?.value?.trim() || 'My Room';
-
-      // Persist dimensions immediately so result page shows correct values before API responds
-      localStorage.setItem('blueprintCurrentRoomName',   roomName);
-      localStorage.setItem('blueprintCurrentRoomWidth',  String(widthFt));
-      localStorage.setItem('blueprintCurrentRoomLength', String(lengthFt));
-
-      // Persist full layout (polygon, doors, windows, cutouts) for the 2D floor plan
-      const roomLayout = {
-        roomPoints: state.roomPoints,
-        elements:   state.elements,
-        cutouts:    state.cutouts,
-        widthFt,
-        lengthFt,
-      };
-      localStorage.setItem('blueprintRoomLayout', JSON.stringify(roomLayout));
-
-      try {
-        const res = await fetch('/api/rooms', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            name:     roomName,
-            widthFt,
-            lengthFt,
-            heightFt: 8,
-            sqft:     Math.round(widthFt * lengthFt),
-          }),
-        });
-        if (!res.ok) throw new Error('save failed');
-        const room = await res.json();
-        localStorage.setItem('blueprintCurrentRoomId', room._id);
-      } catch (err) {
-        console.warn('[save room]', err);
-        // continue even if save fails — roomId stays whatever it was
-      }
-
-      window.location.href = 'inspo-upload.html';
-    });
-
-    // Initial state
-    saveState();
-    renderAll();
+    btnUndo.onclick = undo; btnRedo.onclick = redo;
+    saveState(); renderAll();
   </script>
 </body>
-
 </html>
+```
