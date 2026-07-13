@@ -145,6 +145,15 @@
           <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
         </div>
 
+        <!-- Room Type -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h3 class="text-2xl font-bold">Room Type</h3>
+          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
+          <input type="text" id="room-type-other" placeholder="Describe your room type..."
+            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
+        </div>
+
         <!-- Style Profile -->
         <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
           <h3 class="text-2xl font-bold">Style Profile</h3>
@@ -209,6 +218,10 @@
       { label: 'Farmhouse',          desc: 'Warm, rustic comfort' },
       { label: 'Mid-Century Modern', desc: 'Retro sophistication' },
     ];
+    const ROOM_TYPES = [
+      'Bedroom', 'Living Room', 'Kitchen', 'Bathroom',
+      'Home Office', 'Dining Room', 'Nursery', 'Other',
+    ];
     const MOODS = [
       'Calm & Relaxing', 'Cozy & Warm', 'Natural & Refreshing',
       'Luxurious & Elegant', 'Creative & Artistic', 'Modern & Energetic',
@@ -233,6 +246,8 @@
 
     // ── State ─────────────────────────────────────────────────────────
     const state = {
+      selectedRoomType: null,
+      roomTypeIsOther:  false,
       selectedStyle:    null,
       selectedMood:     null,
       selectedColors:   [],
@@ -322,6 +337,42 @@
     document.getElementById('step1-next').addEventListener('click', () => showStep(2));
 
     // ── Step 2 grids ──────────────────────────────────────────────────
+    function buildRoomTypeGrid() {
+      const grid  = document.getElementById('room-type-grid');
+      const other = document.getElementById('room-type-other');
+      grid.innerHTML = '';
+      ROOM_TYPES.forEach(rt => {
+        const isOther    = rt === 'Other';
+        const isSelected = isOther ? state.roomTypeIsOther : state.selectedRoomType === rt;
+        const btn = document.createElement('button');
+        btn.className = 'option-btn text-center' + (isSelected ? ' selected' : '');
+        btn.innerHTML = `<p class="font-bold">${rt}</p>`;
+        btn.addEventListener('click', () => {
+          grid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          if (isOther) {
+            state.roomTypeIsOther  = true;
+            state.selectedRoomType = other.value.trim() || null;
+            other.classList.remove('hidden');
+            other.focus();
+          } else {
+            state.roomTypeIsOther  = false;
+            state.selectedRoomType = rt;
+            other.classList.add('hidden');
+            other.value = '';
+          }
+          checkStep2Valid();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    document.getElementById('room-type-other').addEventListener('input', function () {
+      if (!state.roomTypeIsOther) return;
+      state.selectedRoomType = this.value.trim() || null;
+      checkStep2Valid();
+    });
+
     function buildStyleGrid() {
       const grid = document.getElementById('style-grid');
       grid.innerHTML = '';
@@ -425,7 +476,7 @@
 
     function checkStep2Valid() {
       document.getElementById('step2-analyze').disabled =
-        !state.selectedStyle || !state.selectedMood ||
+        !state.selectedRoomType || !state.selectedStyle || !state.selectedMood ||
         state.selectedColors.length === 0 || state.selectedFeatures.length === 0;
     }
 
@@ -494,6 +545,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            roomType:     state.selectedRoomType,
             styleTag:     state.selectedStyle,
             colorPalette: state.selectedColors,
             moodTags:     [state.selectedMood],
@@ -507,12 +559,15 @@
 
     // ── Wild Card ─────────────────────────────────────────────────────
     document.getElementById('wild-card-btn').addEventListener('click', () => {
+      state.selectedRoomType = ROOM_TYPES.filter(rt => rt !== 'Other')[Math.floor(Math.random() * (ROOM_TYPES.length - 1))];
+      state.roomTypeIsOther  = false;
       state.selectedStyle    = STYLES[Math.floor(Math.random() * STYLES.length)].label;
       state.selectedMood     = MOODS[Math.floor(Math.random() * MOODS.length)];
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
       state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
       state.visionUrl        = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop';
       localStorage.setItem('blueprintStyleResult', JSON.stringify({
+        roomType:     state.selectedRoomType,
         styleTag:     state.selectedStyle,
         moodTags:     [state.selectedMood],
         colorPalette: state.selectedColors.map(c => c.hex || c),
@@ -523,6 +578,7 @@
     });
 
     // ── Init ──────────────────────────────────────────────────────────
+    buildRoomTypeGrid();
     buildStyleGrid();
     buildMoodGrid();
     buildColorGrid();

@@ -11,6 +11,7 @@ const StyleSchema = new mongoose.Schema(
     },
     source: { type: String, enum: ["user", "ai"], required: true },
 
+    roomType: { type: String }, // e.g. "Bedroom" or a custom "Other" value
     styleTag: { type: String }, // e.g. "scandinavian"
     colorPalette: { type: [String], default: [] }, // ["#E7DECD", ...]
 
