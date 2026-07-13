@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -198,7 +197,7 @@
     </div>
     <nav id="main-nav" class="flex-shrink-0 sticky top-0 z-40 px-8 py-3 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-md bg-[#D3968C]">
       <div class="flex items-center gap-4">
-        <a href="#" id="nav-brand-link" class="flex items-center gap-4">
+        <a href="dashboard.html" id="nav-brand-link" class="flex items-center gap-4">
           <div class="w-10 h-10 bg-[#0A3323] rounded-[1rem] flex items-center justify-center shadow-inner transform transition hover:rotate-12 cursor-pointer">
             <iconify-icon icon="ph:sparkle-duotone" class="text-2xl text-[#F7F4D5] "></iconify-icon>
           </div>
@@ -206,7 +205,7 @@
         </a>
       </div>
       <div class="hidden md:flex items-center gap-10 text-[#0A3323]">
-        <a href="#" id="nav-home-link" class="group relative font-bold text-base hover:text-[#0A3323]/80 transition-all">Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="dashboard.html" id="nav-home-link" class="group relative font-bold text-base hover:text-[#0A3323]/80 transition-all">Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
         <a href="#" id="nav-discover-link" class="group relative font-bold text-base hover:text-[#0A3323]/80 transition-all">Discover<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
         <div class="w-10 h-10 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border border-[#0A3323]/20">
           <iconify-icon icon="ph:user-duotone" class="text-xl text-[#0A3323]"></iconify-icon>
@@ -518,7 +517,7 @@
         g.setAttribute('style', 'cursor: grab');
 
         g.addEventListener('mouseenter', () => { hoveredElementId = el.id; hoveredElementType = 'element'; });
-        g.addEventListener('mouseleave', () => { if (hoveredElementId === el.id) hoveredElementId = null; });
+        g.addEventListener('mouseleave', () => { if (hoveredElementId === el.id) { hoveredElementId = null; hoveredElementType = null; } });
 
         g.onmousedown = (e) => {
           e.stopPropagation();
@@ -708,11 +707,20 @@
       ghost.classList.add('hidden'); document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active')); draggingFromToolbar = null;
     });
 
+    btnUndo.onclick = undo;
+    btnRedo.onclick = redo;
+
     window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z') { e.preventDefault(); undo(); return; }
+        if (e.key === 'y') { e.preventDefault(); redo(); return; }
+      }
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && hoveredElementId) {
         if (hoveredElementType === 'element') { state.elements = state.elements.filter(el => el.id !== hoveredElementId); }
         else { state.cutouts = state.cutouts.filter(c => c.id !== hoveredElementId); }
-        hoveredElementId = null; saveState(); renderAll(); showToast("Element deleted");
+        hoveredElementId = null; hoveredElementType = null; saveState(); renderAll(); showToast("Element deleted");
       }
     });
 
@@ -725,9 +733,10 @@
       renderAll(); saveState();
     };
 
-<<<<<<< HEAD
-    widthInput.addEventListener('input', updateBlueprintRealtime);
-    lengthInput.addEventListener('input', updateBlueprintRealtime);
+    svg.addEventListener('dragleave', () => {
+      ghost.classList.add('hidden');
+      document.querySelectorAll('.edge-highlight').forEach(el => el.classList.remove('active'));
+    });
 
     // Save & Continue
     document.getElementById('cta-save-continue').addEventListener('click', async () => {
@@ -736,22 +745,18 @@
 
       const widthFt  = parseFloat(widthInput.value)  || 12;
       const lengthFt = parseFloat(lengthInput.value) || 14;
-      const roomName = document.getElementById('room-name')?.value?.trim() || 'My Room';
+      const roomName = roomNameInput.value.trim() || 'My Room';
 
-      // Persist dimensions immediately so result page shows correct values before API responds
       localStorage.setItem('blueprintCurrentRoomName',   roomName);
       localStorage.setItem('blueprintCurrentRoomWidth',  String(widthFt));
       localStorage.setItem('blueprintCurrentRoomLength', String(lengthFt));
-
-      // Persist full layout (polygon, doors, windows, cutouts) for the 2D floor plan
-      const roomLayout = {
+      localStorage.setItem('blueprintRoomLayout', JSON.stringify({
         roomPoints: state.roomPoints,
         elements:   state.elements,
         cutouts:    state.cutouts,
         widthFt,
         lengthFt,
-      };
-      localStorage.setItem('blueprintRoomLayout', JSON.stringify(roomLayout));
+      }));
 
       try {
         const res = await fetch('/api/rooms', {
@@ -771,20 +776,17 @@
         localStorage.setItem('blueprintCurrentRoomId', room._id);
       } catch (err) {
         console.warn('[save room]', err);
-        // continue even if save fails — roomId stays whatever it was
       }
 
       window.location.href = 'inspo-upload.html';
     });
 
-    // Initial state — sync polygon to the default input values (15×12) first
-    // so roomPoints are consistent before the first saveState snapshot.
-    updateBlueprintRealtime();
+    // Pre-populate room name from localStorage if returning to edit
+    const savedRoomName = localStorage.getItem('blueprintCurrentRoomName');
+    if (savedRoomName) roomNameInput.value = savedRoomName;
+
     saveState();
     renderAll();
-    btnUndo.onclick = undo; btnRedo.onclick = redo;
-    saveState(); renderAll();
   </script>
 </body>
 </html>
-```
