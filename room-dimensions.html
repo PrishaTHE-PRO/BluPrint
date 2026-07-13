@@ -454,6 +454,10 @@
         if (!parsed || !Array.isArray(parsed.roomPoints) || !Array.isArray(parsed.elements) || !Array.isArray(parsed.cutouts)) {
           return null;
         }
+        const currentRoomId = localStorage.getItem('blueprintCurrentRoomId');
+        if (parsed.roomId && parsed.roomId !== currentRoomId) {
+          return null;
+        }
         return parsed;
       } catch {
         return null;
@@ -524,8 +528,8 @@
       };
     }
 
-    function persistRoomLayout() {
-      localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(captureRoomLayoutSnapshot()));
+    function persistRoomLayout(layout = captureRoomLayoutSnapshot()) {
+      localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
     }
 
     const savedLayout = loadSavedLayout();
@@ -983,20 +987,34 @@
       const userId = localStorage.getItem('blueprintUserId');
       if (!userId) { window.location.href = 'index.html'; return; }
 
-      const widthFt  = parseFloat(widthInput.value)  || 12;
-      const lengthFt = parseFloat(lengthInput.value) || 14;
+      let layoutSnapshot = captureRoomLayoutSnapshot();
+      const widthFt  = layoutSnapshot.widthFt  || parseFloat(widthInput.value)  || 12;
+      const lengthFt = layoutSnapshot.lengthFt || parseFloat(lengthInput.value) || 14;
       const heightFt = parseFloat(heightInput.value) || 8;
       const roomName = document.getElementById('room-name')?.value?.trim() || 'My Room';
+      const existingRoomId = localStorage.getItem('blueprintCurrentRoomId');
+
+      layoutSnapshot = {
+        ...layoutSnapshot,
+        roomId: existingRoomId || undefined,
+        roomName,
+        widthFt,
+        lengthFt,
+        heightFt,
+        sqft: Math.round(widthFt * lengthFt),
+        savedAt: new Date().toISOString(),
+      };
 
       // Persist dimensions immediately so result page shows correct values before API responds
       localStorage.setItem('blueprintCurrentRoomName',   roomName);
       localStorage.setItem('blueprintCurrentRoomWidth',  String(widthFt));
       localStorage.setItem('blueprintCurrentRoomLength', String(lengthFt));
       localStorage.setItem('blueprintCurrentRoomHeight', String(heightFt));
+      persistRoomLayout(layoutSnapshot);
 
       try {
-        const res = await fetch('/api/rooms', {
-          method: 'POST',
+        const res = await fetch(existingRoomId ? `/api/rooms/${existingRoomId}` : '/api/rooms', {
+          method: existingRoomId ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
@@ -1005,12 +1023,13 @@
             lengthFt,
             heightFt,
             sqft:     Math.round(widthFt * lengthFt),
+            layout:   layoutSnapshot,
           }),
         });
         if (!res.ok) throw new Error('save failed');
         const room = await res.json();
         localStorage.setItem('blueprintCurrentRoomId', room._id);
-        persistRoomLayout();
+        persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
       } catch (err) {
         console.warn('[save room]', err);
         // continue even if save fails — roomId stays whatever it was

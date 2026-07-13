@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
 import RoomBlueprintPreview from '../components/RoomBlueprintPreview';
 import FurniturePanel from '../components/FurniturePanel';
-import { buildRoomFromLayout, readSavedRoomLayout } from '../utils/roomLayout';
+import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
 
 const FALLBACK_ROOM: Room = {
   roomId:   'fallback',
@@ -15,9 +15,26 @@ const FALLBACK_ROOM: Room = {
             (Number(localStorage.getItem('blueprintCurrentRoomLength')) || 14),
 };
 
+function isRoomArchitectureLayout(value: unknown): value is RoomArchitectureLayout {
+  return !!value
+    && typeof value === 'object'
+    && Array.isArray((value as RoomArchitectureLayout).roomPoints)
+    && Array.isArray((value as RoomArchitectureLayout).elements)
+    && Array.isArray((value as RoomArchitectureLayout).cutouts);
+}
+
+function readScopedSavedRoomLayout() {
+  const layout = readSavedRoomLayout();
+  const roomId = localStorage.getItem('blueprintCurrentRoomId');
+
+  if (!layout) return null;
+  if (layout.roomId && layout.roomId !== roomId) return null;
+  return layout;
+}
+
 export default function RoomResult() {
   const [room,             setRoom]             = useState<Room | null>(null);
-  const [savedLayout]      = useState<RoomArchitectureLayout | null>(() => readSavedRoomLayout());
+  const [savedLayout,      setSavedLayout]      = useState<RoomArchitectureLayout | null>(() => readScopedSavedRoomLayout());
   const [style,            setStyle]            = useState<Style | null>(null);
   const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
@@ -92,6 +109,11 @@ export default function RoomResult() {
               heightFt: match.heightFt,
               sqft:     match.sqft,
             });
+
+            if (isRoomArchitectureLayout(match.layout)) {
+              setSavedLayout(match.layout);
+              saveRoomLayout(match.layout);
+            }
           }
         })
         .catch(() => {}),
