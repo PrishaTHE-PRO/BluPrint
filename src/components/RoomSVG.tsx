@@ -72,16 +72,38 @@ function pieceSizeFt(item: FurnitureItem) {
 }
 
 /**
- * Convert a point in the architecture editor's SVG space to feet.
- * Editor: 20 px/ft, room centered at (400, 250).
+ * Convert a point in the architecture editor's SVG space to feet,
+ * measured from the room polygon's own top-left corner.
+ *
+ * The editor uses 20 SVG px per foot. We derive the room origin from
+ * the bounding box of the actual polygon — this works correctly for
+ * rectangular rooms, custom polygons, and any drag-resized layout.
  */
 function editorPtToFt(px: number, py: number, layout: RoomLayout) {
-  const ES   = 20; // editor scale px/ft
-  const rx   = 400 - (layout.widthFt * ES) / 2;
-  const ry   = 250 - (layout.lengthFt * ES) / 2;
+  const ES   = 20; // editor: 20 SVG px = 1 ft (constant regardless of shape)
+  const minX = Math.min(...layout.roomPoints.map(p => p.x));
+  const minY = Math.min(...layout.roomPoints.map(p => p.y));
   return {
-    x: (px - rx) / ES,
-    y: (py - ry) / ES,
+    x: (px - minX) / ES,
+    y: (py - minY) / ES,
+  };
+}
+
+/**
+ * Return the canvas dimensions in feet, derived from the roomLayout polygon
+ * bounding box when available (more accurate than the stored widthFt/lengthFt
+ * which can drift if the user drags vertices without updating the inputs).
+ */
+function canvasDimsFt(room: Room, layout: RoomLayout | null | undefined) {
+  if (!layout || layout.roomPoints.length < 2) {
+    return { widthFt: room.widthFt, lengthFt: room.lengthFt };
+  }
+  const xs = layout.roomPoints.map(p => p.x);
+  const ys = layout.roomPoints.map(p => p.y);
+  const ES = 20;
+  return {
+    widthFt:  (Math.max(...xs) - Math.min(...xs)) / ES,
+    lengthFt: (Math.max(...ys) - Math.min(...ys)) / ES,
   };
 }
 
@@ -218,6 +240,10 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
   const [positions, setPositions] = useState<Record<string, PosFt>>({});
   const [dragging,  setDragging]  = useState<string | null>(null);
 
+  // Canvas dimensions — driven by the actual polygon bounding box when available
+  // so the viewport, grid, labels, and drag clamping all agree.
+  const { widthFt: cW, lengthFt: cL } = canvasDimsFt(room, roomLayout);
+
   // Initialise default positions when furniture changes
   useEffect(() => {
     setPositions(prev => {
@@ -273,21 +299,21 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
     setPositions(prev => ({
       ...prev,
       [drag.category]: {
-        x: Math.max(0, Math.min(room.widthFt  - wFt, clickFt.x - drag.offsetX)),
-        y: Math.max(0, Math.min(room.lengthFt - dFt, clickFt.y - drag.offsetY)),
+        x: Math.max(0, Math.min(cW - wFt, clickFt.x - drag.offsetX)),
+        y: Math.max(0, Math.min(cL - dFt, clickFt.y - drag.offsetY)),
       },
     }));
-  }, [furniture, clientToFt, room]);
+  }, [furniture, clientToFt, cW, cL]);
 
   const handlePointerUp = useCallback(() => {
     dragRef.current = null;
     setDragging(null);
   }, []);
 
-  // ── SVG viewBox ────────────────────────────────────────────────────────────
+  // ── SVG viewBox (sized to the actual polygon bounding box) ─────────────────
 
-  const vbW = room.widthFt  * SCALE + 2 * MARGIN;
-  const vbH = room.lengthFt * SCALE + 2 * MARGIN;
+  const vbW = cW * SCALE + 2 * MARGIN;
+  const vbH = cL * SCALE + 2 * MARGIN;
 
   // ── Room polygon (in SVG px) ────────────────────────────────────────────────
 
@@ -298,17 +324,17 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
       return { x: ft.x * SCALE + MARGIN, y: ft.y * SCALE + MARGIN };
     });
   } else {
-    // Fallback: plain rectangle from room dimensions
+    // Fallback: plain rectangle from canvas dimensions
     roomPolygonPts = [
-      { x: MARGIN,                        y: MARGIN },
-      { x: room.widthFt  * SCALE + MARGIN, y: MARGIN },
-      { x: room.widthFt  * SCALE + MARGIN, y: room.lengthFt * SCALE + MARGIN },
-      { x: MARGIN,                        y: room.lengthFt * SCALE + MARGIN },
+      { x: MARGIN,              y: MARGIN },
+      { x: cW * SCALE + MARGIN, y: MARGIN },
+      { x: cW * SCALE + MARGIN, y: cL * SCALE + MARGIN },
+      { x: MARGIN,              y: cL * SCALE + MARGIN },
     ];
   }
   const roomPathD = roomPolygonPts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z';
 
-  // ── Cutout sub-paths (punch holes in room polygon) ─────────────────────────
+  // ── Cutout sub-paths (punch holes in room polygon via even-odd fill) ────────
 
   let cutoutPathD = '';
   if (roomLayout) {
@@ -321,7 +347,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
     });
   }
 
-  // ── Doors & windows (converted to room-space SVG px) ───────────────────────
+  // ── Doors & windows (editor SVG px → room-space SVG px) ───────────────────
 
   const DOOR_PX   = 2.67 * SCALE; // 32 inch standard door
   const WINDOW_PX = 3.5  * SCALE; // ~42 inch window
@@ -335,8 +361,8 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
 
   // ── Grid lines (1 ft intervals) ────────────────────────────────────────────
 
-  const gridV = Array.from({ length: Math.floor(room.widthFt)  - 1 }, (_, i) => i + 1);
-  const gridH = Array.from({ length: Math.floor(room.lengthFt) - 1 }, (_, i) => i + 1);
+  const gridV = Array.from({ length: Math.floor(cW) - 1 }, (_, i) => i + 1);
+  const gridH = Array.from({ length: Math.floor(cL) - 1 }, (_, i) => i + 1);
 
   // ── Sorted furniture (rug renders first / underneath) ─────────────────────
 
@@ -387,14 +413,14 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
         {gridV.map(i => (
           <line key={`v${i}`}
             x1={i * SCALE + MARGIN} y1={MARGIN}
-            x2={i * SCALE + MARGIN} y2={room.lengthFt * SCALE + MARGIN}
+            x2={i * SCALE + MARGIN} y2={cL * SCALE + MARGIN}
             stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
           />
         ))}
         {gridH.map(i => (
           <line key={`h${i}`}
             x1={MARGIN} y1={i * SCALE + MARGIN}
-            x2={room.widthFt * SCALE + MARGIN} y2={i * SCALE + MARGIN}
+            x2={cW * SCALE + MARGIN} y2={i * SCALE + MARGIN}
             stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
           />
         ))}
@@ -411,7 +437,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
 
         {/* ── Dimension labels ── */}
         <text
-          x={room.widthFt * SCALE / 2 + MARGIN}
+          x={cW * SCALE / 2 + MARGIN}
           y={MARGIN / 2 + 4}
           textAnchor="middle"
           fontSize={11}
@@ -419,19 +445,19 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           fill="rgba(10,51,35,0.55)"
           fontFamily="Quicksand, sans-serif"
         >
-          {room.widthFt} ft
+          {cW % 1 === 0 ? cW : cW.toFixed(1)} ft
         </text>
         <text
           x={MARGIN / 2 - 2}
-          y={room.lengthFt * SCALE / 2 + MARGIN}
+          y={cL * SCALE / 2 + MARGIN}
           textAnchor="middle"
           fontSize={11}
           fontWeight="700"
           fill="rgba(10,51,35,0.55)"
           fontFamily="Quicksand, sans-serif"
-          transform={`rotate(-90, ${MARGIN / 2 - 2}, ${room.lengthFt * SCALE / 2 + MARGIN})`}
+          transform={`rotate(-90, ${MARGIN / 2 - 2}, ${cL * SCALE / 2 + MARGIN})`}
         >
-          {room.lengthFt} ft
+          {cL % 1 === 0 ? cL : cL.toFixed(1)} ft
         </text>
 
         {/* ── Furniture pieces ── */}

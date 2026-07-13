@@ -932,7 +932,9 @@
       window.location.href = 'inspo-upload.html';
     });
 
-    // Initial state
+    // Initial state — sync polygon to the default input values (15×12) first
+    // so roomPoints are consistent before the first saveState snapshot.
+    updateBlueprintRealtime();
     saveState();
     renderAll();
   </script>
