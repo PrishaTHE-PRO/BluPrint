@@ -138,43 +138,48 @@
 
       <!-- ── STEP 2: Your Picks ── -->
       <div id="step-2" class="hidden animate-reveal space-y-8">
-        <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
-          <div>
-            <h2 class="text-3xl font-bold mb-2">Step 2: Refine Your Picks</h2>
-            <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
-          </div>
 
-          <div class="space-y-4">
-            <h3 class="text-2xl font-bold">Style Profile</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="style-grid"></div>
-          </div>
+        <!-- Intro -->
+        <div class="garden-card ghibli-border p-8 md:p-10">
+          <h2 class="text-3xl font-bold mb-2">Step 2: Refine Your Picks</h2>
+          <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
+        </div>
 
-          <div class="space-y-4">
-            <h3 class="text-2xl font-bold">The Mood</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="mood-grid"></div>
-          </div>
+        <!-- Style Profile -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h3 class="text-2xl font-bold">Style Profile</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="style-grid"></div>
+        </div>
 
-          <div class="space-y-4">
-            <h3 class="text-2xl font-bold">Color Palette</h3>
-            <p class="text-[#F7F4D5]/60">Choose up to 3 tones. <span class="text-[#D3968C]" id="color-limit-note"></span></p>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" id="color-grid"></div>
-          </div>
+        <!-- The Mood -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h3 class="text-2xl font-bold">The Mood</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="mood-grid"></div>
+        </div>
 
-          <div class="space-y-4">
-            <h3 class="text-2xl font-bold">Room Features</h3>
-            <p class="text-[#F7F4D5]/60">Select up to 3 essential features. <span class="text-[#D3968C]" id="feature-limit-note"></span></p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="feature-grid"></div>
-          </div>
+        <!-- Color Palette -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h3 class="text-2xl font-bold">Color Palette</h3>
+          <p class="text-[#F7F4D5]/60">Choose up to 3 tones. <span class="text-[#D3968C]" id="color-limit-note"></span></p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" id="color-grid"></div>
+        </div>
 
-          <div class="pt-8 flex justify-between items-center">
-            <button id="step2-back" class="px-8 py-3 bg-white/5 text-[#F7F4D5] rounded-2xl font-bold border border-[#F7F4D5]/10 hover:bg-white/10 transition-all">
-              <iconify-icon icon="ph:arrow-left-bold" class="mr-2"></iconify-icon> Back
-            </button>
-            <button id="step2-analyze" disabled
-              class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
-              Analyze with AI <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>
-            </button>
-          </div>
+        <!-- Room Features -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h3 class="text-2xl font-bold">Room Features</h3>
+          <p class="text-[#F7F4D5]/60">Select up to 3 essential features. <span class="text-[#D3968C]" id="feature-limit-note"></span></p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="feature-grid"></div>
+        </div>
+
+        <!-- Nav buttons (no card — sits on the background) -->
+        <div class="pt-4 flex justify-between items-center">
+          <button id="step2-back" class="px-8 py-3 bg-white/5 text-[#F7F4D5] rounded-2xl font-bold border border-[#F7F4D5]/10 hover:bg-white/10 transition-all">
+            <iconify-icon icon="ph:arrow-left-bold" class="mr-2"></iconify-icon> Back
+          </button>
+          <button id="step2-analyze" disabled
+            class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
+            Analyze with AI <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>
+          </button>
         </div>
       </div>
 
