@@ -136,6 +136,7 @@ router.post("/:roomId/style", async (req, res) => {
       {
         roomId: req.params.roomId,
         source: "user",
+        roomType: req.body.roomType,
         styleTag: req.body.styleTag,
         colorPalette: normalizeColorPalette(req.body.colorPalette),
         moodTags: normalizeStringArray(req.body.moodTags),
