@@ -337,6 +337,19 @@
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase">ft</span>
                 </div>
               </div>
+              <div class="space-y-3">
+                <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40">FURNISHING BUDGET</label>
+                <div class="flex items-baseline justify-between">
+                  <span id="budget-display" class="text-2xl font-bold text-[#D3968C]">$5,000</span>
+                  <span class="text-[10px] font-bold text-[#F7F4D5]/30 uppercase tracking-widest">total</span>
+                </div>
+                <input type="range" id="room-budget" min="500" max="50000" step="500" value="5000"
+                  class="w-full accent-[#D3968C] cursor-pointer">
+                <div class="flex justify-between text-[10px] font-bold text-[#F7F4D5]/30 uppercase">
+                  <span>$500</span>
+                  <span>$50k+</span>
+                </div>
+              </div>
               <div class="pt-4">
                 <button id="cta-save-continue" class="w-full py-5 bg-[#D3968C] text-white rounded-2xl font-bold shadow-lg hover:bg-[#c1867b] transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
                   Save & Continue <iconify-icon icon="ph:arrow-right-bold" class="text-xl"></iconify-icon>
@@ -746,10 +759,12 @@
       const widthFt  = parseFloat(widthInput.value)  || 12;
       const lengthFt = parseFloat(lengthInput.value) || 14;
       const roomName = roomNameInput.value.trim() || 'My Room';
+      const budgetTotal = parseInt(budgetInput.value, 10) || 0;
 
       localStorage.setItem('blueprintCurrentRoomName',   roomName);
       localStorage.setItem('blueprintCurrentRoomWidth',  String(widthFt));
       localStorage.setItem('blueprintCurrentRoomLength', String(lengthFt));
+      localStorage.setItem('blueprintCurrentRoomBudget', String(budgetTotal));
       localStorage.setItem('blueprintRoomLayout', JSON.stringify({
         roomPoints: state.roomPoints,
         elements:   state.elements,
@@ -774,6 +789,13 @@
         if (!res.ok) throw new Error('save failed');
         const room = await res.json();
         localStorage.setItem('blueprintCurrentRoomId', room._id);
+
+        // Persist the furnishing budget onto the room doc
+        await fetch('/api/rooms/' + room._id + '/budget', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ budgetTotal }),
+        });
       } catch (err) {
         console.warn('[save room]', err);
       }
@@ -784,6 +806,18 @@
     // Pre-populate room name from localStorage if returning to edit
     const savedRoomName = localStorage.getItem('blueprintCurrentRoomName');
     if (savedRoomName) roomNameInput.value = savedRoomName;
+
+    // ── Budget slider ──
+    const budgetInput   = document.getElementById('room-budget');
+    const budgetDisplay = document.getElementById('budget-display');
+    function updateBudgetDisplay() {
+      const v = Number(budgetInput.value);
+      budgetDisplay.textContent = '$' + v.toLocaleString('en-US') + (v >= 50000 ? '+' : '');
+    }
+    const savedBudget = localStorage.getItem('blueprintCurrentRoomBudget');
+    if (savedBudget) budgetInput.value = savedBudget;
+    budgetInput.addEventListener('input', updateBudgetDisplay);
+    updateBudgetDisplay();
 
     saveState();
     renderAll();

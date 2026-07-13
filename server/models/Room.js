@@ -7,7 +7,8 @@ const RoomSchema = new mongoose.Schema({
     widthFt: { type: Number, required: true },  // How wide is it?
     lengthFt: { type: Number, required: true }, // How long is it?
     heightFt: { type: Number, required: true }, // How tall is it?
-    sqft: { type: Number, required: true }      // Total floor space!
+    sqft: { type: Number, required: true },     // Total floor space!
+    budgetTotal: { type: Number }               // Furnishing budget in dollars (optional)
 }, { timestamps: true }); // This automatically adds the date it was made!
 
 module.exports = mongoose.model('Room', RoomSchema);
