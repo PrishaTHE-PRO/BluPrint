@@ -376,12 +376,111 @@
     const areaBadge = document.getElementById('area-badge');
     const labelWidth = document.getElementById('label-width');
     const labelLength = document.getElementById('label-length');
-    const roomNameInput = document.getElementById('room-name');
-    const heightInput = document.getElementById('room-height');
     const ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
     const ROOM_LAYOUT_VERSION = 1;
     const ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
     const ROOM_LAYOUT_SCALE = 20;
+
+    const roomNameInput = document.getElementById('room-name');
+    const heightInput = document.getElementById('room-height');
+
+    function loadSavedLayout() {
+      const raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY);
+      if (!raw) return null;
+
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.roomPoints) || !Array.isArray(parsed.elements) || !Array.isArray(parsed.cutouts)) {
+          return null;
+        }
+        const currentRoomId = localStorage.getItem('blueprintCurrentRoomId');
+        if (parsed.roomId && parsed.roomId !== currentRoomId) {
+          return null;
+        }
+        return parsed;
+      } catch {
+        return null;
+      }
+    }
+
+    function buildStateFromLayout(layout) {
+      return {
+        roomPoints: layout.roomPoints.map((p) => ({ x: Number(p.x) || 0, y: Number(p.y) || 0 })),
+        elements: layout.elements.map((el) => ({
+          id: el.id,
+          type: el.type === 'window' ? 'window' : 'door',
+          x: Number(el.x) || 0,
+          y: Number(el.y) || 0,
+          angle: Number(el.angle) || 0,
+        })),
+        cutouts: layout.cutouts.map((c) => ({
+          id: c.id,
+          type: 'cutout',
+          points: Array.isArray(c.points)
+            ? c.points.map((p) => ({ x: Number(p.x) || 0, y: Number(p.y) || 0 }))
+            : [],
+        })),
+      };
+    }
+
+    function createDefaultState() {
+      return {
+        roomPoints: [
+          { x: 250, y: 100 },
+          { x: 550, y: 100 },
+          { x: 550, y: 350 },
+          { x: 250, y: 350 }
+        ],
+        elements: [],
+        cutouts: []
+      };
+    }
+
+    function getStateDimensions() {
+      const p1 = state.roomPoints[0];
+      const p2 = state.roomPoints[1];
+      const p3 = state.roomPoints[2];
+      const widthFt = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2) / ROOM_LAYOUT_SCALE;
+      const lengthFt = Math.sqrt((p3.x - p2.x) ** 2 + (p3.y - p2.y) ** 2) / ROOM_LAYOUT_SCALE;
+      return { widthFt, lengthFt };
+    }
+
+    function captureRoomLayoutSnapshot() {
+      const dimensions = getStateDimensions();
+      const roomName = roomNameInput?.value?.trim() || 'My Room';
+      const heightFt = parseFloat(heightInput?.value) || 8;
+
+      return {
+        version: ROOM_LAYOUT_VERSION,
+        roomId: localStorage.getItem('blueprintCurrentRoomId') || undefined,
+        roomName,
+        widthFt: Number(dimensions.widthFt.toFixed(1)),
+        lengthFt: Number(dimensions.lengthFt.toFixed(1)),
+        heightFt,
+        sqft: Math.round(dimensions.widthFt * dimensions.lengthFt),
+        scale: ROOM_LAYOUT_SCALE,
+        viewBox: ROOM_LAYOUT_VIEWBOX,
+        roomPoints: cloneObj(state.roomPoints),
+        elements: cloneObj(state.elements),
+        cutouts: cloneObj(state.cutouts),
+        savedAt: new Date().toISOString(),
+      };
+    }
+
+    function persistRoomLayout(layout = captureRoomLayoutSnapshot()) {
+      localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+    }
+
+    const savedLayout = loadSavedLayout();
+
+    let state = savedLayout ? buildStateFromLayout(savedLayout) : createDefaultState();
+
+    if (savedLayout) {
+      if (roomNameInput) roomNameInput.value = savedLayout.roomName || 'My Room';
+      if (widthInput) widthInput.value = String(savedLayout.widthFt || '');
+      if (lengthInput) lengthInput.value = String(savedLayout.lengthFt || '');
+      if (heightInput) heightInput.value = String(savedLayout.heightFt || '');
+    }
 
     let history = [];
     let historyIndex = -1;
@@ -390,31 +489,6 @@
     let hoveredElementType = null;
 
     function cloneObj(obj) { return JSON.parse(JSON.stringify(obj)); }
-
-    function createDefaultState() {
-      return {
-        roomPoints: [
-          { x: 250, y: 100 },
-          { x: 550, y: 100 },
-          { x: 550, y: 340 },
-          { x: 250, y: 340 }
-        ],
-        elements: [],
-        cutouts: []
-      };
-    }
-
-    function loadSavedLayout() {
-      const raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY);
-      if (!raw) return null;
-      try {
-        const parsed = JSON.parse(raw);
-        return parsed;
-      } catch { return null; }
-    }
-
-    const saved = loadSavedLayout();
-    let state = saved ? (saved.roomPoints ? saved : createDefaultState()) : createDefaultState();
 
     function saveState() {
       if (historyIndex < history.length - 1) {
@@ -437,6 +511,7 @@
         state = cloneObj(history[historyIndex]);
         renderAll();
         updateHistoryUI();
+        persistRoomLayout();
         showToast("Action undone");
       }
     }
@@ -447,12 +522,9 @@
         state = cloneObj(history[historyIndex]);
         renderAll();
         updateHistoryUI();
+        persistRoomLayout();
         showToast("Action redone");
       }
-    }
-
-    function persistRoomLayout() {
-      localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(state));
     }
 
     function getSVGPoint(e) {
@@ -743,37 +815,48 @@
       const userId = localStorage.getItem('blueprintUserId');
       if (!userId) { window.location.href = 'index.html'; return; }
 
-      const widthFt  = parseFloat(widthInput.value)  || 12;
-      const lengthFt = parseFloat(lengthInput.value) || 14;
-      const roomName = roomNameInput.value.trim() || 'My Room';
+      let layoutSnapshot = captureRoomLayoutSnapshot();
+      const widthFt  = layoutSnapshot.widthFt  || parseFloat(widthInput.value)  || 12;
+      const lengthFt = layoutSnapshot.lengthFt || parseFloat(lengthInput.value) || 14;
+      const heightFt = parseFloat(heightInput.value) || 8;
+      const roomName = document.getElementById('room-name')?.value?.trim() || 'My Room';
+      const existingRoomId = localStorage.getItem('blueprintCurrentRoomId');
+
+      layoutSnapshot = {
+        ...layoutSnapshot,
+        roomId: existingRoomId || undefined,
+        roomName,
+        widthFt,
+        lengthFt,
+        heightFt,
+        sqft: Math.round(widthFt * lengthFt),
+        savedAt: new Date().toISOString(),
+      };
 
       localStorage.setItem('blueprintCurrentRoomName',   roomName);
       localStorage.setItem('blueprintCurrentRoomWidth',  String(widthFt));
       localStorage.setItem('blueprintCurrentRoomLength', String(lengthFt));
-      localStorage.setItem('blueprintRoomLayout', JSON.stringify({
-        roomPoints: state.roomPoints,
-        elements:   state.elements,
-        cutouts:    state.cutouts,
-        widthFt,
-        lengthFt,
-      }));
+      localStorage.setItem('blueprintCurrentRoomHeight', String(heightFt));
+      persistRoomLayout(layoutSnapshot);
 
       try {
-        const res = await fetch('/api/rooms', {
-          method: 'POST',
+        const res = await fetch(existingRoomId ? `/api/rooms/${existingRoomId}` : '/api/rooms', {
+          method: existingRoomId ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
             name:     roomName,
             widthFt,
             lengthFt,
-            heightFt: 8,
+            heightFt,
             sqft:     Math.round(widthFt * lengthFt),
+            layout:   layoutSnapshot,
           }),
         });
         if (!res.ok) throw new Error('save failed');
         const room = await res.json();
         localStorage.setItem('blueprintCurrentRoomId', room._id);
+        persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
       } catch (err) {
         console.warn('[save room]', err);
       }

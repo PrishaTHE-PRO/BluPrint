@@ -30,26 +30,40 @@ export interface FurnitureItem {
   brand:    string;
 }
 
-/** One door or window placed on the room perimeter in the editor */
-export interface RoomLayoutElement {
-  id:    number;
+export interface RoomPoint {
+  x: number;
+  y: number;
+}
+
+export interface ArchitectureElement {
+  id:    number | string;
   type:  'door' | 'window';
-  x:     number;  // SVG px in editor space (20 px/ft scale, centered at 400,250)
+  x:     number;
   y:     number;
-  angle: number;  // wall angle in degrees
+  angle: number;
 }
 
-/** A rectilinear cutout (nook, closet, etc.) in editor SVG space */
-export interface RoomLayoutCutout {
-  id:     number;
-  points: Array<{ x: number; y: number }>;
+export interface ArchitectureCutout {
+  id:     number | string;
+  type:   'cutout';
+  points: RoomPoint[];
 }
 
-/** Full room layout saved from the architecture editor */
-export interface RoomLayout {
-  roomPoints: Array<{ x: number; y: number }>; // polygon vertices in editor SVG space
-  elements:   RoomLayoutElement[];
-  cutouts:    RoomLayoutCutout[];
+export interface RoomArchitectureLayout {
+  version:    number;
+  roomId?:    string;
+  roomName:   string;
   widthFt:    number;
   lengthFt:   number;
+  heightFt:   number;
+  sqft:       number;
+  scale:      number;
+  viewBox:    {
+    width:  number;
+    height: number;
+  };
+  roomPoints: RoomPoint[];
+  elements:   ArchitectureElement[];
+  cutouts:    ArchitectureCutout[];
+  savedAt:    string;
 }

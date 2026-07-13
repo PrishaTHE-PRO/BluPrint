@@ -1,28 +1,45 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, Style, FurnitureItem, RoomLayout } from '../types';
-import RoomSVG from '../components/RoomSVG';
+import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
+import RoomBlueprintPreview from '../components/RoomBlueprintPreview';
 import FurniturePanel from '../components/FurniturePanel';
-import { orderedFurniture } from '../utils/furnitureLayout';
+import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
 
 const FALLBACK_ROOM: Room = {
   roomId:   'fallback',
   name:     localStorage.getItem('blueprintCurrentRoomName') ?? 'My Room',
   widthFt:  Number(localStorage.getItem('blueprintCurrentRoomWidth'))  || 12,
   lengthFt: Number(localStorage.getItem('blueprintCurrentRoomLength')) || 14,
-  heightFt: 8,
+  heightFt: Number(localStorage.getItem('blueprintCurrentRoomHeight')) || 8,
   sqft:     (Number(localStorage.getItem('blueprintCurrentRoomWidth')) || 12) *
             (Number(localStorage.getItem('blueprintCurrentRoomLength')) || 14),
 };
 
+function isRoomArchitectureLayout(value: unknown): value is RoomArchitectureLayout {
+  return !!value
+    && typeof value === 'object'
+    && Array.isArray((value as RoomArchitectureLayout).roomPoints)
+    && Array.isArray((value as RoomArchitectureLayout).elements)
+    && Array.isArray((value as RoomArchitectureLayout).cutouts);
+}
+
+function readScopedSavedRoomLayout() {
+  const layout = readSavedRoomLayout();
+  const roomId = localStorage.getItem('blueprintCurrentRoomId');
+
+  if (!layout) return null;
+  if (layout.roomId && layout.roomId !== roomId) return null;
+  return layout;
+}
+
 export default function RoomResult() {
   const [room,             setRoom]             = useState<Room | null>(null);
+  const [savedLayout,      setSavedLayout]      = useState<RoomArchitectureLayout | null>(() => readScopedSavedRoomLayout());
   const [style,            setStyle]            = useState<Style | null>(null);
   const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
-  const [roomLayout,       setRoomLayout]       = useState<RoomLayout | null>(null);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState('');
 
@@ -44,12 +61,6 @@ export default function RoomResult() {
   }, [furniture]);
 
   useEffect(() => {
-    // Load room layout (doors, windows, cutouts) from the architecture editor
-    const rawLayout = localStorage.getItem('blueprintRoomLayout');
-    if (rawLayout) {
-      try { setRoomLayout(JSON.parse(rawLayout)); } catch { /* ignore malformed data */ }
-    }
-
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
     const userId = localStorage.getItem('blueprintUserId');
     const raw    = localStorage.getItem('blueprintStyleResult');
@@ -98,6 +109,11 @@ export default function RoomResult() {
               heightFt: match.heightFt,
               sqft:     match.sqft,
             });
+
+            if (isRoomArchitectureLayout(match.layout)) {
+              setSavedLayout(match.layout);
+              saveRoomLayout(match.layout);
+            }
           }
         })
         .catch(() => {}),
@@ -135,10 +151,7 @@ export default function RoomResult() {
   }
 
   const s = style!;
-  const layoutRoom = room ?? FALLBACK_ROOM;
-  const layoutFurniture = orderedFurniture(furnitureSlots).length > 0
-    ? orderedFurniture(furnitureSlots)
-    : orderedFurniture(Object.fromEntries(furniture.map((item) => [item.category, item])));
+  const layoutRoom = buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM);
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -212,13 +225,9 @@ export default function RoomResult() {
           linkedCategory={linkedCategory}
           onLinkCategory={setLinkedCategory}
           centerContent={
-            <RoomSVG
+            <RoomBlueprintPreview
               room={layoutRoom}
-              style={s}
-              furniture={layoutFurniture}
-              roomLayout={roomLayout}
-              linkedCategory={linkedCategory}
-              onLinkCategory={setLinkedCategory}
+              layout={savedLayout}
             />
           }
         />
