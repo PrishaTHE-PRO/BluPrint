@@ -12,32 +12,105 @@ const MARGIN = 32;
 
 /** Default furniture widths (inches) when the API doesn't supply them */
 const DEFAULT_WIDTH_IN: Record<string, number> = {
-  sofa:         84,
-  accent_chair: 32,
-  coffee_table: 48,
-  rug:          96,
-  floor_lamp:   12,
-  side_table:   18,
+  // Living room
+  sofa:            84, accent_chair: 32, coffee_table: 48,
+  rug:             96, floor_lamp:   12, side_table:   18,
+  // Bedroom
+  bed:             60, nightstand:   20, dresser:      48,
+  bedroom_rug:     96, wardrobe:     36, bedside_lamp: 10,
+  // Kitchen
+  bar_stool:       16, pendant_light: 12, kitchen_rug:  24,
+  kitchen_storage: 30, island_cart:  48, kitchen_shelf: 36,
+  // Bathroom
+  vanity:          36, bath_mirror:  24, bath_storage: 20,
+  bath_mat:        20, bath_light:   24, shower_curtain: 72,
+  // Home office
+  desk:            60, office_chair: 24, bookshelf:    36,
+  desk_lamp:       10, storage_cabinet: 24, monitor_stand: 24,
+  // Dining room
+  dining_table:    60, dining_chair: 18, dining_rug:   96,
+  sideboard:       54, dining_light: 18, bar_cabinet:  36,
+  // Nursery
+  crib:            52, nursery_dresser: 36, rocking_chair: 28,
+  nursery_rug:     72, nursery_shelf: 30, nursery_lamp: 10,
 };
 
 /** Default furniture depths (inches) when the API doesn't supply them */
 const DEFAULT_DEPTH_IN: Record<string, number> = {
-  sofa:         36,
-  accent_chair: 32,
-  coffee_table: 24,
-  rug:          72,
-  floor_lamp:   12,
-  side_table:   18,
+  // Living room
+  sofa:            36, accent_chair: 32, coffee_table: 24,
+  rug:             72, floor_lamp:   12, side_table:   18,
+  // Bedroom
+  bed:             80, nightstand:   16, dresser:      18,
+  bedroom_rug:     72, wardrobe:     24, bedside_lamp: 10,
+  // Kitchen
+  bar_stool:       16, pendant_light: 12, kitchen_rug:  60,
+  kitchen_storage: 14, island_cart:  24, kitchen_shelf: 12,
+  // Bathroom
+  vanity:          21, bath_mirror:   4, bath_storage: 12,
+  bath_mat:        30, bath_light:    8, shower_curtain: 72,
+  // Home office
+  desk:            30, office_chair: 24, bookshelf:    14,
+  desk_lamp:       10, storage_cabinet: 18, monitor_stand: 12,
+  // Dining room
+  dining_table:    36, dining_chair: 18, dining_rug:   72,
+  sideboard:       18, dining_light: 18, bar_cabinet:  18,
+  // Nursery
+  crib:            28, nursery_dresser: 18, rocking_chair: 30,
+  nursery_rug:     60, nursery_shelf: 12, nursery_lamp: 10,
 };
 
 /** Starting positions as fractions of room width/length */
 const DEFAULT_POS_FRAC: Record<string, { xf: number; yf: number }> = {
-  rug:          { xf: 0.20, yf: 0.28 },
-  sofa:         { xf: 0.12, yf: 0.60 },
-  coffee_table: { xf: 0.35, yf: 0.40 },
-  floor_lamp:   { xf: 0.73, yf: 0.07 },
-  accent_chair: { xf: 0.62, yf: 0.57 },
-  side_table:   { xf: 0.04, yf: 0.46 },
+  // Living room
+  rug:             { xf: 0.20, yf: 0.28 },
+  sofa:            { xf: 0.12, yf: 0.60 },
+  coffee_table:    { xf: 0.35, yf: 0.40 },
+  floor_lamp:      { xf: 0.73, yf: 0.07 },
+  accent_chair:    { xf: 0.62, yf: 0.57 },
+  side_table:      { xf: 0.04, yf: 0.46 },
+  // Bedroom
+  bed:             { xf: 0.22, yf: 0.22 },
+  nightstand:      { xf: 0.06, yf: 0.22 },
+  dresser:         { xf: 0.62, yf: 0.08 },
+  bedroom_rug:     { xf: 0.18, yf: 0.52 },
+  wardrobe:        { xf: 0.62, yf: 0.60 },
+  bedside_lamp:    { xf: 0.06, yf: 0.12 },
+  // Kitchen
+  bar_stool:       { xf: 0.35, yf: 0.55 },
+  pendant_light:   { xf: 0.45, yf: 0.20 },
+  kitchen_rug:     { xf: 0.30, yf: 0.40 },
+  kitchen_storage: { xf: 0.70, yf: 0.15 },
+  island_cart:     { xf: 0.22, yf: 0.38 },
+  kitchen_shelf:   { xf: 0.60, yf: 0.08 },
+  // Bathroom
+  vanity:          { xf: 0.08, yf: 0.08 },
+  bath_mirror:     { xf: 0.12, yf: 0.04 },
+  bath_storage:    { xf: 0.65, yf: 0.08 },
+  bath_mat:        { xf: 0.22, yf: 0.55 },
+  bath_light:      { xf: 0.40, yf: 0.04 },
+  shower_curtain:  { xf: 0.40, yf: 0.08 },
+  // Home office
+  desk:            { xf: 0.08, yf: 0.08 },
+  office_chair:    { xf: 0.18, yf: 0.28 },
+  bookshelf:       { xf: 0.65, yf: 0.08 },
+  desk_lamp:       { xf: 0.08, yf: 0.04 },
+  storage_cabinet: { xf: 0.70, yf: 0.50 },
+  monitor_stand:   { xf: 0.14, yf: 0.06 },
+  // Dining room
+  dining_table:    { xf: 0.22, yf: 0.28 },
+  dining_chair:    { xf: 0.55, yf: 0.30 },
+  dining_rug:      { xf: 0.14, yf: 0.18 },
+  sideboard:       { xf: 0.65, yf: 0.60 },
+  dining_light:    { xf: 0.42, yf: 0.10 },
+  bar_cabinet:     { xf: 0.65, yf: 0.08 },
+  // Nursery
+  crib:            { xf: 0.18, yf: 0.12 },
+  nursery_dresser: { xf: 0.65, yf: 0.08 },
+  rocking_chair:   { xf: 0.55, yf: 0.55 },
+  nursery_rug:     { xf: 0.14, yf: 0.42 },
+  nursery_shelf:   { xf: 0.65, yf: 0.38 },
+  nursery_lamp:    { xf: 0.04, yf: 0.08 },
 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -189,14 +262,190 @@ function SideTableIcon({ w, d }: { w: number; d: number }) {
   );
 }
 
+// ── Bedroom icons ─────────────────────────────────────────────────────────────
+
+function BedIcon({ w, d }: { w: number; d: number }) {
+  const headH  = Math.max(6, d * 0.18);   // headboard band
+  const pilW   = w * 0.28;
+  const pilH   = Math.max(5, d * 0.16);
+  const pilY   = headH + Math.max(3, d * 0.05);
+  const pilGap = (w - pilW * 2) / 3;
+  return (
+    <g>
+      {/* mattress */}
+      <rect width={w} height={d} rx={3} fill="#EDE8D8" stroke="#0A3323" strokeWidth={1.5} />
+      {/* headboard */}
+      <rect width={w} height={headH} rx={2} fill="#C4B896" stroke="#0A3323" strokeWidth={1} />
+      {/* left pillow */}
+      <rect x={pilGap} y={pilY} width={pilW} height={pilH} rx={3}
+            fill="#F7F4D5" stroke="#0A3323" strokeWidth={0.8} opacity={0.9} />
+      {/* right pillow */}
+      <rect x={pilGap * 2 + pilW} y={pilY} width={pilW} height={pilH} rx={3}
+            fill="#F7F4D5" stroke="#0A3323" strokeWidth={0.8} opacity={0.9} />
+    </g>
+  );
+}
+
+function NightstandIcon({ w, d }: { w: number; d: number }) {
+  const mg = Math.max(3, Math.min(w, d) * 0.15);
+  return (
+    <g>
+      <rect width={w} height={d} rx={3} fill="#D4C49A" stroke="#0A3323" strokeWidth={1.5} />
+      {/* drawer line */}
+      <line x1={mg} y1={d / 2} x2={w - mg} y2={d / 2} stroke="#0A3323" strokeWidth={0.8} opacity={0.5} />
+      {/* knob */}
+      <circle cx={w / 2} cy={d / 2} r={2} fill="#0A3323" opacity={0.4} />
+    </g>
+  );
+}
+
+function DresserIcon({ w, d }: { w: number; d: number }) {
+  const drawers = Math.max(2, Math.round(w / 30));  // ~1 drawer per 30px
+  const gap     = Math.max(2, w * 0.03);
+  const dw      = (w - gap * (drawers + 1)) / drawers;
+  return (
+    <g>
+      <rect width={w} height={d} rx={3} fill="#C8BA9A" stroke="#0A3323" strokeWidth={1.5} />
+      {Array.from({ length: drawers }, (_, i) => (
+        <g key={i}>
+          <rect
+            x={gap + i * (dw + gap)} y={d * 0.12}
+            width={dw} height={d * 0.76}
+            rx={2} fill="#D8CDB0" stroke="#0A3323" strokeWidth={0.8}
+          />
+          <circle cx={gap + i * (dw + gap) + dw / 2} cy={d / 2} r={2} fill="#0A3323" opacity={0.4} />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+function WardrobeIcon({ w, d }: { w: number; d: number }) {
+  const mid = w / 2;
+  return (
+    <g>
+      <rect width={w} height={d} rx={3} fill="#C8BA9A" stroke="#0A3323" strokeWidth={1.5} />
+      {/* center divider = two door gap */}
+      <line x1={mid} y1={0} x2={mid} y2={d} stroke="#0A3323" strokeWidth={1} opacity={0.5} />
+      {/* door handles */}
+      <circle cx={mid - 6} cy={d / 2} r={2} fill="#0A3323" opacity={0.4} />
+      <circle cx={mid + 6} cy={d / 2} r={2} fill="#0A3323" opacity={0.4} />
+    </g>
+  );
+}
+
+// ── Other room type icons ──────────────────────────────────────────────────────
+
+function DeskIcon({ w, d }: { w: number; d: number }) {
+  const surface = d * 0.55;
+  return (
+    <g>
+      <rect width={w} height={d} rx={3} fill="#D4C49A" stroke="#0A3323" strokeWidth={1.5} />
+      {/* desktop surface line */}
+      <line x1={0} y1={surface} x2={w} y2={surface} stroke="#0A3323" strokeWidth={0.7} opacity={0.4} />
+    </g>
+  );
+}
+
+function DiningTableIcon({ w, d }: { w: number; d: number }) {
+  const mg = Math.max(3, Math.min(w, d) * 0.1);
+  return (
+    <g>
+      <rect width={w} height={d} rx={5} fill="#D4C49A" stroke="#0A3323" strokeWidth={1.5} />
+      <rect x={mg} y={mg} width={w - mg * 2} height={d - mg * 2} rx={3}
+            fill="none" stroke="#0A3323" strokeWidth={0.7} opacity={0.4} />
+    </g>
+  );
+}
+
+function ShelfIcon({ w, d }: { w: number; d: number }) {
+  return (
+    <g>
+      <rect width={w} height={d} rx={2} fill="#C8BA9A" stroke="#0A3323" strokeWidth={1.5} />
+      {/* shelf dividers */}
+      {[0.33, 0.66].map(frac => (
+        <line key={frac} x1={w * frac} y1={0} x2={w * frac} y2={d}
+              stroke="#0A3323" strokeWidth={0.7} opacity={0.4} />
+      ))}
+    </g>
+  );
+}
+
+function CribIcon({ w, d }: { w: number; d: number }) {
+  const slats = Math.max(3, Math.round(w / 14));
+  const gap   = w / (slats + 1);
+  return (
+    <g>
+      <rect width={w} height={d} rx={4} fill="#EDE8D8" stroke="#0A3323" strokeWidth={1.5} />
+      {/* slats */}
+      {Array.from({ length: slats }, (_, i) => (
+        <line key={i}
+          x1={(i + 1) * gap} y1={d * 0.1}
+          x2={(i + 1) * gap} y2={d * 0.9}
+          stroke="#0A3323" strokeWidth={1} opacity={0.3}
+        />
+      ))}
+    </g>
+  );
+}
+
+function LampIcon({ w, d }: { w: number; d: number }) {
+  return <FloorLampIcon w={w} d={d} />;
+}
+
+// ── Icon router ───────────────────────────────────────────────────────────────
+
 function FurnitureIcon({ item, wPx, dPx }: { item: FurnitureItem; wPx: number; dPx: number }) {
   switch (item.category) {
-    case 'sofa':         return <SofaIcon w={wPx} d={dPx} />;
-    case 'accent_chair': return <ChairIcon w={wPx} d={dPx} />;
-    case 'coffee_table': return <CoffeeTableIcon w={wPx} d={dPx} />;
-    case 'rug':          return <RugIcon w={wPx} d={dPx} />;
-    case 'floor_lamp':   return <FloorLampIcon w={wPx} d={dPx} />;
-    case 'side_table':   return <SideTableIcon w={wPx} d={dPx} />;
+    // Living room
+    case 'sofa':            return <SofaIcon w={wPx} d={dPx} />;
+    case 'accent_chair':    return <ChairIcon w={wPx} d={dPx} />;
+    case 'coffee_table':    return <CoffeeTableIcon w={wPx} d={dPx} />;
+    case 'rug':             return <RugIcon w={wPx} d={dPx} />;
+    case 'floor_lamp':      return <FloorLampIcon w={wPx} d={dPx} />;
+    case 'side_table':      return <SideTableIcon w={wPx} d={dPx} />;
+    // Bedroom
+    case 'bed':             return <BedIcon w={wPx} d={dPx} />;
+    case 'nightstand':      return <NightstandIcon w={wPx} d={dPx} />;
+    case 'dresser':         return <DresserIcon w={wPx} d={dPx} />;
+    case 'bedroom_rug':     return <RugIcon w={wPx} d={dPx} />;
+    case 'wardrobe':        return <WardrobeIcon w={wPx} d={dPx} />;
+    case 'bedside_lamp':    return <LampIcon w={wPx} d={dPx} />;
+    // Kitchen
+    case 'bar_stool':       return <ChairIcon w={wPx} d={dPx} />;
+    case 'island_cart':     return <DiningTableIcon w={wPx} d={dPx} />;
+    case 'kitchen_shelf':   return <ShelfIcon w={wPx} d={dPx} />;
+    case 'kitchen_storage': return <DresserIcon w={wPx} d={dPx} />;
+    case 'pendant_light':   return <FloorLampIcon w={wPx} d={dPx} />;
+    case 'kitchen_rug':     return <RugIcon w={wPx} d={dPx} />;
+    // Dining room
+    case 'dining_table':    return <DiningTableIcon w={wPx} d={dPx} />;
+    case 'dining_chair':    return <ChairIcon w={wPx} d={dPx} />;
+    case 'dining_rug':      return <RugIcon w={wPx} d={dPx} />;
+    case 'sideboard':       return <DresserIcon w={wPx} d={dPx} />;
+    case 'dining_light':    return <FloorLampIcon w={wPx} d={dPx} />;
+    case 'bar_cabinet':     return <WardrobeIcon w={wPx} d={dPx} />;
+    // Home office
+    case 'desk':            return <DeskIcon w={wPx} d={dPx} />;
+    case 'office_chair':    return <ChairIcon w={wPx} d={dPx} />;
+    case 'bookshelf':       return <ShelfIcon w={wPx} d={dPx} />;
+    case 'desk_lamp':       return <LampIcon w={wPx} d={dPx} />;
+    case 'storage_cabinet': return <WardrobeIcon w={wPx} d={dPx} />;
+    case 'monitor_stand':   return <CoffeeTableIcon w={wPx} d={dPx} />;
+    // Nursery
+    case 'crib':            return <CribIcon w={wPx} d={dPx} />;
+    case 'nursery_dresser': return <DresserIcon w={wPx} d={dPx} />;
+    case 'rocking_chair':   return <ChairIcon w={wPx} d={dPx} />;
+    case 'nursery_rug':     return <RugIcon w={wPx} d={dPx} />;
+    case 'nursery_shelf':   return <ShelfIcon w={wPx} d={dPx} />;
+    case 'nursery_lamp':    return <LampIcon w={wPx} d={dPx} />;
+    // Bathroom
+    case 'vanity':          return <DresserIcon w={wPx} d={dPx} />;
+    case 'bath_mirror':     return <CoffeeTableIcon w={wPx} d={dPx} />;
+    case 'bath_storage':    return <ShelfIcon w={wPx} d={dPx} />;
+    case 'bath_mat':        return <RugIcon w={wPx} d={dPx} />;
+    case 'bath_light':      return <LampIcon w={wPx} d={dPx} />;
+    case 'shower_curtain':  return <RugIcon w={wPx} d={dPx} />;
     default:
       return <rect width={wPx} height={dPx} rx={3} fill="#D4C49A" stroke="#0A3323" strokeWidth={1.5} />;
   }
@@ -237,8 +486,9 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ category: string; offsetX: number; offsetY: number } | null>(null);
 
-  const [positions, setPositions] = useState<Record<string, PosFt>>({});
-  const [dragging,  setDragging]  = useState<string | null>(null);
+  const [positions,  setPositions]  = useState<Record<string, PosFt>>({});
+  const [rotations,  setRotations]  = useState<Record<string, number>>({});
+  const [dragging,   setDragging]   = useState<string | null>(null);
 
   // Canvas dimensions — driven by the actual polygon bounding box when available
   // so the viewport, grid, labels, and drag clamping all agree.
@@ -274,6 +524,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
   }, []);
 
   const handlePointerDown = useCallback((category: string, e: React.PointerEvent) => {
+    if (e.button !== 0) return; // right-click handled by onContextMenu
     e.preventDefault();
     e.stopPropagation();
     // Capture on the SVG root so move events fire even when pointer leaves the piece
@@ -308,6 +559,11 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
   const handlePointerUp = useCallback(() => {
     dragRef.current = null;
     setDragging(null);
+  }, []);
+
+  const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setRotations(prev => ({ ...prev, [category]: ((prev[category] ?? 0) + 90) % 360 }));
   }, []);
 
   // ── SVG viewBox (sized to the actual polygon bounding box) ─────────────────
@@ -382,7 +638,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           2D Room Layout
         </h3>
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium">
-          Drag pieces to rearrange · hover to link
+          Drag to move · right-click to rotate · hover to link
         </span>
       </div>
 
@@ -442,7 +698,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           textAnchor="middle"
           fontSize={11}
           fontWeight="700"
-          fill="rgba(10,51,35,0.55)"
+          fill="rgba(247,244,213,0.85)"
           fontFamily="Quicksand, sans-serif"
         >
           {cW % 1 === 0 ? cW : cW.toFixed(1)} ft
@@ -453,7 +709,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           textAnchor="middle"
           fontSize={11}
           fontWeight="700"
-          fill="rgba(10,51,35,0.55)"
+          fill="rgba(247,244,213,0.85)"
           fontFamily="Quicksand, sans-serif"
           transform={`rotate(-90, ${MARGIN / 2 - 2}, ${cL * SCALE / 2 + MARGIN})`}
         >
@@ -468,6 +724,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           const dPx    = dFt * SCALE;
           const svgX   = pos.x * SCALE + MARGIN;
           const svgY   = pos.y * SCALE + MARGIN;
+          const rot    = rotations[item.category] ?? 0;
           const isLinked = linkedCategory === item.category;
           const isDimmed = Boolean(linkedCategory && linkedCategory !== item.category);
           const isRug    = item.category === 'rug';
@@ -475,13 +732,14 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           return (
             <g
               key={item.id}
-              transform={`translate(${svgX.toFixed(1)}, ${svgY.toFixed(1)})`}
+              transform={`translate(${(svgX + wPx / 2).toFixed(1)},${(svgY + dPx / 2).toFixed(1)}) rotate(${rot}) translate(${(-wPx / 2).toFixed(1)},${(-dPx / 2).toFixed(1)})`}
               opacity={isDimmed ? 0.22 : 1}
               style={{
                 cursor:     dragging === item.category ? 'grabbing' : 'grab',
                 transition: 'opacity 0.2s',
               }}
               onPointerDown={e => handlePointerDown(item.category, e)}
+              onContextMenu={e => handleContextMenu(item.category, e)}
               onMouseEnter={() => onLinkCategory?.(item.category)}
               onMouseLeave={() => onLinkCategory?.(null)}
             >

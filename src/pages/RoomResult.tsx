@@ -72,8 +72,15 @@ export default function RoomResult() {
     }
 
     let parsedStyle: Style;
+    let roomType = '';
     try {
       const ai = JSON.parse(raw);
+      const rawRoomType = ai.roomType;
+      const fallbackRoomType = localStorage.getItem('blueprintCurrentRoomType');
+      roomType = String(rawRoomType ?? fallbackRoomType ?? '').trim().toLowerCase();
+      console.log('[BluPrint] blueprintStyleResult roomType:', rawRoomType);
+      console.log('[BluPrint] blueprintCurrentRoomType:', fallbackRoomType);
+      console.log('[BluPrint] resolved roomType:', roomType);
       parsedStyle = {
         styleTag:     ai.styleTag     ?? '',
         moodTags:     ai.moodTags     ?? [],
@@ -91,7 +98,7 @@ export default function RoomResult() {
 
     if (!roomId || !userId) {
       setLoading(false);
-      fetchFurniture(roomId ?? 'unknown', parsedStyle.styleTag);
+      fetchFurniture(roomId ?? 'unknown', parsedStyle.styleTag, roomType);
       return;
     }
 
@@ -119,12 +126,14 @@ export default function RoomResult() {
         .catch(() => {}),
     ]).finally(() => setLoading(false));
 
-    fetchFurniture(roomId, parsedStyle.styleTag);
+    fetchFurniture(roomId, parsedStyle.styleTag, roomType);
   }, []);
 
-  function fetchFurniture(roomId: string, styleTag: string) {
+  function fetchFurniture(roomId: string, styleTag: string, roomType = '') {
+    const url = `/api/rooms/${roomId}/furniture?styleTag=${encodeURIComponent(styleTag)}&roomType=${encodeURIComponent(roomType)}`;
+    console.log('[BluPrint] fetching furniture:', url);
     setFurnitureLoading(true);
-    fetch(`/api/rooms/${roomId}/furniture?styleTag=${encodeURIComponent(styleTag)}`)
+    fetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
       .then((items: FurnitureItem[]) => { setFurniture(items); })
       .catch((err) => { console.error('[furniture]', err); setFurniture([]); })
@@ -200,7 +209,7 @@ export default function RoomResult() {
               <h1 className="text-5xl md:text-6xl font-bold text-[#F7F4D5] tracking-tight">
                 {layoutRoom.name}
               </h1>
-              <p className="text-lg text-[#F7F4D5]/60 font-medium">
+              <p className="text-lg text-[#F7F4D5] font-medium">
                 {layoutRoom.widthFt}' x {layoutRoom.lengthFt}' <span className="mx-2 opacity-30">|</span> {layoutRoom.sqft} sqft
               </p>
             </div>
