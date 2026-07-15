@@ -132,7 +132,7 @@ async function loadProjects(userId) {
                         if (res.ok) {
                             card.style.transition = 'opacity 0.3s';
                             card.style.opacity = '0';
-                            setTimeout(() => card.remove(), 300);
+                            setTimeout(() => loadProjects(userID), 300);
                         } else {
                             alert('Delete failed (' + res.status + ')');
                             deleteBtn.disabled = false;
