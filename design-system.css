@@ -677,6 +677,26 @@ body:not(.page-login) .app-nav-actions > button:not(#logout-btn) iconify-icon {
 .workflow-step.completed strong { color: var(--bp-ink); }
 .workflow-step.completed iconify-icon { font-size: 12px; }
 .workflow-connector.completed { background: var(--dimension-primary, var(--bp-primary)); }
+/* Clickable steps — jump between Define Room / Add Inspiration / View Design */
+a.workflow-step {
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: transform 0.15s ease;
+}
+a.workflow-step:hover { transform: translateY(-1px); }
+a.workflow-step:hover span {
+  filter: brightness(1.03);
+  box-shadow: 0 0 0 3px var(--dimension-primary, var(--bp-primary));
+}
+a.workflow-step:hover strong {
+  color: var(--bp-ink);
+  text-decoration: underline;
+}
+a.workflow-step:focus-visible {
+  outline: 2px solid var(--dimension-primary, var(--bp-primary));
+  outline-offset: 3px;
+}
 .page-dimensions main {
   max-width: 1600px !important;
   padding: 18px 24px 24px !important;

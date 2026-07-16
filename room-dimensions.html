@@ -269,22 +269,22 @@
           </div>
         </div>
       </nav>
-      <div class="workflow-steps" aria-label="Room design progress">
-        <div class="workflow-step active">
+      <nav class="workflow-steps" aria-label="Room design progress">
+        <div class="workflow-step active" aria-current="step">
           <span>1</span>
           <strong>Define Room</strong>
         </div>
         <div class="workflow-connector"></div>
-        <div class="workflow-step">
+        <a class="workflow-step" href="inspo-upload.html" aria-label="Go to Add Inspiration">
           <span>2</span>
           <strong>Add Inspiration</strong>
-        </div>
+        </a>
         <div class="workflow-connector"></div>
-        <div class="workflow-step">
+        <a class="workflow-step" href="room-result.html" aria-label="Go to View Design">
           <span>3</span>
           <strong>View Design</strong>
-        </div>
-      </div>
+        </a>
+      </nav>
       <main
         class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full"
       >
@@ -1477,6 +1477,36 @@
       function persistRoomLayout(layout) {
         localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
       }
+      // Rehydrate a previously saved layout so navigating back to this page
+      // (e.g. via the workflow stepper) keeps the user's room instead of
+      // resetting to the default. New rooms clear this key, so this is a no-op
+      // for a fresh start.
+      function restorePersistedLayout() {
+        let raw;
+        try {
+          raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY);
+        } catch {
+          return;
+        }
+        if (!raw) return;
+        let layout;
+        try {
+          layout = JSON.parse(raw);
+        } catch {
+          return;
+        }
+        if (!layout || layout.version !== ROOM_LAYOUT_VERSION) return;
+        if (Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 3) {
+          state.roomPoints = cloneObj(layout.roomPoints);
+        }
+        if (Array.isArray(layout.elements)) state.elements = cloneObj(layout.elements);
+        if (Array.isArray(layout.cutouts)) state.cutouts = cloneObj(layout.cutouts);
+        if (roomNameInput && layout.roomName) roomNameInput.value = layout.roomName;
+        // currentUnit is "ft" at init, matching the stored heightFt.
+        if (heightInput && Number.isFinite(layout.heightFt)) {
+          heightInput.value = String(layout.heightFt);
+        }
+      }
       document
         .getElementById("cta-save-continue")
         .addEventListener("click", async () => {
@@ -1536,6 +1566,7 @@
         });
       toggleFt.onclick = () => setUnit("ft");
       toggleM.onclick = () => setUnit("m");
+      restorePersistedLayout();
       saveState();
       renderAll();
     </script>
