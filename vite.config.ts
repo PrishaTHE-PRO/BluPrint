@@ -12,6 +12,7 @@ export default defineConfig({
         roomResult:     'room-result.html',
         roomDimensions: 'room-dimensions.html',
         inspoUpload:    'inspo-upload.html',
+        pastInspiration:'past-inspiration.html',
       },
     },
   },

@@ -9,6 +9,7 @@ export interface Room {
 
 export interface Style {
   styleTag:     string;
+  roomType?:    string;
   moodTags:     string[];
   colorPalette: string[];
   roomFeatures: string[];
@@ -67,3 +68,6 @@ export interface RoomArchitectureLayout {
   cutouts:    ArchitectureCutout[];
   savedAt:    string;
 }
+
+/** Subset used by the interactive 2D furniture floor plan */
+export type RoomLayout = Pick<RoomArchitectureLayout, 'roomPoints' | 'elements' | 'cutouts'>;

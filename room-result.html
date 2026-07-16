@@ -39,12 +39,28 @@
     .map-furniture.dragging { cursor: grabbing; transition: none; filter: brightness(1.12); outline: 2px solid var(--garden-rosy); }
     .mood-tag { transition: all 0.3s ease; cursor: pointer; }
     .mood-tag:hover { background: var(--garden-rosy); color: white; transform: scale(1.05); }
+    @keyframes float-character {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    .floating-character { animation: float-character 6s ease-in-out infinite; }
+    .custom-furniture-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: var(--garden-moss) transparent;
+    }
+    .custom-furniture-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-furniture-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-furniture-scroll::-webkit-scrollbar-thumb {
+      background: rgba(131, 153, 88, 0.55);
+      border-radius: 10px;
+    }
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: var(--garden-dark); }
     ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
   </style>
+  <link rel="stylesheet" href="./design-system.css">
 </head>
-<body>
+<body class="page-result">
   <div id="root"></div>
   <script type="module" src="./src/main.tsx"></script>
 </body>

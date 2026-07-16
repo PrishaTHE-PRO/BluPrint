@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const Room    = require('../models/Room');
+const Style   = require('../models/Style');
 
 function toNumber(value, fallback = 0) {
     const parsed = Number(value);
@@ -89,8 +90,19 @@ router.post('/', async (req, res) => {
 // GET / — fetch all rooms for a user
 router.get('/', async (req, res) => {
     try {
-        const rooms = await Room.find({ userId: req.query.userId }).sort({ createdAt: -1 });
-        res.status(200).json(rooms);
+        const rooms = await Room.find({ userId: req.query.userId })
+            .sort({ createdAt: -1 })
+            .lean();
+        const roomIds = rooms.map((room) => room._id);
+        const styles = roomIds.length
+            ? await Style.find({ roomId: { $in: roomIds }, source: 'user' }).lean()
+            : [];
+        const stylesByRoom = new Map(styles.map((style) => [String(style.roomId), style]));
+
+        res.status(200).json(rooms.map((room) => ({
+            ...room,
+            style: stylesByRoom.get(String(room._id)) || null,
+        })));
     } catch (error) {
         res.status(500).json({ error: 'Failed to get rooms.' });
     }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { FurnitureItem, Style } from '../types';
-import { groupFurnitureForLayout, orderedFurniture } from '../utils/furnitureLayout';
+import { orderedFurniture } from '../utils/furnitureLayout';
 import FurnitureCard from './FurnitureCard';
 
 interface Props {
@@ -9,13 +9,12 @@ interface Props {
   onSwap:           (category: string) => void;
   style:            Style;
   loading:          boolean;
+  roomType?:        string;
   centerContent?:   ReactNode;
   linkedCategory?:  string | null;
   onLinkCategory?:  (category: string | null) => void;
 }
 
-// Use item.category as key (not item.id) so the card is never unmounted on swap —
-// this prevents the animate-reveal glitch that replays the entrance animation.
 function renderCard(
   item:           FurnitureItem,
   items:          FurnitureItem[],
@@ -43,26 +42,26 @@ export default function FurniturePanel({
   onSwap,
   style,
   loading,
+  roomType,
   centerContent,
   linkedCategory,
   onLinkCategory,
 }: Props) {
-  const displayed = orderedFurniture(slots);
+  const displayed = orderedFurniture(slots, roomType);
   const total     = displayed.reduce((sum, item) => sum + item.price, 0);
-  const { left, right, bottom } = groupFurnitureForLayout(slots);
 
   const header = (
-    <div className="flex items-center justify-between animate-reveal mb-6" style={{ animationDelay: '0.4s' }}>
-      <h2 className="text-2xl font-bold flex items-center gap-3">
-        Recommended Furniture
+    <div className="flex items-center justify-between animate-reveal mb-4 shrink-0" style={{ animationDelay: '0.4s' }}>
+      <h2 className="text-xl font-bold flex items-center gap-2">
+        Furniture
         <span className="text-[#D3968C]">
           <iconify-icon icon="ph:magic-wand-duotone" />
         </span>
       </h2>
       {total > 0 && (
-        <div className="px-4 py-1.5 rounded-full border bg-[#839958]/20 border-[#839958]/30">
-          <span className="text-xs font-bold text-[#F7F4D5]/60">Est. Total:</span>
-          <span className="text-base font-bold ml-2 text-[#F7F4D5]">${total.toLocaleString()}</span>
+        <div className="px-3 py-1 rounded-full border bg-[#839958]/20 border-[#839958]/30">
+          <span className="text-[10px] font-bold text-[#F7F4D5]/60">Est.</span>
+          <span className="text-sm font-bold ml-1.5 text-[#F7F4D5]">${total.toLocaleString()}</span>
         </div>
       )}
     </div>
@@ -71,34 +70,26 @@ export default function FurniturePanel({
   if (loading) {
     return (
       <section className="mb-10">
-        {header}
-        {/* Skeleton: 3+6+3 columns */}
-        <div className="grid lg:grid-cols-12 gap-4 items-start">
-          <div className="lg:col-span-3 flex flex-col gap-3">
-            {[0, 1].map((i) => (
-              <div key={i} className="garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
-                <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg mb-2" />
-                <div className="h-2.5 bg-[#F7F4D5]/10 rounded w-1/3 mb-1.5" />
-                <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4" />
-              </div>
-            ))}
+        <div className="result-workspace grid lg:grid-cols-12 gap-7 items-start">
+          <div className="lg:col-span-8">
+            <div className="rounded-2xl aspect-[4/3] animate-pulse bg-[#EDE8E1]" />
           </div>
-          <div className="lg:col-span-6">
-            <div className="garden-card rounded-2xl border border-[#F7F4D5]/10 aspect-square animate-pulse" />
-          </div>
-          <div className="lg:col-span-3 flex flex-col gap-3">
-            {[2, 3].map((i) => (
-              <div key={i} className="garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
-                <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg mb-2" />
-                <div className="h-2.5 bg-[#F7F4D5]/10 rounded w-1/3 mb-1.5" />
-                <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4" />
-              </div>
-            ))}
-          </div>
+          <aside className="lg:col-span-4 furniture-scroll-panel">
+            {header}
+            <div className="flex flex-col gap-3 max-h-[70vh] overflow-hidden">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
+                  <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg mb-2" />
+                  <div className="h-2.5 bg-[#F7F4D5]/10 rounded w-1/3 mb-1.5" />
+                  <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4" />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-[#F7F4D5]/30 text-center animate-pulse mt-4">
+              Searching for your {style.styleTag} style...
+            </p>
+          </aside>
         </div>
-        <p className="text-xs text-[#F7F4D5]/30 text-center animate-pulse mt-6">
-          Searching furniture stores for your {style.styleTag} style...
-        </p>
       </section>
     );
   }
@@ -106,59 +97,43 @@ export default function FurniturePanel({
   if (displayed.length === 0) {
     return (
       <section className="mb-10">
-        {header}
-        {centerContent && <div className="max-w-xl mx-auto mb-8">{centerContent}</div>}
-        <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found — try re-analyzing your room.</p>
+        <div className="result-workspace grid lg:grid-cols-12 gap-7 items-start">
+          <div className="lg:col-span-8">
+            {centerContent}
+          </div>
+          <aside className="lg:col-span-4 furniture-scroll-panel">
+            {header}
+            <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found — try re-analyzing your room.</p>
+          </aside>
+        </div>
       </section>
     );
   }
 
   return (
     <section className="mb-10">
-      {header}
-
-      {/* Mobile: floor plan then stacked cards */}
       <div className="lg:hidden flex flex-col gap-4">
-        {centerContent && <div className="max-w-md mx-auto w-full">{centerContent}</div>}
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div>{centerContent}</div>
+        {header}
+        <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1 custom-furniture-scroll">
           {displayed.map((item, i) => renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory))}
         </div>
       </div>
 
-      {/* Desktop: 3 | 6 | 3 grid */}
-      <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-start">
-        {/* Left column — 2 cards, stacked */}
-        <div className="col-span-3 flex flex-col gap-3">
-          {left.map((item, i) =>
-            renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory)
-          )}
-        </div>
-
-        {/* Center — floor plan */}
-        <div className="col-span-6">
+      <div className="result-workspace hidden lg:grid lg:grid-cols-12 gap-7 items-start">
+        <div className="col-span-8 min-w-0">
           {centerContent && <div className="w-full">{centerContent}</div>}
         </div>
 
-        {/* Right column — 2 cards, stacked */}
-        <div className="col-span-3 flex flex-col gap-3">
-          {right.map((item, i) =>
-            renderCard(item, items, onSwap, i + left.length, linkedCategory, onLinkCategory)
-          )}
-        </div>
-      </div>
-
-      {/* Bottom row — centered under the floor plan (col 4–9 in the same 12-col grid) */}
-      {bottom.length > 0 && (
-        <div className="hidden lg:grid lg:grid-cols-12 gap-4 mt-3">
-          <div
-            className={`col-start-4 col-span-6 grid gap-3 ${bottom.length >= 2 ? 'grid-cols-2' : 'grid-cols-1'}`}
-          >
-            {bottom.map((item, i) =>
-              renderCard(item, items, onSwap, i + left.length + right.length, linkedCategory, onLinkCategory)
+        <aside className="col-span-4 furniture-scroll-panel flex flex-col min-h-0 h-full">
+          {header}
+          <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto overscroll-contain pr-2 custom-furniture-scroll">
+            {displayed.map((item, i) =>
+              renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory)
             )}
           </div>
-        </div>
-      )}
+        </aside>
+      </div>
     </section>
   );
 }

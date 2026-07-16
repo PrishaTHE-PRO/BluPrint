@@ -45,135 +45,70 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
     </style>
+    <link rel="stylesheet" href="./design-system.css">
 </head>
-<body>
+<body class="page-dashboard">
 <div class="min-h-screen flex flex-col relative grid-background">
     <div class="noise-texture"></div>
 
-    <!-- Navigation -->
-    <nav class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--nav-pink);">
-        <div class="flex items-center gap-4 animate-reveal" style="animation-delay:0.1s;">
-            <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
+    <nav class="app-nav sticky top-0 z-50">
+        <a href="dashboard.html" class="app-brand">
+            <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center">
                 <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
             </div>
             <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif;">BluPrint</span>
+        </a>
+        <div class="app-nav-links">
+            <a href="dashboard.html" class="active"><iconify-icon icon="ph:house-duotone"></iconify-icon>Home</a>
+            <a href="past-inspiration.html"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon>Projects</a>
         </div>
-
-        <div class="hidden md:flex items-center gap-12 text-[#0A3323] animate-reveal" style="animation-delay:0.2s;">
-            <a href="#" class="nav-link relative font-bold text-lg transition-all">Home</a>
-            <a href="#" class="nav-link relative font-bold text-lg transition-all">Discover</a>
-            <a href="#" class="nav-link relative font-bold text-lg transition-all">Community</a>
-            <!-- logout button styled as user avatar -->
+        <div class="app-nav-actions">
+            <button type="button" title="Notifications" aria-label="Notifications">
+                <iconify-icon icon="ph:bell-duotone"></iconify-icon>
+            </button>
             <button id="logout-btn" title="Sign out" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
                 <iconify-icon icon="ph:sign-out-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
             </button>
         </div>
     </nav>
 
-    <!-- Hero -->
-    <header class="relative w-full overflow-hidden border-b border-[#F7F4D5]/5 py-20 px-8 lg:px-16">
-        <div class="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-16 md:gap-32">
-            <div class="flex flex-col gap-8 animate-reveal text-center md:text-left" style="animation-delay:0.3s;">
-                <div class="space-y-4">
-                    <h1 class="text-6xl md:text-8xl font-bold leading-tight drop-shadow-sm text-[#F7F4D5]">
-                        Welcome back, <br><span id="user-name" class="italic text-[#D3968C]">there!</span>
-                    </h1>
-                    <p class="text-xl text-[#F7F4D5]/80 font-medium max-w-md">
-                        Start designing your next serene living space or cozy room retreat. Your next project awaits your touch.
-                    </p>
-                </div>
-                <div class="flex justify-center md:justify-start">
-                    <div class="inline-flex items-center gap-3 bg-[#D3968C] px-6 py-3 rounded-full text-[#F7F4D5] font-bold shadow-xl border border-white/10">
-                        <iconify-icon icon="ph:shooting-star-duotone" class="text-2xl sparkle-icon"></iconify-icon>
-                        <span>Rank: Amateur</span>
-                    </div>
-                </div>
+    <header class="dashboard-hero">
+        <div class="dashboard-container dashboard-hero-layout animate-reveal">
+            <div class="dashboard-character-wrap" aria-hidden="true">
+                <img
+                    class="dashboard-character floating-avatar"
+                    src="https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/uploads/c8b9b493-90d2-48dc-beb9-1c448e14e0d2/1779936396285-b0204285/blueprintavatar.png"
+                    alt=""
+                    style="object-view-box: xywh(23.55% 14.37% 31.43% 47.54%);"
+                >
             </div>
-
-            <!-- avatar -->
-            <div class="relative group animate-reveal" style="animation-delay:0.5s;">
-                <div class="absolute -top-16 left-1/2 -translate-x-1/2 bg-[#F7F4D5] text-[#105666] px-8 py-4 rounded-[2.5rem] border-2 border-[#105666] font-bold text-lg shadow-2xl whitespace-nowrap z-20 transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-4">
-                    Let's get started!
-                    <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#F7F4D5] border-b-2 border-r-2 border-[#105666] transform rotate-45"></div>
-                </div>
-                <div class="floating-avatar">
-                    <img src="https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/uploads/c8b9b493-90d2-48dc-beb9-1c448e14e0d2/1779936396285-b0204285/blueprintavatar.png" alt="Designer Avatar" class="relative z-10 object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.6)]" style="object-view-box:xywh(23.55% 14.37% 31.43% 47.54%);width:280px;height:320px;">
-                </div>
+            <div class="dashboard-welcome-copy">
+                <p class="dashboard-eyebrow">Welcome back</p>
+                <h1><span id="user-name" aria-live="polite"></span></h1>
+                <a href="room-dimensions.html" class="dashboard-new-room">
+                    <iconify-icon icon="ph:plus-bold"></iconify-icon>
+                    New Room
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Dashboard -->
-    <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-[1600px] mx-auto w-full">
-        <div class="grid lg:grid-cols-12 gap-12">
-
-            <!-- Left Sidebar -->
-            <div class="lg:col-span-5 flex flex-col gap-12 animate-reveal" style="animation-delay:0.7s;">
-
-                <!-- Create Project CTA -->
-                <div class="garden-card ghibli-border p-12 overflow-hidden relative group cursor-pointer shadow-xl">
-                    <div class="absolute -top-12 -right-12 w-64 h-64 bg-[#D3968C]/10 rounded-full blur-[80px] group-hover:bg-[#D3968C]/20 transition-all"></div>
-                    <div class="relative z-10 space-y-8">
-                        <!--
-                        <div class="w-20 h-20 bg-[#F7F4D5] rounded-[2.5rem] flex items-center justify-center shadow-2xl transform transition group-hover:rotate-12">
-                            <iconify-icon icon="ph:plus-bold" class="text-4xl text-[#0A3323]"></iconify-icon>
-                        </div>
-                        -->
-                        <a href="room-dimensions.html" class="w-20 h-20 bg-[#F7F4D5] rounded-[2.5rem] flex items-center justify-center shadow-2xl transform transition group-hover:rotate-12">
-                            <iconify-icon icon="ph:plus-bold" class="text-4xl text-[#0A3323]"></iconify-icon>
-                        </a>
-
-                        <div class="space-y-4">
-                            <h2 class="text-4xl font-bold text-[#F7F4D5]">Create a New Project</h2>
-                            <p class="text-xl text-[#F7F4D5]/70 leading-relaxed">
-                                Ready to start your next interior masterpiece? Click here to begin a fresh room template.
-                            </p>
-                        </div>
-                        <a href="room-dimensions.html" class="block w-full py-5 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-[1.02] shadow-xl border border-white/10 text-center">
-                            Get Started
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Tip of the Day -->
-                <div class="garden-card ghibli-border p-10 bg-[#F7F4D5]/5">
-                    <div class="flex items-center gap-4 mb-6">
-                        <iconify-icon icon="ph:sparkle-duotone" class="text-4xl text-[#D3968C]"></iconify-icon>
-                        <h3 class="text-2xl font-bold tracking-wide">Tip of the Day</h3>
-                    </div>
-                    <p class="text-2xl font-medium text-[#F7F4D5]/90 leading-relaxed italic border-l-4 border-[#D3968C] pl-6">
-                        "Soft layered textures can turn any corner into an enchanted space. Try mixing different fabric weights for a hidden luxury look."
-                    </p>
-                    <div class="mt-8 flex justify-end opacity-20">
-                        <iconify-icon icon="ph:house-duotone" class="text-6xl"></iconify-icon>
-                    </div>
-                </div>
+    <main class="dashboard-container dashboard-main">
+        <section class="dashboard-projects animate-reveal">
+            <div class="dashboard-section-heading">
+                <h2>Recent rooms</h2>
+                <a href="past-inspiration.html">
+                    View all <iconify-icon icon="ph:caret-right-bold"></iconify-icon>
+                </a>
             </div>
-
-            <!-- Right: Project Gallery -->
-            <div class="lg:col-span-7 flex flex-col gap-10 animate-reveal" style="animation-delay:0.9s;">
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div>
-                        <h2 class="text-4xl font-bold text-[#F7F4D5]">Your Projects</h2>
-                        <p class="text-[#F7F4D5]/50 text-sm font-medium mt-1">Your 4 most recent rooms</p>
-                    </div>
-                    <a href="past-inspiration.html" class="flex items-center gap-2 text-sm font-bold text-[#D3968C] hover:opacity-70 transition-opacity whitespace-nowrap">
-                        View all <iconify-icon icon="ph:arrow-right-bold"></iconify-icon>
-                    </a>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-8" id="projects-grid">
-                    <p class="text-[#F7F4D5]/40 text-center col-span-2 py-12">Loading your projects...</p>
-                </div>
+            <div id="projects-grid" aria-live="polite" aria-busy="true">
+                <div class="project-card-skeleton"></div>
+                <div class="project-card-skeleton"></div>
+                <div class="project-card-skeleton"></div>
+                <div class="project-card-skeleton"></div>
             </div>
-
-        </div>
+        </section>
     </main>
-
-    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center gap-4 opacity-40">
-        <iconify-icon icon="ph:plant-duotone" class="text-4xl text-[#839958]"></iconify-icon>
-        <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5]">Growing since 2026 • BluPrint</p>
-    </footer>
 </div>
 
 <div id="toast"></div>

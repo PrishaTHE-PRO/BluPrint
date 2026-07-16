@@ -8,6 +8,11 @@ var ROOM_LAYOUT_VERSION = 1;
 var ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
 var ROOM_LAYOUT_SCALE = 20;
 
+var cachedUserName = localStorage.getItem('blueprintUserName');
+if (userNameEl && cachedUserName) {
+    userNameEl.textContent = cachedUserName + '!';
+}
+
 document.querySelectorAll('a[href="room-dimensions.html"]').forEach((link) => {
     link.addEventListener('click', clearCurrentProjectDraft);
 });
@@ -22,7 +27,10 @@ onAuthStateChanged(auth, function(user) {
     }
 
     var name = user.displayName || user.email.split('@')[0];
-    if (userNameEl) userNameEl.textContent = name + '!';
+    if (userNameEl) {
+        userNameEl.textContent = name + '!';
+    }
+    localStorage.setItem('blueprintUserName', name);
 
     // Store uid so other pages can use it
     localStorage.setItem('blueprintUserId', user.uid);
@@ -44,27 +52,17 @@ async function loadProjects(userId) {
 
         if (!rooms.length) {
             grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-2 py-12">No projects yet — click "Get Started" to create your first room!</p>';
+            grid.setAttribute('aria-busy', 'false');
             return;
         }
 
-        // Fetch style for each room in parallel
-        const withStyles = await Promise.all(rooms.map(async room => {
-            try {
-                const sr = await fetch('/api/rooms/' + room._id + '/style');
-                const styles = sr.ok ? await sr.json() : [];
-                const userStyle = styles.find(s => s.source === 'user') || null;
-                return { ...room, style: userStyle };
-            } catch {
-                return { ...room, style: null };
-            }
-        }));
-
         // Newest first, cap at 4 on dashboard
-        withStyles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        const recent = withStyles.slice(0, 4);
+        rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const recent = rooms.slice(0, 4);
 
         grid.innerHTML = '';
-        recent.forEach(room => {
+        const cards = document.createDocumentFragment();
+        recent.forEach((room, index) => {
             const hasStyle = !!room.style;
             const statusLabel = hasStyle ? 'Style Analyzed ✨' : 'Dimensions Set';
             const statusColor = hasStyle ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
@@ -76,7 +74,8 @@ async function loadProjects(userId) {
             const styleTag = escapeHtml(tag);
 
             const card = document.createElement('div');
-            card.className = 'garden-card ghibli-border p-6 group cursor-pointer';
+            card.className = 'garden-card ghibli-border p-6 group cursor-pointer project-card-enter';
+            card.style.setProperty('--card-delay', `${index * 55}ms`);
             card.innerHTML = `
                 <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner bg-[#F7F4D5] flex items-center justify-center">
                     ${roomPreview}
@@ -95,7 +94,7 @@ async function loadProjects(userId) {
                         <span class="text-xs text-[#F7F4D5]/30">${date}</span>
                     </div>
                 </div>`;
-            grid.appendChild(card);
+            cards.appendChild(card);
 
             // Click card body → revisit project
             card.addEventListener('click', (e) => {
@@ -108,6 +107,7 @@ async function loadProjects(userId) {
                 localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(getRoomPreviewLayout(room)));
                 if (room.style) {
                     localStorage.setItem('blueprintStyleResult', JSON.stringify({
+                        roomType:     room.style.roomType     ?? '',
                         styleTag:     room.style.styleTag     ?? '',
                         moodTags:     room.style.moodTags     ?? [],
                         colorPalette: room.style.colorPalette ?? [],
@@ -132,7 +132,7 @@ async function loadProjects(userId) {
                         if (res.ok) {
                             card.style.transition = 'opacity 0.3s';
                             card.style.opacity = '0';
-                            setTimeout(() => loadProjects(userID), 300);
+                            setTimeout(() => loadProjects(userId), 300);
                         } else {
                             alert('Delete failed (' + res.status + ')');
                             deleteBtn.disabled = false;
@@ -159,8 +159,11 @@ async function loadProjects(userId) {
                 }
             });
         });
+        grid.appendChild(cards);
+        grid.setAttribute('aria-busy', 'false');
     } catch {
         grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-2 py-12">Could not load projects — is the server running?</p>';
+        grid.setAttribute('aria-busy', 'false');
     }
 }
 
@@ -360,6 +363,7 @@ function renderRoomPreview(room) {
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async function() {
         await signOut(auth);
+        localStorage.removeItem('blueprintUserName');
         window.location.href = 'index.html';
     });
 }

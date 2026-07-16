@@ -10,6 +10,13 @@ import { auth, googleProvider, isFirebaseConfigured } from "./firebase.js";
 var loginButton = document.getElementById('login-btn');
 var googleButton = document.getElementById('google-button');
 
+function cacheAuthUser(user) {
+    if (!user) return;
+    var name = user.displayName || (user.email ? user.email.split('@')[0] : 'Designer');
+    localStorage.setItem('blueprintUserName', name);
+    localStorage.setItem('blueprintUserId', user.uid);
+}
+
 function showToast(message) {
     var toast = document.getElementById('toast');
     toast.textContent = message;
@@ -26,7 +33,7 @@ function isValidEmail(email) {
 function setLoading(isLoading) {
     loginButton.disabled = isLoading;
     googleButton.disabled = isLoading;
-    loginButton.textContent = isLoading ? 'Logging in...' : 'Log in';
+    loginButton.textContent = isLoading ? 'Signing in...' : 'Sign in →';
 }
 
 function resetErrors() {
@@ -88,7 +95,8 @@ async function handleLogin() {
     setLoading(true);
 
     try {
-        await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+        var result = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+        cacheAuthUser(result.user);
         window.location.href = 'dashboard.html';
     } catch (error) {
         showToast(getAuthErrorMessage(error));
@@ -107,7 +115,8 @@ async function handleSignup(event) {
     setLoading(true);
 
     try {
-        await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+        var result = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+        cacheAuthUser(result.user);
         window.location.href = 'dashboard.html';
     } catch (error) {
         showToast(getAuthErrorMessage(error));
@@ -122,7 +131,8 @@ async function handleGoogle() {
     setLoading(true);
 
     try {
-        await signInWithPopup(auth, googleProvider);
+        var result = await signInWithPopup(auth, googleProvider);
+        cacheAuthUser(result.user);
         window.location.href = 'dashboard.html';
     } catch (error) {
         showToast(getAuthErrorMessage(error));
@@ -140,7 +150,7 @@ async function handleForgotPassword(event) {
 
     if (!isValidEmail(email)) {
         document.getElementById('email').classList.add('error');
-        document.getElementById('email-error').style.display = 'block';
+        showToast('Enter your email address first.');
         return;
     }
 
@@ -155,6 +165,7 @@ async function handleForgotPassword(event) {
 if (auth) {
     onAuthStateChanged(auth, function(user) {
         if (user && isFirebaseConfigured()) {
+            cacheAuthUser(user);
             window.location.href = 'dashboard.html';
         }
     });

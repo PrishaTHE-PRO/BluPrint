@@ -53,92 +53,82 @@
     #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(10,51,35,0.95); border: 1px solid rgba(247,244,213,0.15); color: var(--garden-beige); font-family: 'Quicksand', sans-serif; font-size: 14px; padding: 12px 28px; border-radius: 999px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 100; backdrop-filter: blur(8px); }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
+  <link rel="stylesheet" href="./design-system.css">
 </head>
-<body>
-  <div class="noise-texture"></div>
+<body class="page-login">
+  <main class="login-shell">
+    <section class="login-brand" aria-label="BluPrint introduction">
+      <a class="bp-wordmark" href="/" aria-label="BluPrint home">
+        <span class="bp-wordmark-em">Blu</span>
+        <span class="bp-wordmark-rest">Print</span>
+      </a>
 
-  <div class="min-h-screen relative flex items-center justify-center overflow-hidden grid-background">
+      <svg class="login-plan" viewBox="0 0 420 320" fill="none" aria-hidden="true">
+        <g opacity=".22" stroke="currentColor" stroke-width=".7" stroke-dasharray="7 10">
+          <path d="M42 82H378M42 151H378M42 220H378"/>
+          <path d="M126 32V264M224 32V264M322 32V264"/>
+        </g>
+        <rect x="42" y="32" width="336" height="232" rx="5" fill="rgba(255,255,255,.5)" stroke="currentColor" stroke-width="3"/>
+        <rect x="56" y="47" width="194" height="146" rx="5" fill="rgba(232,228,220,.75)" stroke="#b8a898" stroke-dasharray="6 5"/>
+        <rect x="67" y="59" width="142" height="55" rx="8" fill="#b8d4e8"/>
+        <rect x="67" y="59" width="142" height="15" rx="8" fill="#98bdd8"/>
+        <rect x="91" y="134" width="83" height="46" rx="6" fill="#d4c5b0"/>
+        <rect x="266" y="58" width="65" height="65" rx="8" fill="#e8d5c8"/>
+        <rect x="309" y="143" width="52" height="98" rx="4" fill="#d0c8b8"/>
+        <path d="M42 228Q72 228 72 264" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
+        <rect x="234" y="27" width="92" height="10" rx="4" fill="#b8d4e8" stroke="currentColor"/>
+        <text x="210" y="297" text-anchor="middle" fill="#7a7060" font-family="DM Sans" font-size="12">12 ft</text>
+      </svg>
 
-    <!-- background decorations -->
-    <div class="absolute inset-0 z-0">
-      <div class="floating-particle w-2 h-2" style="top:20%;left:10%;animation-delay:0s;"></div>
-      <div class="floating-particle w-3 h-3" style="top:60%;left:15%;animation-delay:2s;opacity:0.4;"></div>
-      <div class="floating-particle w-2 h-2" style="top:80%;left:80%;animation-delay:4s;"></div>
-      <div class="floating-particle w-4 h-4" style="top:15%;left:85%;animation-delay:1s;opacity:0.2;"></div>
-      <div class="floating-particle w-2 h-2" style="top:40%;left:90%;animation-delay:3s;"></div>
-      <div class="absolute top-[-10%] left-[-5%] w-[40rem] h-[40rem] bg-emerald-900/20 blur-[120px] rounded-full animate-pulse-soft"></div>
-      <div class="absolute bottom-[-10%] right-[-5%] w-[50rem] h-[50rem] bg-emerald-800/20 blur-[150px] rounded-full animate-pulse-soft" style="animation-delay:2s;"></div>
-      <div class="absolute top-1/4 left-1/4 animate-[spin-slow_20s_linear_infinite] opacity-10 pointer-events-none">
-        <iconify-icon icon="ph:sparkle-duotone" class="text-[300px]"></iconify-icon>
+      <div class="login-quote">
+        <strong>Design rooms that feel like home.</strong>
+        <span>AI-powered interior design, built around your taste.</span>
       </div>
-    </div>
+    </section>
 
-    <!-- main card -->
-    <div class="relative z-10 w-full max-w-lg px-6 animate-reveal">
-      <div class="garden-card ghibli-border p-10 md:p-14 relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-rosy-500/5 rounded-full blur-3xl"></div>
+    <section class="login-panel">
+      <div class="login-card">
+        <h1>Welcome back</h1>
+        <p>Sign in to your BluPrint workspace.</p>
 
-        <!-- header -->
-        <div class="flex flex-col items-center text-center gap-4 mb-10">
-          <div class="w-16 h-16 bg-[#0A3323] rounded-2xl flex items-center justify-center shadow-2xl mb-2 animate-[float_4s_infinite_ease-in-out]">
-            <iconify-icon icon="ph:sparkle-duotone" class="text-4xl text-[#F7F4D5]"></iconify-icon>
-          </div>
-          <h1 class="text-5xl font-bold tracking-tight text-[#F7F4D5]">Welcome Back</h1>
-          <p class="text-lg text-[#F7F4D5]/60 font-medium">Enter your sanctuary and resume designing</p>
-        </div>
+        <button type="button" id="google-button" onclick="handleGoogle()" class="social-login">
+          <iconify-icon icon="logos:google-icon" class="text-lg"></iconify-icon>
+          Continue with Google
+        </button>
 
-        <!-- form -->
-        <div class="flex flex-col gap-6">
-          <div class="animate-reveal" style="animation-delay:0.2s;">
-            <label class="block text-sm font-bold text-[#F7F4D5]/70 mb-2 ml-1" for="email">Email Address</label>
-            <input type="email" id="email" placeholder="your@email.com" class="input-field w-full px-5 py-4 rounded-2xl font-medium">
+        <div class="login-divider">or</div>
+
+        <div class="flex flex-col gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-2" for="email">Email address</label>
+            <input type="email" id="email" placeholder="you@example.com" class="input-field w-full px-4 py-3">
           </div>
 
-          <div class="animate-reveal" style="animation-delay:0.3s;">
-            <div class="flex justify-between mb-2 ml-1">
-              <label class="block text-sm font-bold text-[#F7F4D5]/70" for="password">Password</label>
-              <a href="#" id="forgot-link" class="text-sm font-bold text-[#D3968C] hover:text-[#f5a7b8] transition-colors">Forgot?</a>
+          <div>
+            <div class="flex justify-between mb-2">
+              <label class="block text-xs font-medium" for="password">Password</label>
+              <a href="#" id="forgot-link" class="text-xs font-medium">Forgot password?</a>
             </div>
-            <input type="password" id="password" placeholder="••••••••" class="input-field w-full px-5 py-4 rounded-2xl font-medium">
+            <input type="password" id="password" placeholder="••••••••" class="input-field w-full px-4 py-3">
           </div>
 
-          <div class="flex items-center gap-3 ml-1 animate-reveal" style="animation-delay:0.4s;">
-            <input type="checkbox" id="remember" class="h-5 w-5 accent-[#D3968C] cursor-pointer rounded">
-            <label for="remember" class="text-sm font-semibold text-[#F7F4D5]/60 cursor-pointer">Keep me signed in</label>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="remember" class="h-4 w-4 accent-[#3D5A80] cursor-pointer">
+            <label for="remember" class="text-xs cursor-pointer">Keep me signed in</label>
           </div>
 
-          <button type="button" id="login-btn" onclick="handleLogin()" class="btn-bounce w-full py-5 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl shadow-xl mt-4 animate-reveal" style="animation-delay:0.5s;">
-            Enter BluPrint
+          <button type="button" id="login-btn" onclick="handleLogin()" class="w-full py-3 text-white font-semibold">
+            Sign in <span aria-hidden="true">→</span>
           </button>
         </div>
 
-        <!-- signup link -->
-        <div class="mt-10 text-center animate-reveal" style="animation-delay:0.6s;">
-          <p class="text-[#F7F4D5]/50 font-medium">
-            New to the sanctuary?
-            <a href="#" id="signup-link" onclick="handleSignup(event)" class="text-[#D3968C] font-bold hover:underline decoration-2 underline-offset-4 ml-1">Start a journey</a>
-          </p>
-        </div>
-
-        <!-- leaf decoration -->
-        <div class="absolute bottom-[-2rem] left-[-2rem] opacity-10 animate-[float_6s_infinite_ease-in-out]">
-          <iconify-icon icon="ph:leaf-duotone" class="text-8xl rotate-[45deg]"></iconify-icon>
-        </div>
+        <p class="mt-7 text-center text-sm">
+          New to BluPrint?
+          <a href="#" id="signup-link" onclick="handleSignup(event)" class="font-semibold ml-1">Create an account</a>
+        </p>
       </div>
-
-      <!-- social sign-in row -->
-      <div class="mt-8 flex justify-center gap-10 animate-reveal" style="animation-delay:0.8s;">
-        <button type="button" id="google-button" onclick="handleGoogle()" class="flex items-center gap-2 text-[#F7F4D5]/30 hover:text-[#F7F4D5]/80 cursor-pointer transition-colors bg-transparent border-none font-bold">
-          <iconify-icon icon="ph:google-logo-duotone" class="text-2xl"></iconify-icon>
-          <span class="text-sm font-bold">Google</span>
-        </button>
-        <div class="flex items-center gap-2 text-[#F7F4D5]/30 cursor-not-allowed">
-          <iconify-icon icon="ph:apple-logo-duotone" class="text-2xl"></iconify-icon>
-          <span class="text-sm font-bold">Apple</span>
-        </div>
-      </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <div id="toast"></div>
 

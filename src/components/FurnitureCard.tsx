@@ -19,6 +19,42 @@ const CATEGORY_FALLBACK: Record<string, string> = {
   floor_lamp:   'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=400',
   accent_chair: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400',
   side_table:   'https://images.unsplash.com/photo-1532372320572-cda25653a26d?auto=format&fit=crop&q=80&w=400',
+  bed:          'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=400',
+  nightstand:   'https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&q=80&w=400',
+  dresser:      'https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=400',
+  bedroom_rug:  'https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=400',
+  wardrobe:     'https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&q=80&w=400',
+  bedside_lamp: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=400',
+  island_cart:  'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&q=80&w=400',
+  bar_stool:    'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&q=80&w=400',
+  kitchen_rug:  'https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=400',
+  kitchen_storage: 'https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&q=80&w=400',
+  kitchen_shelf:   'https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=400',
+  pendant_light:   'https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?auto=format&fit=crop&q=80&w=400',
+  vanity:          'https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&q=80&w=400',
+  bath_mirror:     'https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&q=80&w=400',
+  bath_storage:    'https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=400',
+  bath_mat:        'https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=400',
+  bath_light:      'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=400',
+  shower_curtain:  'https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&q=80&w=400',
+  desk:            'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=400',
+  office_chair:    'https://images.unsplash.com/photo-1505843490701-5be5d0b19d58?auto=format&fit=crop&q=80&w=400',
+  bookshelf:       'https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=400',
+  desk_lamp:       'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=400',
+  storage_cabinet: 'https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&q=80&w=400',
+  monitor_stand:   'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=400',
+  dining_table:    'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&q=80&w=400',
+  dining_chair:    'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400',
+  dining_rug:      'https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=400',
+  sideboard:       'https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=400',
+  dining_light:    'https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?auto=format&fit=crop&q=80&w=400',
+  bar_cabinet:     'https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&q=80&w=400',
+  crib:            'https://images.unsplash.com/photo-1616627561839-074385245ff6?auto=format&fit=crop&q=80&w=400',
+  nursery_dresser: 'https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=400',
+  rocking_chair:   'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400',
+  nursery_rug:     'https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=400',
+  nursery_shelf:   'https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=400',
+  nursery_lamp:    'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=400',
 };
 
 export default function FurnitureCard({
@@ -58,6 +94,7 @@ export default function FurnitureCard({
           <img
             src={imgSrc}
             alt={item.name}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={() => setImgSrc(CATEGORY_FALLBACK[item.category] ?? '')}
           />
@@ -100,10 +137,10 @@ export default function FurnitureCard({
         <img
           src={imgSrc}
           alt={item.name}
+          referrerPolicy="no-referrer"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={() => setImgSrc(CATEGORY_FALLBACK[item.category] ?? '')}
         />
-        <div className="absolute inset-0 bg-[#0A3323]/10" />
       </div>
 
       <div className="flex-1 flex flex-col gap-1 min-w-0">

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
-import RoomBlueprintPreview from '../components/RoomBlueprintPreview';
+import RoomSVG from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
+import { orderedFurniture } from '../utils/furnitureLayout';
 
 const FALLBACK_ROOM: Room = {
   roomId:   'fallback',
@@ -77,12 +78,10 @@ export default function RoomResult() {
       const ai = JSON.parse(raw);
       const rawRoomType = ai.roomType;
       const fallbackRoomType = localStorage.getItem('blueprintCurrentRoomType');
-      roomType = String(rawRoomType ?? fallbackRoomType ?? '').trim().toLowerCase();
-      console.log('[BluPrint] blueprintStyleResult roomType:', rawRoomType);
-      console.log('[BluPrint] blueprintCurrentRoomType:', fallbackRoomType);
-      console.log('[BluPrint] resolved roomType:', roomType);
+      roomType = String(rawRoomType ?? fallbackRoomType ?? '').trim();
       parsedStyle = {
         styleTag:     ai.styleTag     ?? '',
+        roomType,
         moodTags:     ai.moodTags     ?? [],
         colorPalette: ai.colorPalette ?? [],
         roomFeatures: ai.roomFeatures ?? [],
@@ -131,7 +130,6 @@ export default function RoomResult() {
 
   function fetchFurniture(roomId: string, styleTag: string, roomType = '') {
     const url = `/api/rooms/${roomId}/furniture?styleTag=${encodeURIComponent(styleTag)}&roomType=${encodeURIComponent(roomType)}`;
-    console.log('[BluPrint] fetching furniture:', url);
     setFurnitureLoading(true);
     fetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
@@ -161,6 +159,12 @@ export default function RoomResult() {
 
   const s = style!;
   const layoutRoom = buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM);
+  const layoutFurniture = orderedFurniture(furnitureSlots, s.roomType).length > 0
+    ? orderedFurniture(furnitureSlots, s.roomType)
+    : orderedFurniture(
+        Object.fromEntries(furniture.map((item) => [item.category, item])),
+        s.roomType,
+      );
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -181,17 +185,22 @@ export default function RoomResult() {
         ))}
       </div>
 
-      <nav className="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style={{ backgroundColor: 'var(--nav-pink)' }}>
-        <div className="flex items-center gap-4 animate-reveal" style={{ animationDelay: '0.1s' }}>
-          <a href="/dashboard.html" className="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
+      <nav className="app-nav sticky top-0 z-50">
+        <a href="/dashboard.html" className="app-brand">
+          <div className="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center">
             <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]" />
-          </a>
+          </div>
           <span className="text-3xl font-bold tracking-tighter text-[#0A3323]" style={{ fontFamily: 'Crimson Pro, serif' }}>BluPrint</span>
+        </a>
+        <div className="app-nav-links">
+          <a href="/dashboard.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
+            <iconify-icon icon="ph:house-duotone" /> Home
+          </a>
+          <a href="/past-inspiration.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
+            <iconify-icon icon="ph:squares-four-duotone" /> Projects
+          </a>
         </div>
-        <div className="hidden md:flex items-center gap-12 text-[#0A3323] animate-reveal" style={{ animationDelay: '0.2s' }}>
-          <a href="/dashboard.html" className="relative font-bold text-lg hover:opacity-70 transition-all">Dashboard</a>
-          <a href="#" className="relative font-bold text-lg hover:opacity-70 transition-all">Gallery</a>
-          <a href="#" className="relative font-bold text-lg hover:opacity-70 transition-all">Community</a>
+        <div className="app-nav-actions">
           <div className="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm cursor-pointer">
             <iconify-icon icon="ph:user-duotone" class="text-2xl text-[#0A3323]" />
           </div>
@@ -230,64 +239,22 @@ export default function RoomResult() {
           slots={furnitureSlots}
           onSwap={handleSwap}
           style={s}
+          roomType={s.roomType}
           loading={furnitureLoading}
           linkedCategory={linkedCategory}
           onLinkCategory={setLinkedCategory}
           centerContent={
-            <RoomBlueprintPreview
+            <RoomSVG
               room={layoutRoom}
-              layout={savedLayout}
+              style={s}
+              furniture={layoutFurniture}
+              roomLayout={savedLayout}
+              linkedCategory={linkedCategory}
+              onLinkCategory={setLinkedCategory}
             />
           }
         />
 
-        <div className="grid md:grid-cols-3 gap-4 animate-reveal" style={{ animationDelay: '0.6s' }}>
-          <div className="garden-card ghibli-border p-6">
-            <h3 className="text-base font-bold mb-4 flex items-center gap-2">
-              <iconify-icon icon="ph:palette-duotone" class="text-[#D3968C]" />
-              Color Palette
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {s.colorPalette.map((hex) => (
-                <div
-                  key={hex}
-                  className="w-10 h-10 rounded-xl shadow transform hover:scale-110 transition-all cursor-help"
-                  style={{ background: hex }}
-                  title={hex}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="garden-card ghibli-border p-6">
-            <h3 className="text-base font-bold mb-4 flex items-center gap-2">
-              <iconify-icon icon="ph:cloud-sun-duotone" class="text-[#D3968C]" />
-              Mood
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {s.moodTags.map((tag) => (
-                <span key={tag} className="mood-tag px-3 py-1.5 bg-[#105666]/30 rounded-full text-xs font-bold">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="garden-card ghibli-border p-6">
-            <h3 className="text-base font-bold mb-4 flex items-center gap-2">
-              <iconify-icon icon="ph:list-checks-duotone" class="text-[#D3968C]" />
-              Room Features
-            </h3>
-            <ul className="space-y-2">
-              {s.roomFeatures.map((feat) => (
-                <li key={feat} className="flex items-center gap-2 text-[#F7F4D5]/80 text-sm font-medium">
-                  <iconify-icon icon="ph:dot-bold" class="text-[#D3968C] flex-shrink-0" />
-                  <span>{feat}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
       </main>
 
       <footer className="relative z-10 py-16 flex flex-col items-center gap-6 opacity-40">

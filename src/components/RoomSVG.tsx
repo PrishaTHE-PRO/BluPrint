@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import type { Room, Style, FurnitureItem, RoomLayout } from '../types';
-import { CATEGORY_LABELS } from '../utils/furnitureLayout';
+import { CATEGORY_LABELS, isFloorCovering } from '../utils/furnitureLayout';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -141,6 +141,32 @@ function pieceSizeFt(item: FurnitureItem) {
   return {
     wFt: (item.widthIn ?? DEFAULT_WIDTH_IN[item.category] ?? 36) / 12,
     dFt: (item.depthIn ?? DEFAULT_DEPTH_IN[item.category] ?? 30) / 12,
+  };
+}
+
+function clampFurniturePosition(
+  position: PosFt,
+  item: FurnitureItem,
+  rotation: number,
+  roomWidthFt: number,
+  roomLengthFt: number,
+): PosFt {
+  const { wFt, dFt } = pieceSizeFt(item);
+  const isQuarterTurn = Math.abs(rotation % 180) === 90;
+  const occupiedWidth = isQuarterTurn ? dFt : wFt;
+  const occupiedDepth = isQuarterTurn ? wFt : dFt;
+  const desiredCenterX = position.x + wFt / 2;
+  const desiredCenterY = position.y + dFt / 2;
+  const centerX = occupiedWidth >= roomWidthFt
+    ? roomWidthFt / 2
+    : Math.max(occupiedWidth / 2, Math.min(roomWidthFt - occupiedWidth / 2, desiredCenterX));
+  const centerY = occupiedDepth >= roomLengthFt
+    ? roomLengthFt / 2
+    : Math.max(occupiedDepth / 2, Math.min(roomLengthFt - occupiedDepth / 2, desiredCenterY));
+
+  return {
+    x: centerX - wFt / 2,
+    y: centerY - dFt / 2,
   };
 }
 
@@ -458,13 +484,14 @@ function DoorMark({ sizePx }: { sizePx: number }) {
   return (
     <g transform={`translate(${-sizePx / 2}, 0)`}>
       {/* wall gap */}
-      <line x1={0} y1={0} x2={sizePx} y2={0} stroke="#0A3323" strokeWidth={3} strokeLinecap="round" />
+      <line x1={0} y1={0} x2={sizePx} y2={0} stroke="#0A3323" strokeWidth={4} strokeLinecap="round" />
       {/* swing arc */}
       <path d={`M ${sizePx} 0 A ${sizePx} ${sizePx} 0 0 1 0 ${sizePx}`}
-            fill="none" stroke="#0A3323" strokeWidth={1.5}
-            strokeDasharray="5 3" opacity={0.55} />
-      {/* hinge wall */}
-      <line x1={0} y1={0} x2={0} y2={sizePx} stroke="#D3968C" strokeWidth={4} strokeLinecap="round" />
+            fill="none" stroke="#294F7D" strokeWidth={2.6}
+            strokeDasharray="5 2.5" opacity={0.95} />
+      {/* open door leaf */}
+      <line x1={0} y1={0} x2={0} y2={sizePx} stroke="#294F7D" strokeWidth={5.5} strokeLinecap="round" />
+      <circle cx={0} cy={0} r={3.5} fill="#294F7D" />
     </g>
   );
 }
@@ -546,15 +573,21 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
     const clickFt = clientToFt(e);
     const item    = furniture.find(f => f.category === drag.category);
     if (!item) return;
-    const { wFt, dFt } = pieceSizeFt(item);
+    const rotation = rotations[drag.category] ?? 0;
     setPositions(prev => ({
       ...prev,
-      [drag.category]: {
-        x: Math.max(0, Math.min(cW - wFt, clickFt.x - drag.offsetX)),
-        y: Math.max(0, Math.min(cL - dFt, clickFt.y - drag.offsetY)),
-      },
+      [drag.category]: clampFurniturePosition(
+        {
+          x: clickFt.x - drag.offsetX,
+          y: clickFt.y - drag.offsetY,
+        },
+        item,
+        rotation,
+        cW,
+        cL,
+      ),
     }));
-  }, [furniture, clientToFt, cW, cL]);
+  }, [furniture, rotations, clientToFt, cW, cL]);
 
   const handlePointerUp = useCallback(() => {
     dragRef.current = null;
@@ -563,8 +596,21 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
 
   const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
     e.preventDefault();
-    setRotations(prev => ({ ...prev, [category]: ((prev[category] ?? 0) + 90) % 360 }));
-  }, []);
+    const item = furniture.find(f => f.category === category);
+    if (!item) return;
+    const nextRotation = ((rotations[category] ?? 0) + 90) % 360;
+    setRotations(prev => ({ ...prev, [category]: nextRotation }));
+    setPositions(prev => ({
+      ...prev,
+      [category]: clampFurniturePosition(
+        prev[category] ?? defaultPos(category, room),
+        item,
+        nextRotation,
+        cW,
+        cL,
+      ),
+    }));
+  }, [furniture, rotations, room, cW, cL]);
 
   // ── SVG viewBox (sized to the actual polygon bounding box) ─────────────────
 
@@ -592,16 +638,46 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
 
   // ── Cutout sub-paths (punch holes in room polygon via even-odd fill) ────────
 
-  let cutoutPathD = '';
-  if (roomLayout) {
-    roomLayout.cutouts.forEach(c => {
-      const pts = c.points.map(p => {
+  const roomBounds = {
+    minX: Math.min(...roomPolygonPts.map(point => point.x)),
+    maxX: Math.max(...roomPolygonPts.map(point => point.x)),
+    minY: Math.min(...roomPolygonPts.map(point => point.y)),
+    maxY: Math.max(...roomPolygonPts.map(point => point.y)),
+  };
+  const cutoutPolygons = roomLayout
+    ? roomLayout.cutouts.map(cutout => {
+      const points = cutout.points.map(p => {
         const ft = editorPtToFt(p.x, p.y, roomLayout);
         return { x: ft.x * SCALE + MARGIN, y: ft.y * SCALE + MARGIN };
       });
-      cutoutPathD += ' ' + pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z';
-    });
-  }
+      const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z';
+      const outsideEdge = points.reduce((closestIndex, point, index) => {
+        const next = points[(index + 1) % points.length];
+        const midpoint = { x: (point.x + next.x) / 2, y: (point.y + next.y) / 2 };
+        const distance = Math.min(
+          Math.abs(midpoint.x - roomBounds.minX),
+          Math.abs(midpoint.x - roomBounds.maxX),
+          Math.abs(midpoint.y - roomBounds.minY),
+          Math.abs(midpoint.y - roomBounds.maxY),
+        );
+        const closestPoint = points[closestIndex];
+        const closestNext = points[(closestIndex + 1) % points.length];
+        const closestMidpoint = {
+          x: (closestPoint.x + closestNext.x) / 2,
+          y: (closestPoint.y + closestNext.y) / 2,
+        };
+        const closestDistance = Math.min(
+          Math.abs(closestMidpoint.x - roomBounds.minX),
+          Math.abs(closestMidpoint.x - roomBounds.maxX),
+          Math.abs(closestMidpoint.y - roomBounds.minY),
+          Math.abs(closestMidpoint.y - roomBounds.maxY),
+        );
+        return distance < closestDistance ? index : closestIndex;
+      }, 0);
+      return { points, path, outsideEdge };
+    })
+    : [];
+  const cutoutPathD = cutoutPolygons.map(cutout => ` ${cutout.path}`).join('');
 
   // ── Doors & windows (editor SVG px → room-space SVG px) ───────────────────
 
@@ -622,13 +698,15 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
 
   // ── Sorted furniture (rug renders first / underneath) ─────────────────────
 
-  const sorted = [...furniture].sort((a, b) =>
-    a.category === 'rug' ? -1 : b.category === 'rug' ? 1 : 0,
-  );
+  const sorted = [...furniture].sort((a, b) => {
+    const aRug = isFloorCovering(a.category) ? -1 : 0;
+    const bRug = isFloorCovering(b.category) ? -1 : 0;
+    return aRug - bRug;
+  });
 
   return (
     <div
-      className="garden-card rounded-2xl border border-[#F7F4D5]/10 p-4 animate-reveal w-full"
+      className="room-layout-canvas animate-reveal w-full"
       style={{ animationDelay: '0.4s' }}
     >
       {/* Header */}
@@ -647,39 +725,77 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
         ref={svgRef}
         viewBox={`0 0 ${vbW} ${vbH}`}
         className="w-full rounded-xl"
-        style={{ maxHeight: '70vh', display: 'block' }}
+        style={{ maxHeight: '78vh', display: 'block' }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        {/* ── Background ── */}
-        <rect width={vbW} height={vbH} fill="rgba(247,244,213,0.06)" rx={12} />
+        <defs>
+          <clipPath id="room-interior-clip">
+            <path d={roomPathD + cutoutPathD} fillRule="evenodd" />
+          </clipPath>
+          <mask id="room-wall-mask">
+            <rect width={vbW} height={vbH} fill="white" />
+            {cutoutPolygons.map((cutout, index) => (
+              <path key={index} d={cutout.path} fill="black" stroke="black" strokeWidth={6} />
+            ))}
+          </mask>
+        </defs>
 
-        {/* ── Room fill + wall outline (with cutouts via even-odd) ── */}
+        {/* ── Background ── */}
+        <rect width={vbW} height={vbH} fill="transparent" />
+
+        {/* ── Room fill and walls, with true open-sided cutouts ── */}
         <path
           d={roomPathD + cutoutPathD}
           fill="#F7F4D5"
           fillRule="evenodd"
+          stroke="none"
+        />
+        <path
+          d={roomPathD}
+          fill="none"
           stroke="#0A3323"
           strokeWidth={3}
           strokeLinejoin="round"
+          mask="url(#room-wall-mask)"
         />
+        {cutoutPolygons.flatMap((cutout, cutoutIndex) =>
+          cutout.points.map((point, edgeIndex) => {
+            if (edgeIndex === cutout.outsideEdge) return null;
+            const next = cutout.points[(edgeIndex + 1) % cutout.points.length];
+            return (
+              <line
+                key={`${cutoutIndex}-${edgeIndex}`}
+                x1={point.x}
+                y1={point.y}
+                x2={next.x}
+                y2={next.y}
+                stroke="#0A3323"
+                strokeWidth={2.5}
+                strokeLinejoin="round"
+              />
+            );
+          })
+        )}
 
         {/* ── 1-ft grid lines ── */}
-        {gridV.map(i => (
-          <line key={`v${i}`}
-            x1={i * SCALE + MARGIN} y1={MARGIN}
-            x2={i * SCALE + MARGIN} y2={cL * SCALE + MARGIN}
-            stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
-          />
-        ))}
-        {gridH.map(i => (
-          <line key={`h${i}`}
-            x1={MARGIN} y1={i * SCALE + MARGIN}
-            x2={cW * SCALE + MARGIN} y2={i * SCALE + MARGIN}
-            stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
-          />
-        ))}
+        <g clipPath="url(#room-interior-clip)">
+          {gridV.map(i => (
+            <line key={`v${i}`}
+              x1={i * SCALE + MARGIN} y1={MARGIN}
+              x2={i * SCALE + MARGIN} y2={cL * SCALE + MARGIN}
+              stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
+            />
+          ))}
+          {gridH.map(i => (
+            <line key={`h${i}`}
+              x1={MARGIN} y1={i * SCALE + MARGIN}
+              x2={cW * SCALE + MARGIN} y2={i * SCALE + MARGIN}
+              stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
+            />
+          ))}
+        </g>
 
         {/* ── Doors & Windows ── */}
         {layoutElements.map(el => (

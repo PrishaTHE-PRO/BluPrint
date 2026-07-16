@@ -38,35 +38,53 @@
     ::-webkit-scrollbar-track { background: var(--garden-dark); }
     ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
   </style>
+  <link rel="stylesheet" href="./design-system.css">
 </head>
-<body>
+<body class="page-inspo">
   <div class="noise-texture"></div>
   <div class="min-h-screen relative flex flex-col grid-background">
 
     <!-- Nav -->
-    <nav class="sticky top-0 z-50 px-8 py-5 flex items-center justify-between border-b border-[#F7F4D5]/10 shadow-lg" style="background-color: var(--garden-accent);">
-      <div class="flex items-center gap-4">
+    <nav class="app-nav sticky top-0 z-50">
+      <a href="dashboard.html" class="app-brand">
         <div class="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center transform transition hover:rotate-12 cursor-pointer">
           <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]"></iconify-icon>
         </div>
         <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif">BluPrint</span>
+      </a>
+      <div class="app-nav-links">
+        <a href="dashboard.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all"><iconify-icon icon="ph:house-duotone"></iconify-icon>Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="past-inspiration.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon>Projects<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
       </div>
-      <div class="hidden md:flex items-center gap-12 text-[#0A3323]">
-        <a href="dashboard.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
-        <a href="#" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Discover<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
-        <a href="#" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all">Community<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+      <div class="app-nav-actions">
         <div class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
           <iconify-icon icon="ph:user-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
         </div>
       </div>
     </nav>
 
+    <div class="workflow-steps" aria-label="Room design progress">
+      <div class="workflow-step completed">
+        <span><iconify-icon icon="ph:check-bold"></iconify-icon></span>
+        <strong>Define Room</strong>
+      </div>
+      <div class="workflow-connector completed"></div>
+      <div class="workflow-step active">
+        <span>2</span>
+        <strong>Add Inspiration</strong>
+      </div>
+      <div class="workflow-connector"></div>
+      <div class="workflow-step">
+        <span>3</span>
+        <strong>View Design</strong>
+      </div>
+    </div>
+
     <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-5xl mx-auto w-full flex flex-col gap-12">
 
       <!-- Header -->
       <header class="animate-reveal text-center space-y-4">
         <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Analyze Style</h1>
-        <p class="text-xl text-[#F7F4D5]/70 max-w-2xl mx-auto">Tell us your preferences and share a vision — we'll build your style profile and recommend furniture for your room retreat.</p>
       </header>
 
       <!-- Stepper -->
@@ -192,6 +210,44 @@
         </div>
       </div>
 
+      <aside id="how-it-works-panel" class="how-it-works-panel">
+          <p class="how-it-works-label">How it works</p>
+          <div>
+            <span>1</span>
+            <p>Upload a room photo or inspiration image you love.</p>
+          </div>
+          <div>
+            <span>2</span>
+            <p>Choose the style, mood, colors, and features that fit you.</p>
+          </div>
+          <div>
+            <span>3</span>
+            <p>Our AI creates your style profile and shoppable room design.</p>
+          </div>
+      </aside>
+
+      <aside id="ai-analysis-panel" class="ai-analysis-panel hidden" aria-live="polite">
+          <div class="ai-analysis-label">
+            <span><iconify-icon icon="ph:sparkle-bold"></iconify-icon></span>
+            <strong>AI Analysis</strong>
+            <em id="ai-confidence">—</em>
+          </div>
+          <h2 id="ai-style-title">Your Style</h2>
+          <p id="ai-style-description">Your personalized style profile is ready.</p>
+
+          <div class="ai-analysis-section">
+            <span>Detected palette</span>
+            <div id="ai-palette" class="ai-palette"></div>
+          </div>
+
+          <div id="ai-tags" class="ai-tags"></div>
+
+          <button id="generate-room-design" type="button">
+            Generate Room Design
+            <iconify-icon icon="ph:arrow-right-bold"></iconify-icon>
+          </button>
+      </aside>
+
       <!-- ── STEP 3: Results ── -->
       <div id="analyze-status" class="hidden text-sm font-medium text-center py-2"></div>
     </main>
@@ -261,7 +317,10 @@
     function showStep(n) {
       [1, 2, 3].forEach(i => {
         const el = document.getElementById('step-' + i);
-        if (el) el.style.display = i === n ? 'block' : 'none';
+        if (el) {
+          el.classList.toggle('hidden', i !== n);
+          el.style.display = '';
+        }
         const circle = document.getElementById('circle-' + i);
         const lbl    = document.getElementById('label-' + i);
         if (circle) {
@@ -518,12 +577,61 @@
           throw new Error(msg);
         }
         const ai = await res.json();
-        localStorage.setItem('blueprintStyleResult', JSON.stringify(ai));
-        btn.textContent = 'Done! Redirecting...';
-        setTimeout(() => { window.location.href = 'room-result.html'; }, 800);
+        const analysisResult = {
+          ...ai,
+          roomType:     state.selectedRoomType,
+          styleTag:     ai.styleTag     ?? state.selectedStyle,
+          moodTags:     ai.moodTags?.length ? ai.moodTags : [state.selectedMood],
+          colorPalette: ai.colorPalette?.length ? ai.colorPalette : state.selectedColors.map(c => c.hex || c),
+          roomFeatures: ai.roomFeatures?.length ? ai.roomFeatures : state.selectedFeatures,
+        };
+        state.aiResult = analysisResult;
+        localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
+        localStorage.setItem('blueprintStyleResult', JSON.stringify(analysisResult));
+        btn.textContent = 'Analysis complete';
+        showAnalysisPanel(analysisResult);
       } catch (e) {
         showError(e.message || 'Analysis failed. Make sure the server is running and try again.');
       }
+    });
+
+    function showAnalysisPanel(analysis) {
+      const panel = document.getElementById('ai-analysis-panel');
+      const palette = document.getElementById('ai-palette');
+      const tags = document.getElementById('ai-tags');
+      const confidence = Number(analysis.confidence);
+      const confidencePercent = Number.isFinite(confidence)
+        ? Math.round(confidence <= 1 ? confidence * 100 : confidence)
+        : 94;
+
+      document.getElementById('ai-style-title').textContent = analysis.styleTag || 'Your Style';
+      document.getElementById('ai-confidence').textContent = `${confidencePercent}%`;
+      document.getElementById('ai-style-description').textContent =
+        `Your room combines ${analysis.styleTag || 'a personalized'} direction with ${analysis.moodTags?.[0] || 'a balanced, inviting mood'}. These selections will guide the furniture layout and recommendations.`;
+
+      palette.innerHTML = '';
+      (analysis.colorPalette || []).slice(0, 6).forEach(color => {
+        const swatch = document.createElement('span');
+        swatch.style.background = typeof color === 'string' ? color : color.hex;
+        swatch.title = typeof color === 'string' ? color : color.name || color.hex;
+        palette.appendChild(swatch);
+      });
+
+      tags.innerHTML = '';
+      [...(analysis.moodTags || []), ...(analysis.roomFeatures || [])].slice(0, 6).forEach(label => {
+        const tag = document.createElement('span');
+        tag.textContent = label;
+        tags.appendChild(tag);
+      });
+
+      document.getElementById('step-2').classList.add('analysis-ready');
+      document.getElementById('how-it-works-panel').classList.add('hidden');
+      panel.classList.remove('hidden');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    document.getElementById('generate-room-design').addEventListener('click', () => {
+      window.location.href = 'room-result.html';
     });
 
     // ── Save to MongoDB ───────────────────────────────────────────────
@@ -566,6 +674,7 @@
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
       state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
       state.visionUrl        = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop';
+      localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
       localStorage.setItem('blueprintStyleResult', JSON.stringify({
         roomType:     state.selectedRoomType,
         styleTag:     state.selectedStyle,
