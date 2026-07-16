@@ -96,6 +96,78 @@
     const grid = document.getElementById('all-projects-grid');
     const filters = document.getElementById('project-filters');
     const projectCount = document.getElementById('project-count');
+    const PREVIEW_VIEWBOX = { width: 800, height: 500 };
+
+    function previewNumber(value, fallback = 0) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function previewPath(points) {
+        if (!Array.isArray(points) || points.length < 3) return '';
+        return `${points.map((point, index) =>
+            `${index === 0 ? 'M' : 'L'} ${previewNumber(point.x)} ${previewNumber(point.y)}`
+        ).join(' ')} Z`;
+    }
+
+    function previewRoomPoints(room) {
+        if (Array.isArray(room.layout?.roomPoints) && room.layout.roomPoints.length >= 3) {
+            return room.layout.roomPoints;
+        }
+        const width = Math.max(previewNumber(room.widthFt, 12), 1);
+        const length = Math.max(previewNumber(room.lengthFt, 14), 1);
+        const scale = Math.min(20, 640 / width, 380 / length);
+        const roomWidth = width * scale;
+        const roomLength = length * scale;
+        return [
+            { x: 400 - roomWidth / 2, y: 250 - roomLength / 2 },
+            { x: 400 + roomWidth / 2, y: 250 - roomLength / 2 },
+            { x: 400 + roomWidth / 2, y: 250 + roomLength / 2 },
+            { x: 400 - roomWidth / 2, y: 250 + roomLength / 2 },
+        ];
+    }
+
+    function renderPreviewElement(element) {
+        const x = previewNumber(element?.x);
+        const y = previewNumber(element?.y);
+        const angle = previewNumber(element?.angle);
+        if (element?.type === 'window') {
+            return `<g transform="translate(${x},${y}) rotate(${angle}) translate(-25,0)">
+                <rect x="0" y="-4" width="50" height="8" fill="#8fc5e7" stroke="#294f7d" stroke-width="2"></rect>
+                <line x1="6" y1="0" x2="44" y2="0" stroke="#fff" stroke-width="1.5"></line>
+            </g>`;
+        }
+        return `<g transform="translate(${x},${y}) rotate(${angle}) translate(-20,0)">
+            <path d="M 0 0 L 40 0" stroke="#1c1714" stroke-width="4"></path>
+            <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#294f7d" stroke-width="2.5" stroke-dasharray="5 3" fill="none"></path>
+            <path d="M 0 0 L 0 40" stroke="#294f7d" stroke-width="5"></path>
+        </g>`;
+    }
+
+    function renderRoomPreview(room) {
+        const layout = room.layout || {};
+        const viewBox = layout.viewBox || PREVIEW_VIEWBOX;
+        const roomPath = previewPath(previewRoomPoints(room));
+        const cutoutPaths = (Array.isArray(layout.cutouts) ? layout.cutouts : [])
+            .map(cutout => previewPath(cutout.points))
+            .filter(Boolean);
+        const combinedPath = [roomPath, ...cutoutPaths].join(' ');
+        const elements = Array.isArray(layout.elements) ? layout.elements : [];
+        const gridId = `past-project-grid-${String(room._id || 'room').replace(/[^a-zA-Z0-9_-]/g, '')}`;
+
+        return `<svg viewBox="0 0 ${previewNumber(viewBox.width, 800)} ${previewNumber(viewBox.height, 500)}"
+            preserveAspectRatio="xMidYMid meet" class="w-full h-full p-3 select-none" aria-hidden="true">
+            <defs>
+                <pattern id="${gridId}" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(41,79,125,.1)" stroke-width="1"></path>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#${gridId})"></rect>
+            <path d="${combinedPath}" fill-rule="evenodd" fill="rgba(143,197,231,.14)"
+                stroke="#294f7d" stroke-width="4" stroke-linejoin="round"></path>
+            ${elements.map(renderPreviewElement).join('')}
+        </svg>`;
+    }
 
     document.querySelectorAll('a[href="room-dimensions.html"]').forEach(link => {
         link.addEventListener('click', () => {
@@ -183,7 +255,7 @@
                 card.style.setProperty('--card-delay', `${Math.min(index * 55, 330)}ms`);
                 card.innerHTML = `
                     <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner bg-[#105666]/30 flex items-center justify-center">
-                        <iconify-icon icon="ph:floor-plan-duotone" class="text-7xl text-[#D3968C]/40"></iconify-icon>
+                        ${renderRoomPreview(room)}
                         <button class="delete-btn absolute top-5 left-5 w-9 h-9 rounded-full bg-[#0A3323]/70 hover:bg-[#D3968C] text-[#F7F4D5] flex items-center justify-center transition-all backdrop-blur z-10" title="Delete room">
                             <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
                         </button>

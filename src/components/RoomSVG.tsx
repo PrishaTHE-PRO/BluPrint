@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import type { Room, Style, FurnitureItem, RoomLayout } from '../types';
 import { CATEGORY_LABELS, isFloorCovering } from '../utils/furnitureLayout';
 
@@ -126,6 +126,7 @@ interface Props {
 
 /** Position in feet from the room's top-left origin */
 interface PosFt { x: number; y: number }
+interface ForbiddenRect { minX: number; minY: number; maxX: number; maxY: number }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -168,6 +169,82 @@ function clampFurniturePosition(
     x: centerX - wFt / 2,
     y: centerY - dFt / 2,
   };
+}
+
+function furnitureBounds(position: PosFt, item: FurnitureItem, rotation: number): ForbiddenRect {
+  const { wFt, dFt } = pieceSizeFt(item);
+  const isQuarterTurn = Math.abs(rotation % 180) === 90;
+  const occupiedWidth = isQuarterTurn ? dFt : wFt;
+  const occupiedDepth = isQuarterTurn ? wFt : dFt;
+  const centerX = position.x + wFt / 2;
+  const centerY = position.y + dFt / 2;
+  return {
+    minX: centerX - occupiedWidth / 2,
+    maxX: centerX + occupiedWidth / 2,
+    minY: centerY - occupiedDepth / 2,
+    maxY: centerY + occupiedDepth / 2,
+  };
+}
+
+function placedFurnitureZones(
+  positions: Record<string, PosFt>,
+  furniture: FurnitureItem[],
+  rotations: Record<string, number>,
+  excludedCategory: string,
+): ForbiddenRect[] {
+  return furniture
+    .filter(item => item.category !== excludedCategory && positions[item.category])
+    .map(item => furnitureBounds(
+      positions[item.category],
+      item,
+      rotations[item.category] ?? 0,
+    ));
+}
+
+function overlapsForbiddenZone(
+  position: PosFt,
+  item: FurnitureItem,
+  rotation: number,
+  zones: ForbiddenRect[],
+) {
+  const bounds = furnitureBounds(position, item, rotation);
+  const clearance = 0.1;
+  return zones.some(zone =>
+    bounds.maxX > zone.minX - clearance
+    && bounds.minX < zone.maxX + clearance
+    && bounds.maxY > zone.minY - clearance
+    && bounds.minY < zone.maxY + clearance
+  );
+}
+
+function findValidFurniturePosition(
+  desired: PosFt,
+  item: FurnitureItem,
+  rotation: number,
+  roomWidthFt: number,
+  roomLengthFt: number,
+  zones: ForbiddenRect[],
+): PosFt {
+  const base = clampFurniturePosition(desired, item, rotation, roomWidthFt, roomLengthFt);
+  if (!overlapsForbiddenZone(base, item, rotation, zones)) return base;
+
+  const step = 0.25;
+  const maxRadius = Math.max(roomWidthFt, roomLengthFt);
+  for (let radius = step; radius <= maxRadius; radius += step) {
+    for (let offset = -radius; offset <= radius; offset += step) {
+      const candidates = [
+        { x: base.x + offset, y: base.y - radius },
+        { x: base.x + offset, y: base.y + radius },
+        { x: base.x - radius, y: base.y + offset },
+        { x: base.x + radius, y: base.y + offset },
+      ];
+      for (const candidate of candidates) {
+        const clamped = clampFurniturePosition(candidate, item, rotation, roomWidthFt, roomLengthFt);
+        if (!overlapsForbiddenZone(clamped, item, rotation, zones)) return clamped;
+      }
+    }
+  }
+  return base;
 }
 
 /**
@@ -520,19 +597,65 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
   // Canvas dimensions — driven by the actual polygon bounding box when available
   // so the viewport, grid, labels, and drag clamping all agree.
   const { widthFt: cW, lengthFt: cL } = canvasDimsFt(room, roomLayout);
+  const forbiddenZones = useMemo<ForbiddenRect[]>(() => {
+    if (!roomLayout) return [];
+    const padding = 0.15;
+    const cutoutZones = roomLayout.cutouts
+      .filter(cutout => cutout.points.length >= 3)
+      .map(cutout => {
+        const points = cutout.points.map(point => editorPtToFt(point.x, point.y, roomLayout));
+        return {
+          minX: Math.min(...points.map(point => point.x)) - padding,
+          maxX: Math.max(...points.map(point => point.x)) + padding,
+          minY: Math.min(...points.map(point => point.y)) - padding,
+          maxY: Math.max(...points.map(point => point.y)) + padding,
+        };
+      });
+    const doorSizeFt = 2.67;
+    const doorZones = roomLayout.elements
+      .filter(element => element.type === 'door')
+      .map(element => {
+        const anchor = editorPtToFt(element.x, element.y, roomLayout);
+        const radians = (element.angle * Math.PI) / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        const corners = [
+          { x: -doorSizeFt / 2, y: 0 },
+          { x: doorSizeFt / 2, y: 0 },
+          { x: -doorSizeFt / 2, y: doorSizeFt },
+          { x: doorSizeFt / 2, y: doorSizeFt },
+        ].map(point => ({
+          x: anchor.x + point.x * cos - point.y * sin,
+          y: anchor.y + point.x * sin + point.y * cos,
+        }));
+        return {
+          minX: Math.min(...corners.map(point => point.x)) - padding,
+          maxX: Math.max(...corners.map(point => point.x)) + padding,
+          minY: Math.min(...corners.map(point => point.y)) - padding,
+          maxY: Math.max(...corners.map(point => point.y)) + padding,
+        };
+      });
+    return [...cutoutZones, ...doorZones];
+  }, [roomLayout]);
 
   // Initialise default positions when furniture changes
   useEffect(() => {
     setPositions(prev => {
       const next = { ...prev };
       furniture.forEach(item => {
-        if (!next[item.category]) {
-          next[item.category] = defaultPos(item.category, room);
-        }
+        const occupiedZones = placedFurnitureZones(next, furniture, rotations, item.category);
+        next[item.category] = findValidFurniturePosition(
+          next[item.category] ?? defaultPos(item.category, room),
+          item,
+          rotations[item.category] ?? 0,
+          cW,
+          cL,
+          [...forbiddenZones, ...occupiedZones],
+        );
       });
       return next;
     });
-  }, [furniture]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [furniture, forbiddenZones, room, rotations, cW, cL]);
 
   // Convert a pointer-event client coordinate to room-space feet
   const clientToFt = useCallback((e: React.PointerEvent): PosFt => {
@@ -574,9 +697,11 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
     const item    = furniture.find(f => f.category === drag.category);
     if (!item) return;
     const rotation = rotations[drag.category] ?? 0;
-    setPositions(prev => ({
-      ...prev,
-      [drag.category]: clampFurniturePosition(
+    setPositions(prev => {
+      const occupiedZones = placedFurnitureZones(prev, furniture, rotations, drag.category);
+      return {
+        ...prev,
+        [drag.category]: findValidFurniturePosition(
         {
           x: clickFt.x - drag.offsetX,
           y: clickFt.y - drag.offsetY,
@@ -585,9 +710,11 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
         rotation,
         cW,
         cL,
+        [...forbiddenZones, ...occupiedZones],
       ),
-    }));
-  }, [furniture, rotations, clientToFt, cW, cL]);
+      };
+    });
+  }, [furniture, rotations, clientToFt, cW, cL, forbiddenZones]);
 
   const handlePointerUp = useCallback(() => {
     dragRef.current = null;
@@ -600,17 +727,21 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
     if (!item) return;
     const nextRotation = ((rotations[category] ?? 0) + 90) % 360;
     setRotations(prev => ({ ...prev, [category]: nextRotation }));
-    setPositions(prev => ({
-      ...prev,
-      [category]: clampFurniturePosition(
+    setPositions(prev => {
+      const occupiedZones = placedFurnitureZones(prev, furniture, rotations, category);
+      return {
+        ...prev,
+        [category]: findValidFurniturePosition(
         prev[category] ?? defaultPos(category, room),
         item,
         nextRotation,
         cW,
         cL,
+        [...forbiddenZones, ...occupiedZones],
       ),
-    }));
-  }, [furniture, rotations, room, cW, cL]);
+      };
+    });
+  }, [furniture, rotations, room, cW, cL, forbiddenZones]);
 
   // ── SVG viewBox (sized to the actual polygon bounding box) ─────────────────
 
@@ -638,12 +769,6 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
 
   // ── Cutout sub-paths (punch holes in room polygon via even-odd fill) ────────
 
-  const roomBounds = {
-    minX: Math.min(...roomPolygonPts.map(point => point.x)),
-    maxX: Math.max(...roomPolygonPts.map(point => point.x)),
-    minY: Math.min(...roomPolygonPts.map(point => point.y)),
-    maxY: Math.max(...roomPolygonPts.map(point => point.y)),
-  };
   const cutoutPolygons = roomLayout
     ? roomLayout.cutouts.map(cutout => {
       const points = cutout.points.map(p => {
@@ -651,30 +776,8 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
         return { x: ft.x * SCALE + MARGIN, y: ft.y * SCALE + MARGIN };
       });
       const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z';
-      const outsideEdge = points.reduce((closestIndex, point, index) => {
-        const next = points[(index + 1) % points.length];
-        const midpoint = { x: (point.x + next.x) / 2, y: (point.y + next.y) / 2 };
-        const distance = Math.min(
-          Math.abs(midpoint.x - roomBounds.minX),
-          Math.abs(midpoint.x - roomBounds.maxX),
-          Math.abs(midpoint.y - roomBounds.minY),
-          Math.abs(midpoint.y - roomBounds.maxY),
-        );
-        const closestPoint = points[closestIndex];
-        const closestNext = points[(closestIndex + 1) % points.length];
-        const closestMidpoint = {
-          x: (closestPoint.x + closestNext.x) / 2,
-          y: (closestPoint.y + closestNext.y) / 2,
-        };
-        const closestDistance = Math.min(
-          Math.abs(closestMidpoint.x - roomBounds.minX),
-          Math.abs(closestMidpoint.x - roomBounds.maxX),
-          Math.abs(closestMidpoint.y - roomBounds.minY),
-          Math.abs(closestMidpoint.y - roomBounds.maxY),
-        );
-        return distance < closestDistance ? index : closestIndex;
-      }, 0);
-      return { points, path, outsideEdge };
+      // Cutouts are stored p0 → p1 → p2 → p3; p0 → p1 is always the open wall edge.
+      return { points, path, outsideEdge: 0 };
     })
     : [];
   const cutoutPathD = cutoutPolygons.map(cutout => ` ${cutout.path}`).join('');

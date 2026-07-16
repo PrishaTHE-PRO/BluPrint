@@ -992,13 +992,14 @@ body:not(.page-login) .app-nav-actions > button:not(#logout-btn) iconify-icon {
   color: #fff;
 }
 .page-projects #all-projects-grid {
-  columns: 3;
-  column-gap: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
 }
 .page-projects #all-projects-grid .garden-card {
-  display: inline-block;
+  display: block;
   width: 100%;
-  margin: 0 0 18px;
+  margin: 0;
   overflow: hidden;
   break-inside: avoid;
   padding: 0 !important;
@@ -1009,13 +1010,11 @@ body:not(.page-login) .app-nav-actions > button:not(#logout-btn) iconify-icon {
   aspect-ratio: 16/10;
   background: #f4f1ec !important;
 }
-.page-projects #all-projects-grid .garden-card:nth-child(3n + 2) > div:first-child { aspect-ratio: 4/3; }
-.page-projects #all-projects-grid .garden-card:nth-child(3n) > div:first-child { aspect-ratio: 3/2; }
 .page-projects #all-projects-grid .project-card-skeleton {
-  display: inline-block;
+  display: block;
   width: 100%;
   min-height: 330px;
-  margin: 0 0 18px;
+  margin: 0;
   break-inside: avoid;
 }
 .project-card-enter {
@@ -1121,7 +1120,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .login-brand { display: none; }
   .login-panel { min-height: 100vh; }
   .page-dashboard #projects-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .page-projects #all-projects-grid { columns: 2; }
+  .page-projects #all-projects-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .page-inspo main { display: block !important; }
   .page-inspo #step-1,
   .page-inspo #step-2,
@@ -1162,7 +1161,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     width: 150px;
     height: 210px;
   }
-  .page-projects #all-projects-grid { columns: 1; }
+  .page-projects #all-projects-grid { grid-template-columns: 1fr; }
   .projects-header-row { align-items: flex-start; flex-direction: column; }
   .ai-analysis-panel {
     width: 100%;
