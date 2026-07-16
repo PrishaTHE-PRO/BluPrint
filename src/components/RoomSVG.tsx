@@ -192,8 +192,13 @@ function placedFurnitureZones(
   rotations: Record<string, number>,
   excludedCategory: string,
 ): ForbiddenRect[] {
+  if (isFloorCovering(excludedCategory)) return [];
   return furniture
-    .filter(item => item.category !== excludedCategory && positions[item.category])
+    .filter(item =>
+      item.category !== excludedCategory
+      && !isFloorCovering(item.category)
+      && positions[item.category]
+    )
     .map(item => furnitureBounds(
       positions[item.category],
       item,
