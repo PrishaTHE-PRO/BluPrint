@@ -108,6 +108,15 @@
           </button>
         </div>
 
+        <!-- Room Type -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h3 class="text-2xl font-bold">Room Type</h3>
+          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
+          <input type="text" id="room-type-other" placeholder="Describe your room type..."
+            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
+        </div>
+
         <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
           <h2 class="text-4xl font-bold">Step 1: Visual Inspiration</h2>
           <p class="text-lg text-[#F7F4D5]/60">Upload a photo or paste a Pinterest image URL that captures your room vision.</p>
@@ -161,15 +170,6 @@
         <div class="garden-card ghibli-border p-8 md:p-10">
           <h2 class="text-3xl font-bold mb-2">Step 2: Refine Your Picks</h2>
           <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
-        </div>
-
-        <!-- Room Type -->
-        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
-          <h3 class="text-2xl font-bold">Room Type</h3>
-          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
-          <input type="text" id="room-type-other" placeholder="Describe your room type..."
-            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
         </div>
 
         <!-- Style Profile -->
@@ -403,7 +403,7 @@
     }
 
     function checkStep1Valid() {
-      document.getElementById('step1-next').disabled = !state.visionUrl;
+      document.getElementById('step1-next').disabled = !state.visionUrl || !state.selectedRoomType;
     }
 
     // ── File upload ───────────────────────────────────────────────────
@@ -477,6 +477,7 @@
             other.classList.add('hidden');
             other.value = '';
           }
+          checkStep1Valid();
           checkStep2Valid();
         });
         grid.appendChild(btn);
@@ -486,6 +487,7 @@
     document.getElementById('room-type-other').addEventListener('input', function () {
       if (!state.roomTypeIsOther) return;
       state.selectedRoomType = this.value.trim() || null;
+      checkStep1Valid();
       checkStep2Valid();
     });
 
