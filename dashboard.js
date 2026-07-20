@@ -87,7 +87,12 @@ async function loadProjects(userId) {
                     </div>
                 </div>
                 <div class="px-2 space-y-2">
-                    <h3 class="text-3xl font-bold text-[#F7F4D5]">${roomName}</h3>
+                    <div class="flex items-center gap-2">
+                        <h3 class="room-name-display text-3xl font-bold text-[#F7F4D5]">${roomName}</h3>
+                        <button class="rename-btn opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-[#F7F4D5] shrink-0" title="Rename room" aria-label="Rename room">
+                            <iconify-icon icon="ph:pencil-simple-duotone" class="text-xl"></iconify-icon>
+                        </button>
+                    </div>
                     <p class="text-lg text-[#F7F4D5]/60">${roomSqft} sq ft${styleTag ? ' · ' + styleTag : ''}</p>
                     <div class="pt-6 flex items-center justify-between border-t border-[#F7F4D5]/10 mt-6">
                         <span class="text-sm ${statusColor}">${statusLabel}</span>
@@ -96,9 +101,17 @@ async function loadProjects(userId) {
                 </div>`;
             cards.appendChild(card);
 
+            // Rename → inline edit, doesn't navigate
+            card.querySelector('.rename-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                startRename(card, room);
+            });
+
             // Click card body → revisit project
             card.addEventListener('click', (e) => {
-                if (e.target.closest('.delete-btn')) return; // don't navigate on delete
+                // don't navigate while deleting or renaming
+                if (e.target.closest('.delete-btn') || e.target.closest('.rename-btn') || e.target.tagName === 'INPUT') return;
                 localStorage.setItem('blueprintCurrentRoomId',     room._id);
                 localStorage.setItem('blueprintCurrentRoomName',   room.name);
                 localStorage.setItem('blueprintCurrentRoomWidth',  String(room.widthFt));
@@ -165,6 +178,60 @@ async function loadProjects(userId) {
         grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-2 py-12">Could not load projects — is the server running?</p>';
         grid.setAttribute('aria-busy', 'false');
     }
+}
+
+// Inline-rename a room from its dashboard card. Swaps the title for an input,
+// commits on Enter/blur, cancels on Escape. PATCHes the room's name.
+function startRename(card, room) {
+    const nameEl = card.querySelector('.room-name-display');
+    if (!nameEl) return;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = room.name || '';
+    input.maxLength = 60;
+    input.className = 'room-name-display text-3xl font-bold text-[#F7F4D5] bg-transparent border-b-2 border-[#D3968C] outline-none w-full';
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let done = false;
+    const finish = async (commit) => {
+        if (done) return;
+        done = true;
+
+        const next = input.value.trim();
+        const h3 = document.createElement('h3');
+        h3.className = 'room-name-display text-3xl font-bold text-[#F7F4D5]';
+
+        if (commit && next && next !== room.name) {
+            room.name = next;
+            h3.textContent = next;
+            input.replaceWith(h3);
+            try {
+                const res = await fetch('/api/rooms/' + room._id, {
+                    method:  'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ name: next }),
+                });
+                if (!res.ok) throw new Error('rename failed (' + res.status + ')');
+            } catch (err) {
+                console.error('[rename]', err);
+                alert('Rename failed — is the server running? Try again.');
+            }
+        } else {
+            h3.textContent = room.name || 'Untitled Room';
+            input.replaceWith(h3);
+        }
+    };
+
+    input.addEventListener('click',   (e) => e.stopPropagation());
+    input.addEventListener('keydown', (e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter')  finish(true);
+        if (e.key === 'Escape') finish(false);
+    });
+    input.addEventListener('blur', () => finish(true));
 }
 
 function clearCurrentProjectDraft() {

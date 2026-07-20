@@ -64,6 +64,9 @@ export default function RoomResult() {
   const [error,            setError]            = useState('');
   const [savedPlacement,   setSavedPlacement]   = useState<FurniturePlacement | null>(() => readScopedSavedFurniturePlacement());
   const [saveStatus,       setSaveStatus]       = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [renamedName,      setRenamedName]      = useState<string | null>(null);
+  const [editingName,      setEditingName]      = useState(false);
+  const [nameDraft,        setNameDraft]        = useState('');
 
   // Live positions/rotations from RoomSVG. Held in a ref, not state — dragging
   // fires this on every pointer move and re-rendering the page would stutter.
@@ -147,6 +150,34 @@ export default function RoomResult() {
     });
     setLinkedCategory((prev) => (prev === category ? null : prev));
   }, []);
+
+  const commitRename = useCallback((currentName: string) => {
+    setEditingName(false);
+    const next = nameDraft.trim();
+    if (!next || next === currentName) return;
+
+    // Optimistic: reflect the new name immediately and keep it for other pages.
+    setRenamedName(next);
+    localStorage.setItem('blueprintCurrentRoomName', next);
+
+    // The title is derived from the layout's own roomName on reload, so keep it
+    // in sync — otherwise the rename would revert next time the page loads.
+    const nextLayout = savedLayout ? { ...savedLayout, roomName: next } : null;
+    if (nextLayout) {
+      setSavedLayout(nextLayout);
+      saveRoomLayout(nextLayout);
+    }
+
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    if (!roomId) return;
+    fetch(`/api/rooms/${roomId}`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(nextLayout ? { name: next, layout: nextLayout } : { name: next }),
+    })
+      .then((res) => { if (!res.ok) throw new Error(`rename failed (${res.status})`); })
+      .catch((err) => console.error('[rename]', err));
+  }, [nameDraft, savedLayout]);
 
   const handleSaveLayout = useCallback(async () => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
@@ -293,6 +324,7 @@ export default function RoomResult() {
 
   const s = style!;
   const layoutRoom = buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM);
+  const roomName = renamedName ?? layoutRoom.name;
   const slottedFurniture = orderedFurniture(furnitureSlots, s.roomType);
   const placeableFurniture = slottedFurniture.length > 0
     ? slottedFurniture
@@ -371,9 +403,34 @@ export default function RoomResult() {
           </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2">
-              <h1 className="text-5xl md:text-6xl font-bold text-[#F7F4D5] tracking-tight">
-                {layoutRoom.name}
-              </h1>
+              {editingName ? (
+                <input
+                  autoFocus
+                  value={nameDraft}
+                  maxLength={60}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={() => commitRename(roomName)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitRename(roomName);
+                    if (e.key === 'Escape') setEditingName(false);
+                  }}
+                  className="text-5xl md:text-6xl font-bold text-[#F7F4D5] tracking-tight bg-transparent border-b-2 border-[#D3968C] outline-none w-full max-w-2xl"
+                  aria-label="Room name"
+                />
+              ) : (
+                <h1 className="group flex items-center gap-3 text-5xl md:text-6xl font-bold text-[#F7F4D5] tracking-tight">
+                  {roomName}
+                  <button
+                    type="button"
+                    onClick={() => { setNameDraft(roomName); setEditingName(true); }}
+                    aria-label="Rename room"
+                    title="Rename room"
+                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-2xl text-[#F7F4D5]"
+                  >
+                    <iconify-icon icon="ph:pencil-simple-duotone" />
+                  </button>
+                </h1>
+              )}
               <p className="text-lg text-[#F7F4D5] font-medium">
                 {layoutRoom.widthFt}' x {layoutRoom.lengthFt}' <span className="mx-2 opacity-30">|</span> {layoutRoom.sqft} sqft
               </p>
