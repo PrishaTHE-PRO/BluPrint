@@ -9,6 +9,7 @@ const RoomSchema = new mongoose.Schema({
     heightFt: { type: Number, required: true }, // How tall is it?
     sqft: { type: Number, required: true },     // Total floor space!
     layout: { type: mongoose.Schema.Types.Mixed, default: null }, // 2D room preview snapshot
+    budgetTotal: { type: Number },              // Furnishing budget in dollars (optional)
     // Where the user placed each furniture piece, which ones they removed, and
     // which product they swapped in. Stores full items, not search ids — those
     // are positional and change between searches.
