@@ -41,6 +41,7 @@ export default function RoomResult() {
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
+  const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState('');
 
@@ -48,6 +49,7 @@ export default function RoomResult() {
     const init: Record<string, FurnitureItem> = {};
     furniture.forEach((item) => { if (!init[item.category]) init[item.category] = item; });
     setFurnitureSlots(init);
+    setHiddenCategories(new Set());
   }, [furniture]);
 
   const handleSwap = useCallback((category: string) => {
@@ -60,6 +62,22 @@ export default function RoomResult() {
       return { ...prev, [category]: next };
     });
   }, [furniture]);
+
+  /** Take a piece off the floor plan. Its sidebar card stays so it can be added back. */
+  const handleRemoveFromRoom = useCallback((category: string) => {
+    setHiddenCategories((prev) => new Set(prev).add(category));
+    // Drop the hover link — otherwise it points at a piece that's no longer drawn.
+    setLinkedCategory((prev) => (prev === category ? null : prev));
+  }, []);
+
+  const handleToggleInRoom = useCallback((category: string) => {
+    setHiddenCategories((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(category)) next.add(category);
+      return next;
+    });
+    setLinkedCategory((prev) => (prev === category ? null : prev));
+  }, []);
 
   useEffect(() => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
@@ -159,12 +177,15 @@ export default function RoomResult() {
 
   const s = style!;
   const layoutRoom = buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM);
-  const layoutFurniture = orderedFurniture(furnitureSlots, s.roomType).length > 0
-    ? orderedFurniture(furnitureSlots, s.roomType)
+  const slottedFurniture = orderedFurniture(furnitureSlots, s.roomType);
+  const placeableFurniture = slottedFurniture.length > 0
+    ? slottedFurniture
     : orderedFurniture(
         Object.fromEntries(furniture.map((item) => [item.category, item])),
         s.roomType,
       );
+  // The floor plan shows only what's currently placed; the sidebar keeps every card.
+  const layoutFurniture = placeableFurniture.filter((item) => !hiddenCategories.has(item.category));
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -243,6 +264,8 @@ export default function RoomResult() {
           loading={furnitureLoading}
           linkedCategory={linkedCategory}
           onLinkCategory={setLinkedCategory}
+          hiddenCategories={hiddenCategories}
+          onToggleInRoom={handleToggleInRoom}
           centerContent={
             <RoomSVG
               room={layoutRoom}
@@ -251,6 +274,7 @@ export default function RoomResult() {
               roomLayout={savedLayout}
               linkedCategory={linkedCategory}
               onLinkCategory={setLinkedCategory}
+              onRemove={handleRemoveFromRoom}
             />
           }
         />

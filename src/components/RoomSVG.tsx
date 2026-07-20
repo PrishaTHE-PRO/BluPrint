@@ -122,6 +122,7 @@ interface Props {
   roomLayout?:      RoomLayout | null;
   linkedCategory?:  string | null;
   onLinkCategory?:  (cat: string | null) => void;
+  onRemove?:        (cat: string) => void;
 }
 
 /** Position in feet from the room's top-left origin */
@@ -591,7 +592,7 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, onLinkCategory }: Props) {
+export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, onLinkCategory, onRemove }: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ category: string; offsetX: number; offsetY: number } | null>(null);
 
@@ -824,7 +825,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           2D Room Layout
         </h3>
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium">
-          Drag to move · right-click to rotate · hover to link
+          Drag to move · right-click to rotate · ✕ to remove
         </span>
       </div>
 
@@ -996,6 +997,30 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
                 >
                   {CATEGORY_LABELS[item.category] ?? item.category}
                 </text>
+              )}
+
+              {/* Remove from floor plan — appears on hover. Counter-rotated so it
+                  stays upright and pinned to the top-right corner at any rotation. */}
+              {isLinked && onRemove && (
+                <g
+                  transform={`translate(${wPx.toFixed(1)},0) rotate(${-rot})`}
+                  style={{ cursor: 'pointer' }}
+                  // Remove on pointerdown so the parent's drag handler never starts.
+                  onPointerDown={e => {
+                    e.stopPropagation();
+                    if (e.button !== 0) return;
+                    onRemove(item.category);
+                  }}
+                  onContextMenu={e => { e.stopPropagation(); e.preventDefault(); }}
+                >
+                  <circle r={8} fill="#D3968C" stroke="#F7F4D5" strokeWidth={1.5} />
+                  <path
+                    d="M -3 -3 L 3 3 M 3 -3 L -3 3"
+                    stroke="#F7F4D5"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                  />
+                </g>
               )}
             </g>
           );
