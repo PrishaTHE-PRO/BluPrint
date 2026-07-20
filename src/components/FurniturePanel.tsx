@@ -59,9 +59,18 @@ export default function FurniturePanel({
         </span>
       </h2>
       {total > 0 && (
-        <div className="px-3 py-1 rounded-full border bg-[#839958]/20 border-[#839958]/30">
+        <div className={`px-3 py-1 rounded-full border ${
+          style.budgetTotal > 0 && total > style.budgetTotal
+            ? 'bg-[#D3968C]/20 border-[#D3968C]/30'
+            : 'bg-[#839958]/20 border-[#839958]/30'
+        }`}>
           <span className="text-[10px] font-bold text-[#F7F4D5]/60">Est.</span>
           <span className="text-sm font-bold ml-1.5 text-[#F7F4D5]">${total.toLocaleString()}</span>
+          {style.budgetTotal > 0 && (
+            <span className="text-[10px] font-bold text-[#F7F4D5]/50 ml-1">
+              / ${style.budgetTotal.toLocaleString()}
+            </span>
+          )}
         </div>
       )}
     </div>

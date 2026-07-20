@@ -175,10 +175,14 @@ router.patch("/:roomId/budget", async (req, res) => {
     });
   }
   try {
+    const budgetTotal = Number(req.body.budgetTotal);
+    if (!Number.isFinite(budgetTotal) || budgetTotal < 0) {
+      return res.status(400).json({ error: "Budget must be a positive number" });
+    }
     const room = await Room.findByIdAndUpdate(
       req.params.roomId,
-      { budgetTotal: req.body.budgetTotal },
-      { new: true }
+      { budgetTotal },
+      { returnDocument: "after", runValidators: true }
     );
     if (!room) return res.status(404).json({ error: "Room not found" });
     res.json(room);

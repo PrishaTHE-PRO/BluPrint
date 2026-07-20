@@ -141,6 +141,13 @@ router.get("/:roomId/furniture", async (req, res) => {
   const results = await Promise.allSettled(
     categories.map((cat) => searchCategory(styleTag, cat))
   );
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      const status = result.reason?.response?.status;
+      const detail = result.reason?.response?.data?.message || result.reason?.message;
+      console.error(`[furniture] Serper ${categories[index].key} failed:`, status || "", detail || "");
+    }
+  });
 
   const furniture = results.flatMap((r) =>
     r.status === "fulfilled" ? r.value : []

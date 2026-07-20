@@ -113,6 +113,17 @@ const DEFAULT_POS_FRAC: Record<string, { xf: number; yf: number }> = {
   nursery_lamp:    { xf: 0.04, yf: 0.08 },
 };
 
+/** Furniture orientation chosen to match the wall or anchor it belongs to. */
+const DEFAULT_ROTATION: Record<string, number> = {
+  sofa: 180,
+  side_table: 180,
+  floor_lamp: 180,
+  wardrobe: 180,
+  nursery_shelf: 180,
+  storage_cabinet: 180,
+  sideboard: 180,
+};
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -145,6 +156,178 @@ function pieceSizeFt(item: FurnitureItem) {
   };
 }
 
+function defaultRotation(category: string) {
+  return DEFAULT_ROTATION[category] ?? 0;
+}
+
+/**
+ * Produce a practical first-pass layout from furniture relationships rather
+ * than scattering every category at an unrelated room percentage.
+ */
+function preferredFurniturePosition(
+  item: FurnitureItem,
+  positions: Record<string, PosFt>,
+  furniture: FurnitureItem[],
+  roomWidthFt: number,
+  roomLengthFt: number,
+): PosFt {
+  const { wFt, dFt } = pieceSizeFt(item);
+  const inset = 0.35;
+  const gap = 0.5;
+  const centered = {
+    x: (roomWidthFt - wFt) / 2,
+    y: (roomLengthFt - dFt) / 2,
+  };
+  const anchor = (category: string) => {
+    const anchorItem = furniture.find(candidate => candidate.category === category);
+    const position = positions[category];
+    return anchorItem && position
+      ? { position, size: pieceSizeFt(anchorItem) }
+      : null;
+  };
+
+  switch (item.category) {
+    // Living room: seating faces the center, with tables and lighting nearby.
+    case 'sofa':
+      return { x: centered.x, y: roomLengthFt - dFt - inset };
+    case 'coffee_table': {
+      const sofa = anchor('sofa');
+      return sofa
+        ? { x: sofa.position.x + (sofa.size.wFt - wFt) / 2, y: sofa.position.y - dFt - 1.5 }
+        : centered;
+    }
+    case 'rug':
+      return centered;
+    case 'accent_chair': {
+      const table = anchor('coffee_table');
+      return table
+        ? { x: table.position.x + table.size.wFt + 1, y: table.position.y + (table.size.dFt - dFt) / 2 }
+        : { x: roomWidthFt - wFt - inset, y: centered.y };
+    }
+    case 'side_table': {
+      const sofa = anchor('sofa');
+      return sofa
+        ? { x: sofa.position.x - wFt - gap, y: sofa.position.y + sofa.size.dFt - dFt }
+        : { x: inset, y: roomLengthFt - dFt - inset };
+    }
+    case 'floor_lamp': {
+      const sofa = anchor('sofa');
+      return sofa
+        ? { x: sofa.position.x + sofa.size.wFt + gap, y: sofa.position.y + sofa.size.dFt - dFt }
+        : { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
+    }
+
+    // Bedroom: headboard on a clear wall and storage around the perimeter.
+    case 'bed':
+      return { x: centered.x, y: inset };
+    case 'nightstand': {
+      const bed = anchor('bed');
+      return bed
+        ? { x: bed.position.x - wFt - gap, y: bed.position.y }
+        : { x: inset, y: inset };
+    }
+    case 'bedside_lamp': {
+      const nightstand = anchor('nightstand');
+      return nightstand
+        ? {
+            x: nightstand.position.x + (nightstand.size.wFt - wFt) / 2,
+            y: nightstand.position.y + nightstand.size.dFt + gap,
+          }
+        : { x: inset, y: inset };
+    }
+    case 'bedroom_rug': {
+      const bed = anchor('bed');
+      return bed
+        ? { x: bed.position.x + (bed.size.wFt - wFt) / 2, y: bed.position.y + bed.size.dFt * 0.45 }
+        : centered;
+    }
+    case 'dresser':
+      return { x: roomWidthFt - wFt - inset, y: inset };
+    case 'wardrobe':
+      return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
+
+    // Work and dining zones are centered around their main functional object.
+    case 'desk':
+      return { x: centered.x, y: inset };
+    case 'office_chair': {
+      const desk = anchor('desk');
+      return desk
+        ? { x: desk.position.x + (desk.size.wFt - wFt) / 2, y: desk.position.y + desk.size.dFt + 1 }
+        : centered;
+    }
+    case 'desk_lamp':
+    case 'monitor_stand': {
+      const desk = anchor('desk');
+      return desk
+        ? { x: desk.position.x + (desk.size.wFt - wFt) / 2, y: desk.position.y + desk.size.dFt + gap }
+        : { x: inset, y: inset };
+    }
+    case 'dining_table':
+    case 'dining_rug':
+    case 'island_cart':
+    case 'kitchen_rug':
+    case 'bath_mat':
+    case 'nursery_rug':
+      return centered;
+    case 'dining_chair': {
+      const table = anchor('dining_table');
+      return table
+        ? { x: table.position.x + table.size.wFt + gap, y: table.position.y + (table.size.dFt - dFt) / 2 }
+        : { x: roomWidthFt - wFt - inset, y: centered.y };
+    }
+    case 'bar_stool': {
+      const island = anchor('island_cart');
+      return island
+        ? { x: island.position.x + (island.size.wFt - wFt) / 2, y: island.position.y + island.size.dFt + gap }
+        : centered;
+    }
+    case 'pendant_light': {
+      const island = anchor('island_cart');
+      return island
+        ? { x: island.position.x + (island.size.wFt - wFt) / 2, y: island.position.y - dFt - gap }
+        : centered;
+    }
+
+    // Large storage and plumbing pieces stay against room edges.
+    case 'bookshelf':
+    case 'kitchen_storage':
+    case 'bath_storage':
+    case 'nursery_dresser':
+    case 'bar_cabinet':
+      return { x: roomWidthFt - wFt - inset, y: inset };
+    case 'kitchen_shelf':
+    case 'bath_mirror':
+    case 'bath_light':
+    case 'vanity':
+    case 'crib':
+      return { x: inset, y: inset };
+    case 'storage_cabinet':
+    case 'sideboard':
+    case 'nursery_shelf':
+      return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
+    case 'rocking_chair':
+    case 'nursery_lamp':
+      return { x: inset, y: roomLengthFt - dFt - inset };
+    case 'shower_curtain':
+      return { x: centered.x, y: inset };
+    case 'dining_light': {
+      const table = anchor('dining_table');
+      return table
+        ? { x: table.position.x + (table.size.wFt - wFt) / 2, y: table.position.y - dFt - gap }
+        : centered;
+    }
+    default:
+      return defaultPos(item.category, {
+        roomId: '',
+        name: '',
+        widthFt: roomWidthFt,
+        lengthFt: roomLengthFt,
+        heightFt: 0,
+        sqft: roomWidthFt * roomLengthFt,
+      });
+  }
+}
+
 function clampFurniturePosition(
   position: PosFt,
   item: FurnitureItem,
@@ -153,9 +336,9 @@ function clampFurniturePosition(
   roomLengthFt: number,
 ): PosFt {
   const { wFt, dFt } = pieceSizeFt(item);
-  const isQuarterTurn = Math.abs(rotation % 180) === 90;
-  const occupiedWidth = isQuarterTurn ? dFt : wFt;
-  const occupiedDepth = isQuarterTurn ? wFt : dFt;
+  const radians = (rotation * Math.PI) / 180;
+  const occupiedWidth = Math.abs(wFt * Math.cos(radians)) + Math.abs(dFt * Math.sin(radians));
+  const occupiedDepth = Math.abs(wFt * Math.sin(radians)) + Math.abs(dFt * Math.cos(radians));
   const desiredCenterX = position.x + wFt / 2;
   const desiredCenterY = position.y + dFt / 2;
   const centerX = occupiedWidth >= roomWidthFt
@@ -173,9 +356,9 @@ function clampFurniturePosition(
 
 function furnitureBounds(position: PosFt, item: FurnitureItem, rotation: number): ForbiddenRect {
   const { wFt, dFt } = pieceSizeFt(item);
-  const isQuarterTurn = Math.abs(rotation % 180) === 90;
-  const occupiedWidth = isQuarterTurn ? dFt : wFt;
-  const occupiedDepth = isQuarterTurn ? wFt : dFt;
+  const radians = (rotation * Math.PI) / 180;
+  const occupiedWidth = Math.abs(wFt * Math.cos(radians)) + Math.abs(dFt * Math.sin(radians));
+  const occupiedDepth = Math.abs(wFt * Math.sin(radians)) + Math.abs(dFt * Math.cos(radians));
   const centerX = position.x + wFt / 2;
   const centerY = position.y + dFt / 2;
   return {
@@ -594,10 +777,17 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, onLinkCategory }: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ category: string; offsetX: number; offsetY: number } | null>(null);
+  const rotateRef = useRef<{
+    category: string;
+    center: PosFt;
+    pointerStartAngle: number;
+    rotationStart: number;
+  } | null>(null);
 
   const [positions,  setPositions]  = useState<Record<string, PosFt>>({});
   const [rotations,  setRotations]  = useState<Record<string, number>>({});
   const [dragging,   setDragging]   = useState<string | null>(null);
+  const [rotating,   setRotating]   = useState<string | null>(null);
 
   // Canvas dimensions — driven by the actual polygon bounding box when available
   // so the viewport, grid, labels, and drag clamping all agree.
@@ -649,10 +839,11 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
       const next = { ...prev };
       furniture.forEach(item => {
         const occupiedZones = placedFurnitureZones(next, furniture, rotations, item.category);
+        const rotation = rotations[item.category] ?? defaultRotation(item.category);
         next[item.category] = findValidFurniturePosition(
-          next[item.category] ?? defaultPos(item.category, room),
+          next[item.category] ?? preferredFurniturePosition(item, next, furniture, cW, cL),
           item,
-          rotations[item.category] ?? 0,
+          rotation,
           cW,
           cL,
           [...forbiddenZones, ...occupiedZones],
@@ -695,13 +886,48 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
     onLinkCategory?.(category);
   }, [positions, clientToFt, room, onLinkCategory]);
 
+  const handleRotatePointerDown = useCallback((category: string, e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const item = furniture.find(candidate => candidate.category === category);
+    if (!item) return;
+    const position = positions[category] ?? defaultPos(category, room);
+    const { wFt, dFt } = pieceSizeFt(item);
+    const center = { x: position.x + wFt / 2, y: position.y + dFt / 2 };
+    const pointer = clientToFt(e);
+    rotateRef.current = {
+      category,
+      center,
+      pointerStartAngle: Math.atan2(pointer.y - center.y, pointer.x - center.x) * 180 / Math.PI,
+      rotationStart: rotations[category] ?? defaultRotation(category),
+    };
+    svgRef.current?.setPointerCapture(e.pointerId);
+    setRotating(category);
+    onLinkCategory?.(category);
+  }, [furniture, positions, room, rotations, clientToFt, onLinkCategory]);
+
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const rotatingPiece = rotateRef.current;
+    if (rotatingPiece) {
+      const pointer = clientToFt(e);
+      const pointerAngle = Math.atan2(
+        pointer.y - rotatingPiece.center.y,
+        pointer.x - rotatingPiece.center.x,
+      ) * 180 / Math.PI;
+      const nextRotation = rotatingPiece.rotationStart
+        + pointerAngle
+        - rotatingPiece.pointerStartAngle;
+      setRotations(prev => ({ ...prev, [rotatingPiece.category]: nextRotation }));
+      return;
+    }
+
     const drag = dragRef.current;
     if (!drag) return;
     const clickFt = clientToFt(e);
     const item    = furniture.find(f => f.category === drag.category);
     if (!item) return;
-    const rotation = rotations[drag.category] ?? 0;
+    const rotation = rotations[drag.category] ?? defaultRotation(drag.category);
     setPositions(prev => {
       const occupiedZones = placedFurnitureZones(prev, furniture, rotations, drag.category);
       return {
@@ -723,14 +949,16 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
 
   const handlePointerUp = useCallback(() => {
     dragRef.current = null;
+    rotateRef.current = null;
     setDragging(null);
+    setRotating(null);
   }, []);
 
   const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
     e.preventDefault();
     const item = furniture.find(f => f.category === category);
     if (!item) return;
-    const nextRotation = ((rotations[category] ?? 0) + 90) % 360;
+    const nextRotation = ((rotations[category] ?? defaultRotation(category)) + 90) % 360;
     setRotations(prev => ({ ...prev, [category]: nextRotation }));
     setPositions(prev => {
       const occupiedZones = placedFurnitureZones(prev, furniture, rotations, category);
@@ -824,7 +1052,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           2D Room Layout
         </h3>
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium">
-          Drag to move · right-click to rotate · hover to link
+          Drag to move · hold the rotate handle for any angle
         </span>
       </div>
 
@@ -948,7 +1176,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           const dPx    = dFt * SCALE;
           const svgX   = pos.x * SCALE + MARGIN;
           const svgY   = pos.y * SCALE + MARGIN;
-          const rot    = rotations[item.category] ?? 0;
+          const rot    = rotations[item.category] ?? defaultRotation(item.category);
           const isLinked = linkedCategory === item.category;
           const isDimmed = Boolean(linkedCategory && linkedCategory !== item.category);
           const isRug    = item.category === 'rug';
@@ -969,14 +1197,46 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
             >
               {/* Highlight ring when linked */}
               {isLinked && (
-                <rect
-                  x={-3} y={-3}
-                  width={wPx + 6} height={dPx + 6}
-                  rx={6}
-                  fill="none"
-                  stroke="#D3968C"
-                  strokeWidth={2.5}
-                />
+                <>
+                  <rect
+                    x={-3} y={-3}
+                    width={wPx + 6} height={dPx + 6}
+                    rx={6}
+                    fill="none"
+                    stroke="#D3968C"
+                    strokeWidth={2.5}
+                  />
+                  <line
+                    x1={wPx / 2}
+                    y1={-3}
+                    x2={wPx / 2}
+                    y2={-18}
+                    stroke="#D3968C"
+                    strokeWidth={2}
+                  />
+                  <g
+                    role="button"
+                    aria-label={`Rotate ${CATEGORY_LABELS[item.category] ?? item.category}`}
+                    style={{ cursor: rotating === item.category ? 'grabbing' : 'grab' }}
+                    onPointerDown={e => handleRotatePointerDown(item.category, e)}
+                  >
+                    <circle
+                      cx={wPx / 2}
+                      cy={-24}
+                      r={9}
+                      fill="#D3968C"
+                      stroke="#F7F4D5"
+                      strokeWidth={2}
+                    />
+                    <path
+                      d={`M ${wPx / 2 - 4} -24 A 4 4 0 1 1 ${wPx / 2 + 2} -20`}
+                      fill="none"
+                      stroke="#F7F4D5"
+                      strokeWidth={1.8}
+                      strokeLinecap="round"
+                    />
+                  </g>
+                </>
               )}
 
               <FurnitureIcon item={item} wPx={wPx} dPx={dPx} />

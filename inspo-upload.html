@@ -102,10 +102,50 @@
 
       <!-- ── STEP 1: Vision ── -->
       <div id="step-1" class="animate-reveal space-y-8" style="animation-delay:0.4s">
-        <div class="flex justify-center mb-4">
-          <button id="wild-card-btn" class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl flex items-center gap-2">
-            <iconify-icon icon="ph:dice-five-duotone" class="text-2xl"></iconify-icon> Wild Card Mode
+        <!-- Room Type -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h2 class="text-3xl font-bold">Choose Your Room</h2>
+          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
+          <input type="text" id="room-type-other" placeholder="Describe your room type..."
+            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
+
+          <div class="pt-6 mt-2 border-t border-[#F7F4D5]/10 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="text-2xl font-bold flex items-center gap-2">
+                  <iconify-icon icon="ph:piggy-bank-duotone" class="text-[#D3968C]"></iconify-icon>
+                  Your Budget
+                </h3>
+                <p class="text-sm text-[#F7F4D5]/50 mt-1">No pressure — your room can keep its financial secrets.</p>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-[#839958]/20 border border-[#839958]/30 text-[#F7F4D5]/70 text-xs font-bold uppercase tracking-wider">Totally optional</span>
+            </div>
+
+            <div class="grid md:grid-cols-[1fr_180px] gap-4 items-center">
+              <input type="range" id="budget-slider" min="500" max="25000" step="250" value="5000"
+                aria-label="Optional furniture budget"
+                class="w-full accent-[#D3968C] cursor-pointer">
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#F7F4D5]/50 font-bold">$</span>
+                <input type="number" id="budget-input" min="500" max="25000" step="250" placeholder="Optional"
+                  class="w-full pl-8 pr-4 py-3 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/25 focus:outline-none focus:border-[#D3968C]/50 transition-all font-bold">
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-4">
+              <p id="budget-status" class="text-sm font-medium text-[#F7F4D5]/50">Budget-free and fabulous — move the slider only if you want to.</p>
+              <button type="button" id="clear-budget" class="hidden shrink-0 text-sm font-bold text-[#D3968C] hover:text-[#F7F4D5] transition-colors">Clear budget</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <button id="wild-card-btn" disabled class="w-full px-10 py-5 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-[1.01] shadow-xl flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
+            <iconify-icon icon="ph:dice-five-duotone" class="text-3xl"></iconify-icon>
+            Wild Card Mode — Surprise Me
           </button>
+          <p class="text-center text-sm text-[#F7F4D5]/50">Choose a room first, then let BluPrint randomly select the style, mood, colors, and features.</p>
         </div>
 
         <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
@@ -161,15 +201,6 @@
         <div class="garden-card ghibli-border p-8 md:p-10">
           <h2 class="text-3xl font-bold mb-2">Step 2: Refine Your Picks</h2>
           <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
-        </div>
-
-        <!-- Room Type -->
-        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
-          <h3 class="text-2xl font-bold">Room Type</h3>
-          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
-          <input type="text" id="room-type-other" placeholder="Describe your room type..."
-            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
         </div>
 
         <!-- Style Profile -->
@@ -311,6 +342,7 @@
       visionUrl:        '',
       uploadedFile:     null,
       aiResult:         null,
+      budgetTotal:      null,
     };
 
     // ── Step navigation ───────────────────────────────────────────────
@@ -346,8 +378,39 @@
     }
 
     function checkStep1Valid() {
-      document.getElementById('step1-next').disabled = !state.visionUrl;
+      document.getElementById('step1-next').disabled = !state.visionUrl || !state.selectedRoomType;
+      document.getElementById('wild-card-btn').disabled = !state.selectedRoomType;
     }
+
+    // ── Optional budget ────────────────────────────────────────────────
+    const budgetSlider = document.getElementById('budget-slider');
+    const budgetInput = document.getElementById('budget-input');
+    const budgetStatus = document.getElementById('budget-status');
+    const clearBudget = document.getElementById('clear-budget');
+
+    function setBudget(value) {
+      const parsed = Number(value);
+      if (value === '' || !Number.isFinite(parsed) || parsed <= 0) {
+        state.budgetTotal = null;
+        budgetInput.value = '';
+        budgetStatus.textContent = 'Budget-free and fabulous — move the slider only if you want to.';
+        clearBudget.classList.add('hidden');
+        localStorage.removeItem('blueprintBudgetTotal');
+        return;
+      }
+
+      const budget = Math.min(25000, Math.max(500, Math.round(parsed / 250) * 250));
+      state.budgetTotal = budget;
+      budgetSlider.value = String(budget);
+      budgetInput.value = String(budget);
+      budgetStatus.textContent = `Lovely — we’ll aim to keep the furniture around $${budget.toLocaleString()}.`;
+      clearBudget.classList.remove('hidden');
+      localStorage.setItem('blueprintBudgetTotal', String(budget));
+    }
+
+    budgetSlider.addEventListener('input', () => setBudget(budgetSlider.value));
+    budgetInput.addEventListener('change', () => setBudget(budgetInput.value));
+    clearBudget.addEventListener('click', () => setBudget(''));
 
     // ── File upload ───────────────────────────────────────────────────
     const fileDrop  = document.getElementById('file-drop-area');
@@ -420,6 +483,7 @@
             other.classList.add('hidden');
             other.value = '';
           }
+          checkStep1Valid();
           checkStep2Valid();
         });
         grid.appendChild(btn);
@@ -429,6 +493,7 @@
     document.getElementById('room-type-other').addEventListener('input', function () {
       if (!state.roomTypeIsOther) return;
       state.selectedRoomType = this.value.trim() || null;
+      checkStep1Valid();
       checkStep2Valid();
     });
 
@@ -584,6 +649,7 @@
           moodTags:     ai.moodTags?.length ? ai.moodTags : [state.selectedMood],
           colorPalette: ai.colorPalette?.length ? ai.colorPalette : state.selectedColors.map(c => c.hex || c),
           roomFeatures: ai.roomFeatures?.length ? ai.roomFeatures : state.selectedFeatures,
+          budgetTotal:  state.budgetTotal || 0,
         };
         state.aiResult = analysisResult;
         localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
@@ -660,6 +726,15 @@
             roomFeatures: state.selectedFeatures,
           }),
         });
+
+        if (state.budgetTotal) {
+          const budgetResponse = await fetch(base + '/budget', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ budgetTotal: state.budgetTotal }),
+          });
+          if (!budgetResponse.ok) throw new Error('Could not save your budget');
+        }
       } catch (e) {
         throw e;
       }
@@ -667,8 +742,7 @@
 
     // ── Wild Card ─────────────────────────────────────────────────────
     document.getElementById('wild-card-btn').addEventListener('click', () => {
-      state.selectedRoomType = ROOM_TYPES.filter(rt => rt !== 'Other')[Math.floor(Math.random() * (ROOM_TYPES.length - 1))];
-      state.roomTypeIsOther  = false;
+      if (!state.selectedRoomType) return;
       state.selectedStyle    = STYLES[Math.floor(Math.random() * STYLES.length)].label;
       state.selectedMood     = MOODS[Math.floor(Math.random() * MOODS.length)];
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
@@ -682,6 +756,7 @@
         colorPalette: state.selectedColors.map(c => c.hex || c),
         roomFeatures: state.selectedFeatures,
         confidence:   1,
+        budgetTotal:  state.budgetTotal || 0,
       }));
       window.location.href = 'room-result.html';
     });

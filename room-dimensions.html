@@ -313,5 +313,81 @@ svg.addEventListener("drop",(e)=>{e.preventDefault();if(!draggingFromToolbar)ret
   });
 } saveState();renderAll();showToast(`${draggingFromToolbar} added`)}ghost.classList.add("hidden");document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"));draggingFromToolbar=null});btnUndo.onclick=undo;btnRedo.onclick=redo;window.addEventListener("keydown",(e)=>{if(e.ctrlKey||e.metaKey){if(e.key==="z"){e.preventDefault();undo();return}if(e.key==="y"){e.preventDefault();redo();return}}const tag=document.activeElement?.tagName;if(tag==="INPUT"||tag==="TEXTAREA")return;if((e.key==="Delete"||e.key==="Backspace")&&hoveredElementId){if(hoveredElementType==="element"){state.elements=state.elements.filter((el)=>el.id!==hoveredElementId)}else{state.cutouts=state.cutouts.filter((c)=>c.id!==hoveredElementId)}hoveredElementId=null;hoveredElementType=null;saveState();renderAll();showToast("Element deleted")}});widthInput.oninput=lengthInput.oninput=(e)=>{const rawW=widthInput.value;const rawL=lengthInput.value;if(rawW===""||rawL==="")return;let wVal=parseFloat(rawW);let lVal=parseFloat(rawL);if(isNaN(wVal)||isNaN(lVal)||wVal<=0||lVal<=0)return;if(currentUnit==="m"){wVal/=FT_TO_M;lVal/=FT_TO_M}const newWidth=wVal*20;const newLength=lVal*20;const cx=400;const cy=250;state.elements.forEach((el)=>{const snap=getClosestPointOnPerimeter(el.x,el.y);el.origEdge=snap.edgeIndex});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{const snap=getClosestPointOnPerimeter(p.x,p.y);p.origEdge=snap.edgeIndex})});const oldP1=state.roomPoints[0];const oldP2=state.roomPoints[1];const oldP3=state.roomPoints[2];const oldWidth=Math.abs(oldP2.x-oldP1.x);const oldLength=Math.abs(oldP3.y-oldP2.y);const scaleX=newWidth/oldWidth;const scaleY=newLength/oldLength;state.elements.forEach((el)=>{el.x=cx+(el.x-cx)*scaleX;el.y=cy+(el.y-cy)*scaleY});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{p.x=cx+(p.x-cx)*scaleX;p.y=cy+(p.y-cy)*scaleY})});state.roomPoints=[{x:cx-newWidth/2,y:cy-newLength/2},{x:cx+newWidth/2,y:cy-newLength/2},{x:cx+newWidth/2,y:cy+newLength/2},{x:cx-newWidth/2,y:cy+newLength/2}];state.elements.forEach((el)=>{const p1=state.roomPoints[el.origEdge];const p2=state.roomPoints[(el.origEdge+1)%4];const dx=p2.x-p1.x;const dy=p2.y-p1.y;const lenSq=dx*dx+dy*dy;if(lenSq===0)return;let t=((el.x-p1.x)*dx+(el.y-p1.y)*dy)/lenSq;t=Math.max(0,Math.min(1,t));el.x=p1.x+t*dx;el.y=p1.y+t*dy;el.angle=(Math.atan2(dy,dx)*180)/Math.PI});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{const p1=state.roomPoints[p.origEdge];const p2=state.roomPoints[(p.origEdge+1)%4];const dx=p2.x-p1.x;const dy=p2.y-p1.y;const lenSq=dx*dx+dy*dy;if(lenSq===0)return;let t=((p.x-p1.x)*dx+(p.y-p1.y)*dy)/lenSq;t=Math.max(0,Math.min(1,t));p.x=p1.x+t*dx;p.y=p1.y+t*dy})});roomPath.classList.remove("flip-anim");void roomPath.offsetWidth;roomPath.classList.add("flip-anim");renderAll();saveState()};svg.addEventListener("dragleave",()=>{ghost.classList.add("hidden");document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"))});const toggleFt=document.getElementById("toggle-ft");const toggleM=document.getElementById("toggle-m");const unitIndicators=document.querySelectorAll(".unit-indicator");function setUnit(unit){if(currentUnit===unit)return;currentUnit=unit;toggleFt.classList.toggle("bg-[#D3968C]",unit==="ft");toggleFt.classList.toggle("text-[#0A3323]",unit==="ft");toggleFt.classList.toggle("text-[#F7F4D5]/40",unit==="m");toggleM.classList.toggle("bg-[#D3968C]",unit==="m");toggleM.classList.toggle("text-[#0A3323]",unit==="m");toggleM.classList.toggle("text-[#F7F4D5]/40",unit==="ft");unitIndicators.forEach((span)=>(span.textContent=unit));renderAll()}toggleFt.onclick=()=>setUnit("ft");toggleM.onclick=()=>setUnit("m");saveState();renderAll();
 </script>
+<script>
+  document.getElementById("cta-save-continue").addEventListener("click", async () => {
+    const button = document.getElementById("cta-save-continue");
+    const userId = localStorage.getItem("blueprintUserId");
+    const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
+    const roomName = roomNameInput.value.trim();
+    const widthFt = Math.hypot(
+      state.roomPoints[1].x - state.roomPoints[0].x,
+      state.roomPoints[1].y - state.roomPoints[0].y
+    ) / ROOM_LAYOUT_SCALE;
+    const lengthFt = Math.hypot(
+      state.roomPoints[2].x - state.roomPoints[1].x,
+      state.roomPoints[2].y - state.roomPoints[1].y
+    ) / ROOM_LAYOUT_SCALE;
+    const heightFt = Number(heightInput.value);
+
+    if (!userId) {
+      showToast("Please sign in before saving");
+      return;
+    }
+    if (!roomName || widthFt <= 0 || lengthFt <= 0 || heightFt <= 0) {
+      showToast("Enter valid room details");
+      return;
+    }
+
+    const layout = {
+      version: 1,
+      roomId: existingRoomId || undefined,
+      roomName,
+      widthFt,
+      lengthFt,
+      heightFt,
+      sqft: widthFt * lengthFt,
+      scale: ROOM_LAYOUT_SCALE,
+      viewBox: { width: 800, height: 500 },
+      roomPoints: state.roomPoints,
+      elements: state.elements,
+      cutouts: state.cutouts,
+      savedAt: new Date().toISOString()
+    };
+    const payload = { userId, name: roomName, widthFt, lengthFt, heightFt, layout };
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+
+    try {
+      const response = await fetch(
+        existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
+        {
+          method: existingRoomId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }
+      );
+      const savedRoom = await response.json();
+      if (!response.ok) {
+        throw new Error(savedRoom.error || "Could not save room");
+      }
+
+      const roomId = String(savedRoom._id || existingRoomId);
+      layout.roomId = roomId;
+      localStorage.setItem("blueprintCurrentRoomId", roomId);
+      localStorage.setItem("blueprintCurrentRoomName", roomName);
+      localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
+      localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
+      localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
+      localStorage.setItem("blueprintRoomLayout", JSON.stringify(layout));
+      window.location.href = "inspo-upload.html";
+    } catch (error) {
+      console.error("Room save failed:", error);
+      showToast(error.message || "Could not save room");
+      button.disabled = false;
+      button.innerHTML = 'Save &amp; Continue <iconify-icon icon="ph:arrow-right-bold" class="text-xl"></iconify-icon>';
+    }
+  });
+</script>
 </body>
 </html>

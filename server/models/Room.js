@@ -8,6 +8,7 @@ const RoomSchema = new mongoose.Schema({
     lengthFt: { type: Number, required: true }, // How long is it?
     heightFt: { type: Number, required: true }, // How tall is it?
     sqft: { type: Number, required: true },     // Total floor space!
+    budgetTotal: { type: Number, min: 0, default: null },
     layout: { type: mongoose.Schema.Types.Mixed, default: null } // 2D room preview snapshot
 }, { timestamps: true }); // This automatically adds the date it was made!
 

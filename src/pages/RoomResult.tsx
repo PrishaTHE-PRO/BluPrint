@@ -86,7 +86,7 @@ export default function RoomResult() {
         colorPalette: ai.colorPalette ?? [],
         roomFeatures: ai.roomFeatures ?? [],
         confidence:   ai.confidence   ?? 0,
-        budgetTotal:  0,
+        budgetTotal:  Number(ai.budgetTotal ?? localStorage.getItem('blueprintBudgetTotal')) || 0,
       };
       setStyle(parsedStyle);
     } catch {
