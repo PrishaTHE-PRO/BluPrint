@@ -180,6 +180,19 @@
               </div>
             </div>
             <input type="hidden" id="room-height" value="9.5" data-sd-id="79">
+            <div class="space-y-3">
+              <label for="room-budget" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40">FURNISHING BUDGET</label>
+              <div class="flex items-baseline justify-between">
+                <span id="budget-display" class="text-2xl font-bold text-[#D3968C]">$5,000</span>
+                <span class="text-[10px] font-bold text-[#F7F4D5]/30 uppercase tracking-widest">total</span>
+              </div>
+              <input type="range" id="room-budget" min="500" max="50000" step="500" value="5000"
+                     class="w-full accent-[#D3968C] cursor-pointer">
+              <div class="flex justify-between text-[10px] font-bold text-[#F7F4D5]/30 uppercase">
+                <span>$500</span>
+                <span>$50k+</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="pt-4" data-sd-id="80">
@@ -354,6 +367,20 @@ function persistRoomLayout(layout) {
   localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
 }
 
+/* ── Furnishing budget slider ─────────────────────────────────────────────── */
+const budgetInput   = document.getElementById("room-budget");
+const budgetDisplay = document.getElementById("budget-display");
+
+function updateBudgetDisplay() {
+  const value = Number(budgetInput.value);
+  budgetDisplay.textContent = "$" + value.toLocaleString("en-US") + (value >= 50000 ? "+" : "");
+}
+
+const savedBudget = localStorage.getItem("blueprintCurrentRoomBudget");
+if (savedBudget) budgetInput.value = savedBudget;
+budgetInput.addEventListener("input", updateBudgetDisplay);
+updateBudgetDisplay();
+
 /* Rehydrate a previously saved layout so navigating back to this page — e.g.
    via the workflow stepper above — keeps the user's room instead of resetting
    to the default. New rooms clear this key, so it's a no-op for a fresh start. */
@@ -419,6 +446,8 @@ document.getElementById("cta-save-continue").addEventListener("click", async () 
   localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
   localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
   localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
+  const budgetTotal = parseInt(budgetInput.value, 10) || 0;
+  localStorage.setItem("blueprintCurrentRoomBudget", String(budgetTotal));
   persistRoomLayout(layoutSnapshot);
 
   btn.disabled = true;
@@ -444,6 +473,18 @@ document.getElementById("cta-save-continue").addEventListener("click", async () 
     const room = await res.json();
     localStorage.setItem("blueprintCurrentRoomId", room._id);
     persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
+
+    // Budget has its own endpoint — don't let it fail the room save.
+    try {
+      const budgetRes = await fetch(`/api/rooms/${room._id}/budget`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ budgetTotal }),
+      });
+      if (!budgetRes.ok) throw new Error("budget save failed (" + budgetRes.status + ")");
+    } catch (budgetErr) {
+      console.warn("[save budget]", budgetErr);
+    }
   } catch (err) {
     console.warn("[save room]", err);
     showToast("Saved locally — continuing");
