@@ -1,10 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
+import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
 import { orderedFurniture } from '../utils/furnitureLayout';
+import {
+  buildFurniturePlacement,
+  normalizeFurniturePlacement,
+  readPlacement,
+  readSavedFurniturePlacement,
+  saveFurniturePlacementLocally,
+} from '../utils/furniturePlacement';
+import type { FurniturePlacement } from '../utils/furniturePlacement';
 
 const FALLBACK_ROOM: Room = {
   roomId:   'fallback',
@@ -33,6 +42,15 @@ function readScopedSavedRoomLayout() {
   return layout;
 }
 
+function readScopedSavedFurniturePlacement() {
+  const placement = readSavedFurniturePlacement();
+  const roomId    = localStorage.getItem('blueprintCurrentRoomId');
+
+  if (!placement) return null;
+  if (placement.roomId && placement.roomId !== roomId) return null;
+  return placement;
+}
+
 export default function RoomResult() {
   const [room,             setRoom]             = useState<Room | null>(null);
   const [savedLayout,      setSavedLayout]      = useState<RoomArchitectureLayout | null>(() => readScopedSavedRoomLayout());
@@ -41,14 +59,56 @@ export default function RoomResult() {
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
+  const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState('');
+  const [savedPlacement,   setSavedPlacement]   = useState<FurniturePlacement | null>(() => readScopedSavedFurniturePlacement());
+  const [saveStatus,       setSaveStatus]       = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
+  // Live positions/rotations from RoomSVG. Held in a ref, not state — dragging
+  // fires this on every pointer move and re-rendering the page would stutter.
+  const placementRef = useRef<Placement>({ positions: {}, rotations: {} });
+  const restoredRef  = useRef(false);
+
+  const handlePlacementChange = useCallback((placement: Placement) => {
+    placementRef.current = placement;
+  }, []);
+
+  // Compose the slots from the fresh search, then overlay anything the user
+  // saved. The two arrive independently, so this runs whenever either lands.
   useEffect(() => {
+    // A saved layout carries full products, so it can render on its own even if
+    // the furniture search failed or returned nothing.
+    if (furniture.length === 0 && !savedPlacement) return;
+
     const init: Record<string, FurnitureItem> = {};
     furniture.forEach((item) => { if (!init[item.category]) init[item.category] = item; });
+
+    if (savedPlacement) {
+      const restored = readPlacement(savedPlacement);
+      // The saved product always wins over whatever the search returned this
+      // time — search ids are positional, so "the same id" is a different sofa.
+      Object.assign(init, restored.slots);
+
+      // Removed pieces and placement only need seeding once; re-applying them
+      // would undo edits the user made after the restore.
+      if (!restoredRef.current) {
+        restoredRef.current = true;
+        setHiddenCategories(restored.hidden);
+        placementRef.current = { positions: restored.positions, rotations: restored.rotations };
+      }
+    } else if (!restoredRef.current) {
+      setHiddenCategories(new Set());
+    }
+
     setFurnitureSlots(init);
-  }, [furniture]);
+  }, [furniture, savedPlacement]);
+
+  const initialPlacement = useMemo<Placement | null>(() => {
+    if (!savedPlacement) return null;
+    const { positions, rotations } = readPlacement(savedPlacement);
+    return { positions, rotations };
+  }, [savedPlacement]);
 
   const handleSwap = useCallback((category: string) => {
     const inCategory = furniture.filter((i) => i.category === category);
@@ -60,6 +120,61 @@ export default function RoomResult() {
       return { ...prev, [category]: next };
     });
   }, [furniture]);
+
+  /** Take a piece off the floor plan. Its sidebar card stays so it can be added back. */
+  const handleRemoveFromRoom = useCallback((category: string) => {
+    setHiddenCategories((prev) => new Set(prev).add(category));
+    // Drop the hover link — otherwise it points at a piece that's no longer drawn.
+    setLinkedCategory((prev) => (prev === category ? null : prev));
+  }, []);
+
+  const handleToggleInRoom = useCallback((category: string) => {
+    setHiddenCategories((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(category)) next.add(category);
+      return next;
+    });
+    setLinkedCategory((prev) => (prev === category ? null : prev));
+  }, []);
+
+  const handleSaveLayout = useCallback(async () => {
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    const placement = buildFurniturePlacement({
+      roomId,
+      slots:     furnitureSlots,
+      hidden:    hiddenCategories,
+      positions: placementRef.current.positions,
+      rotations: placementRef.current.rotations,
+    });
+
+    // Save locally first so the layout survives even if the request fails.
+    saveFurniturePlacementLocally(placement);
+    setSaveStatus('saving');
+
+    if (!roomId) {
+      setSaveStatus('saved');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/rooms/${roomId}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ furnitureLayout: placement }),
+      });
+      if (!res.ok) throw new Error(`save failed (${res.status})`);
+      setSaveStatus('saved');
+    } catch (err) {
+      console.error('[save layout]', err);
+      setSaveStatus('error');
+    }
+  }, [furnitureSlots, hiddenCategories]);
+
+  useEffect(() => {
+    if (saveStatus !== 'saved' && saveStatus !== 'error') return;
+    const timer = setTimeout(() => setSaveStatus('idle'), 2500);
+    return () => clearTimeout(timer);
+  }, [saveStatus]);
 
   useEffect(() => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
@@ -120,6 +235,13 @@ export default function RoomResult() {
               setSavedLayout(match.layout);
               saveRoomLayout(match.layout);
             }
+
+            // Server placement is authoritative, but don't clobber a local one
+            // that has already been applied to the canvas.
+            const serverPlacement = normalizeFurniturePlacement(match.furnitureLayout);
+            if (serverPlacement && !restoredRef.current) {
+              setSavedPlacement(serverPlacement);
+            }
           }
         })
         .catch(() => {}),
@@ -159,12 +281,15 @@ export default function RoomResult() {
 
   const s = style!;
   const layoutRoom = buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM);
-  const layoutFurniture = orderedFurniture(furnitureSlots, s.roomType).length > 0
-    ? orderedFurniture(furnitureSlots, s.roomType)
+  const slottedFurniture = orderedFurniture(furnitureSlots, s.roomType);
+  const placeableFurniture = slottedFurniture.length > 0
+    ? slottedFurniture
     : orderedFurniture(
         Object.fromEntries(furniture.map((item) => [item.category, item])),
         s.roomType,
       );
+  // The floor plan shows only what's currently placed; the sidebar keeps every card.
+  const layoutFurniture = placeableFurniture.filter((item) => !hiddenCategories.has(item.category));
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -223,9 +348,24 @@ export default function RoomResult() {
               </p>
             </div>
             <div className="flex gap-3">
-              <button className="px-6 py-3 bg-[#105666] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#156a7d] transition-all text-sm">
-                <iconify-icon icon="ph:floppy-disk-duotone" />
-                Save Layout
+              <button
+                onClick={handleSaveLayout}
+                disabled={saveStatus === 'saving'}
+                className={[
+                  'px-6 py-3 text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm',
+                  saveStatus === 'error' ? 'bg-[#D3968C] hover:bg-[#c1867b]' : 'bg-[#105666] hover:bg-[#156a7d]',
+                  saveStatus === 'saving' ? 'opacity-70 cursor-wait' : '',
+                ].join(' ')}
+              >
+                <iconify-icon icon={
+                  saveStatus === 'saved' ? 'ph:check-circle-duotone'
+                  : saveStatus === 'error' ? 'ph:warning-circle-duotone'
+                  : 'ph:floppy-disk-duotone'
+                } />
+                {saveStatus === 'saving' ? 'Saving...'
+                  : saveStatus === 'saved' ? 'Saved'
+                  : saveStatus === 'error' ? 'Retry Save'
+                  : 'Save Layout'}
               </button>
               <button className="p-3 bg-white/5 border border-white/10 text-white rounded-2xl hover:bg-white/10 transition-all">
                 <iconify-icon icon="ph:export-duotone" class="text-xl" />
@@ -243,6 +383,8 @@ export default function RoomResult() {
           loading={furnitureLoading}
           linkedCategory={linkedCategory}
           onLinkCategory={setLinkedCategory}
+          hiddenCategories={hiddenCategories}
+          onToggleInRoom={handleToggleInRoom}
           centerContent={
             <RoomSVG
               room={layoutRoom}
@@ -251,6 +393,9 @@ export default function RoomResult() {
               roomLayout={savedLayout}
               linkedCategory={linkedCategory}
               onLinkCategory={setLinkedCategory}
+              onRemove={handleRemoveFromRoom}
+              initialPlacement={initialPlacement}
+              onPlacementChange={handlePlacementChange}
             />
           }
         />

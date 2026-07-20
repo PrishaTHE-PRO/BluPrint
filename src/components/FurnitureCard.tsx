@@ -10,6 +10,8 @@ interface Props {
   variant?:         'compact' | 'featured';
   linkedCategory?:  string | null;
   onLinkCategory?:  (category: string | null) => void;
+  inRoom:           boolean;
+  onToggleInRoom:   () => void;
 }
 
 const CATEGORY_FALLBACK: Record<string, string> = {
@@ -65,6 +67,8 @@ export default function FurnitureCard({
   variant = 'featured',
   linkedCategory,
   onLinkCategory,
+  inRoom,
+  onToggleInRoom,
 }: Props) {
   const [imgSrc, setImgSrc] = useState(item.imageUrl || CATEGORY_FALLBACK[item.category] || '');
 
@@ -82,10 +86,28 @@ export default function FurnitureCard({
   };
 
   const shellClass = [
-    'garden-card rounded-2xl border border-[#F7F4D5]/10 group animate-reveal transition-all duration-200',
+    'garden-card rounded-2xl border group animate-reveal transition-all duration-200',
+    inRoom ? 'border-[#F7F4D5]/10' : 'border-dashed border-[#F7F4D5]/25',
     isLinked ? 'ring-2 ring-[#D3968C] ring-offset-2 ring-offset-[#0A3323] scale-[1.02]' : '',
-    isDimmed ? 'opacity-40' : 'opacity-100',
+    isDimmed ? 'opacity-40' : inRoom ? 'opacity-100' : 'opacity-70',
   ].join(' ');
+
+  const inRoomToggle = (
+    <button
+      type="button"
+      onClick={onToggleInRoom}
+      title={inRoom ? 'Remove from floor plan' : 'Add back to floor plan'}
+      className={[
+        'flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold transition-all flex-shrink-0',
+        inRoom
+          ? 'text-[#F7F4D5]/40 hover:text-[#D3968C] hover:bg-white/5'
+          : 'text-[#839958] bg-[#839958]/15 hover:bg-[#839958]/30 hover:text-[#F7F4D5]',
+      ].join(' ')}
+    >
+      <iconify-icon icon={inRoom ? 'ph:minus-circle-duotone' : 'ph:plus-circle-duotone'} />
+      {inRoom ? 'Remove' : 'Add'}
+    </button>
+  );
 
   if (variant === 'compact') {
     return (
@@ -101,9 +123,12 @@ export default function FurnitureCard({
         </div>
         <div className="flex-1 flex flex-col justify-between min-w-0">
           <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-[#839958] truncate">
-              {categoryLabel}{item.brand ? ` · ${item.brand}` : ''}
-            </p>
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-[#839958] truncate">
+                {categoryLabel}{item.brand ? ` · ${item.brand}` : ''}
+              </p>
+              {inRoomToggle}
+            </div>
             <h3 className="text-xs font-bold leading-tight line-clamp-2 mt-0.5">{item.name}</h3>
           </div>
           <div className="flex items-center justify-between gap-1 mt-1.5">
@@ -130,7 +155,7 @@ export default function FurnitureCard({
     <div className={`${shellClass} p-3 flex flex-col`} style={{ animationDelay: animDelay }} {...linkProps}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-[#839958] font-bold text-[9px] uppercase tracking-widest truncate">{categoryLabel}</span>
-        <span className="text-[8px] text-[#F7F4D5]/30 font-medium flex-shrink-0 ml-1">↔ floor plan</span>
+        {inRoomToggle}
       </div>
 
       <div className="w-full aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg overflow-hidden shadow-inner relative mb-2">

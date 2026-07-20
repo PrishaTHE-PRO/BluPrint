@@ -57,6 +57,40 @@ function sanitizeLayout(layout, roomFields) {
     };
 }
 
+function sanitizeFurnitureItem(item) {
+    return {
+        id:       item && item.id !== undefined ? String(item.id) : '',
+        name:     item && typeof item.name === 'string' ? item.name : '',
+        category: item && typeof item.category === 'string' ? item.category : '',
+        brand:    item && typeof item.brand === 'string' ? item.brand : '',
+        price:    toNumber(item && item.price),
+        imageUrl: item && typeof item.imageUrl === 'string' ? item.imageUrl : '',
+        buyUrl:   item && typeof item.buyUrl === 'string' ? item.buyUrl : '',
+        widthIn:  item && item.widthIn !== undefined ? toNumber(item.widthIn) : undefined,
+        depthIn:  item && item.depthIn !== undefined ? toNumber(item.depthIn) : undefined,
+    };
+}
+
+function sanitizeFurnitureLayout(layout) {
+    if (!layout || typeof layout !== 'object') return null;
+    if (!Array.isArray(layout.items)) return null;
+
+    return {
+        version: typeof layout.version === 'number' ? layout.version : 1,
+        items: layout.items
+            .filter((entry) => entry && typeof entry.category === 'string' && entry.category)
+            .map((entry) => ({
+                category: entry.category,
+                hidden:   Boolean(entry.hidden),
+                x:        toNumber(entry.x),
+                y:        toNumber(entry.y),
+                rotation: toNumber(entry.rotation),
+                item:     sanitizeFurnitureItem(entry.item),
+            })),
+        savedAt: typeof layout.savedAt === 'string' ? layout.savedAt : new Date().toISOString(),
+    };
+}
+
 // POST / — save a new room
 router.post('/', async (req, res) => {
     try {
@@ -129,6 +163,10 @@ router.patch('/:roomId', async (req, res) => {
 
         if (Object.prototype.hasOwnProperty.call(req.body, 'layout')) {
             current.layout = sanitizeLayout(req.body.layout, roomFields);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(req.body, 'furnitureLayout')) {
+            current.furnitureLayout = sanitizeFurnitureLayout(req.body.furnitureLayout);
         }
 
         const saved = await current.save();

@@ -122,10 +122,20 @@ interface Props {
   roomLayout?:      RoomLayout | null;
   linkedCategory?:  string | null;
   onLinkCategory?:  (cat: string | null) => void;
+  onRemove?:        (cat: string) => void;
+  /** Restored placement from a saved layout; applied once when it arrives. */
+  initialPlacement?: Placement | null;
+  /** Fires whenever a piece is dragged or rotated, so the parent can save it. */
+  onPlacementChange?: (placement: Placement) => void;
+}
+
+export interface Placement {
+  positions: Record<string, PosFt>;
+  rotations: Record<string, number>;
 }
 
 /** Position in feet from the room's top-left origin */
-interface PosFt { x: number; y: number }
+export interface PosFt { x: number; y: number }
 interface ForbiddenRect { minX: number; minY: number; maxX: number; maxY: number }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -591,13 +601,30 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, onLinkCategory }: Props) {
+export default function RoomSVG({
+  room, furniture, roomLayout, linkedCategory, onLinkCategory, onRemove,
+  initialPlacement, onPlacementChange,
+}: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ category: string; offsetX: number; offsetY: number } | null>(null);
+  const seededRef = useRef(false);
 
   const [positions,  setPositions]  = useState<Record<string, PosFt>>({});
   const [rotations,  setRotations]  = useState<Record<string, number>>({});
   const [dragging,   setDragging]   = useState<string | null>(null);
+
+  // Seed from a saved layout exactly once — it may arrive after the first render.
+  useEffect(() => {
+    if (seededRef.current || !initialPlacement) return;
+    seededRef.current = true;
+    setPositions(initialPlacement.positions);
+    setRotations(initialPlacement.rotations);
+  }, [initialPlacement]);
+
+  // Report placement upward so Save Layout can capture it.
+  useEffect(() => {
+    onPlacementChange?.({ positions, rotations });
+  }, [positions, rotations, onPlacementChange]);
 
   // Canvas dimensions — driven by the actual polygon bounding box when available
   // so the viewport, grid, labels, and drag clamping all agree.
@@ -824,7 +851,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           2D Room Layout
         </h3>
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium">
-          Drag to move · right-click to rotate · hover to link
+          Drag to move · right-click to rotate · ✕ to remove
         </span>
       </div>
 
@@ -996,6 +1023,30 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
                 >
                   {CATEGORY_LABELS[item.category] ?? item.category}
                 </text>
+              )}
+
+              {/* Remove from floor plan — appears on hover. Counter-rotated so it
+                  stays upright and pinned to the top-right corner at any rotation. */}
+              {isLinked && onRemove && (
+                <g
+                  transform={`translate(${wPx.toFixed(1)},0) rotate(${-rot})`}
+                  style={{ cursor: 'pointer' }}
+                  // Remove on pointerdown so the parent's drag handler never starts.
+                  onPointerDown={e => {
+                    e.stopPropagation();
+                    if (e.button !== 0) return;
+                    onRemove(item.category);
+                  }}
+                  onContextMenu={e => { e.stopPropagation(); e.preventDefault(); }}
+                >
+                  <circle r={8} fill="#D3968C" stroke="#F7F4D5" strokeWidth={1.5} />
+                  <path
+                    d="M -3 -3 L 3 3 M 3 -3 L -3 3"
+                    stroke="#F7F4D5"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                  />
+                </g>
               )}
             </g>
           );
