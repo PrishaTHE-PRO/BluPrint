@@ -77,6 +77,7 @@ function sanitizeFurnitureLayout(layout) {
 
     return {
         version: typeof layout.version === 'number' ? layout.version : 1,
+        ...(typeof layout.styleTag === 'string' ? { styleTag: layout.styleTag } : {}),
         items: layout.items
             .filter((entry) => entry && typeof entry.category === 'string' && entry.category)
             .map((entry) => ({

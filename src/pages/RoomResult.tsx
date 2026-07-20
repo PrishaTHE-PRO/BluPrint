@@ -74,18 +74,29 @@ export default function RoomResult() {
     placementRef.current = placement;
   }, []);
 
+  // A saved layout only applies while the room is still in the style it was
+  // arranged under. Once the user re-analyzes into a different style, the saved
+  // furniture no longer matches — drop it so the fresh search shows through.
+  const activePlacement = useMemo<FurniturePlacement | null>(() => {
+    if (!savedPlacement) return null;
+    if (savedPlacement.styleTag && style && savedPlacement.styleTag !== style.styleTag) {
+      return null;
+    }
+    return savedPlacement;
+  }, [savedPlacement, style]);
+
   // Compose the slots from the fresh search, then overlay anything the user
   // saved. The two arrive independently, so this runs whenever either lands.
   useEffect(() => {
     // A saved layout carries full products, so it can render on its own even if
     // the furniture search failed or returned nothing.
-    if (furniture.length === 0 && !savedPlacement) return;
+    if (furniture.length === 0 && !activePlacement) return;
 
     const init: Record<string, FurnitureItem> = {};
     furniture.forEach((item) => { if (!init[item.category]) init[item.category] = item; });
 
-    if (savedPlacement) {
-      const restored = readPlacement(savedPlacement);
+    if (activePlacement) {
+      const restored = readPlacement(activePlacement);
       // The saved product always wins over whatever the search returned this
       // time — search ids are positional, so "the same id" is a different sofa.
       Object.assign(init, restored.slots);
@@ -102,13 +113,13 @@ export default function RoomResult() {
     }
 
     setFurnitureSlots(init);
-  }, [furniture, savedPlacement]);
+  }, [furniture, activePlacement]);
 
   const initialPlacement = useMemo<Placement | null>(() => {
-    if (!savedPlacement) return null;
-    const { positions, rotations } = readPlacement(savedPlacement);
+    if (!activePlacement) return null;
+    const { positions, rotations } = readPlacement(activePlacement);
     return { positions, rotations };
-  }, [savedPlacement]);
+  }, [activePlacement]);
 
   const handleSwap = useCallback((category: string) => {
     const inCategory = furniture.filter((i) => i.category === category);
@@ -141,6 +152,7 @@ export default function RoomResult() {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
     const placement = buildFurniturePlacement({
       roomId,
+      styleTag:  style?.styleTag,
       slots:     furnitureSlots,
       hidden:    hiddenCategories,
       positions: placementRef.current.positions,
@@ -168,7 +180,7 @@ export default function RoomResult() {
       console.error('[save layout]', err);
       setSaveStatus('error');
     }
-  }, [furnitureSlots, hiddenCategories]);
+  }, [furnitureSlots, hiddenCategories, style]);
 
   useEffect(() => {
     if (saveStatus !== 'saved' && saveStatus !== 'error') return;

@@ -25,6 +25,12 @@ export interface FurniturePlacement {
   version: number;
   /** Scopes a locally-cached placement so it can't leak into a different room. */
   roomId?: string;
+  /**
+   * The style this layout was arranged under. When the user re-analyzes into a
+   * different style, the saved furniture no longer matches and is ignored so the
+   * fresh search shows through.
+   */
+  styleTag?: string;
   items:   PlacedFurniture[];
   savedAt: string;
 }
@@ -73,6 +79,7 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
   return {
     version: typeof layout.version === 'number' ? layout.version : FURNITURE_PLACEMENT_VERSION,
     ...(typeof layout.roomId === 'string' ? { roomId: layout.roomId } : {}),
+    ...(typeof layout.styleTag === 'string' ? { styleTag: layout.styleTag } : {}),
     items,
     savedAt: typeof layout.savedAt === 'string' ? layout.savedAt : new Date().toISOString(),
   };
@@ -80,16 +87,18 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
 
 export function buildFurniturePlacement(args: {
   roomId?:   string | null;
+  styleTag?: string | null;
   slots:     Record<string, FurnitureItem>;
   hidden:    Set<string>;
   positions: Record<string, PlacementPos>;
   rotations: Record<string, number>;
 }): FurniturePlacement {
-  const { roomId, slots, hidden, positions, rotations } = args;
+  const { roomId, styleTag, slots, hidden, positions, rotations } = args;
 
   return {
     version: FURNITURE_PLACEMENT_VERSION,
     ...(roomId ? { roomId } : {}),
+    ...(styleTag ? { styleTag } : {}),
     items: Object.values(slots)
       .filter(Boolean)
       .map((item) => ({
