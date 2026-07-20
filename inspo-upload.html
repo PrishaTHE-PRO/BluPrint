@@ -63,22 +63,22 @@
       </div>
     </nav>
 
-    <div class="workflow-steps" aria-label="Room design progress">
-      <div class="workflow-step completed">
+    <nav class="workflow-steps" aria-label="Room design progress">
+      <a class="workflow-step completed" href="room-dimensions.html" aria-label="Back to Define Room">
         <span><iconify-icon icon="ph:check-bold"></iconify-icon></span>
         <strong>Define Room</strong>
-      </div>
+      </a>
       <div class="workflow-connector completed"></div>
-      <div class="workflow-step active">
+      <div class="workflow-step active" aria-current="step">
         <span>2</span>
         <strong>Add Inspiration</strong>
       </div>
       <div class="workflow-connector"></div>
-      <div class="workflow-step">
+      <a class="workflow-step" href="room-result.html" aria-label="Go to View Design">
         <span>3</span>
         <strong>View Design</strong>
-      </div>
-    </div>
+      </a>
+    </nav>
 
     <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-5xl mx-auto w-full flex flex-col gap-12">
 
@@ -106,6 +106,15 @@
           <button id="wild-card-btn" class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl flex items-center gap-2">
             <iconify-icon icon="ph:dice-five-duotone" class="text-2xl"></iconify-icon> Wild Card Mode
           </button>
+        </div>
+
+        <!-- Room Type -->
+        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
+          <h3 class="text-2xl font-bold">Room Type</h3>
+          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
+          <input type="text" id="room-type-other" placeholder="Describe your room type..."
+            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
         </div>
 
         <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
@@ -161,15 +170,6 @@
         <div class="garden-card ghibli-border p-8 md:p-10">
           <h2 class="text-3xl font-bold mb-2">Step 2: Refine Your Picks</h2>
           <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
-        </div>
-
-        <!-- Room Type -->
-        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
-          <h3 class="text-2xl font-bold">Room Type</h3>
-          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
-          <input type="text" id="room-type-other" placeholder="Describe your room type..."
-            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
         </div>
 
         <!-- Style Profile -->
@@ -313,6 +313,63 @@
       aiResult:         null,
     };
 
+    // ── Draft persistence ─────────────────────────────────────────────
+    // Keep the user's picks when they navigate away (e.g. back to Define
+    // Room via the stepper) and return. Cleared when a new room is started.
+    const PICKS_KEY = 'blueprintInspoPicks';
+    function persistPicks() {
+      try {
+        // Blob URLs (uploaded files) don't survive navigation — only keep
+        // a real remote URL so the preview can be restored.
+        const visionUrl = /^https?:/i.test(state.visionUrl) ? state.visionUrl : '';
+        localStorage.setItem(PICKS_KEY, JSON.stringify({
+          roomId:           ROOM_ID || null,
+          selectedRoomType: state.selectedRoomType,
+          roomTypeIsOther:  state.roomTypeIsOther,
+          selectedStyle:    state.selectedStyle,
+          selectedMood:     state.selectedMood,
+          selectedColors:   state.selectedColors,
+          selectedFeatures: state.selectedFeatures,
+          visionUrl,
+        }));
+      } catch {}
+    }
+    function restorePicks() {
+      let saved;
+      try { saved = JSON.parse(localStorage.getItem(PICKS_KEY) || 'null'); } catch { return; }
+      if (!saved || typeof saved !== 'object') return;
+      // Only restore picks that belong to the room currently being edited, so
+      // a different or brand-new room never inherits stale selections. (Avoids
+      // having to clear a new key from the shared new-room handlers.)
+      if ((saved.roomId || null) !== (ROOM_ID || null)) return;
+      if (typeof saved.selectedRoomType === 'string') state.selectedRoomType = saved.selectedRoomType;
+      state.roomTypeIsOther = !!saved.roomTypeIsOther;
+      if (typeof saved.selectedStyle === 'string') state.selectedStyle = saved.selectedStyle;
+      if (typeof saved.selectedMood === 'string')  state.selectedMood  = saved.selectedMood;
+      if (Array.isArray(saved.selectedColors))
+        state.selectedColors = saved.selectedColors.filter(c => c && typeof c.hex === 'string').slice(0, 3);
+      if (Array.isArray(saved.selectedFeatures))
+        state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string').slice(0, 3);
+      if (typeof saved.visionUrl === 'string') state.visionUrl = saved.visionUrl;
+    }
+    // Restore the step-1 image and "Other" room-type fields into the DOM
+    // (grids reflect state on build; these inputs need explicit hydration).
+    function hydrateRestoredUi() {
+      const other = document.getElementById('room-type-other');
+      if (other && state.roomTypeIsOther) {
+        other.classList.remove('hidden');
+        if (state.selectedRoomType) other.value = state.selectedRoomType;
+      }
+      if (/^https?:/i.test(state.visionUrl)) {
+        const urlInput = document.getElementById('pinterest-url');
+        if (urlInput) urlInput.value = state.visionUrl;
+        showPreview(state.visionUrl);
+        checkStep1Valid();
+      }
+      checkStep2Valid();
+    }
+    window.addEventListener('beforeunload', persistPicks);
+
     // ── Step navigation ───────────────────────────────────────────────
     function showStep(n) {
       [1, 2, 3].forEach(i => {
@@ -346,7 +403,7 @@
     }
 
     function checkStep1Valid() {
-      document.getElementById('step1-next').disabled = !state.visionUrl;
+      document.getElementById('step1-next').disabled = !state.visionUrl || !state.selectedRoomType;
     }
 
     // ── File upload ───────────────────────────────────────────────────
@@ -420,6 +477,7 @@
             other.classList.add('hidden');
             other.value = '';
           }
+          checkStep1Valid();
           checkStep2Valid();
         });
         grid.appendChild(btn);
@@ -429,6 +487,7 @@
     document.getElementById('room-type-other').addEventListener('input', function () {
       if (!state.roomTypeIsOther) return;
       state.selectedRoomType = this.value.trim() || null;
+      checkStep1Valid();
       checkStep2Valid();
     });
 
@@ -687,11 +746,13 @@
     });
 
     // ── Init ──────────────────────────────────────────────────────────
+    restorePicks();
     buildRoomTypeGrid();
     buildStyleGrid();
     buildMoodGrid();
     buildColorGrid();
     buildFeatureGrid();
+    hydrateRestoredUi();
     showStep(1);
   </script>
 </body>

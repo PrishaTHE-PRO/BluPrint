@@ -41,13 +41,13 @@
       </div>
     </div>
   </nav>
-  <div class="workflow-steps" aria-label="Room design progress" data-sd-id="16">
-    <div class="workflow-step active" data-sd-id="17"><span data-sd-id="18">1</span><strong>Define Room</strong></div>
+  <nav class="workflow-steps" aria-label="Room design progress" data-sd-id="16">
+    <div class="workflow-step active" aria-current="step" data-sd-id="17"><span data-sd-id="18">1</span><strong>Define Room</strong></div>
     <div class="workflow-connector" data-sd-id="19"></div>
-    <div class="workflow-step" data-sd-id="20"><span data-sd-id="21">2</span><strong>Add Inspiration</strong></div>
+    <a class="workflow-step" href="inspo-upload.html" aria-label="Go to Add Inspiration" data-sd-id="20"><span data-sd-id="21">2</span><strong>Add Inspiration</strong></a>
     <div class="workflow-connector" data-sd-id="22"></div>
-    <div class="workflow-step" data-sd-id="23"><span data-sd-id="24">3</span><strong>View Design</strong></div>
-  </div>
+    <a class="workflow-step" href="room-result.html" aria-label="Go to View Design" data-sd-id="23"><span data-sd-id="24">3</span><strong>View Design</strong></a>
+  </nav>
   <main class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full" data-sd-id="25">
     <section class="w-[70%] relative flex flex-col gap-4 overflow-hidden h-full" data-sd-id="26">
       <header class="animate-slide-right flex-shrink-0" data-sd-id="27">
@@ -352,6 +352,51 @@ function captureRoomLayoutSnapshot() {
 
 function persistRoomLayout(layout) {
   localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+}
+
+/* Rehydrate a previously saved layout so navigating back to this page — e.g.
+   via the workflow stepper above — keeps the user's room instead of resetting
+   to the default. New rooms clear this key, so it's a no-op for a fresh start. */
+function restorePersistedLayout() {
+  let raw;
+  try {
+    raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY);
+  } catch {
+    return false;
+  }
+  if (!raw) return false;
+
+  let layout;
+  try {
+    layout = JSON.parse(raw);
+  } catch {
+    return false;
+  }
+  if (!layout || layout.version !== ROOM_LAYOUT_VERSION) return false;
+
+  // Don't rehydrate one room's layout onto another.
+  const currentRoomId = localStorage.getItem("blueprintCurrentRoomId");
+  if (layout.roomId && currentRoomId && layout.roomId !== currentRoomId) return false;
+
+  if (Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 3) {
+    state.roomPoints = cloneObj(layout.roomPoints);
+  }
+  if (Array.isArray(layout.elements)) state.elements = cloneObj(layout.elements);
+  if (Array.isArray(layout.cutouts)) state.cutouts = cloneObj(layout.cutouts);
+  if (roomNameInput && layout.roomName) roomNameInput.value = layout.roomName;
+  // currentUnit is "ft" at init, matching the stored heightFt.
+  if (heightInput && Number.isFinite(layout.heightFt)) {
+    heightInput.value = String(layout.heightFt);
+  }
+  return true;
+}
+
+if (restorePersistedLayout()) {
+  // Drop the default-room history entry so Undo doesn't jump back to it.
+  history = [];
+  historyIndex = -1;
+  saveState();
+  renderAll();
 }
 
 document.getElementById("cta-save-continue").addEventListener("click", async () => {
