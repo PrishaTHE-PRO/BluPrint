@@ -8,7 +8,11 @@ const RoomSchema = new mongoose.Schema({
     lengthFt: { type: Number, required: true }, // How long is it?
     heightFt: { type: Number, required: true }, // How tall is it?
     sqft: { type: Number, required: true },     // Total floor space!
-    layout: { type: mongoose.Schema.Types.Mixed, default: null } // 2D room preview snapshot
+    layout: { type: mongoose.Schema.Types.Mixed, default: null }, // 2D room preview snapshot
+    // Where the user placed each furniture piece, which ones they removed, and
+    // which product they swapped in. Stores full items, not search ids — those
+    // are positional and change between searches.
+    furnitureLayout: { type: mongoose.Schema.Types.Mixed, default: null }
 }, { timestamps: true }); // This automatically adds the date it was made!
 
 module.exports = mongoose.model('Room', RoomSchema);
