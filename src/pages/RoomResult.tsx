@@ -332,6 +332,25 @@ export default function RoomResult() {
         </div>
       </nav>
 
+      {/* Workflow stepper — lets the user step back to change the room or their
+          preferences and re-analyze. Those pages restore prior input on load. */}
+      <nav className="workflow-steps" aria-label="Room design progress">
+        <a className="workflow-step completed" href="/room-dimensions.html" aria-label="Back to Define Room">
+          <span><iconify-icon icon="ph:check-bold" /></span>
+          <strong>Define Room</strong>
+        </a>
+        <div className="workflow-connector completed" />
+        <a className="workflow-step completed" href="/inspo-upload.html" aria-label="Back to Add Inspiration">
+          <span><iconify-icon icon="ph:check-bold" /></span>
+          <strong>Add Inspiration</strong>
+        </a>
+        <div className="workflow-connector completed" />
+        <div className="workflow-step active" aria-current="step">
+          <span>3</span>
+          <strong>View Design</strong>
+        </div>
+      </nav>
+
       <main className="relative z-10 max-w-[1600px] mx-auto p-8 lg:p-12">
 
         <header className="mb-8 animate-reveal" style={{ animationDelay: '0.3s' }}>
