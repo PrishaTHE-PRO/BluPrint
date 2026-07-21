@@ -432,6 +432,7 @@ const FURN_COLORS = {
     dresser: '#94adca', sideboard: '#94adca', vanity: '#94adca', kitchen_storage: '#94adca', bar_cabinet: '#94adca',
     wardrobe: '#5c7ca4', bookshelf: '#5c7ca4', storage_cabinet: '#5c7ca4', kitchen_shelf: '#5c7ca4', bath_storage: '#5c7ca4', nursery_shelf: '#5c7ca4',
     floor_lamp: '#f1e7c4', bedside_lamp: '#f1e7c4', desk_lamp: '#f1e7c4',
+    wall_art: '#5c7ca4', floating_shelves: '#a7bdd6',
 };
 // Default footprint (inches) when a saved item omits its own dimensions — keyed
 // per category so a bed falls back to a bed's size, not a generic small box.
@@ -444,6 +445,7 @@ const FURN_DEFAULT_W = {
     desk: 60, office_chair: 24, bookshelf: 36, desk_lamp: 10, storage_cabinet: 24, monitor_stand: 24,
     dining_table: 60, dining_chair: 18, dining_rug: 96, sideboard: 54, dining_light: 18, bar_cabinet: 36,
     crib: 52, nursery_dresser: 36, rocking_chair: 28, nursery_rug: 72, nursery_shelf: 30, nursery_lamp: 10,
+    wall_art: 42, floating_shelves: 44,
 };
 const FURN_DEFAULT_D = {
     sofa: 36, accent_chair: 32, coffee_table: 24, rug: 72, floor_lamp: 12, side_table: 18,
@@ -453,6 +455,7 @@ const FURN_DEFAULT_D = {
     desk: 30, office_chair: 24, bookshelf: 14, desk_lamp: 10, storage_cabinet: 18, monitor_stand: 12,
     dining_table: 36, dining_chair: 18, dining_rug: 72, sideboard: 18, dining_light: 18, bar_cabinet: 18,
     crib: 28, nursery_dresser: 18, rocking_chair: 30, nursery_rug: 60, nursery_shelf: 12, nursery_lamp: 10,
+    wall_art: 3, floating_shelves: 10,
 };
 const furnHeight  = (cat) => FURN_HEIGHTS[cat] ?? 2.5;
 const furnColor   = (cat) => FURN_COLORS[cat] || '#9fb2c8';
@@ -623,6 +626,39 @@ function isoPartOps(ox, oy, cxR, cyR, rot, lx, ly, lw, ld, z0, h, color, seam) {
     return ops;
 }
 
+// Wall-mounted pieces render flat on / attached to a wall, not as floor boxes.
+function isoIsWallMounted(cat) { return cat === 'wall_art' || cat === 'floating_shelves'; }
+
+// Returns { order, ops } for a wall-mounted item on whichever visible back wall
+// (y=0 or x=0) it sits nearest. Walls are drawn short (WH ft) so pieces stay
+// within that band. Ordered behind the furniture (negative order).
+function isoWallMounted(cat, cx, cy, w, d, hex, WH) {
+    const onBack = cy <= cx;                 // nearer the back (y=0) wall, else the left (x=0) wall
+    const along = onBack ? cx : cy;
+    const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
+    const ops = [];
+
+    if (cat === 'wall_art') {
+        const aw = Math.max(1.2, w), ah = Math.min(1.9, WH - 0.6), zc = WH * 0.55, off = 0.05, ins = 0.16;
+        const z1 = zc - ah / 2, z2 = zc + ah / 2;
+        const rect = (o, i) => onBack
+            ? [P(cx - aw / 2 + i, o, z1 + i), P(cx + aw / 2 - i, o, z1 + i), P(cx + aw / 2 - i, o, z2 - i), P(cx - aw / 2 + i, o, z2 - i)]
+            : [P(o, cy - aw / 2 + i, z1 + i), P(o, cy + aw / 2 - i, z1 + i), P(o, cy + aw / 2 - i, z2 - i), P(o, cy - aw / 2 + i, z2 - i)];
+        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade(hex, -0.05) });   // frame
+        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#efe6cc' });     // canvas
+        return { order: -500 + along, ops };
+    }
+
+    // floating_shelves — two thin slabs cantilevered off the wall
+    const sw = Math.max(1.6, w), sd = Math.max(0.55, Math.min(1.0, d || 0.8));
+    [WH * 0.5, WH * 0.8].forEach((z0) => {
+        let ox, oy, lw, ld;
+        if (onBack) { ox = cx - sw / 2; oy = 0; lw = sw; ld = sd; } else { ox = 0; oy = cy - sw / 2; lw = sd; ld = sw; }
+        isoPartOps(0, 0, 0, 0, 0, ox, oy, lw, ld, z0, 0.14, hex, null).forEach((op) => ops.push(op));
+    });
+    return { order: -490 + along, ops };
+}
+
 function renderIsoRoom(room) {
     const rough = window.rough;
     if (!rough) return null;
@@ -674,6 +710,8 @@ function renderIsoRoom(room) {
         if (w <= 0 || d <= 0) return;
         const x = toNumber(entry.x), y = toNumber(entry.y), rot = toNumber(entry.rotation);
         const H = furnHeight(cat), hex = furnColor(cat);
+
+        if (isoIsWallMounted(cat)) { pieces.push(isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH)); return; }
 
         if (H < 0.1) {
             // Rug — a flat pad just above the floor.
