@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BluPrint | Sign In</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --garden-dark: #0A3323;
+      --garden-moss: #839958;
+      --garden-beige: #F7F4D5;
+      --garden-rosy: #D3968C;
+      --garden-midnight: #105666;
+      --garden-accent: #f5a7b8;
+    }
+    body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); overflow: hidden; }
+    h1, h2, h3 { font-family: 'Crimson Pro', serif; }
+    .grid-background {
+      background-image: linear-gradient(rgba(131,153,88,0.1) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(131,153,88,0.1) 1.5px, transparent 1.5px);
+      background-size: 50px 50px;
+    }
+    .ghibli-border {
+      border: 2px solid rgba(247,244,213,0.15);
+      border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px;
+      transition: border-color 0.4s ease;
+    }
+    .garden-card {
+      background: rgba(16,86,102,0.25);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(247,244,213,0.1);
+      box-shadow: 0 40px 100px -20px rgba(0,0,0,0.5);
+    }
+    @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(5deg); } }
+    @keyframes float-slow { 0%,100% { transform: translate(0,0); } 33% { transform: translate(30px,-20px); } 66% { transform: translate(-20px,40px); } }
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes pulse-soft { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
+    @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .floating-particle { position: absolute; background: var(--garden-beige); border-radius: 50%; pointer-events: none; filter: blur(2px); animation: float-slow 15s infinite ease-in-out; }
+    .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; opacity: 0; }
+    .input-field { background: rgba(247,244,213,0.05); border: 1px solid rgba(247,244,213,0.1); color: var(--garden-beige); transition: all 0.3s ease; }
+    .input-field:focus { background: rgba(247,244,213,0.1); border-color: var(--garden-rosy); outline: none; box-shadow: 0 0 0 4px rgba(211,150,140,0.1); }
+    .input-field.error { border-color: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,0.1); }
+    .btn-bounce { transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .btn-bounce:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 20px 40px -10px rgba(211,150,140,0.4); }
+    .btn-bounce:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+    .noise-texture { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(10,51,35,0.95); border: 1px solid rgba(247,244,213,0.15); color: var(--garden-beige); font-family: 'Quicksand', sans-serif; font-size: 14px; padding: 12px 28px; border-radius: 999px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 100; backdrop-filter: blur(8px); }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+  <link rel="stylesheet" href="./design-system.css">
+</head>
+<body class="page-login">
+  <main class="login-shell">
+    <section class="login-brand" aria-label="BluPrint introduction">
+      <a class="bp-wordmark" href="index.html" aria-label="BluPrint home">
+        <span class="bp-wordmark-em">Blu</span>
+        <span class="bp-wordmark-rest">Print</span>
+      </a>
+
+      <svg class="login-plan" viewBox="0 0 420 320" fill="none" aria-hidden="true">
+        <g opacity=".22" stroke="currentColor" stroke-width=".7" stroke-dasharray="7 10">
+          <path d="M42 82H378M42 151H378M42 220H378"/>
+          <path d="M126 32V264M224 32V264M322 32V264"/>
+        </g>
+        <rect x="42" y="32" width="336" height="232" rx="5" fill="rgba(255,255,255,.5)" stroke="currentColor" stroke-width="3"/>
+        <rect x="56" y="47" width="194" height="146" rx="5" fill="rgba(232,228,220,.75)" stroke="#b8a898" stroke-dasharray="6 5"/>
+        <rect x="67" y="59" width="142" height="55" rx="8" fill="#b8d4e8"/>
+        <rect x="67" y="59" width="142" height="15" rx="8" fill="#98bdd8"/>
+        <rect x="91" y="134" width="83" height="46" rx="6" fill="#d4c5b0"/>
+        <rect x="266" y="58" width="65" height="65" rx="8" fill="#e8d5c8"/>
+        <rect x="309" y="143" width="52" height="98" rx="4" fill="#d0c8b8"/>
+        <path d="M42 228Q72 228 72 264" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
+        <rect x="234" y="27" width="92" height="10" rx="4" fill="#b8d4e8" stroke="currentColor"/>
+        <text x="210" y="297" text-anchor="middle" fill="#7a7060" font-family="DM Sans" font-size="12">12 ft</text>
+      </svg>
+
+      <div class="login-quote">
+        <strong>Design rooms that feel like home.</strong>
+        <span>AI-powered interior design, built around your taste.</span>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <div class="login-card">
+        <h1>Welcome back</h1>
+        <p>Sign in to your BluPrint workspace.</p>
+
+        <button type="button" id="google-button" onclick="handleGoogle()" class="social-login">
+          <iconify-icon icon="logos:google-icon" class="text-lg"></iconify-icon>
+          Continue with Google
+        </button>
+
+        <div class="login-divider">or</div>
+
+        <div class="flex flex-col gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-2" for="email">Email address</label>
+            <input type="email" id="email" placeholder="you@example.com" class="input-field w-full px-4 py-3">
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-2">
+              <label class="block text-xs font-medium" for="password">Password</label>
+              <a href="#" id="forgot-link" class="text-xs font-medium">Forgot password?</a>
+            </div>
+            <input type="password" id="password" placeholder="••••••••" class="input-field w-full px-4 py-3">
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="remember" class="h-4 w-4 accent-[#3D5A80] cursor-pointer">
+            <label for="remember" class="text-xs cursor-pointer">Keep me signed in</label>
+          </div>
+
+          <button type="button" id="login-btn" onclick="handleLogin()" class="w-full py-3 text-white font-semibold">
+            Sign in <span aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <p class="mt-7 text-center text-sm">
+          New to BluPrint?
+          <a href="#" id="signup-link" onclick="handleSignup(event)" class="font-semibold ml-1">Create an account</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast"></div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

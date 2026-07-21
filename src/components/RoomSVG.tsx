@@ -151,6 +151,7 @@ interface Props {
 export interface Placement {
   positions: Record<string, PosFt>;
   rotations: Record<string, number>;
+  scales: Record<string, number>;
 }
 
 /** Position in feet from the room's top-left origin */
@@ -167,10 +168,11 @@ function defaultPos(category: string, room: Room): PosFt {
   };
 }
 
-function pieceSizeFt(item: FurnitureItem) {
+function pieceSizeFt(item: FurnitureItem, scale = 1) {
+  const safeScale = Math.max(0.5, Math.min(2, scale));
   return {
-    wFt: (item.widthIn ?? DEFAULT_WIDTH_IN[item.category] ?? 36) / 12,
-    dFt: (item.depthIn ?? DEFAULT_DEPTH_IN[item.category] ?? 30) / 12,
+    wFt: ((item.widthIn ?? DEFAULT_WIDTH_IN[item.category] ?? 36) / 12) * safeScale,
+    dFt: ((item.depthIn ?? DEFAULT_DEPTH_IN[item.category] ?? 30) / 12) * safeScale,
   };
 }
 
@@ -363,8 +365,9 @@ function clampFurniturePosition(
   rotation: number,
   roomWidthFt: number,
   roomLengthFt: number,
+  scale = 1,
 ): PosFt {
-  const { wFt, dFt } = pieceSizeFt(item);
+  const { wFt, dFt } = pieceSizeFt(item, scale);
   const radians = (rotation * Math.PI) / 180;
   const occupiedWidth = Math.abs(wFt * Math.cos(radians)) + Math.abs(dFt * Math.sin(radians));
   const occupiedDepth = Math.abs(wFt * Math.sin(radians)) + Math.abs(dFt * Math.cos(radians));
@@ -383,8 +386,8 @@ function clampFurniturePosition(
   };
 }
 
-function furnitureBounds(position: PosFt, item: FurnitureItem, rotation: number): ForbiddenRect {
-  const { wFt, dFt } = pieceSizeFt(item);
+function furnitureBounds(position: PosFt, item: FurnitureItem, rotation: number, scale = 1): ForbiddenRect {
+  const { wFt, dFt } = pieceSizeFt(item, scale);
   const radians = (rotation * Math.PI) / 180;
   const occupiedWidth = Math.abs(wFt * Math.cos(radians)) + Math.abs(dFt * Math.sin(radians));
   const occupiedDepth = Math.abs(wFt * Math.sin(radians)) + Math.abs(dFt * Math.cos(radians));
@@ -402,6 +405,7 @@ function placedFurnitureZones(
   positions: Record<string, PosFt>,
   furniture: FurnitureItem[],
   rotations: Record<string, number>,
+  scales: Record<string, number>,
   excludedCategory: string,
 ): ForbiddenRect[] {
   if (isFloorCovering(excludedCategory)) return [];
@@ -415,6 +419,7 @@ function placedFurnitureZones(
       positions[item.category],
       item,
       rotations[item.category] ?? 0,
+      scales[item.category] ?? 1,
     ));
 }
 
@@ -423,8 +428,9 @@ function overlapsForbiddenZone(
   item: FurnitureItem,
   rotation: number,
   zones: ForbiddenRect[],
+  scale = 1,
 ) {
-  const bounds = furnitureBounds(position, item, rotation);
+  const bounds = furnitureBounds(position, item, rotation, scale);
   const clearance = 0.1;
   return zones.some(zone =>
     bounds.maxX > zone.minX - clearance
@@ -441,9 +447,10 @@ function findValidFurniturePosition(
   roomWidthFt: number,
   roomLengthFt: number,
   zones: ForbiddenRect[],
+  scale = 1,
 ): PosFt {
-  const base = clampFurniturePosition(desired, item, rotation, roomWidthFt, roomLengthFt);
-  if (!overlapsForbiddenZone(base, item, rotation, zones)) return base;
+  const base = clampFurniturePosition(desired, item, rotation, roomWidthFt, roomLengthFt, scale);
+  if (!overlapsForbiddenZone(base, item, rotation, zones, scale)) return base;
 
   const step = 0.25;
   const maxRadius = Math.max(roomWidthFt, roomLengthFt);
@@ -456,8 +463,8 @@ function findValidFurniturePosition(
         { x: base.x + radius, y: base.y + offset },
       ];
       for (const candidate of candidates) {
-        const clamped = clampFurniturePosition(candidate, item, rotation, roomWidthFt, roomLengthFt);
-        if (!overlapsForbiddenZone(clamped, item, rotation, zones)) return clamped;
+        const clamped = clampFurniturePosition(candidate, item, rotation, roomWidthFt, roomLengthFt, scale);
+        if (!overlapsForbiddenZone(clamped, item, rotation, zones, scale)) return clamped;
       }
     }
   }
@@ -824,12 +831,20 @@ export default function RoomSVG({
     pointerStartAngle: number;
     rotationStart: number;
   } | null>(null);
+  const resizeRef = useRef<{
+    category: string;
+    center: PosFt;
+    pointerStartDistance: number;
+    scaleStart: number;
+  } | null>(null);
   const seededRef = useRef(false);
 
   const [positions,  setPositions]  = useState<Record<string, PosFt>>({});
   const [rotations,  setRotations]  = useState<Record<string, number>>({});
+  const [scales,     setScales]     = useState<Record<string, number>>({});
   const [dragging,   setDragging]   = useState<string | null>(null);
   const [rotating,   setRotating]   = useState<string | null>(null);
+  const [resizing,   setResizing]   = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Seed from a saved layout exactly once — it may arrive after the first render.
@@ -838,12 +853,13 @@ export default function RoomSVG({
     seededRef.current = true;
     setPositions(initialPlacement.positions);
     setRotations(initialPlacement.rotations);
+    setScales(initialPlacement.scales);
   }, [initialPlacement]);
 
   // Report placement upward so Save Layout can capture it.
   useEffect(() => {
-    onPlacementChange?.({ positions, rotations });
-  }, [positions, rotations, onPlacementChange]);
+    onPlacementChange?.({ positions, rotations, scales });
+  }, [positions, rotations, scales, onPlacementChange]);
 
   // Canvas dimensions — driven by the actual polygon bounding box when available
   // so the viewport, grid, labels, and drag clamping all agree.
@@ -894,8 +910,9 @@ export default function RoomSVG({
     setPositions(prev => {
       const next = { ...prev };
       furniture.forEach(item => {
-        const occupiedZones = placedFurnitureZones(next, furniture, rotations, item.category);
+        const occupiedZones = placedFurnitureZones(next, furniture, rotations, scales, item.category);
         const rotation = rotations[item.category] ?? defaultRotation(item.category);
+        const scale = scales[item.category] ?? 1;
         next[item.category] = findValidFurniturePosition(
           next[item.category] ?? preferredFurniturePosition(item, next, furniture, cW, cL),
           item,
@@ -903,11 +920,12 @@ export default function RoomSVG({
           cW,
           cL,
           [...forbiddenZones, ...occupiedZones],
+          scale,
         );
       });
       return next;
     });
-  }, [furniture, forbiddenZones, room, rotations, cW, cL]);
+  }, [furniture, forbiddenZones, room, rotations, scales, cW, cL]);
 
   // Convert a pointer-event client coordinate to room-space feet
   const clientToFt = useCallback((e: React.PointerEvent): PosFt => {
@@ -950,7 +968,7 @@ export default function RoomSVG({
     const item = furniture.find(candidate => candidate.category === category);
     if (!item) return;
     const position = positions[category] ?? defaultPos(category, room);
-    const { wFt, dFt } = pieceSizeFt(item);
+    const { wFt, dFt } = pieceSizeFt(item, scales[category] ?? 1);
     const center = { x: position.x + wFt / 2, y: position.y + dFt / 2 };
     const pointer = clientToFt(e);
     rotateRef.current = {
@@ -963,9 +981,65 @@ export default function RoomSVG({
     setRotating(category);
     setSelectedCategory(category);
     onLinkCategory?.(category);
-  }, [furniture, positions, room, rotations, clientToFt, onLinkCategory]);
+  }, [furniture, positions, room, rotations, scales, clientToFt, onLinkCategory]);
+
+  const handleResizePointerDown = useCallback((category: string, e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const item = furniture.find(candidate => candidate.category === category);
+    if (!item) return;
+    const scale = scales[category] ?? 1;
+    const position = positions[category] ?? defaultPos(category, room);
+    const { wFt, dFt } = pieceSizeFt(item, scale);
+    const center = { x: position.x + wFt / 2, y: position.y + dFt / 2 };
+    const pointer = clientToFt(e);
+    resizeRef.current = {
+      category,
+      center,
+      pointerStartDistance: Math.max(0.1, Math.hypot(pointer.x - center.x, pointer.y - center.y)),
+      scaleStart: scale,
+    };
+    svgRef.current?.setPointerCapture(e.pointerId);
+    setResizing(category);
+    setSelectedCategory(category);
+    onLinkCategory?.(category);
+  }, [furniture, positions, room, scales, clientToFt, onLinkCategory]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const resizingPiece = resizeRef.current;
+    if (resizingPiece) {
+      const pointer = clientToFt(e);
+      const distance = Math.hypot(
+        pointer.x - resizingPiece.center.x,
+        pointer.y - resizingPiece.center.y,
+      );
+      const nextScale = Math.max(
+        0.5,
+        Math.min(2, resizingPiece.scaleStart * distance / resizingPiece.pointerStartDistance),
+      );
+      const item = furniture.find(candidate => candidate.category === resizingPiece.category);
+      if (!item) return;
+      const rotation = rotations[resizingPiece.category] ?? defaultRotation(resizingPiece.category);
+      const { wFt, dFt } = pieceSizeFt(item, nextScale);
+      setScales(prev => ({ ...prev, [resizingPiece.category]: nextScale }));
+      setPositions(prev => ({
+        ...prev,
+        [resizingPiece.category]: clampFurniturePosition(
+          {
+            x: resizingPiece.center.x - wFt / 2,
+            y: resizingPiece.center.y - dFt / 2,
+          },
+          item,
+          rotation,
+          cW,
+          cL,
+          nextScale,
+        ),
+      }));
+      return;
+    }
+
     const rotatingPiece = rotateRef.current;
     if (rotatingPiece) {
       const pointer = clientToFt(e);
@@ -986,8 +1060,9 @@ export default function RoomSVG({
     const item    = furniture.find(f => f.category === drag.category);
     if (!item) return;
     const rotation = rotations[drag.category] ?? defaultRotation(drag.category);
+    const scale = scales[drag.category] ?? 1;
     setPositions(prev => {
-      const occupiedZones = placedFurnitureZones(prev, furniture, rotations, drag.category);
+      const occupiedZones = placedFurnitureZones(prev, furniture, rotations, scales, drag.category);
       return {
         ...prev,
         [drag.category]: findValidFurniturePosition(
@@ -1000,16 +1075,19 @@ export default function RoomSVG({
         cW,
         cL,
         [...forbiddenZones, ...occupiedZones],
+        scale,
       ),
       };
     });
-  }, [furniture, rotations, clientToFt, cW, cL, forbiddenZones]);
+  }, [furniture, rotations, scales, clientToFt, cW, cL, forbiddenZones]);
 
   const handlePointerUp = useCallback(() => {
     dragRef.current = null;
     rotateRef.current = null;
+    resizeRef.current = null;
     setDragging(null);
     setRotating(null);
+    setResizing(null);
   }, []);
 
   const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
@@ -1017,9 +1095,10 @@ export default function RoomSVG({
     const item = furniture.find(f => f.category === category);
     if (!item) return;
     const nextRotation = ((rotations[category] ?? defaultRotation(category)) + 90) % 360;
+    const scale = scales[category] ?? 1;
     setRotations(prev => ({ ...prev, [category]: nextRotation }));
     setPositions(prev => {
-      const occupiedZones = placedFurnitureZones(prev, furniture, rotations, category);
+      const occupiedZones = placedFurnitureZones(prev, furniture, rotations, scales, category);
       return {
         ...prev,
         [category]: findValidFurniturePosition(
@@ -1029,10 +1108,11 @@ export default function RoomSVG({
         cW,
         cL,
         [...forbiddenZones, ...occupiedZones],
+        scale,
       ),
       };
     });
-  }, [furniture, rotations, room, cW, cL, forbiddenZones]);
+  }, [furniture, rotations, scales, room, cW, cL, forbiddenZones]);
 
   // ── SVG viewBox (sized to the actual polygon bounding box) ─────────────────
 
@@ -1110,7 +1190,7 @@ export default function RoomSVG({
           2D Room Layout
         </h3>
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium">
-          Drag to move · hold the rotate handle · ✕ to remove
+          Drag to move · top handle rotates · corner handle resizes
         </span>
       </div>
 
@@ -1230,7 +1310,8 @@ export default function RoomSVG({
         {/* ── Furniture pieces ── */}
         {sorted.map(item => {
           const pos    = positions[item.category] ?? defaultPos(item.category, room);
-          const { wFt, dFt } = pieceSizeFt(item);
+          const scale  = scales[item.category] ?? 1;
+          const { wFt, dFt } = pieceSizeFt(item, scale);
           const wPx    = wFt * SCALE;
           const dPx    = dFt * SCALE;
           const svgX   = pos.x * SCALE + MARGIN;
@@ -1339,6 +1420,27 @@ export default function RoomSVG({
                   <circle r={8} fill="#D3968C" stroke="#F7F4D5" strokeWidth={1.5} />
                   <path
                     d="M -3 -3 L 3 3 M 3 -3 L -3 3"
+                    stroke="#F7F4D5"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                  />
+                </g>
+              )}
+
+              {/* Bottom-right resize handle. Its distance from the piece center
+                  determines scale, preserving the product's aspect ratio. */}
+              {isLinked && (
+                <g
+                  role="button"
+                  aria-label={`Resize ${CATEGORY_LABELS[item.category] ?? item.category}`}
+                  transform={`translate(${wPx.toFixed(1)},${dPx.toFixed(1)})`}
+                  style={{ cursor: resizing === item.category ? 'grabbing' : 'nwse-resize' }}
+                  onPointerDown={e => handleResizePointerDown(item.category, e)}
+                >
+                  <circle r={9} fill="#839958" stroke="#F7F4D5" strokeWidth={2} />
+                  <path
+                    d="M -4 2 L 2 -4 M -1 4 L 4 -1"
+                    fill="none"
                     stroke="#F7F4D5"
                     strokeWidth={1.8}
                     strokeLinecap="round"

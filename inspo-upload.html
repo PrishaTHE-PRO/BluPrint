@@ -479,6 +479,8 @@
     budgetSlider.addEventListener('input', () => setBudget(budgetSlider.value));
     budgetInput.addEventListener('change', () => setBudget(budgetInput.value));
     clearBudget.addEventListener('click', () => setBudget(''));
+    const savedBudgetTotal = localStorage.getItem('blueprintBudgetTotal');
+    if (savedBudgetTotal) setBudget(savedBudgetTotal);
 
     // ── File upload ───────────────────────────────────────────────────
     const fileDrop  = document.getElementById('file-drop-area');
@@ -710,13 +712,18 @@
           throw new Error(msg);
         }
         const ai = await res.json();
+        const selectedRoomFeatures = state.selectedFeatures
+          .map(feature => String(feature || '').trim())
+          .filter(Boolean);
         const analysisResult = {
           ...ai,
           roomType:     state.selectedRoomType,
           styleTag:     ai.styleTag     ?? state.selectedStyle,
           moodTags:     ai.moodTags?.length ? ai.moodTags : [state.selectedMood],
           colorPalette: ai.colorPalette?.length ? ai.colorPalette : state.selectedColors.map(c => c.hex || c),
-          roomFeatures: ai.roomFeatures?.length ? ai.roomFeatures : state.selectedFeatures,
+          // User picks are requirements, not suggestions. Preserve every
+          // selected feature even when AI returns a different feature list.
+          roomFeatures: selectedRoomFeatures,
           budgetTotal:  state.budgetTotal || 0,
         };
         state.aiResult = analysisResult;
@@ -795,14 +802,12 @@
           }),
         });
 
-        if (state.budgetTotal) {
-          const budgetResponse = await fetch(base + '/budget', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ budgetTotal: state.budgetTotal }),
-          });
-          if (!budgetResponse.ok) throw new Error('Could not save your budget');
-        }
+        const budgetResponse = await fetch(base + '/budget', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ budgetTotal: state.budgetTotal || 0 }),
+        });
+        if (!budgetResponse.ok) throw new Error('Could not save your budget');
       } catch (e) {
         throw e;
       }

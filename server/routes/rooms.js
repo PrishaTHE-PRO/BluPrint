@@ -78,6 +78,16 @@ function sanitizeFurnitureLayout(layout) {
     return {
         version: typeof layout.version === 'number' ? layout.version : 1,
         ...(typeof layout.styleTag === 'string' ? { styleTag: layout.styleTag } : {}),
+        ...(layout.budgetTotal !== undefined
+            ? { budgetTotal: Math.max(0, toNumber(layout.budgetTotal)) }
+            : {}),
+        ...(Array.isArray(layout.roomFeatures)
+            ? {
+                roomFeatures: layout.roomFeatures
+                    .map((feature) => String(feature || '').trim())
+                    .filter(Boolean),
+            }
+            : {}),
         items: layout.items
             .filter((entry) => entry && typeof entry.category === 'string' && entry.category)
             .map((entry) => ({
@@ -86,6 +96,7 @@ function sanitizeFurnitureLayout(layout) {
                 x:        toNumber(entry.x),
                 y:        toNumber(entry.y),
                 rotation: toNumber(entry.rotation),
+                scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
                 item:     sanitizeFurnitureItem(entry.item),
             })),
         savedAt: typeof layout.savedAt === 'string' ? layout.savedAt : new Date().toISOString(),

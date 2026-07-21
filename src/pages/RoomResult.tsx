@@ -4,6 +4,7 @@ import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../type
 import RoomSVG from '../components/RoomSVG';
 import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
+import { Link000 } from '@/components/ui/skiper-ui/skiper40';
 import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
 import { orderedFurniture } from '../utils/furnitureLayout';
 import {
@@ -51,6 +52,14 @@ function readScopedSavedFurniturePlacement() {
   return placement;
 }
 
+function roomFeatureSignature(features: string[] = []) {
+  return [...features]
+    .map((feature) => feature.trim().toLowerCase())
+    .filter(Boolean)
+    .sort()
+    .join('|');
+}
+
 export default function RoomResult() {
   const [room,             setRoom]             = useState<Room | null>(null);
   const [savedLayout,      setSavedLayout]      = useState<RoomArchitectureLayout | null>(() => readScopedSavedRoomLayout());
@@ -70,7 +79,7 @@ export default function RoomResult() {
 
   // Live positions/rotations from RoomSVG. Held in a ref, not state — dragging
   // fires this on every pointer move and re-rendering the page would stutter.
-  const placementRef = useRef<Placement>({ positions: {}, rotations: {} });
+  const placementRef = useRef<Placement>({ positions: {}, rotations: {}, scales: {} });
   const restoredRef  = useRef(false);
 
   const handlePlacementChange = useCallback((placement: Placement) => {
@@ -83,6 +92,16 @@ export default function RoomResult() {
   const activePlacement = useMemo<FurniturePlacement | null>(() => {
     if (!savedPlacement) return null;
     if (savedPlacement.styleTag && style && savedPlacement.styleTag !== style.styleTag) {
+      return null;
+    }
+    if (style && (savedPlacement.budgetTotal ?? 0) !== style.budgetTotal) {
+      return null;
+    }
+    if (
+      style
+      && roomFeatureSignature(savedPlacement.roomFeatures)
+        !== roomFeatureSignature(style.roomFeatures)
+    ) {
       return null;
     }
     return savedPlacement;
@@ -109,7 +128,11 @@ export default function RoomResult() {
       if (!restoredRef.current) {
         restoredRef.current = true;
         setHiddenCategories(restored.hidden);
-        placementRef.current = { positions: restored.positions, rotations: restored.rotations };
+        placementRef.current = {
+          positions: restored.positions,
+          rotations: restored.rotations,
+          scales: restored.scales,
+        };
       }
     } else if (!restoredRef.current) {
       setHiddenCategories(new Set());
@@ -120,8 +143,8 @@ export default function RoomResult() {
 
   const initialPlacement = useMemo<Placement | null>(() => {
     if (!activePlacement) return null;
-    const { positions, rotations } = readPlacement(activePlacement);
-    return { positions, rotations };
+    const { positions, rotations, scales } = readPlacement(activePlacement);
+    return { positions, rotations, scales };
   }, [activePlacement]);
 
   const handleSwap = useCallback((category: string) => {
@@ -184,10 +207,13 @@ export default function RoomResult() {
     const placement = buildFurniturePlacement({
       roomId,
       styleTag:  style?.styleTag,
+      budgetTotal: style?.budgetTotal,
+      roomFeatures: style?.roomFeatures,
       slots:     furnitureSlots,
       hidden:    hiddenCategories,
       positions: placementRef.current.positions,
       rotations: placementRef.current.rotations,
+      scales:    placementRef.current.scales,
     });
 
     // Save locally first so the layout survives even if the request fails.
@@ -255,7 +281,13 @@ export default function RoomResult() {
 
     if (!roomId || !userId) {
       setLoading(false);
-      fetchFurniture(roomId ?? 'unknown', parsedStyle.styleTag, roomType, parsedStyle.roomFeatures);
+      fetchFurniture(
+        roomId ?? 'unknown',
+        parsedStyle.styleTag,
+        roomType,
+        parsedStyle.roomFeatures,
+        parsedStyle.budgetTotal,
+      );
       return;
     }
 
@@ -290,11 +322,27 @@ export default function RoomResult() {
         .catch(() => {}),
     ]).finally(() => setLoading(false));
 
-    fetchFurniture(roomId, parsedStyle.styleTag, roomType, parsedStyle.roomFeatures);
+    fetchFurniture(
+      roomId,
+      parsedStyle.styleTag,
+      roomType,
+      parsedStyle.roomFeatures,
+      parsedStyle.budgetTotal,
+    );
   }, []);
 
-  function fetchFurniture(roomId: string, styleTag: string, roomType = '', roomFeatures: string[] = []) {
-    const params = new URLSearchParams({ styleTag, roomType });
+  function fetchFurniture(
+    roomId: string,
+    styleTag: string,
+    roomType = '',
+    roomFeatures: string[] = [],
+    budgetTotal = 0,
+  ) {
+    const params = new URLSearchParams({
+      styleTag,
+      roomType,
+      budgetTotal: String(Math.max(0, budgetTotal)),
+    });
     roomFeatures.forEach((feature) => params.append('roomFeature', feature));
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
@@ -317,9 +365,9 @@ export default function RoomResult() {
     return (
       <div className="min-h-screen grid-background flex flex-col items-center justify-center gap-6 p-8">
         <p className="text-[#D3968C] text-xl font-medium text-center">{error}</p>
-        <a href="/inspo-upload.html" className="px-8 py-4 bg-[#D3968C] text-white rounded-2xl font-bold hover:bg-[#c1867b] transition-all">
+        <Link000 href="/inspo-upload.html" className="px-8 py-4 bg-[#D3968C] text-white rounded-2xl font-bold hover:bg-[#c1867b] transition-all">
           Analyze Style
-        </a>
+        </Link000>
       </div>
     );
   }
@@ -364,12 +412,12 @@ export default function RoomResult() {
           <span className="text-3xl font-bold tracking-tighter text-[#0A3323]" style={{ fontFamily: 'Crimson Pro, serif' }}>BluPrint</span>
         </a>
         <div className="app-nav-links">
-          <a href="/dashboard.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
+          <Link000 href="/dashboard.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
             <iconify-icon icon="ph:house-duotone" /> Home
-          </a>
-          <a href="/past-inspiration.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
+          </Link000>
+          <Link000 href="/past-inspiration.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
             <iconify-icon icon="ph:squares-four-duotone" /> Projects
-          </a>
+          </Link000>
         </div>
         <div className="app-nav-actions">
           <div className="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm cursor-pointer">
@@ -381,17 +429,17 @@ export default function RoomResult() {
       {/* Workflow stepper — lets the user step back to change the room or their
           preferences and re-analyze. Those pages restore prior input on load. */}
       <nav className="workflow-steps" aria-label="Room design progress">
-        <a className="workflow-step completed" href="/room-dimensions.html" aria-label="Back to Define Room">
+        <Link000 className="workflow-step completed" href="/room-dimensions.html" aria-label="Back to Define Room">
           <iconify-icon class="workflow-arrow" icon="ph:arrow-left-bold" />
           <span><iconify-icon icon="ph:check-bold" /></span>
           <strong>Define Room</strong>
-        </a>
+        </Link000>
         <div className="workflow-connector completed" />
-        <a className="workflow-step completed" href="/inspo-upload.html" aria-label="Back to Add Inspiration">
+        <Link000 className="workflow-step completed" href="/inspo-upload.html" aria-label="Back to Add Inspiration">
           <iconify-icon class="workflow-arrow" icon="ph:arrow-left-bold" />
           <span><iconify-icon icon="ph:check-bold" /></span>
           <strong>Add Inspiration</strong>
-        </a>
+        </Link000>
         <div className="workflow-connector completed" />
         <div className="workflow-step active" aria-current="step">
           <span>3</span>

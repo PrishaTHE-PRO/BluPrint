@@ -1,6 +1,7 @@
 const express = require("express");
 const axios   = require("axios");
 const Style   = require("../models/Style");
+const Room    = require("../models/Room");
 
 const router = express.Router();
 
@@ -104,10 +105,103 @@ function parsePrice(raw) {
   return match ? Math.round(parseFloat(match[0])) : 0;
 }
 
+function parseDimensionInches(value, unit) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return null;
+  const normalizedUnit = String(unit || "").toLowerCase();
+  if (normalizedUnit === "'" || normalizedUnit.startsWith("ft") || normalizedUnit.startsWith("feet")) {
+    return amount * 12;
+  }
+  if (normalizedUnit.startsWith("cm")) return amount / 2.54;
+  return amount;
+}
+
+function parseProductDimensions(title) {
+  const text = String(title || "").replace(/×/g, "x");
+  const match = text.match(
+    /(\d+(?:\.\d+)?)\s*(in(?:ch(?:es)?)?|"|'|ft|feet|cm)?\s*(?:w(?:ide)?\s*)?x\s*(\d+(?:\.\d+)?)\s*(in(?:ch(?:es)?)?|"|'|ft|feet|cm)(?![a-z])/i
+  );
+  if (!match) return {};
+
+  const sharedUnit = match[2] || match[4];
+  const widthIn = parseDimensionInches(match[1], sharedUnit);
+  const depthIn = parseDimensionInches(match[3], match[4] || sharedUnit);
+  if (
+    !Number.isFinite(widthIn) ||
+    !Number.isFinite(depthIn) ||
+    widthIn < 4 ||
+    depthIn < 4 ||
+    widthIn > 240 ||
+    depthIn > 240
+  ) {
+    return {};
+  }
+  return { widthIn: Math.round(widthIn), depthIn: Math.round(depthIn) };
+}
+
+/**
+ * Pick one product per category whose combined price is closest to the user's
+ * budget. The selected item is moved to the front of each category so the
+ * existing frontend slot initialization uses the optimized combination while
+ * still retaining alternatives for Swap.
+ */
+function orderFurnitureForBudget(categoryGroups, budgetTotal) {
+  if (!Number.isFinite(budgetTotal) || budgetTotal <= 0) {
+    return categoryGroups.flat();
+  }
+
+  let states = [{ total: 0, picks: [] }];
+  categoryGroups.forEach((group) => {
+    const priced = group.filter((item) => item.price > 0);
+    const options = priced.length > 0 ? priced : group.slice(0, 1);
+    const byTotal = new Map();
+
+    states.forEach((state) => {
+      options.forEach((item) => {
+        const total = state.total + Math.max(0, item.price);
+        if (!byTotal.has(total)) {
+          byTotal.set(total, { total, picks: [...state.picks, item] });
+        }
+      });
+    });
+
+    states = [...byTotal.values()];
+    if (states.length > 5000) {
+      states.sort((a, b) =>
+        Math.abs(a.total - budgetTotal) - Math.abs(b.total - budgetTotal)
+      );
+      states = states.slice(0, 5000);
+    }
+  });
+
+  const best = states.reduce((closest, candidate) =>
+    Math.abs(candidate.total - budgetTotal) < Math.abs(closest.total - budgetTotal)
+      ? candidate
+      : closest
+  );
+  const selectedIds = new Map(best.picks.map((item) => [item.category, item.id]));
+
+  console.log(
+    "[furniture] budget=",
+    budgetTotal,
+    "selectedTotal=",
+    best.total,
+    "difference=",
+    best.total - budgetTotal
+  );
+
+  return categoryGroups.flatMap((group) => {
+    const selectedId = selectedIds.get(group[0]?.category);
+    return [...group].sort((a, b) =>
+      Number(b.id === selectedId) - Number(a.id === selectedId)
+    );
+  });
+}
+
 async function searchCategory(styleTag, cat) {
   const response = await axios.post(
     "https://google.serper.dev/shopping",
-    { q: cat.query(styleTag), num: 4, gl: "us" },
+    { q: cat.query(styleTag), num: 10, gl: "us" },
     {
       headers: {
         "X-API-KEY": process.env.SERPER_API_KEY,
@@ -125,16 +219,20 @@ async function searchCategory(styleTag, cat) {
       resolvedLink: item.link || item.productLink || "",
     }))
     .filter((item) => item.resolvedImageUrl && item.resolvedLink)
-    .slice(0, 3)
-    .map((item, i) => ({
-      id:       `${cat.key}-${i}`,
-      name:     item.title,
-      category: cat.key,
-      brand:    item.source || "",
-      price:    parsePrice(item.price),
-      imageUrl: item.resolvedImageUrl,
-      buyUrl:   item.resolvedLink,
-    }));
+    .slice(0, 6)
+    .map((item, i) => {
+      const dimensions = parseProductDimensions(item.title);
+      return {
+        id:       `${cat.key}-${i}`,
+        name:     item.title,
+        category: cat.key,
+        brand:    item.source || "",
+        price:    parsePrice(item.price),
+        imageUrl: item.resolvedImageUrl,
+        buyUrl:   item.resolvedLink,
+        ...dimensions,
+      };
+    });
 }
 
 // GET /api/rooms/:roomId/furniture?styleTag=minimalist&roomType=bedroom
@@ -144,6 +242,8 @@ router.get("/:roomId/furniture", async (req, res) => {
   }
 
   const styleTag = String(req.query.styleTag || "modern").trim().toLowerCase();
+  const hasBudgetParam = Object.prototype.hasOwnProperty.call(req.query, "budgetTotal");
+  let budgetTotal = Number(req.query.budgetTotal);
   let roomType = String(req.query.roomType || "").trim();
   let roomFeatures = (Array.isArray(req.query.roomFeature)
     ? req.query.roomFeature
@@ -152,12 +252,21 @@ router.get("/:roomId/furniture", async (req, res) => {
     .filter(Boolean);
 
   try {
-    const userStyle = await Style.findOne({ roomId: req.params.roomId, source: "user" });
+    const [userStyle, room] = await Promise.all([
+      Style.findOne({ roomId: req.params.roomId, source: "user" }),
+      Room.findById(req.params.roomId).select("budgetTotal"),
+    ]);
     if (!roomType) {
       roomType = userStyle?.roomType || "living room";
     }
-    if (roomFeatures.length === 0) {
-      roomFeatures = userStyle?.roomFeatures || [];
+    // The saved user selections are authoritative. Union them with the query
+    // so an AI response or stale browser state can never drop requested items.
+    roomFeatures = [...new Set([
+      ...(userStyle?.roomFeatures || []),
+      ...roomFeatures,
+    ].map((feature) => String(feature || "").trim()).filter(Boolean))];
+    if (!hasBudgetParam && room?.budgetTotal > 0) {
+      budgetTotal = room.budgetTotal;
     }
   } catch {
     if (!roomType) roomType = "living room";
@@ -188,9 +297,10 @@ router.get("/:roomId/furniture", async (req, res) => {
     }
   });
 
-  const furniture = results.flatMap((r) =>
-    r.status === "fulfilled" ? r.value : []
-  );
+  const categoryGroups = results
+    .filter((result) => result.status === "fulfilled" && result.value.length > 0)
+    .map((result) => result.value);
+  const furniture = orderFurnitureForBudget(categoryGroups, budgetTotal);
 
   if (furniture.length === 0) {
     return res.status(502).json({ error: "Furniture search returned no results" });

@@ -1,7 +1,7 @@
 import type { FurnitureItem } from '../types';
 
 export const FURNITURE_PLACEMENT_STORAGE_KEY = 'blueprintFurniturePlacement';
-export const FURNITURE_PLACEMENT_VERSION = 1;
+export const FURNITURE_PLACEMENT_VERSION = 2;
 
 /** Position in feet from the room's top-left origin — matches RoomSVG's PosFt. */
 export interface PlacementPos { x: number; y: number }
@@ -13,6 +13,7 @@ export interface PlacedFurniture {
   x:        number;
   y:        number;
   rotation: number;
+  scale:    number;
   /**
    * The full chosen product, not just its id. Furniture ids from the search API
    * are positional (`sofa-0`, `sofa-1`, ...) and point at whatever ranks there
@@ -31,6 +32,10 @@ export interface FurniturePlacement {
    * fresh search shows through.
    */
   styleTag?: string;
+  /** Budget used when these products were selected. */
+  budgetTotal?: number;
+  /** Required room features used to build this recommendation set. */
+  roomFeatures?: string[];
   items:   PlacedFurniture[];
   savedAt: string;
 }
@@ -71,6 +76,7 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
       x:        toNumber(entry.x),
       y:        toNumber(entry.y),
       rotation: toNumber(entry.rotation),
+      scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
       item:     normalizeItem(entry.item, entry.category),
     }));
 
@@ -80,6 +86,10 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
     version: typeof layout.version === 'number' ? layout.version : FURNITURE_PLACEMENT_VERSION,
     ...(typeof layout.roomId === 'string' ? { roomId: layout.roomId } : {}),
     ...(typeof layout.styleTag === 'string' ? { styleTag: layout.styleTag } : {}),
+    ...(layout.budgetTotal !== undefined ? { budgetTotal: Math.max(0, toNumber(layout.budgetTotal)) } : {}),
+    ...(Array.isArray(layout.roomFeatures)
+      ? { roomFeatures: layout.roomFeatures.map(String).map((feature) => feature.trim()).filter(Boolean) }
+      : {}),
     items,
     savedAt: typeof layout.savedAt === 'string' ? layout.savedAt : new Date().toISOString(),
   };
@@ -88,17 +98,24 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
 export function buildFurniturePlacement(args: {
   roomId?:   string | null;
   styleTag?: string | null;
+  budgetTotal?: number | null;
+  roomFeatures?: string[];
   slots:     Record<string, FurnitureItem>;
   hidden:    Set<string>;
   positions: Record<string, PlacementPos>;
   rotations: Record<string, number>;
+  scales:    Record<string, number>;
 }): FurniturePlacement {
-  const { roomId, styleTag, slots, hidden, positions, rotations } = args;
+  const { roomId, styleTag, budgetTotal, roomFeatures, slots, hidden, positions, rotations, scales } = args;
 
   return {
     version: FURNITURE_PLACEMENT_VERSION,
     ...(roomId ? { roomId } : {}),
     ...(styleTag ? { styleTag } : {}),
+    ...(budgetTotal !== null && budgetTotal !== undefined
+      ? { budgetTotal: Math.max(0, toNumber(budgetTotal)) }
+      : {}),
+    ...(roomFeatures ? { roomFeatures: [...roomFeatures] } : {}),
     items: Object.values(slots)
       .filter(Boolean)
       .map((item) => ({
@@ -107,6 +124,7 @@ export function buildFurniturePlacement(args: {
         x:        toNumber(positions[item.category]?.x),
         y:        toNumber(positions[item.category]?.y),
         rotation: toNumber(rotations[item.category]),
+        scale:    Math.max(0.5, Math.min(2, toNumber(scales[item.category], 1))),
         item,
       })),
     savedAt: new Date().toISOString(),
@@ -118,16 +136,18 @@ export function readPlacement(placement: FurniturePlacement) {
   const slots:     Record<string, FurnitureItem> = {};
   const positions: Record<string, PlacementPos>  = {};
   const rotations: Record<string, number>        = {};
+  const scales:    Record<string, number>        = {};
   const hidden = new Set<string>();
 
   placement.items.forEach((entry) => {
     slots[entry.category]     = entry.item;
     positions[entry.category] = { x: entry.x, y: entry.y };
     rotations[entry.category] = entry.rotation;
+    scales[entry.category]    = entry.scale;
     if (entry.hidden) hidden.add(entry.category);
   });
 
-  return { slots, positions, rotations, hidden };
+  return { slots, positions, rotations, scales, hidden };
 }
 
 export function readSavedFurniturePlacement(): FurniturePlacement | null {

@@ -100,6 +100,16 @@ textarea:focus-visible {
   50% { transform: translate3d(0, -12px, 0) scale(1.04); }
 }
 
+@keyframes bp-panel-in {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes bp-panel-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 @view-transition { navigation: auto; }
 
 ::view-transition-old(root) {
@@ -633,6 +643,13 @@ body:not(.page-login) .app-nav-actions > button:not(#logout-btn) iconify-icon {
   margin: 0 auto;
   padding: 14px 0 4px;
 }
+body:not(.page-login) nav.workflow-steps {
+  padding: 14px 0 4px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+}
 .workflow-step {
   display: flex;
   align-items: center;
@@ -797,9 +814,9 @@ a.workflow-step:focus-visible {
   align-items: start;
   width: min(100% - 48px, 1480px);
   max-width: none !important;
-  column-gap: 32px !important;
-  row-gap: 28px !important;
-  padding: 28px 0 64px !important;
+  column-gap: clamp(36px, 4vw, 64px) !important;
+  row-gap: 36px !important;
+  padding: 36px 0 80px !important;
 }
 .page-inspo main > header { grid-column: 1 / -1; }
 .page-inspo #step-1,
@@ -814,18 +831,40 @@ a.workflow-step:focus-visible {
 .page-inspo .step-circle.active,
 .page-inspo .step-circle.done { background: var(--bp-primary) !important; color: #fff !important; box-shadow: none !important; }
 .page-inspo .stepper span { color: var(--bp-muted) !important; font-size: 12px; font-weight: 500 !important; }
-.page-inspo .garden-card { padding: 28px !important; }
-.page-inspo #step-2 .garden-card { padding: 22px !important; }
+.page-inspo .garden-card {
+  padding: clamp(28px, 3vw, 38px) !important;
+  border-radius: 22px !important;
+  animation: bp-panel-in .58s cubic-bezier(.22, 1, .36, 1) both;
+  transition: transform .3s cubic-bezier(.22, 1, .36, 1),
+              box-shadow .3s ease,
+              border-color .3s ease !important;
+}
+.page-inspo #step-1 > .garden-card:nth-of-type(2),
+.page-inspo #step-2 > .garden-card:nth-of-type(2) { animation-delay: 80ms; }
+.page-inspo #step-1 > .garden-card:nth-of-type(3),
+.page-inspo #step-2 > .garden-card:nth-of-type(3) { animation-delay: 140ms; }
+.page-inspo #step-2 .garden-card { padding: clamp(24px, 2.5vw, 32px) !important; }
 .page-inspo #step-2 .garden-card.space-y-4 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: .65rem !important;
+  margin-top: 1rem !important;
 }
 .page-inspo .garden-card h2 { font-size: 25px !important; }
 .page-inspo .garden-card h3 { font-size: 20px !important; }
 .page-inspo .garden-card p { color: var(--bp-muted) !important; font-size: 14px !important; }
 .page-inspo #file-drop-area { border-color: rgba(61, 90, 128, .2) !important; background: var(--bp-surface) !important; border-radius: 14px !important; }
 .page-inspo #file-drop-area:hover { background: rgba(184, 212, 232, .1) !important; border-color: var(--bp-primary) !important; }
-.page-inspo .option-btn { border: 1px solid transparent !important; border-radius: 12px !important; background: var(--bp-soft) !important; color: var(--bp-muted) !important; }
-.page-inspo .option-btn:hover { background: var(--bp-secondary) !important; }
+.page-inspo .option-btn {
+  padding: 14px 17px !important;
+  border: 1px solid transparent !important;
+  border-radius: 14px !important;
+  background: var(--bp-soft) !important;
+  color: var(--bp-muted) !important;
+  transition: transform .22s ease, background .22s ease, box-shadow .22s ease !important;
+}
+.page-inspo .option-btn:hover {
+  background: var(--bp-secondary) !important;
+  box-shadow: 0 8px 20px rgba(28, 23, 20, .07);
+  transform: translateY(-2px);
+}
 .page-inspo .option-btn.selected { border-color: rgba(61, 90, 128, .2) !important; background: var(--bp-primary) !important; color: #fff !important; }
 .page-inspo .option-btn.selected * { color: #fff !important; }
 .page-inspo #step-2:not(.hidden) {
@@ -843,12 +882,15 @@ a.workflow-step:focus-visible {
   grid-column: 2;
   grid-row: 2;
   width: 100%;
-  padding: 24px;
+  padding: 32px;
   border: 1px solid var(--bp-border);
-  border-radius: 16px;
-  background: var(--bp-surface);
-  box-shadow: 0 10px 34px rgba(28, 23, 20, .08);
-  animation: bp-enter .45s cubic-bezier(.25, .46, .45, .94) both;
+  border-radius: 22px;
+  background: rgba(254, 252, 250, .9);
+  box-shadow: 0 18px 50px rgba(28, 23, 20, .09);
+  backdrop-filter: blur(20px);
+  animation:
+    bp-enter .45s cubic-bezier(.25, .46, .45, .94) both,
+    bp-panel-breathe 7s 1.2s ease-in-out infinite;
 }
 .how-it-works-panel {
   min-height: 400px;
@@ -1082,7 +1124,18 @@ a.workflow-step:focus-visible {
 .page-result .garden-card [class*="bg-[#D3968C]"] { color: #fff !important; }
 .page-result .ring-offset-\[\#0A3323\] { --tw-ring-offset-color: var(--bp-bg) !important; }
 .page-result .room-layout-canvas {
-  padding: 2px 8px 8px 0;
+  padding: clamp(20px, 2.5vw, 30px);
+  border: 1px solid var(--bp-border);
+  border-radius: 22px;
+  background: rgba(254, 252, 250, .88);
+  box-shadow: 0 18px 52px rgba(28, 23, 20, .08);
+  backdrop-filter: blur(20px);
+  transition: box-shadow .3s ease, border-color .3s ease, transform .3s ease;
+}
+.page-result .room-layout-canvas:hover {
+  border-color: rgba(61, 90, 128, .16);
+  box-shadow: 0 24px 64px rgba(28, 23, 20, .11);
+  transform: translateY(-2px);
 }
 .page-result .room-layout-canvas > div:first-child {
   padding: 0 4px 10px;
@@ -1099,14 +1152,20 @@ a.workflow-step:focus-visible {
   min-height: 0;
   overflow: hidden;
   contain: size;
-  padding: 18px;
+  padding: 26px;
   border: 1px solid var(--bp-border);
-  border-radius: 16px;
-  background: rgba(254, 252, 250, .94);
-  box-shadow: var(--bp-shadow);
+  border-radius: 22px;
+  background: linear-gradient(160deg, rgba(254, 252, 250, .96), rgba(239, 246, 250, .9));
+  box-shadow: 0 18px 52px rgba(28, 23, 20, .08);
+  backdrop-filter: blur(20px);
+  animation: bp-panel-breathe 8s 1.8s ease-in-out infinite;
 }
 .page-result .furniture-scroll-panel .garden-card {
-  padding: 10px !important;
+  padding: 14px !important;
+  border-radius: 16px !important;
+}
+.page-result .furniture-scroll-panel .custom-furniture-scroll {
+  gap: 14px !important;
 }
 .page-result .furniture-scroll-panel .garden-card > div:nth-child(2) {
   aspect-ratio: 16 / 9 !important;

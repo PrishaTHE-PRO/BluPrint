@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FurnitureItem } from '../types';
 import { CATEGORY_LABELS } from '../utils/furnitureLayout';
+import { Link001 } from '@/components/ui/skiper-ui/skiper40';
 
 interface Props {
   item:             FurnitureItem;
@@ -141,9 +142,9 @@ export default function FurnitureCard({
                   Swap
                 </button>
               )}
-              <a href={item.buyUrl} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap">
+              <Link001 href={item.buyUrl} className="before:hidden px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap">
                 Buy
-              </a>
+              </Link001>
             </div>
           </div>
         </div>
@@ -187,14 +188,12 @@ export default function FurnitureCard({
                 Swap
               </button>
             )}
-            <a
+            <Link001
               href={item.buyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap"
+              className="before:hidden px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap"
             >
               Buy
-            </a>
+            </Link001>
           </div>
         </div>
       </div>

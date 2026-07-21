@@ -3,135 +3,511 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BluPrint | Enter Your Sanctuary</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="description" content="BluPrint turns your room dimensions, inspiration, and budget into a shoppable 2D interior plan.">
+  <title>BluPrint | A room plan built around you</title>
   <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --garden-dark: #0A3323;
-      --garden-moss: #839958;
-      --garden-beige: #F7F4D5;
-      --garden-rosy: #D3968C;
-      --garden-midnight: #105666;
-      --garden-accent: #f5a7b8;
+      --ink: #1c1714;
+      --muted: #756d63;
+      --paper: #f8f5f0;
+      --surface: rgba(255, 253, 250, .82);
+      --blue: #3d5a80;
+      --blue-dark: #294563;
+      --sky: #b8d4e8;
+      --sky-soft: #e9f3f9;
+      --sand: #e9dfd2;
+      --green: #5e7d66;
+      --line: rgba(28, 23, 20, .1);
+      --shadow: 0 28px 80px rgba(46, 58, 68, .14);
     }
-    body { font-family: 'Quicksand', sans-serif; background-color: var(--garden-dark); color: var(--garden-beige); overflow: hidden; }
-    h1, h2, h3 { font-family: 'Crimson Pro', serif; }
-    .grid-background {
-      background-image: linear-gradient(rgba(131,153,88,0.1) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(131,153,88,0.1) 1.5px, transparent 1.5px);
-      background-size: 50px 50px;
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: "DM Sans", sans-serif;
+      background:
+        radial-gradient(circle at 92% 4%, rgba(184, 212, 232, .7), transparent 28rem),
+        radial-gradient(circle at 4% 42%, rgba(233, 223, 210, .75), transparent 30rem),
+        linear-gradient(145deg, #fbf8f3 0%, #f5f7f7 48%, #eaf4fa 100%);
     }
-    .ghibli-border {
-      border: 2px solid rgba(247,244,213,0.15);
-      border-radius: 40px 60px 45px 70px / 65px 45px 75px 45px;
-      transition: border-color 0.4s ease;
+    a { color: inherit; text-decoration: none; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { font-family: "Fraunces", serif; font-weight: 400; letter-spacing: -.035em; }
+    .shell { width: min(100% - 48px, 1180px); margin-inline: auto; }
+
+    .site-nav {
+      position: fixed;
+      z-index: 50;
+      top: 16px;
+      left: 50%;
+      display: flex;
+      align-items: center;
+      width: min(calc(100% - 32px), 1180px);
+      min-height: 68px;
+      padding: 10px 12px 10px 20px;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 20px;
+      background: rgba(251, 249, 246, .76);
+      box-shadow: 0 12px 38px rgba(42, 53, 61, .08);
+      backdrop-filter: blur(22px);
     }
-    .garden-card {
-      background: rgba(16,86,102,0.25);
+    .brand { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; font-size: 20px; font-weight: 700; }
+    .brand-mark {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--blue);
+      box-shadow: inset 0 1px rgba(255,255,255,.3);
+    }
+    .nav-links { display: flex; align-items: center; gap: 28px; margin-right: 30px; color: var(--muted); font-size: 14px; font-weight: 600; }
+    .nav-links a { position: relative; }
+    .nav-links a::after {
+      position: absolute;
+      right: 0;
+      bottom: -5px;
+      left: 0;
+      height: 1.5px;
+      content: "";
+      transform: scaleX(0);
+      transform-origin: right;
+      background: var(--blue);
+      transition: transform .25s ease;
+    }
+    .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
+    .nav-actions { display: flex; align-items: center; gap: 9px; }
+    .nav-signin { padding: 11px 15px; color: var(--blue-dark); font-size: 14px; font-weight: 700; }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 46px;
+      padding: 0 20px;
+      border: 0;
+      border-radius: 13px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+    }
+    .button:hover { transform: translateY(-2px); }
+    .button-primary { color: #fff; background: var(--blue); box-shadow: 0 12px 26px rgba(61, 90, 128, .24); }
+    .button-primary:hover { background: var(--blue-dark); box-shadow: 0 16px 34px rgba(61, 90, 128, .3); }
+    .button-secondary { border: 1px solid var(--line); color: var(--ink); background: rgba(255,255,255,.66); }
+    .button-secondary:hover { background: #fff; box-shadow: 0 12px 28px rgba(43, 52, 58, .09); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: .88fr 1.12fr;
+      gap: clamp(42px, 6vw, 86px);
+      align-items: center;
+      min-height: 100vh;
+      padding-top: 116px;
+      padding-bottom: 84px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 24px;
+      padding: 7px 11px;
+      border: 1px solid rgba(61,90,128,.13);
+      border-radius: 999px;
+      color: var(--blue-dark);
+      background: rgba(255,255,255,.5);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #6e9b76; box-shadow: 0 0 0 5px rgba(110,155,118,.13); }
+    .hero h1 { max-width: 620px; margin-bottom: 24px; font-size: clamp(52px, 6.6vw, 88px); line-height: .96; }
+    .hero h1 em { color: var(--blue); font-style: italic; }
+    .hero-copy { max-width: 550px; margin-bottom: 32px; color: var(--muted); font-size: clamp(17px, 1.8vw, 20px); line-height: 1.65; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 30px; }
+    .hero-actions .button { min-height: 54px; padding-inline: 24px; font-size: 15px; }
+    .micro-proof { display: flex; align-items: center; gap: 13px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .avatars { display: flex; }
+    .avatar { display: grid; width: 30px; height: 30px; margin-left: -7px; place-items: center; border: 2px solid var(--paper); border-radius: 50%; color: var(--blue-dark); background: var(--sky); font-size: 10px; }
+    .avatar:first-child { margin-left: 0; background: #decfc1; }
+    .avatar:last-child { background: #cbd9cb; }
+
+    .product-stage { position: relative; min-height: 610px; perspective: 1200px; }
+    .app-window {
+      position: absolute;
+      inset: 30px 0 40px 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 28px;
+      background: rgba(255,255,255,.68);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      transform: rotateY(-4deg) rotateX(2deg);
+      animation: app-float 7s ease-in-out infinite;
+    }
+    .window-bar { display: flex; align-items: center; gap: 7px; height: 48px; padding: 0 18px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.48); }
+    .window-dot { width: 8px; height: 8px; border-radius: 50%; background: #d9d0c7; }
+    .window-dot:nth-child(2) { background: #c4d5df; }
+    .window-dot:nth-child(3) { background: #bacdbd; }
+    .window-title { margin-left: auto; color: #8c857d; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .planner { display: grid; grid-template-columns: 1fr 160px; height: calc(100% - 48px); padding: 22px; gap: 17px; }
+    .canvas {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(61,90,128,.09);
+      border-radius: 20px;
+      background: #f7f3ec;
+    }
+    .canvas::before {
+      position: absolute; inset: 0; content: "";
+      opacity: .45;
+      background-image: linear-gradient(rgba(61,90,128,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(61,90,128,.08) 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+    .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); }
+    .side-list { display: flex; flex-direction: column; gap: 11px; }
+    .side-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; font-size: 11px; font-weight: 800; }
+    .mini-card { padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.86); box-shadow: 0 7px 16px rgba(46,58,68,.05); }
+    .mini-image { height: 55px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(145deg, #d8e8f1, #e8ded2); }
+    .mini-line { width: 74%; height: 5px; margin-bottom: 5px; border-radius: 999px; background: #cfc8bf; }
+    .mini-line.short { width: 42%; background: #97acbe; }
+    .floating-note {
+      position: absolute;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      border: 1px solid rgba(255,255,255,.85);
+      border-radius: 15px;
+      background: rgba(255,255,255,.83);
+      box-shadow: 0 15px 35px rgba(44,55,63,.13);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(247,244,213,0.1);
-      box-shadow: 0 40px 100px -20px rgba(0,0,0,0.5);
+      font-size: 12px;
+      font-weight: 700;
+      animation: note-float 5s ease-in-out infinite;
     }
-    @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(5deg); } }
-    @keyframes float-slow { 0%,100% { transform: translate(0,0); } 33% { transform: translate(30px,-20px); } 66% { transform: translate(-20px,40px); } }
-    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes pulse-soft { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
-    @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .floating-particle { position: absolute; background: var(--garden-beige); border-radius: 50%; pointer-events: none; filter: blur(2px); animation: float-slow 15s infinite ease-in-out; }
-    .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; opacity: 0; }
-    .input-field { background: rgba(247,244,213,0.05); border: 1px solid rgba(247,244,213,0.1); color: var(--garden-beige); transition: all 0.3s ease; }
-    .input-field:focus { background: rgba(247,244,213,0.1); border-color: var(--garden-rosy); outline: none; box-shadow: 0 0 0 4px rgba(211,150,140,0.1); }
-    .input-field.error { border-color: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,0.1); }
-    .btn-bounce { transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
-    .btn-bounce:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 20px 40px -10px rgba(211,150,140,0.4); }
-    .btn-bounce:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
-    .noise-texture { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-    /* toast */
-    #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(10,51,35,0.95); border: 1px solid rgba(247,244,213,0.15); color: var(--garden-beige); font-family: 'Quicksand', sans-serif; font-size: 14px; padding: 12px 28px; border-radius: 999px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 100; backdrop-filter: blur(8px); }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .floating-note iconify-icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; color: var(--blue); background: var(--sky-soft); font-size: 18px; }
+    .note-one { top: 4px; right: -20px; }
+    .note-two { bottom: 8px; left: -18px; animation-delay: -2.4s; }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 120px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.48); backdrop-filter: blur(18px); }
+    .stat { padding: 28px; text-align: center; }
+    .stat + .stat { border-left: 1px solid var(--line); }
+    .stat strong { display: block; margin-bottom: 4px; color: var(--blue-dark); font-family: "Fraunces", serif; font-size: 30px; font-weight: 500; }
+    .stat span { color: var(--muted); font-size: 13px; }
+
+    .section { padding: 36px 0 120px; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 42px; }
+    .section-heading h2 { max-width: 680px; margin-bottom: 0; font-size: clamp(39px, 5vw, 62px); line-height: 1.03; }
+    .section-heading p { max-width: 390px; margin-bottom: 6px; color: var(--muted); line-height: 1.65; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .feature-card {
+      min-height: 300px;
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 24px;
+      background: var(--surface);
+      box-shadow: 0 14px 45px rgba(43,54,61,.07);
+      backdrop-filter: blur(16px);
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .feature-card:hover { transform: translateY(-7px); box-shadow: 0 24px 60px rgba(43,54,61,.12); }
+    .feature-icon { display: grid; width: 48px; height: 48px; margin-bottom: 38px; place-items: center; border-radius: 14px; color: var(--blue); background: var(--sky-soft); font-size: 25px; }
+    .feature-card:nth-child(2) .feature-icon { color: #6f624f; background: #f0e7dc; }
+    .feature-card:nth-child(3) .feature-icon { color: var(--green); background: #e5eee6; }
+    .feature-card:nth-child(5) .feature-icon { color: #6f624f; background: #f0e7dc; }
+    .feature-card:nth-child(6) .feature-icon { color: var(--green); background: #e5eee6; }
+    .feature-card h3 { margin-bottom: 12px; font-size: 28px; }
+    .feature-card p { margin-bottom: 0; color: var(--muted); line-height: 1.65; }
+    .feature-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 22px; }
+    .feature-list span {
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--blue-dark);
+      background: rgba(255,255,255,.62);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .capability-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.42);
+    }
+    .capability {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,.6);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .capability iconify-icon { color: var(--blue); font-size: 18px; }
+
+    .process-wrap { padding: 58px; border: 1px solid rgba(255,255,255,.76); border-radius: 30px; background: linear-gradient(145deg, rgba(61,90,128,.96), rgba(41,69,99,.98)); box-shadow: 0 30px 80px rgba(41,69,99,.2); }
+    .process-wrap .section-heading h2, .process-wrap .section-heading p { color: #fff; }
+    .process-wrap .section-heading p { opacity: .7; }
+    .process { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .process-step { position: relative; padding: 24px; border: 1px solid rgba(255,255,255,.13); border-radius: 18px; color: #fff; background: rgba(255,255,255,.07); }
+    .process-number { display: grid; width: 30px; height: 30px; margin-bottom: 42px; place-items: center; border-radius: 50%; color: var(--blue-dark); background: #fff; font-size: 12px; font-weight: 800; }
+    .process-step h3 { margin-bottom: 8px; color: #fff; font-family: "DM Sans", sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 0; }
+    .process-step p { margin-bottom: 0; color: rgba(255,255,255,.66); font-size: 13px; line-height: 1.55; }
+
+    .final-cta { padding: 130px 0; text-align: center; }
+    .final-cta h2 { max-width: 760px; margin: 0 auto 22px; font-size: clamp(46px, 6vw, 76px); line-height: 1; }
+    .final-cta p { max-width: 570px; margin: 0 auto 32px; color: var(--muted); font-size: 18px; line-height: 1.6; }
+    .final-cta .button { min-height: 56px; padding-inline: 28px; }
+    footer { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    .footer-links { display: flex; gap: 24px; }
+
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @keyframes app-float { 0%,100% { transform: rotateY(-4deg) rotateX(2deg) translateY(0); } 50% { transform: rotateY(-2deg) rotateX(1deg) translateY(-8px); } }
+    @keyframes note-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; padding-top: 150px; }
+      .hero-copy { max-width: 680px; }
+      .product-stage { min-height: 560px; }
+      .section-heading { display: block; }
+      .section-heading p { margin-top: 20px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .feature-card { min-height: 260px; }
+      .feature-icon { margin-bottom: 38px; }
+      .capability-grid { grid-template-columns: repeat(2, 1fr); }
+      .process { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .shell { width: min(100% - 32px, 1180px); }
+      .site-nav { top: 10px; min-height: 60px; border-radius: 16px; }
+      .nav-signin { display: none; }
+      .hero { padding-top: 120px; padding-bottom: 56px; }
+      .hero h1 { font-size: 52px; }
+      .product-stage { min-height: 440px; margin-top: 10px; }
+      .app-window { inset: 20px 0; transform: none; animation: none; }
+      .planner { grid-template-columns: 1fr; padding: 14px; }
+      .side-list { display: none; }
+      .floating-note { font-size: 10px; }
+      .note-one { right: -8px; }
+      .note-two { left: -8px; }
+      .stats { grid-template-columns: 1fr; margin-bottom: 84px; }
+      .stat + .stat { border-top: 1px solid var(--line); border-left: 0; }
+      .section { padding-bottom: 84px; }
+      .capability-grid { grid-template-columns: 1fr; }
+      .process-wrap { padding: 30px 20px; }
+      .final-cta { padding: 96px 0; }
+      footer { align-items: flex-start; flex-direction: column; gap: 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
   </style>
-  <link rel="stylesheet" href="./design-system.css">
 </head>
-<body class="page-login">
-  <main class="login-shell">
-    <section class="login-brand" aria-label="BluPrint introduction">
-      <a class="bp-wordmark" href="/" aria-label="BluPrint home">
-        <span class="bp-wordmark-em">Blu</span>
-        <span class="bp-wordmark-rest">Print</span>
-      </a>
+<body>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a class="brand" href="index.html" aria-label="BluPrint home">
+      <span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>
+      BluPrint
+    </a>
+    <div class="nav-links">
+      <a href="#features">What it does</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#start">Why BluPrint</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-signin" href="login.html">Sign in</a>
+      <a class="button button-primary" href="login.html">Design my room <span aria-hidden="true">↗</span></a>
+    </div>
+  </nav>
 
-      <svg class="login-plan" viewBox="0 0 420 320" fill="none" aria-hidden="true">
-        <g opacity=".22" stroke="currentColor" stroke-width=".7" stroke-dasharray="7 10">
-          <path d="M42 82H378M42 151H378M42 220H378"/>
-          <path d="M126 32V264M224 32V264M322 32V264"/>
-        </g>
-        <rect x="42" y="32" width="336" height="232" rx="5" fill="rgba(255,255,255,.5)" stroke="currentColor" stroke-width="3"/>
-        <rect x="56" y="47" width="194" height="146" rx="5" fill="rgba(232,228,220,.75)" stroke="#b8a898" stroke-dasharray="6 5"/>
-        <rect x="67" y="59" width="142" height="55" rx="8" fill="#b8d4e8"/>
-        <rect x="67" y="59" width="142" height="15" rx="8" fill="#98bdd8"/>
-        <rect x="91" y="134" width="83" height="46" rx="6" fill="#d4c5b0"/>
-        <rect x="266" y="58" width="65" height="65" rx="8" fill="#e8d5c8"/>
-        <rect x="309" y="143" width="52" height="98" rx="4" fill="#d0c8b8"/>
-        <path d="M42 228Q72 228 72 264" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
-        <rect x="234" y="27" width="92" height="10" rx="4" fill="#b8d4e8" stroke="currentColor"/>
-        <text x="210" y="297" text-anchor="middle" fill="#7a7060" font-family="DM Sans" font-size="12">12 ft</text>
-      </svg>
+  <main>
+    <section class="hero shell">
+      <div>
+        <div class="eyebrow"><span class="eyebrow-dot"></span> Interior planning, made personal</div>
+        <h1>Your room, <em>thoughtfully</em> planned.</h1>
+        <p class="hero-copy">Turn inspiration into a practical 2D room plan with furniture that fits your space, style, features, and real-world budget.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="login.html">Start designing <iconify-icon icon="ph:arrow-up-right-bold"></iconify-icon></a>
+          <a class="button button-secondary" href="#how-it-works"><iconify-icon icon="ph:play-circle-duotone"></iconify-icon> See how it works</a>
+        </div>
+        <div class="micro-proof">
+          <iconify-icon icon="ph:check-circle-fill" style="color:#5e7d66;font-size:20px"></iconify-icon>
+          No design experience required. Built for real rooms and real budgets.
+        </div>
+      </div>
 
-      <div class="login-quote">
-        <strong>Design rooms that feel like home.</strong>
-        <span>AI-powered interior design, built around your taste.</span>
+      <div class="product-stage" aria-label="BluPrint room planner preview">
+        <div class="floating-note note-one"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon><span>Style matched<br><small>Warm modern</small></span></div>
+        <div class="floating-note note-two"><iconify-icon icon="ph:wallet-duotone"></iconify-icon><span>On budget<br><small>$4,920 of $5,000</small></span></div>
+        <div class="app-window">
+          <div class="window-bar">
+            <span class="window-dot"></span><span class="window-dot"></span><span class="window-dot"></span>
+            <span class="window-title">Your room plan</span>
+          </div>
+          <div class="planner">
+            <div class="canvas">
+              <svg class="floor-plan" viewBox="0 0 420 360" fill="none" aria-hidden="true">
+                <rect x="32" y="28" width="356" height="300" rx="7" fill="#FCFAF7" stroke="#294F7D" stroke-width="5"/>
+                <rect x="68" y="226" width="220" height="68" rx="13" fill="#B8D4E8" stroke="#294F7D" stroke-width="2"/>
+                <rect x="103" y="128" width="148" height="70" rx="10" fill="#E5D8C8" stroke="#8F7B68" stroke-width="2"/>
+                <rect x="86" y="100" width="180" height="130" rx="16" fill="#DDE7DD" opacity=".7" stroke="#7D987F" stroke-width="2" stroke-dasharray="7 6"/>
+                <rect x="300" y="70" width="55" height="55" rx="12" fill="#D8C7B5" stroke="#8F7B68" stroke-width="2"/>
+                <circle cx="327" cy="97" r="15" fill="#F8F5F0" stroke="#8F7B68"/>
+                <rect x="302" y="220" width="52" height="73" rx="9" fill="#C7D9E5" stroke="#294F7D" stroke-width="2"/>
+                <circle cx="61" cy="64" r="17" fill="#A9C4AB"/>
+                <path d="M32 280Q70 280 70 328" stroke="#294F7D" stroke-width="3" stroke-dasharray="5 4"/>
+                <path d="M145 28h105" stroke="#8FC5E7" stroke-width="9" stroke-linecap="round"/>
+                <text x="210" y="350" text-anchor="middle" fill="#756D63" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
+              </svg>
+            </div>
+            <aside class="side-list" aria-hidden="true">
+              <div class="side-heading"><span>Furniture</span><span>$4,920</span></div>
+              <div class="mini-card"><div class="mini-image"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#e6dbce,#dce8ed)"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#dce7dc,#e8ded2)"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+            </aside>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="login-panel">
-      <div class="login-card">
-        <h1>Welcome back</h1>
-        <p>Sign in to your BluPrint workspace.</p>
+    <section class="stats shell reveal" aria-label="BluPrint benefits">
+      <div class="stat"><strong>3 steps</strong><span>From blank room to full plan</span></div>
+      <div class="stat"><strong>Real products</strong><span>Recommendations you can buy</span></div>
+      <div class="stat"><strong>Your budget</strong><span>Optimized across the whole room</span></div>
+    </section>
 
-        <button type="button" id="google-button" onclick="handleGoogle()" class="social-login">
-          <iconify-icon icon="logos:google-icon" class="text-lg"></iconify-icon>
-          Continue with Google
-        </button>
-
-        <div class="login-divider">or</div>
-
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="block text-xs font-medium mb-2" for="email">Email address</label>
-            <input type="email" id="email" placeholder="you@example.com" class="input-field w-full px-4 py-3">
-          </div>
-
-          <div>
-            <div class="flex justify-between mb-2">
-              <label class="block text-xs font-medium" for="password">Password</label>
-              <a href="#" id="forgot-link" class="text-xs font-medium">Forgot password?</a>
-            </div>
-            <input type="password" id="password" placeholder="••••••••" class="input-field w-full px-4 py-3">
-          </div>
-
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="remember" class="h-4 w-4 accent-[#3D5A80] cursor-pointer">
-            <label for="remember" class="text-xs cursor-pointer">Keep me signed in</label>
-          </div>
-
-          <button type="button" id="login-btn" onclick="handleLogin()" class="w-full py-3 text-white font-semibold">
-            Sign in <span aria-hidden="true">→</span>
-          </button>
-        </div>
-
-        <p class="mt-7 text-center text-sm">
-          New to BluPrint?
-          <a href="#" id="signup-link" onclick="handleSignup(event)" class="font-semibold ml-1">Create an account</a>
-        </p>
+    <section class="section shell" id="features">
+      <div class="section-heading reveal">
+        <h2>Everything you need to go from blank room to finished plan.</h2>
+        <p>One focused workspace for the creative, practical, and shoppable sides of interior planning.</p>
       </div>
+      <div class="feature-grid">
+        <article class="feature-card reveal">
+          <div class="feature-icon"><iconify-icon icon="ph:ruler-duotone"></iconify-icon></div>
+          <h3>Build the real room</h3>
+          <p>Enter exact dimensions and add the architectural details that determine what can go where.</p>
+          <div class="feature-list"><span>Feet or meters</span><span>Doors</span><span>Windows</span><span>Cutouts</span></div>
+        </article>
+        <article class="feature-card reveal">
+          <div class="feature-icon"><iconify-icon icon="ph:image-square-duotone"></iconify-icon></div>
+          <h3>Bring your inspiration</h3>
+          <p>Upload an image or paste a visual reference, then use AI to translate it into a design direction.</p>
+          <div class="feature-list"><span>Image upload</span><span>URL input</span><span>AI analysis</span></div>
+        </article>
+        <article class="feature-card reveal">
+          <div class="feature-icon"><iconify-icon icon="ph:palette-duotone"></iconify-icon></div>
+          <h3>Make the style yours</h3>
+          <p>Choose the room type, style, mood, colors, and must-have features instead of accepting a generic result.</p>
+          <div class="feature-list"><span>Room type</span><span>Mood</span><span>Palette</span><span>Features</span></div>
+        </article>
+        <article class="feature-card reveal">
+          <div class="feature-icon"><iconify-icon icon="ph:wallet-duotone"></iconify-icon></div>
+          <h3>Design to a budget</h3>
+          <p>Set an optional whole-room budget and BluPrint chooses a furniture combination that gets as close as possible.</p>
+          <div class="feature-list"><span>Optional budget</span><span>Live estimate</span><span>Swap options</span></div>
+        </article>
+        <article class="feature-card reveal">
+          <div class="feature-icon"><iconify-icon icon="ph:cursor-click-duotone"></iconify-icon></div>
+          <h3>Refine the 2D layout</h3>
+          <p>Work directly on the floor plan until the arrangement fits how you actually want to use the room.</p>
+          <div class="feature-list"><span>Drag</span><span>Rotate</span><span>Resize</span><span>Add or remove</span></div>
+        </article>
+        <article class="feature-card reveal">
+          <div class="feature-icon"><iconify-icon icon="ph:shopping-bag-open-duotone"></iconify-icon></div>
+          <h3>Shop and save</h3>
+          <p>Compare real products, open buying links, save the complete layout, and return to the project later.</p>
+          <div class="feature-list"><span>Real products</span><span>Buy links</span><span>Saved projects</span></div>
+        </article>
+      </div>
+      <div class="capability-grid reveal" aria-label="Additional BluPrint capabilities">
+        <div class="capability"><iconify-icon icon="ph:dice-five-duotone"></iconify-icon>Wild Card mode</div>
+        <div class="capability"><iconify-icon icon="ph:plant-duotone"></iconify-icon>Required room features</div>
+        <div class="capability"><iconify-icon icon="ph:arrows-clockwise-duotone"></iconify-icon>Furniture swapping</div>
+        <div class="capability"><iconify-icon icon="ph:floppy-disk-duotone"></iconify-icon>Persistent layouts</div>
+        <div class="capability"><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon>Project renaming</div>
+        <div class="capability"><iconify-icon icon="ph:clock-counter-clockwise-duotone"></iconify-icon>Undo and redo</div>
+        <div class="capability"><iconify-icon icon="ph:devices-duotone"></iconify-icon>Responsive workspace</div>
+        <div class="capability"><iconify-icon icon="ph:arrow-left-duotone"></iconify-icon>Step-by-step navigation</div>
+      </div>
+    </section>
+
+    <section class="section shell" id="how-it-works">
+      <div class="process-wrap reveal">
+        <div class="section-heading">
+          <h2>A clear path to a room you love.</h2>
+          <p>No design degree, complicated software, or endless open tabs required.</p>
+        </div>
+        <div class="process">
+          <article class="process-step">
+            <span class="process-number">1</span>
+            <h3>Define your room</h3>
+            <p>Enter dimensions and mark the architectural details that affect placement.</p>
+          </article>
+          <article class="process-step">
+            <span class="process-number">2</span>
+            <h3>Share your vision</h3>
+            <p>Add inspiration, choose your style, and tell us which features are non-negotiable.</p>
+          </article>
+          <article class="process-step">
+            <span class="process-number">3</span>
+            <h3>Refine your plan</h3>
+            <p>Move, rotate, resize, swap, and shop furniture inside your personalized 2D layout.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta shell reveal" id="start">
+      <div class="eyebrow"><span class="eyebrow-dot"></span> Your blank room is waiting</div>
+      <h2>Make space for a better idea.</h2>
+      <p>Build your first room plan in minutes, then keep refining it until every piece feels right.</p>
+      <a class="button button-primary" href="login.html">Create my BluPrint <iconify-icon icon="ph:arrow-up-right-bold"></iconify-icon></a>
     </section>
   </main>
 
-  <div id="toast"></div>
+  <footer class="shell">
+    <a class="brand" href="index.html"><span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>BluPrint</a>
+    <span>Rooms that work beautifully.</span>
+    <div class="footer-links"><a href="#features">Features</a><a href="login.html">Sign in</a></div>
+  </footer>
 
-  <script type="module" src="./main.js"></script>
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.14 });
+    document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
+  </script>
 </body>
 </html>

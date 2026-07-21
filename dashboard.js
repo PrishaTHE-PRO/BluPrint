@@ -18,11 +18,11 @@ document.querySelectorAll('a[href="room-dimensions.html"]').forEach((link) => {
 });
 
 if (!isFirebaseConfigured() || !auth) {
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
 } else {
 onAuthStateChanged(auth, function(user) {
     if (!user) {
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
         return;
     }
 
@@ -117,6 +117,11 @@ async function loadProjects(userId) {
                 localStorage.setItem('blueprintCurrentRoomWidth',  String(room.widthFt));
                 localStorage.setItem('blueprintCurrentRoomLength', String(room.lengthFt));
                 localStorage.setItem('blueprintCurrentRoomHeight', String(room.heightFt || 8));
+                if (room.budgetTotal > 0) {
+                    localStorage.setItem('blueprintBudgetTotal', String(room.budgetTotal));
+                } else {
+                    localStorage.removeItem('blueprintBudgetTotal');
+                }
                 localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(getRoomPreviewLayout(room)));
                 if (room.style) {
                     localStorage.setItem('blueprintStyleResult', JSON.stringify({
@@ -126,6 +131,7 @@ async function loadProjects(userId) {
                         colorPalette: room.style.colorPalette ?? [],
                         roomFeatures: room.style.roomFeatures ?? [],
                         confidence:   room.style.confidence   ?? 0,
+                        budgetTotal:  Number(room.budgetTotal) || 0,
                     }));
                     window.location.href = 'room-result.html';
                 } else {
@@ -241,6 +247,7 @@ function clearCurrentProjectDraft() {
         'blueprintCurrentRoomWidth',
         'blueprintCurrentRoomLength',
         'blueprintCurrentRoomHeight',
+        'blueprintBudgetTotal',
         'blueprintStyleResult',
         ROOM_LAYOUT_STORAGE_KEY,
     ].forEach((key) => localStorage.removeItem(key));
@@ -431,6 +438,6 @@ if (logoutBtn) {
     logoutBtn.addEventListener('click', async function() {
         await signOut(auth);
         localStorage.removeItem('blueprintUserName');
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
     });
 }

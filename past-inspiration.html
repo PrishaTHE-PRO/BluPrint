@@ -176,14 +176,15 @@
                 'blueprintCurrentRoomWidth', 'blueprintCurrentRoomLength',
                 'blueprintCurrentRoomHeight', 'blueprintStyleResult',
                 'blueprintRoomLayout', 'blueprintCurrentRoomType',
+                'blueprintBudgetTotal',
             ].forEach(key => localStorage.removeItem(key));
         });
     });
 
     if (!isFirebaseConfigured() || !auth) {
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
     } else onAuthStateChanged(auth, function(user) {
-        if (!user) { window.location.href = 'index.html'; return; }
+        if (!user) { window.location.href = 'login.html'; return; }
         loadAllProjects(user.uid);
     });
 
@@ -281,6 +282,11 @@
                     localStorage.setItem('blueprintCurrentRoomWidth',  String(room.widthFt));
                     localStorage.setItem('blueprintCurrentRoomLength', String(room.lengthFt));
                     localStorage.setItem('blueprintCurrentRoomHeight', String(room.heightFt || 8));
+                    if (room.budgetTotal > 0) {
+                        localStorage.setItem('blueprintBudgetTotal', String(room.budgetTotal));
+                    } else {
+                        localStorage.removeItem('blueprintBudgetTotal');
+                    }
                     if (room.style) {
                         localStorage.setItem('blueprintCurrentRoomType', room.style.roomType ?? '');
                         localStorage.setItem('blueprintStyleResult', JSON.stringify({
@@ -290,6 +296,7 @@
                             colorPalette: room.style.colorPalette ?? [],
                             roomFeatures: room.style.roomFeatures ?? [],
                             confidence:   room.style.confidence   ?? 0,
+                            budgetTotal:  Number(room.budgetTotal) || 0,
                         }));
                         window.location.href = 'room-result.html';
                     } else {
@@ -358,7 +365,7 @@
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async function() {
             await signOut(auth);
-            window.location.href = 'index.html';
+            window.location.href = 'login.html';
         });
     }
 </script>
