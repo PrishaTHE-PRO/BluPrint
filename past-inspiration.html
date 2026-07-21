@@ -250,7 +250,8 @@
                 const statusLabel = hasStyle ? 'Style Analyzed ✨' : 'Dimensions Set';
                 const statusColor = hasStyle ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
                 const tag = room.style?.styleTag || '';
-                const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                //const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const card = document.createElement('div');
                 card.className = 'garden-card ghibli-border p-6 group cursor-pointer project-card-enter';
                 card.style.setProperty('--card-delay', `${Math.min(index * 55, 330)}ms`);
