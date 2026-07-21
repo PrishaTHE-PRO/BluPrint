@@ -97,7 +97,7 @@ export default function RoomResult() {
 
     if (!roomId || !userId) {
       setLoading(false);
-      fetchFurniture(roomId ?? 'unknown', parsedStyle.styleTag, roomType);
+      fetchFurniture(roomId ?? 'unknown', parsedStyle.styleTag, roomType, parsedStyle.roomFeatures);
       return;
     }
 
@@ -125,11 +125,13 @@ export default function RoomResult() {
         .catch(() => {}),
     ]).finally(() => setLoading(false));
 
-    fetchFurniture(roomId, parsedStyle.styleTag, roomType);
+    fetchFurniture(roomId, parsedStyle.styleTag, roomType, parsedStyle.roomFeatures);
   }, []);
 
-  function fetchFurniture(roomId: string, styleTag: string, roomType = '') {
-    const url = `/api/rooms/${roomId}/furniture?styleTag=${encodeURIComponent(styleTag)}&roomType=${encodeURIComponent(roomType)}`;
+  function fetchFurniture(roomId: string, styleTag: string, roomType = '', roomFeatures: string[] = []) {
+    const params = new URLSearchParams({ styleTag, roomType });
+    roomFeatures.forEach((feature) => params.append('roomFeature', feature));
+    const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
     fetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))

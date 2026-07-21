@@ -104,6 +104,15 @@ export const CATEGORY_LABELS: Record<string, string> = {
   nursery_rug: 'Rug',
   nursery_shelf: 'Shelf',
   nursery_lamp: 'Lamp',
+  reading_nook: 'Reading Nook Chair',
+  smart_lighting: 'Smart Lighting',
+  floating_shelves: 'Floating Shelves',
+  indoor_plants: 'Indoor Plant',
+  full_length_mirror: 'Full-Length Mirror',
+  wall_art: 'Wall Art',
+  workspace_desk: 'Workspace Desk',
+  vanity_station: 'Vanity Station',
+  bookcase: 'Bookcase',
 };
 
 export function isFloorCovering(category: string) {

@@ -67,6 +67,19 @@ const NURSERY = [
   { key: "nursery_lamp",    query: (s) => `${s} nursery lamp` },
 ];
 
+const FEATURE_CATEGORIES = {
+  "reading nook":            { key: "reading_nook",       query: (s) => `${s} reading nook chair` },
+  "smart lighting":          { key: "smart_lighting",     query: (s) => `${s} smart home lighting` },
+  "floating shelves":        { key: "floating_shelves",   query: (s) => `${s} floating wall shelves` },
+  "indoor plants":           { key: "indoor_plants",      query: (s) => `${s} indoor plant with decorative planter` },
+  "full-length mirror":      { key: "full_length_mirror", query: (s) => `${s} full length mirror` },
+  "wall art / gallery wall": { key: "wall_art",           query: (s) => `${s} wall art set` },
+  "accent chair":            { key: "accent_chair",       query: (s) => `${s} accent chair` },
+  "workspace desk":          { key: "workspace_desk",     query: (s) => `${s} workspace desk` },
+  "vanity station":          { key: "vanity_station",     query: (s) => `${s} vanity table` },
+  "bookcase / bookshelves":  { key: "bookcase",           query: (s) => `${s} bookcase` },
+};
+
 function categoriesForRoomType(roomType) {
   const t = String(roomType || "").toLowerCase();
   if (t.includes("bed")) return BEDROOM;
@@ -76,6 +89,13 @@ function categoriesForRoomType(roomType) {
   if (t.includes("dining")) return DINING_ROOM;
   if (t.includes("nursery") || t.includes("baby")) return NURSERY;
   return LIVING_ROOM;
+}
+
+function categoriesForFeatures(features, baseCategories) {
+  const existing = new Set(baseCategories.map((category) => category.key));
+  return features
+    .map((feature) => FEATURE_CATEGORIES[String(feature || "").trim().toLowerCase()])
+    .filter((category) => category && !existing.has(category.key));
 }
 
 function parsePrice(raw) {
@@ -124,19 +144,38 @@ router.get("/:roomId/furniture", async (req, res) => {
   }
 
   const styleTag = String(req.query.styleTag || "modern").trim().toLowerCase();
-  let roomType   = String(req.query.roomType || "").trim();
+  let roomType = String(req.query.roomType || "").trim();
+  let roomFeatures = (Array.isArray(req.query.roomFeature)
+    ? req.query.roomFeature
+    : [req.query.roomFeature])
+    .map((feature) => String(feature || "").trim())
+    .filter(Boolean);
 
-  if (!roomType) {
-    try {
-      const userStyle = await Style.findOne({ roomId: req.params.roomId, source: "user" });
+  try {
+    const userStyle = await Style.findOne({ roomId: req.params.roomId, source: "user" });
+    if (!roomType) {
       roomType = userStyle?.roomType || "living room";
-    } catch {
-      roomType = "living room";
     }
+    if (roomFeatures.length === 0) {
+      roomFeatures = userStyle?.roomFeatures || [];
+    }
+  } catch {
+    if (!roomType) roomType = "living room";
   }
 
-  const categories = categoriesForRoomType(roomType);
-  console.log("[furniture] roomType=", roomType, "categories=", categories.map((c) => c.key).join(","));
+  const baseCategories = categoriesForRoomType(roomType);
+  const categories = [
+    ...baseCategories,
+    ...categoriesForFeatures(roomFeatures, baseCategories),
+  ];
+  console.log(
+    "[furniture] roomType=",
+    roomType,
+    "features=",
+    roomFeatures.join(","),
+    "categories=",
+    categories.map((c) => c.key).join(",")
+  );
 
   const results = await Promise.allSettled(
     categories.map((cat) => searchCategory(styleTag, cat))

@@ -33,6 +33,10 @@ const DEFAULT_WIDTH_IN: Record<string, number> = {
   // Nursery
   crib:            52, nursery_dresser: 36, rocking_chair: 28,
   nursery_rug:     72, nursery_shelf: 30, nursery_lamp: 10,
+  // User-selected room features
+  reading_nook: 34, smart_lighting: 12, floating_shelves: 36,
+  indoor_plants: 18, full_length_mirror: 24, wall_art: 36,
+  workspace_desk: 48, vanity_station: 42, bookcase: 36,
 };
 
 /** Default furniture depths (inches) when the API doesn't supply them */
@@ -58,6 +62,10 @@ const DEFAULT_DEPTH_IN: Record<string, number> = {
   // Nursery
   crib:            28, nursery_dresser: 18, rocking_chair: 30,
   nursery_rug:     60, nursery_shelf: 12, nursery_lamp: 10,
+  // User-selected room features
+  reading_nook: 34, smart_lighting: 12, floating_shelves: 10,
+  indoor_plants: 18, full_length_mirror: 6, wall_art: 4,
+  workspace_desk: 24, vanity_station: 20, bookcase: 14,
 };
 
 /** Starting positions as fractions of room width/length */
@@ -307,6 +315,8 @@ function preferredFurniturePosition(
       return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
     case 'rocking_chair':
     case 'nursery_lamp':
+    case 'reading_nook':
+    case 'indoor_plants':
       return { x: inset, y: roomLengthFt - dFt - inset };
     case 'shower_curtain':
       return { x: centered.x, y: inset };
@@ -316,6 +326,15 @@ function preferredFurniturePosition(
         ? { x: table.position.x + (table.size.wFt - wFt) / 2, y: table.position.y - dFt - gap }
         : centered;
     }
+    case 'smart_lighting':
+      return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
+    case 'floating_shelves':
+    case 'full_length_mirror':
+    case 'wall_art':
+    case 'workspace_desk':
+    case 'vanity_station':
+    case 'bookcase':
+      return { x: roomWidthFt - wFt - inset, y: inset };
     default:
       return defaultPos(item.category, {
         roomId: '',
@@ -737,6 +756,15 @@ function FurnitureIcon({ item, wPx, dPx }: { item: FurnitureItem; wPx: number; d
     case 'bath_mat':        return <RugIcon w={wPx} d={dPx} />;
     case 'bath_light':      return <LampIcon w={wPx} d={dPx} />;
     case 'shower_curtain':  return <RugIcon w={wPx} d={dPx} />;
+    // User-selected room features
+    case 'reading_nook':       return <ChairIcon w={wPx} d={dPx} />;
+    case 'smart_lighting':     return <LampIcon w={wPx} d={dPx} />;
+    case 'floating_shelves':   return <ShelfIcon w={wPx} d={dPx} />;
+    case 'indoor_plants':      return <FloorLampIcon w={wPx} d={dPx} />;
+    case 'full_length_mirror': return <CoffeeTableIcon w={wPx} d={dPx} />;
+    case 'workspace_desk':     return <DeskIcon w={wPx} d={dPx} />;
+    case 'vanity_station':     return <DresserIcon w={wPx} d={dPx} />;
+    case 'bookcase':           return <ShelfIcon w={wPx} d={dPx} />;
     default:
       return <rect width={wPx} height={dPx} rx={3} fill="#D4C49A" stroke="#0A3323" strokeWidth={1.5} />;
   }
@@ -788,6 +816,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
   const [rotations,  setRotations]  = useState<Record<string, number>>({});
   const [dragging,   setDragging]   = useState<string | null>(null);
   const [rotating,   setRotating]   = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Canvas dimensions — driven by the actual polygon bounding box when available
   // so the viewport, grid, labels, and drag clamping all agree.
@@ -883,6 +912,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
       offsetY: clickFt.y - pos.y,
     };
     setDragging(category);
+    setSelectedCategory(category);
     onLinkCategory?.(category);
   }, [positions, clientToFt, room, onLinkCategory]);
 
@@ -904,6 +934,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
     };
     svgRef.current?.setPointerCapture(e.pointerId);
     setRotating(category);
+    setSelectedCategory(category);
     onLinkCategory?.(category);
   }, [furniture, positions, room, rotations, clientToFt, onLinkCategory]);
 
@@ -1065,6 +1096,7 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        onPointerDown={() => setSelectedCategory(null)}
       >
         <defs>
           <clipPath id="room-interior-clip">
@@ -1177,13 +1209,15 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
           const svgX   = pos.x * SCALE + MARGIN;
           const svgY   = pos.y * SCALE + MARGIN;
           const rot    = rotations[item.category] ?? defaultRotation(item.category);
-          const isLinked = linkedCategory === item.category;
-          const isDimmed = Boolean(linkedCategory && linkedCategory !== item.category);
+          const activeCategory = linkedCategory || selectedCategory;
+          const isLinked = activeCategory === item.category;
+          const isDimmed = Boolean(activeCategory && activeCategory !== item.category);
           const isRug    = item.category === 'rug';
 
           return (
             <g
               key={item.id}
+              data-furniture-piece={item.category}
               transform={`translate(${(svgX + wPx / 2).toFixed(1)},${(svgY + dPx / 2).toFixed(1)}) rotate(${rot}) translate(${(-wPx / 2).toFixed(1)},${(-dPx / 2).toFixed(1)})`}
               opacity={isDimmed ? 0.22 : 1}
               style={{
@@ -1192,7 +1226,10 @@ export default function RoomSVG({ room, furniture, roomLayout, linkedCategory, o
               }}
               onPointerDown={e => handlePointerDown(item.category, e)}
               onContextMenu={e => handleContextMenu(item.category, e)}
-              onMouseEnter={() => onLinkCategory?.(item.category)}
+              onMouseEnter={() => {
+                setSelectedCategory(item.category);
+                onLinkCategory?.(item.category);
+              }}
               onMouseLeave={() => onLinkCategory?.(null)}
             >
               {/* Highlight ring when linked */}
