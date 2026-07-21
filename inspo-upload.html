@@ -194,11 +194,15 @@
           </div>
 
           <!-- Status -->
+          <!-- Status -->
           <div id="vision-status" class="hidden p-6 rounded-2xl text-lg font-medium"></div>
 
-          <div class="flex justify-end pt-4">
-            <button id="step1-next" disabled
-              class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
+          <div class="flex justify-end items-center gap-3 pt-4">
+            <div id="step1-error" class="hidden text-sm font-bold px-4 py-3 rounded-2xl pointer-events-none"
+                 style="background: rgba(211,150,140,0.15); border: 1px solid rgba(211,150,140,0.5); color: #D3968C;">
+            </div>
+            <button id="step1-next"
+                    class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl">
               Next: Your Picks <iconify-icon icon="ph:arrow-right-bold" class="ml-2"></iconify-icon>
             </button>
           </div>
@@ -446,8 +450,8 @@
     }
 
     function checkStep1Valid() {
-      document.getElementById('step1-next').disabled = !state.visionUrl || !state.selectedRoomType;
       document.getElementById('wild-card-btn').disabled = !state.selectedRoomType;
+      document.getElementById('step1-error').classList.add('hidden');
     }
 
     // ── Optional budget ────────────────────────────────────────────────
@@ -526,7 +530,23 @@
       wrap.classList.remove('hidden');
     }
 
-    document.getElementById('step1-next').addEventListener('click', () => showStep(2));
+    document.getElementById('step1-next').addEventListener('click', () => {
+      const errorBubble = document.getElementById('step1-error');
+
+      if (!state.selectedRoomType) {
+        errorBubble.textContent = 'Please choose a room type first';
+        errorBubble.classList.remove('hidden');
+        return;
+      }
+      if (!state.visionUrl) {
+        errorBubble.textContent = 'Please upload an image or paste a link';
+        errorBubble.classList.remove('hidden');
+        return;
+      }
+
+      errorBubble.classList.add('hidden');
+      showStep(2);
+    });
 
     // ── Step 2 grids ──────────────────────────────────────────────────
     function buildRoomTypeGrid() {
