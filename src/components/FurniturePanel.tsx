@@ -13,27 +13,8 @@ interface Props {
   centerContent?:   ReactNode;
   linkedCategory?:  string | null;
   onLinkCategory?:  (category: string | null) => void;
-}
-
-function renderCard(
-  item:           FurnitureItem,
-  items:          FurnitureItem[],
-  onSwap:         (category: string) => void,
-  animIndex:      number,
-  linkedCategory: string | null | undefined,
-  onLinkCategory: ((category: string | null) => void) | undefined,
-) {
-  return (
-    <FurnitureCard
-      key={item.category}
-      item={item}
-      canSwap={items.filter((x) => x.category === item.category).length > 1}
-      onSwap={() => onSwap(item.category)}
-      animDelay={`${0.45 + animIndex * 0.07}s`}
-      linkedCategory={linkedCategory}
-      onLinkCategory={onLinkCategory}
-    />
-  );
+  hiddenCategories: Set<string>;
+  onToggleInRoom:   (category: string) => void;
 }
 
 export default function FurniturePanel({
@@ -46,9 +27,28 @@ export default function FurniturePanel({
   centerContent,
   linkedCategory,
   onLinkCategory,
+  hiddenCategories,
+  onToggleInRoom,
 }: Props) {
   const displayed = orderedFurniture(slots, roomType);
-  const total     = displayed.reduce((sum, item) => sum + item.price, 0);
+  // Pieces taken off the floor plan don't count toward the estimate.
+  const total     = displayed
+    .filter((item) => !hiddenCategories.has(item.category))
+    .reduce((sum, item) => sum + item.price, 0);
+
+  const cards = displayed.map((item, i) => (
+    <FurnitureCard
+      key={item.category}
+      item={item}
+      canSwap={items.filter((x) => x.category === item.category).length > 1}
+      onSwap={() => onSwap(item.category)}
+      animDelay={`${0.45 + i * 0.07}s`}
+      linkedCategory={linkedCategory}
+      onLinkCategory={onLinkCategory}
+      inRoom={!hiddenCategories.has(item.category)}
+      onToggleInRoom={() => onToggleInRoom(item.category)}
+    />
+  ));
 
   const header = (
     <div className="flex items-center justify-between animate-reveal mb-4 shrink-0" style={{ animationDelay: '0.4s' }}>
@@ -125,7 +125,7 @@ export default function FurniturePanel({
         <div>{centerContent}</div>
         {header}
         <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1 custom-furniture-scroll">
-          {displayed.map((item, i) => renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory))}
+          {cards}
         </div>
       </div>
 
@@ -137,9 +137,7 @@ export default function FurniturePanel({
         <aside className="col-span-4 furniture-scroll-panel flex flex-col min-h-0 h-full">
           {header}
           <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto overscroll-contain pr-2 custom-furniture-scroll">
-            {displayed.map((item, i) =>
-              renderCard(item, items, onSwap, i, linkedCategory, onLinkCategory)
-            )}
+            {cards}
           </div>
         </aside>
       </div>

@@ -41,13 +41,13 @@
       </div>
     </div>
   </nav>
-  <div class="workflow-steps" aria-label="Room design progress" data-sd-id="16">
-    <div class="workflow-step active" data-sd-id="17"><span data-sd-id="18">1</span><strong>Define Room</strong></div>
+  <nav class="workflow-steps" aria-label="Room design progress" data-sd-id="16">
+    <div class="workflow-step active" aria-current="step" data-sd-id="17"><span data-sd-id="18">1</span><strong>Define Room</strong></div>
     <div class="workflow-connector" data-sd-id="19"></div>
-    <div class="workflow-step" data-sd-id="20"><span data-sd-id="21">2</span><strong>Add Inspiration</strong></div>
+    <a class="workflow-step" href="inspo-upload.html" aria-label="Go to Add Inspiration" data-sd-id="20"><span data-sd-id="21">2</span><strong>Add Inspiration</strong><iconify-icon class="workflow-arrow" icon="ph:arrow-right-bold"></iconify-icon></a>
     <div class="workflow-connector" data-sd-id="22"></div>
-    <div class="workflow-step" data-sd-id="23"><span data-sd-id="24">3</span><strong>View Design</strong></div>
-  </div>
+    <a class="workflow-step" href="room-result.html" aria-label="Go to View Design" data-sd-id="23"><span data-sd-id="24">3</span><strong>View Design</strong><iconify-icon class="workflow-arrow" icon="ph:arrow-right-bold"></iconify-icon></a>
+  </nav>
   <main class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full" data-sd-id="25">
     <section class="w-[70%] relative flex flex-col gap-4 overflow-hidden h-full" data-sd-id="26">
       <header class="animate-slide-right flex-shrink-0" data-sd-id="27">
@@ -168,7 +168,7 @@
             <div class="flex items-center bg-black/40 p-0.5 rounded-lg border border-white/10 shrink-0" data-sd-id="61"><button id="toggle-ft" class="px-2 py-1 text-[9px] font-bold rounded bg-[#D3968C] text-[#0A3323] transition-all" data-sd-id="62">FT</button><button id="toggle-m" class="px-2 py-1 text-[9px] font-bold rounded text-[#F7F4D5]/40 hover:text-[#F7F4D5] transition-all" data-sd-id="63">M</button></div>
           </div>
           <div class="space-y-6" data-sd-id="64">
-            <div class="space-y-3" data-sd-id="65"><label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="66">SPACE LABEL</label><input type="text" id="room-name" value="Serenity Loft" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67"></div>
+            <div class="space-y-3" data-sd-id="65"><label for="room-name" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="66">ROOM NAME</label><input type="text" id="room-name" value="Serenity Loft" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67"></div>
             <div class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
@@ -312,6 +312,144 @@ svg.addEventListener("drop",(e)=>{e.preventDefault();if(!draggingFromToolbar)ret
     width: draggingFromToolbar === 'window' ? 50 : undefined
   });
 } saveState();renderAll();showToast(`${draggingFromToolbar} added`)}ghost.classList.add("hidden");document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"));draggingFromToolbar=null});btnUndo.onclick=undo;btnRedo.onclick=redo;window.addEventListener("keydown",(e)=>{if(e.ctrlKey||e.metaKey){if(e.key==="z"){e.preventDefault();undo();return}if(e.key==="y"){e.preventDefault();redo();return}}const tag=document.activeElement?.tagName;if(tag==="INPUT"||tag==="TEXTAREA")return;if((e.key==="Delete"||e.key==="Backspace")&&hoveredElementId){if(hoveredElementType==="element"){state.elements=state.elements.filter((el)=>el.id!==hoveredElementId)}else{state.cutouts=state.cutouts.filter((c)=>c.id!==hoveredElementId)}hoveredElementId=null;hoveredElementType=null;saveState();renderAll();showToast("Element deleted")}});widthInput.oninput=lengthInput.oninput=(e)=>{const rawW=widthInput.value;const rawL=lengthInput.value;if(rawW===""||rawL==="")return;let wVal=parseFloat(rawW);let lVal=parseFloat(rawL);if(isNaN(wVal)||isNaN(lVal)||wVal<=0||lVal<=0)return;if(currentUnit==="m"){wVal/=FT_TO_M;lVal/=FT_TO_M}const newWidth=wVal*20;const newLength=lVal*20;const cx=400;const cy=250;state.elements.forEach((el)=>{const snap=getClosestPointOnPerimeter(el.x,el.y);el.origEdge=snap.edgeIndex});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{const snap=getClosestPointOnPerimeter(p.x,p.y);p.origEdge=snap.edgeIndex})});const oldP1=state.roomPoints[0];const oldP2=state.roomPoints[1];const oldP3=state.roomPoints[2];const oldWidth=Math.abs(oldP2.x-oldP1.x);const oldLength=Math.abs(oldP3.y-oldP2.y);const scaleX=newWidth/oldWidth;const scaleY=newLength/oldLength;state.elements.forEach((el)=>{el.x=cx+(el.x-cx)*scaleX;el.y=cy+(el.y-cy)*scaleY});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{p.x=cx+(p.x-cx)*scaleX;p.y=cy+(p.y-cy)*scaleY})});state.roomPoints=[{x:cx-newWidth/2,y:cy-newLength/2},{x:cx+newWidth/2,y:cy-newLength/2},{x:cx+newWidth/2,y:cy+newLength/2},{x:cx-newWidth/2,y:cy+newLength/2}];state.elements.forEach((el)=>{const p1=state.roomPoints[el.origEdge];const p2=state.roomPoints[(el.origEdge+1)%4];const dx=p2.x-p1.x;const dy=p2.y-p1.y;const lenSq=dx*dx+dy*dy;if(lenSq===0)return;let t=((el.x-p1.x)*dx+(el.y-p1.y)*dy)/lenSq;t=Math.max(0,Math.min(1,t));el.x=p1.x+t*dx;el.y=p1.y+t*dy;el.angle=(Math.atan2(dy,dx)*180)/Math.PI});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{const p1=state.roomPoints[p.origEdge];const p2=state.roomPoints[(p.origEdge+1)%4];const dx=p2.x-p1.x;const dy=p2.y-p1.y;const lenSq=dx*dx+dy*dy;if(lenSq===0)return;let t=((p.x-p1.x)*dx+(p.y-p1.y)*dy)/lenSq;t=Math.max(0,Math.min(1,t));p.x=p1.x+t*dx;p.y=p1.y+t*dy})});roomPath.classList.remove("flip-anim");void roomPath.offsetWidth;roomPath.classList.add("flip-anim");renderAll();saveState()};svg.addEventListener("dragleave",()=>{ghost.classList.add("hidden");document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"))});const toggleFt=document.getElementById("toggle-ft");const toggleM=document.getElementById("toggle-m");const unitIndicators=document.querySelectorAll(".unit-indicator");function setUnit(unit){if(currentUnit===unit)return;currentUnit=unit;toggleFt.classList.toggle("bg-[#D3968C]",unit==="ft");toggleFt.classList.toggle("text-[#0A3323]",unit==="ft");toggleFt.classList.toggle("text-[#F7F4D5]/40",unit==="m");toggleM.classList.toggle("bg-[#D3968C]",unit==="m");toggleM.classList.toggle("text-[#0A3323]",unit==="m");toggleM.classList.toggle("text-[#F7F4D5]/40",unit==="ft");unitIndicators.forEach((span)=>(span.textContent=unit));renderAll()}toggleFt.onclick=()=>setUnit("ft");toggleM.onclick=()=>setUnit("m");saveState();renderAll();
+
+/* ── Save & Continue ───────────────────────────────────────────────────────
+   Persists the layout to localStorage (read back by the results page via
+   src/utils/roomLayout.ts) and to the API, then moves on to inspiration. */
+const ROOM_LAYOUT_STORAGE_KEY = "blueprintRoomLayout";
+const ROOM_LAYOUT_VERSION = 1;
+const ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
+
+function getStateDimensionsFt() {
+  const [p1, p2, p3] = state.roomPoints;
+  return {
+    widthFt:  Math.hypot(p2.x - p1.x, p2.y - p1.y) / ROOM_LAYOUT_SCALE,
+    lengthFt: Math.hypot(p3.x - p2.x, p3.y - p2.y) / ROOM_LAYOUT_SCALE,
+  };
+}
+
+function captureRoomLayoutSnapshot() {
+  const dims = getStateDimensionsFt();
+  // The hidden height input is always in feet — setUnit() doesn't convert it.
+  const heightFt = parseFloat(heightInput.value) || 8;
+  const roomName = (roomNameInput && roomNameInput.value.trim()) || "My Room";
+  return {
+    version:    ROOM_LAYOUT_VERSION,
+    roomId:     localStorage.getItem("blueprintCurrentRoomId") || undefined,
+    roomName,
+    widthFt:    Number(dims.widthFt.toFixed(1)),
+    lengthFt:   Number(dims.lengthFt.toFixed(1)),
+    heightFt:   Number(heightFt.toFixed(1)),
+    sqft:       Math.round(dims.widthFt * dims.lengthFt),
+    scale:      ROOM_LAYOUT_SCALE,
+    viewBox:    ROOM_LAYOUT_VIEWBOX,
+    roomPoints: cloneObj(state.roomPoints),
+    elements:   cloneObj(state.elements),
+    cutouts:    cloneObj(state.cutouts),
+    savedAt:    new Date().toISOString(),
+  };
+}
+
+function persistRoomLayout(layout) {
+  localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+}
+
+/* Rehydrate a previously saved layout so navigating back to this page — e.g.
+   via the workflow stepper above — keeps the user's room instead of resetting
+   to the default. New rooms clear this key, so it's a no-op for a fresh start. */
+function restorePersistedLayout() {
+  let raw;
+  try {
+    raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY);
+  } catch {
+    return false;
+  }
+  if (!raw) return false;
+
+  let layout;
+  try {
+    layout = JSON.parse(raw);
+  } catch {
+    return false;
+  }
+  if (!layout || layout.version !== ROOM_LAYOUT_VERSION) return false;
+
+  // Don't rehydrate one room's layout onto another.
+  const currentRoomId = localStorage.getItem("blueprintCurrentRoomId");
+  if (layout.roomId && currentRoomId && layout.roomId !== currentRoomId) return false;
+
+  if (Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 3) {
+    state.roomPoints = cloneObj(layout.roomPoints);
+  }
+  if (Array.isArray(layout.elements)) state.elements = cloneObj(layout.elements);
+  if (Array.isArray(layout.cutouts)) state.cutouts = cloneObj(layout.cutouts);
+  if (roomNameInput && layout.roomName) roomNameInput.value = layout.roomName;
+  // currentUnit is "ft" at init, matching the stored heightFt.
+  if (heightInput && Number.isFinite(layout.heightFt)) {
+    heightInput.value = String(layout.heightFt);
+  }
+  return true;
+}
+
+if (restorePersistedLayout()) {
+  // Drop the default-room history entry so Undo doesn't jump back to it.
+  history = [];
+  historyIndex = -1;
+  saveState();
+  renderAll();
+}
+
+document.getElementById("cta-save-continue").addEventListener("click", async () => {
+  const btn = document.getElementById("cta-save-continue");
+  const userId = localStorage.getItem("blueprintUserId");
+  if (!userId) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
+  const layoutSnapshot = {
+    ...captureRoomLayoutSnapshot(),
+    roomId: existingRoomId || undefined,
+  };
+  const { widthFt, lengthFt, heightFt, roomName } = layoutSnapshot;
+
+  // Write locally first so the next page still works if the API call fails.
+  localStorage.setItem("blueprintCurrentRoomName", roomName);
+  localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
+  localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
+  localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
+  persistRoomLayout(layoutSnapshot);
+
+  btn.disabled = true;
+  btn.innerHTML = "Saving...";
+  try {
+    const res = await fetch(
+      existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
+      {
+        method: existingRoomId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          name: roomName,
+          widthFt,
+          lengthFt,
+          heightFt,
+          sqft: layoutSnapshot.sqft,
+          layout: layoutSnapshot,
+        }),
+      },
+    );
+    if (!res.ok) throw new Error("save failed (" + res.status + ")");
+    const room = await res.json();
+    localStorage.setItem("blueprintCurrentRoomId", room._id);
+    persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
+  } catch (err) {
+    console.warn("[save room]", err);
+    showToast("Saved locally — continuing");
+  }
+  window.location.href = "inspo-upload.html";
+});
 </script>
 <script>
   document.getElementById("cta-save-continue").addEventListener("click", async () => {
