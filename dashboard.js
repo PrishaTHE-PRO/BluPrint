@@ -358,6 +358,7 @@ function normalizeLayout(layout, room) {
             x: svgNumber(element?.x),
             y: svgNumber(element?.y),
             angle: svgNumber(element?.angle),
+            ...(element?.type === 'window' && element?.width != null ? { width: svgNumber(element.width) } : {}),
         })) : [],
         cutouts: Array.isArray(layout.cutouts) ? layout.cutouts.map((cutout) => ({
             id: cutout?.id ?? '',
@@ -734,7 +735,8 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
         : [P(off, along - hw + ins, z1 + ins), P(off, along + hw - ins, z1 + ins), P(off, along + hw - ins, z2 - ins), P(off, along - hw + ins, z2 - ins)];
     const ops = [];
     if (el.type === 'window') {
-        const hw = 1.5, z1 = WH * 0.32, z2 = WH * 0.78, off = 0.03, midZ = (z1 + z2) / 2;
+        // Windows carry a saved width in editor px (20px/ft); size to it, else 3 ft.
+        const hw = Math.max(0.6, (el.width ? el.width / 20 : 3) / 2), z1 = WH * 0.32, z2 = WH * 0.78, off = 0.03, midZ = (z1 + z2) / 2;
         ops.push({ kind: 'poly', pts: rectAt(hw, z1, z2, off, 0), fill: '#cfe0ee' });   // glass
         const vt = onBack ? [P(along, off + 0.01, z1), P(along, off + 0.01, z2)] : [P(off + 0.01, along, z1), P(off + 0.01, along, z2)];
         const hz = onBack ? [P(along - hw, off + 0.01, midZ), P(along + hw, off + 0.01, midZ)] : [P(off + 0.01, along - hw, midZ), P(off + 0.01, along + hw, midZ)];
