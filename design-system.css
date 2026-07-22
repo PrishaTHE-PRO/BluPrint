@@ -112,6 +112,15 @@ textarea:focus-visible {
 
 @view-transition { navigation: auto; }
 
+/* Apply theme on <html> before first paint to avoid light-mode flash on nav. */
+html.dark-mode {
+  color-scheme: dark;
+  background: #0d1218;
+}
+html.dark-mode body {
+  background: #0d1218 !important;
+}
+
 ::view-transition-old(root) {
   animation: 180ms ease both bp-page-out;
 }
@@ -315,6 +324,15 @@ body:not(.page-login) .app-brand > span {
   align-items: center;
   gap: 2px !important;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+#theme-toggle-btn {
+  display: grid !important;
+  place-items: center;
+  flex-shrink: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .app-nav-actions > button,
@@ -358,6 +376,23 @@ body:not(.page-login) .app-nav-actions > button:not(#logout-btn) iconify-icon {
 
 /* Login */
 .page-login { overflow: auto !important; }
+.login-theme-btn {
+  position: fixed;
+  z-index: 60;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--bp-border);
+  border-radius: 999px;
+  background: var(--bp-surface);
+  color: var(--bp-ink);
+  box-shadow: var(--bp-shadow);
+  cursor: pointer;
+}
+.login-theme-btn iconify-icon { font-size: 20px; }
 .login-shell {
   display: grid;
   min-height: 100vh;
@@ -1576,4 +1611,534 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     scroll-behavior: auto !important;
     transition-duration: .01ms !important;
   }
+}
+
+
+.profile-menu-wrap { position: relative; z-index: 80; }
+
+/* Perfect circle avatar — one ring, one icon */
+.profile-btn {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  display: grid !important;
+  place-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1.5px solid var(--bp-border) !important;
+  background: var(--bp-soft) !important;
+  color: var(--bp-ink) !important;
+  box-shadow: none !important;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.profile-btn:hover {
+  background: var(--bp-secondary) !important;
+  border-color: color-mix(in srgb, var(--bp-primary) 35%, transparent) !important;
+  color: var(--bp-ink) !important;
+}
+.profile-btn:active { transform: scale(0.96); }
+.profile-btn iconify-icon,
+.profile-btn .profile-btn-icon {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  display: block !important;
+  color: var(--bp-ink) !important;
+}
+.profile-btn-initials {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+}
+
+.profile-popup {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  width: min(300px, calc(100vw - 24px));
+  min-width: 260px;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--bp-border) !important;
+  border-radius: 18px !important;
+  background: var(--bp-surface) !important;
+  box-shadow:
+    0 4px 12px rgba(28, 23, 20, 0.06),
+    0 22px 48px rgba(28, 23, 20, 0.16);
+  color: var(--bp-ink) !important;
+  text-align: left;
+}
+.profile-popup.hidden { display: none !important; }
+
+.profile-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 14px;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--bp-primary) 12%, transparent), transparent 70%),
+    var(--bp-surface);
+  border-bottom: 1px solid var(--bp-border);
+}
+.profile-popup-avatar {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0;
+  display: grid !important;
+  place-items: center;
+  overflow: hidden;
+  background: var(--bp-soft) !important;
+  color: var(--bp-primary) !important;
+  border: 1.5px solid var(--bp-border) !important;
+}
+.profile-popup-avatar iconify-icon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  color: var(--bp-primary) !important;
+}
+.profile-popup-identity { min-width: 0; flex: 1; }
+.profile-popup-name {
+  margin: 0;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  color: var(--bp-ink) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-popup-email {
+  margin: 2px 0 0;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  color: var(--bp-muted) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-popup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 10px 8px;
+}
+.profile-popup-label {
+  margin: 0 8px 4px;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bp-muted) !important;
+  line-height: 1.2 !important;
+}
+.profile-popup-footer {
+  padding: 8px 10px 12px;
+  border-top: 1px solid var(--bp-border);
+  background: color-mix(in srgb, var(--bp-ink) 3%, transparent);
+}
+
+.profile-popup-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 11px 10px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  color: var(--bp-ink) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: none !important;
+  transition: background 0.15s ease;
+}
+.profile-popup-item:hover { background: var(--bp-soft) !important; }
+.profile-popup-item-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  flex-shrink: 0;
+  display: grid !important;
+  place-items: center;
+  background: var(--bp-soft) !important;
+  color: var(--bp-ink) !important;
+}
+.profile-popup-item-icon iconify-icon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  color: inherit !important;
+}
+.profile-popup-item-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.profile-popup-item-copy strong {
+  display: block;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 1.25 !important;
+  color: inherit !important;
+}
+.profile-popup-item-copy small {
+  display: block;
+  font-size: 11.5px !important;
+  color: var(--bp-muted) !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+}
+.profile-popup-item-danger { color: var(--bp-danger) !important; }
+.profile-popup-item-danger .profile-popup-item-icon {
+  background: color-mix(in srgb, var(--bp-danger) 14%, transparent) !important;
+  color: var(--bp-danger) !important;
+}
+.profile-popup-item-danger:hover { background: color-mix(in srgb, var(--bp-danger) 10%, transparent) !important; }
+
+html.dark-mode .profile-btn {
+  background: var(--bp-soft) !important;
+  border-color: var(--bp-border) !important;
+  color: var(--bp-ink) !important;
+}
+html.dark-mode .profile-btn:hover {
+  background: var(--bp-secondary) !important;
+}
+html.dark-mode .profile-btn iconify-icon {
+  color: var(--bp-ink) !important;
+}
+html.dark-mode .profile-popup-footer {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(28, 23, 20, 0.4);
+  backdrop-filter: blur(6px);
+}
+.settings-overlay.hidden { display: none; }
+.settings-modal {
+  width: min(90%, 480px);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 32px;
+  border-radius: 22px;
+  background: var(--bp-surface);
+  border: 1px solid var(--bp-border);
+  box-shadow:
+    0 12px 28px rgba(28, 23, 20, 0.12),
+    0 36px 90px rgba(28, 23, 20, 0.22);
+  position: relative;
+  color: var(--bp-ink);
+  transform: translateY(-14px);
+  animation: settings-float 5s ease-in-out infinite;
+}
+@keyframes settings-float {
+  0%, 100% { transform: translateY(-12px); }
+  50% { transform: translateY(-20px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-modal { animation: none; transform: translateY(-8px); }
+}
+.settings-modal h2 { margin: 0 0 6px; font-size: 26px; }
+.settings-modal-close {
+  position: absolute; top: 18px; right: 18px;
+  width: 34px; height: 34px; border: 0; border-radius: 50%;
+  background: var(--bp-soft); color: var(--bp-muted);
+  display: grid; place-items: center; cursor: pointer;
+}
+.settings-modal-close:hover { background: var(--bp-secondary); color: var(--bp-ink); }
+.settings-field { margin-bottom: 18px; }
+.settings-field label {
+  display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--bp-muted); margin-bottom: 6px;
+}
+.settings-field input {
+  width: 100%; padding: 12px 14px; border-radius: 12px;
+  border: 1.5px solid transparent; background: var(--bp-soft);
+  color: var(--bp-ink); font-size: 14px;
+}
+.settings-field input:focus { outline: none; border-color: var(--bp-primary); background: var(--bp-surface); }
+.settings-save-btn {
+  padding: 11px 22px; border: 0; border-radius: 12px;
+  background: var(--bp-primary); color: #fff; font-weight: 700; cursor: pointer;
+}
+.settings-save-btn:hover { background: var(--bp-primary-hover); }
+.settings-save-status { margin-left: 10px; font-size: 13px; color: var(--bp-green); }
+.settings-divider { margin: 24px 0; border: 0; border-top: 1px solid var(--bp-border); }
+.settings-contact h3 { font-size: 15px; margin: 0 0 10px; }
+.settings-contact ul { list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--bp-muted); line-height: 1.8; }
+.settings-contact li strong { color: var(--bp-ink); }
+.settings-contact a { color: var(--bp-primary); text-decoration: none; }
+.settings-contact a:hover { text-decoration: underline; }
+
+/*
+  Dark mode — "blueprint dusk"
+  Deep slate-blue night (ink / paper / graphite), not purple-black or acid neon.
+  Surfaces stay darker than text so project-card titles never wash out.
+*/
+html.dark-mode {
+  --bp-bg: #10161d;
+  --bp-surface: #1a232e;
+  --bp-ink: #e8eef4;
+  --bp-muted: #9aabb8;
+  --bp-primary: #7ea8c9;
+  --bp-primary-hover: #97bad4;
+  --bp-soft: #243140;
+  --bp-secondary: #2c3a4a;
+  --bp-blue-soft: #1f3345;
+  --bp-blue: #5f8fb8;
+  --bp-green: #8aab82;
+  --bp-rose: #d4a399;
+  --bp-rose-hover: #e0b5ad;
+  --bp-rose-soft: #3a2e2c;
+  --bp-danger: #e07070;
+  --bp-border: rgba(232, 238, 244, 0.10);
+  --bp-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --nav-pink: rgba(16, 22, 29, 0.92) !important;
+}
+
+html.dark-mode,
+html.dark-mode body {
+  background:
+    radial-gradient(circle at 88% 6%, rgba(95, 143, 184, 0.22), transparent 32rem),
+    radial-gradient(circle at 8% 90%, rgba(138, 171, 130, 0.10), transparent 28rem),
+    linear-gradient(145deg, #0d1218 0%, #121922 46%, #16202a 100%) fixed !important;
+  color: var(--bp-ink) !important;
+}
+
+html.dark-mode .login-brand { background: var(--bp-surface); }
+
+html.dark-mode .garden-card {
+  background: color-mix(in srgb, var(--bp-surface) 96%, #000) !important;
+  border-color: var(--bp-border) !important;
+  color: var(--bp-ink) !important;
+  box-shadow: var(--bp-shadow) !important;
+}
+html.dark-mode .garden-card:hover {
+  background: #212c3a !important;
+  border-color: color-mix(in srgb, var(--bp-primary) 35%, transparent) !important;
+}
+
+/* Project card titles — force readable ink on dark surfaces */
+html.dark-mode .page-dashboard #projects-grid h3,
+html.dark-mode .page-dashboard #projects-grid .room-name-display,
+html.dark-mode .page-projects #all-projects-grid h3,
+html.dark-mode .page-projects #all-projects-grid .room-name-display,
+html.dark-mode h1,
+html.dark-mode h2,
+html.dark-mode h3,
+html.dark-mode h4 {
+  color: var(--bp-ink) !important;
+}
+
+html.dark-mode .page-dashboard #projects-grid p,
+html.dark-mode .page-dashboard #projects-grid span,
+html.dark-mode .page-projects #all-projects-grid p,
+html.dark-mode .page-projects #all-projects-grid span {
+  color: var(--bp-muted) !important;
+}
+
+/* Keep floor-plan / iso previews on warm paper so sketches stay legible */
+html.dark-mode .page-dashboard #projects-grid .garden-card > div:first-child,
+html.dark-mode .page-projects #all-projects-grid .garden-card > div:first-child,
+html.dark-mode .project-card-preview {
+  background: #e8e2d6 !important;
+}
+
+html.dark-mode ::-webkit-scrollbar-thumb { background: #3a4a5a !important; }
+html.dark-mode ::selection { background: var(--bp-blue-soft); color: var(--bp-ink); }
+
+html.dark-mode .settings-modal,
+html.dark-mode .profile-popup {
+  background: var(--bp-surface);
+  border-color: var(--bp-border);
+  color: var(--bp-ink);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+html.dark-mode .settings-field input {
+  background: var(--bp-soft);
+  color: var(--bp-ink);
+}
+html.dark-mode .settings-field input:focus {
+  background: #1e2936;
+  border-color: var(--bp-primary);
+}
+html.dark-mode .settings-modal-close {
+  background: var(--bp-soft);
+  color: var(--bp-muted);
+}
+html.dark-mode .project-card-skeleton {
+  border-color: rgba(126, 168, 201, 0.12);
+  background:
+    linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.06) 48%, transparent 61%),
+    linear-gradient(#1a232e 68%, #212c3a 68%);
+  background-size: 220% 100%, 100% 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+html.dark-mode .page-result .result-dual-pane,
+html.dark-mode .page-result .furniture-strip,
+html.dark-mode .page-result .furniture-h-strip,
+html.dark-mode .page-result .iso-room-preview,
+html.dark-mode .page-result .room-layout-canvas,
+html.dark-mode .page-result .furniture-scroll-panel {
+  background: var(--bp-surface) !important;
+  border-color: var(--bp-border) !important;
+  box-shadow: var(--bp-shadow) !important;
+}
+html.dark-mode .page-result .room-layout-canvas {
+  background: #e8e2d6 !important;
+}
+html.dark-mode .page-result .iso-room-preview {
+  background: #e8e2d6 !important;
+}
+
+/* Hide sky clouds + calm the animated light sky in dark mode */
+html.dark-mode body.page-dimensions::before,
+html.dark-mode body.page-inspo::before,
+html.dark-mode body.page-result::before,
+html.dark-mode body.page-dimensions::after,
+html.dark-mode body.page-inspo::after,
+html.dark-mode body.page-result::after {
+  display: none !important;
+  animation: none !important;
+  opacity: 0 !important;
+}
+html.dark-mode body.page-dimensions,
+html.dark-mode body.page-inspo,
+html.dark-mode body.page-result {
+  animation: none !important;
+  background:
+    radial-gradient(circle at 88% 6%, rgba(95, 143, 184, 0.18), transparent 32rem),
+    radial-gradient(circle at 8% 90%, rgba(138, 171, 130, 0.08), transparent 28rem),
+    linear-gradient(145deg, #0d1218 0%, #121922 46%, #16202a 100%) fixed !important;
+  background-size: auto !important;
+}
+
+/* Analyze Style — restore readable text & dark glass panels */
+html.dark-mode body.page-inspo .analyze-hero {
+  border-color: var(--bp-border);
+  background: linear-gradient(135deg, rgba(26, 35, 46, 0.92), rgba(33, 44, 58, 0.78));
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+html.dark-mode body.page-inspo .analyze-hero::before,
+html.dark-mode body.page-inspo .analyze-hero::after {
+  border-color: rgba(126, 168, 201, 0.18);
+  box-shadow: inset 0 0 28px rgba(95, 143, 184, 0.12);
+}
+html.dark-mode body.page-inspo .analyze-eyebrow {
+  border-color: rgba(126, 168, 201, 0.28);
+  color: var(--bp-primary);
+  background: rgba(36, 49, 64, 0.85);
+  box-shadow: none;
+}
+html.dark-mode body.page-inspo .garden-card,
+html.dark-mode body.page-inspo .garden-card:hover {
+  border-color: var(--bp-border) !important;
+  background: color-mix(in srgb, var(--bp-surface) 96%, #000) !important;
+  box-shadow: var(--bp-shadow) !important;
+}
+html.dark-mode body.page-inspo .garden-card:hover {
+  background: #212c3a !important;
+  border-color: color-mix(in srgb, var(--bp-primary) 35%, transparent) !important;
+}
+html.dark-mode body.page-inspo .garden-card h2,
+html.dark-mode body.page-inspo .garden-card h3,
+html.dark-mode body.page-inspo header h1 {
+  color: var(--bp-ink) !important;
+}
+html.dark-mode body.page-inspo .garden-card p,
+html.dark-mode body.page-inspo header p {
+  color: var(--bp-muted) !important;
+}
+html.dark-mode .how-it-works-panel {
+  background: linear-gradient(155deg, rgba(26, 35, 46, 0.95), rgba(33, 44, 58, 0.88));
+}
+html.dark-mode .how-it-works-panel > div:not(.inspo-character):not(#how-it-works-glow) > p,
+html.dark-mode .ai-analysis-panel p,
+html.dark-mode .ai-analysis-panel li {
+  color: var(--bp-muted) !important;
+}
+html.dark-mode body.page-inspo #file-drop-area {
+  border-color: rgba(126, 168, 201, 0.28) !important;
+  background: var(--bp-soft) !important;
+}
+html.dark-mode body.page-inspo .option-btn {
+  border-color: var(--bp-border) !important;
+  background: var(--bp-soft) !important;
+  color: var(--bp-ink) !important;
+}
+html.dark-mode body.page-inspo .option-btn:hover {
+  border-color: rgba(126, 168, 201, 0.35) !important;
+  background: #2c3a4a !important;
+}
+html.dark-mode body.page-inspo .option-btn.selected {
+  border-color: var(--bp-primary) !important;
+  background: var(--bp-primary) !important;
+  color: #fff !important;
+}
+html.dark-mode body.page-inspo #budget-input,
+html.dark-mode body.page-inspo #room-type-other {
+  background: var(--bp-soft) !important;
+  color: var(--bp-ink) !important;
+  border-color: var(--bp-border) !important;
+}
+html.dark-mode body.page-inspo input::placeholder {
+  color: var(--bp-muted) !important;
+}
+
+html.dark-mode [class*="text-[#F7F4D5]"] { color: var(--bp-ink) !important; }
+html.dark-mode [class*="text-[#0A3323]"] { color: var(--bp-ink) !important; }
+html.dark-mode [class*="bg-[#0A3323]"] { background-color: var(--bp-primary) !important; }
+html.dark-mode [class*="bg-[#105666]"] {
+  background-color: var(--bp-blue-soft) !important;
+  color: var(--bp-primary) !important;
+}
+
+html.dark-mode .room-name-display,
+html.dark-mode input.room-name-input {
+  color: var(--bp-ink) !important;
+}
+html.dark-mode input.room-name-input {
+  background: var(--bp-soft) !important;
+  border: 1px solid var(--bp-border) !important;
+  border-radius: 8px;
+  padding: 4px 8px;
 }

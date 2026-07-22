@@ -68,6 +68,9 @@
         <a href="past-inspiration.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon>Projects<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
       </div>
       <div class="app-nav-actions">
+        <button id="theme-toggle-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <iconify-icon icon="ph:moon-duotone"></iconify-icon>
+        </button>
         <div class="profile-menu-wrap">
           <button id="profile-btn" type="button" class="profile-btn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
             <iconify-icon icon="ph:user"></iconify-icon>
@@ -370,8 +373,8 @@
       </div>
     </div>
   </div>
-
-  <script type="module">
+<script src="./theme-toggle.js" defer></script>
+<script type="module">
     // ── Backend ───────────────────────────────────────────────────────
     import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { auth } from "./firebase.js";
@@ -398,20 +401,7 @@
         }
       });
     }
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    if (localStorage.getItem('blueprintTheme') === 'dark') {
-      document.documentElement.classList.add('dark-mode');
-      document.body.classList.add('dark-mode');
-      if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
-    }
-    if (themeToggleBtn) {
-      themeToggleBtn.addEventListener('click', () => {
-        const isDark = document.body.classList.toggle('dark-mode');
-        document.documentElement.classList.toggle('dark-mode', isDark);
-        localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
-        themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
-      });
-    }
+
 
     const settingsBtn = document.getElementById('settings-btn');
     const settingsOverlay = document.getElementById('settings-overlay');

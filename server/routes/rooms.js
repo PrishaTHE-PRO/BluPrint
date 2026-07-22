@@ -63,6 +63,9 @@ function sanitizeLayout(layout, roomFields) {
 }
 
 function sanitizeFurnitureItem(item) {
+    const color = item && typeof item.color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim())
+        ? item.color.trim()
+        : undefined;
     return {
         id:       item && item.id !== undefined ? String(item.id) : '',
         name:     item && typeof item.name === 'string' ? item.name : '',
@@ -73,6 +76,7 @@ function sanitizeFurnitureItem(item) {
         buyUrl:   item && typeof item.buyUrl === 'string' ? item.buyUrl : '',
         widthIn:  item && item.widthIn !== undefined ? toNumber(item.widthIn) : undefined,
         depthIn:  item && item.depthIn !== undefined ? toNumber(item.depthIn) : undefined,
+        ...(color ? { color } : {}),
     };
 }
 
@@ -95,15 +99,22 @@ function sanitizeFurnitureLayout(layout) {
             : {}),
         items: layout.items
             .filter((entry) => entry && typeof entry.category === 'string' && entry.category)
-            .map((entry) => ({
-                category: entry.category,
-                hidden:   Boolean(entry.hidden),
-                x:        toNumber(entry.x),
-                y:        toNumber(entry.y),
-                rotation: toNumber(entry.rotation),
-                scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
-                item:     sanitizeFurnitureItem(entry.item),
-            })),
+            .map((entry) => {
+                const item = sanitizeFurnitureItem(entry.item);
+                const color = entry && typeof entry.color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(entry.color.trim())
+                    ? entry.color.trim()
+                    : item.color;
+                return {
+                    category: entry.category,
+                    hidden:   Boolean(entry.hidden),
+                    x:        toNumber(entry.x),
+                    y:        toNumber(entry.y),
+                    rotation: toNumber(entry.rotation),
+                    scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
+                    ...(color ? { color } : {}),
+                    item:     color && !item.color ? { ...item, color } : item,
+                };
+            }),
         savedAt: typeof layout.savedAt === 'string' ? layout.savedAt : new Date().toISOString(),
     };
 }

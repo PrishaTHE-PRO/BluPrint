@@ -172,6 +172,7 @@
         </div>
     </div>
 </div>
+<script src="./theme-toggle.js" defer></script>
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { auth, isFirebaseConfigured } from "./firebase.js";
@@ -200,20 +201,7 @@
             }
         });
     }
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    if (localStorage.getItem('blueprintTheme') === 'dark') {
-        document.documentElement.classList.add('dark-mode');
-      document.body.classList.add('dark-mode');
-        if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
-    }
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark-mode');
-            document.documentElement.classList.toggle('dark-mode', isDark);
-            localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
-            themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
-        });
-    }
+
 
     const settingsBtn = document.getElementById('settings-btn');
     const settingsOverlay = document.getElementById('settings-overlay');

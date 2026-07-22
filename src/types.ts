@@ -29,6 +29,8 @@ export interface FurnitureItem {
   imageUrl: string;
   buyUrl:   string;
   brand:    string;
+  /** Optional sampled product color for previews. */
+  color?:   string;
 }
 
 export interface RoomPoint {

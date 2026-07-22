@@ -24,20 +24,6 @@ if (profileBtn && profilePopup) {
         }
     });
 }
-var themeToggleBtn = document.getElementById('theme-toggle-btn');
-if (localStorage.getItem('blueprintTheme') === 'dark') {
-    document.documentElement.classList.add('dark-mode');
-    document.body.classList.add('dark-mode');
-    if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
-}
-if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', function () {
-        var isDark = document.body.classList.toggle('dark-mode');
-        document.documentElement.classList.toggle('dark-mode', isDark);
-        localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
-        themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
-    });
-}
 
 var settingsBtn = document.getElementById('settings-btn');
 var settingsOverlay = document.getElementById('settings-overlay');

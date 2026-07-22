@@ -14,6 +14,8 @@ export interface PlacedFurniture {
   y:        number;
   rotation: number;
   scale:    number;
+  /** Sampled / matched product color used in 2D + 3D previews. */
+  color?:   string;
   /**
    * The full chosen product, not just its id. Furniture ids from the search API
    * are positional (`sofa-0`, `sofa-1`, ...) and point at whatever ranks there
@@ -46,7 +48,7 @@ function toNumber(value: unknown, fallback = 0) {
 }
 
 function normalizeItem(value: unknown, category: string): FurnitureItem {
-  const item = (value ?? {}) as Partial<FurnitureItem>;
+  const item = (value ?? {}) as Partial<FurnitureItem> & { color?: string };
   return {
     id:       typeof item.id === 'string' ? item.id : '',
     name:     typeof item.name === 'string' ? item.name : '',
@@ -57,7 +59,16 @@ function normalizeItem(value: unknown, category: string): FurnitureItem {
     buyUrl:   typeof item.buyUrl === 'string' ? item.buyUrl : '',
     ...(item.widthIn !== undefined ? { widthIn: toNumber(item.widthIn) } : {}),
     ...(item.depthIn !== undefined ? { depthIn: toNumber(item.depthIn) } : {}),
+    ...(typeof item.color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim())
+      ? { color: item.color.trim() }
+      : {}),
   };
+}
+
+function normalizeColor(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const hex = value.trim();
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex) ? hex : undefined;
 }
 
 /** Parse a placement from the API or localStorage; returns null if unusable. */
@@ -70,15 +81,21 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
   const items = layout.items
     .filter((entry): entry is PlacedFurniture =>
       Boolean(entry) && typeof (entry as PlacedFurniture).category === 'string' && Boolean((entry as PlacedFurniture).category))
-    .map((entry) => ({
-      category: entry.category,
-      hidden:   Boolean(entry.hidden),
-      x:        toNumber(entry.x),
-      y:        toNumber(entry.y),
-      rotation: toNumber(entry.rotation),
-      scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
-      item:     normalizeItem(entry.item, entry.category),
-    }));
+    .map((entry) => {
+      const color = normalizeColor(entry.color)
+        || normalizeColor((entry.item as { color?: string } | undefined)?.color);
+      const item = normalizeItem(entry.item, entry.category);
+      return {
+        category: entry.category,
+        hidden:   Boolean(entry.hidden),
+        x:        toNumber(entry.x),
+        y:        toNumber(entry.y),
+        rotation: toNumber(entry.rotation),
+        scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
+        ...(color ? { color } : {}),
+        item:     color ? { ...item, color } : item,
+      };
+    });
 
   if (items.length === 0) return null;
 
@@ -105,8 +122,9 @@ export function buildFurniturePlacement(args: {
   positions: Record<string, PlacementPos>;
   rotations: Record<string, number>;
   scales:    Record<string, number>;
+  colors?:   Record<string, string>;
 }): FurniturePlacement {
-  const { roomId, styleTag, budgetTotal, roomFeatures, slots, hidden, positions, rotations, scales } = args;
+  const { roomId, styleTag, budgetTotal, roomFeatures, slots, hidden, positions, rotations, scales, colors } = args;
 
   return {
     version: FURNITURE_PLACEMENT_VERSION,
@@ -118,15 +136,19 @@ export function buildFurniturePlacement(args: {
     ...(roomFeatures ? { roomFeatures: [...roomFeatures] } : {}),
     items: Object.values(slots)
       .filter(Boolean)
-      .map((item) => ({
-        category: item.category,
-        hidden:   hidden.has(item.category),
-        x:        toNumber(positions[item.category]?.x),
-        y:        toNumber(positions[item.category]?.y),
-        rotation: toNumber(rotations[item.category]),
-        scale:    Math.max(0.5, Math.min(2, toNumber(scales[item.category], 1))),
-        item,
-      })),
+      .map((item) => {
+        const color = normalizeColor(colors?.[item.category]) || normalizeColor((item as FurnitureItem & { color?: string }).color);
+        return {
+          category: item.category,
+          hidden:   hidden.has(item.category),
+          x:        toNumber(positions[item.category]?.x),
+          y:        toNumber(positions[item.category]?.y),
+          rotation: toNumber(rotations[item.category]),
+          scale:    Math.max(0.5, Math.min(2, toNumber(scales[item.category], 1))),
+          ...(color ? { color } : {}),
+          item:     color ? { ...item, color } : item,
+        };
+      }),
     savedAt: new Date().toISOString(),
   };
 }
@@ -137,6 +159,7 @@ export function readPlacement(placement: FurniturePlacement) {
   const positions: Record<string, PlacementPos>  = {};
   const rotations: Record<string, number>        = {};
   const scales:    Record<string, number>        = {};
+  const colors:    Record<string, string>        = {};
   const hidden = new Set<string>();
 
   placement.items.forEach((entry) => {
@@ -144,10 +167,12 @@ export function readPlacement(placement: FurniturePlacement) {
     positions[entry.category] = { x: entry.x, y: entry.y };
     rotations[entry.category] = entry.rotation;
     scales[entry.category]    = entry.scale;
+    const color = entry.color || (entry.item as FurnitureItem & { color?: string }).color;
+    if (typeof color === 'string' && color) colors[entry.category] = color;
     if (entry.hidden) hidden.add(entry.category);
   });
 
-  return { slots, positions, rotations, scales, hidden };
+  return { slots, positions, rotations, scales, colors, hidden };
 }
 
 export function readSavedFurniturePlacement(): FurniturePlacement | null {

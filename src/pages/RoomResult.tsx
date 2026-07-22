@@ -83,9 +83,6 @@ export default function RoomResult() {
   const [renamedName,      setRenamedName]      = useState<string | null>(null);
   const [editingName,      setEditingName]      = useState(false);
   const [nameDraft,        setNameDraft]        = useState('');
-  const [isDarkMode,       setIsDarkMode]       = useState(
-    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark-mode'),
-  );
 
   // Live positions/rotations from RoomSVG. Held in a ref for saves, plus a
   // throttled state copy so the isometric preview can follow without stuttering.
@@ -95,21 +92,6 @@ export default function RoomResult() {
   const colorSourceIdsRef = useRef<Record<string, string>>({});
   const isoThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef  = useRef(false);
-
-  useEffect(() => {
-    const dark = localStorage.getItem('blueprintTheme') === 'dark';
-    document.documentElement.classList.toggle('dark-mode', dark);
-    document.body.classList.toggle('dark-mode', dark);
-    setIsDarkMode(dark);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    const next = !document.documentElement.classList.contains('dark-mode');
-    document.documentElement.classList.toggle('dark-mode', next);
-    document.body.classList.toggle('dark-mode', next);
-    localStorage.setItem('blueprintTheme', next ? 'dark' : 'light');
-    setIsDarkMode(next);
-  }, []);
 
   const handlePlacementChange = useCallback((placement: Placement) => {
     placementRef.current = placement;
@@ -180,6 +162,14 @@ export default function RoomResult() {
           rotations: { ...restored.rotations },
           scales: { ...restored.scales },
         });
+        if (Object.keys(restored.colors).length) {
+          setColorByCategory(restored.colors);
+          Object.entries(restored.slots).forEach(([category, item]) => {
+            if (restored.colors[category] && item?.id) {
+              colorSourceIdsRef.current[category] = item.id;
+            }
+          });
+        }
       }
     } else if (!restoredRef.current) {
       setHiddenCategories(new Set());
@@ -261,6 +251,7 @@ export default function RoomResult() {
       positions: placementRef.current.positions,
       rotations: placementRef.current.rotations,
       scales:    placementRef.current.scales,
+      colors:    colorByCategory,
     });
 
     // Save locally first so the layout survives even if the request fails.
@@ -284,7 +275,7 @@ export default function RoomResult() {
       console.error('[save layout]', err);
       setSaveStatus('error');
     }
-  }, [furnitureSlots, hiddenCategories, style]);
+  }, [furnitureSlots, hiddenCategories, style, colorByCategory]);
 
   useEffect(() => {
     if (saveStatus !== 'saved' && saveStatus !== 'error') return;
@@ -586,9 +577,8 @@ export default function RoomResult() {
             type="button"
             title="Toggle dark mode"
             aria-label="Toggle dark mode"
-            onClick={toggleTheme}
           >
-            <iconify-icon icon={isDarkMode ? 'ph:sun-duotone' : 'ph:moon-duotone'} />
+            <iconify-icon icon="ph:moon-duotone" />
           </button>
           <ProfileMenu />
         </div>

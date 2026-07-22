@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('blueprintTheme') === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="BluPrint turns your room dimensions, inspiration, and budget into a shoppable 2D interior plan.">
@@ -121,7 +130,52 @@
     }
     .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
     .nav-actions { display: flex; align-items: center; gap: 9px; }
+    .nav-theme-btn {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(28, 23, 20, .1);
+      border-radius: 999px;
+      background: rgba(255,255,255,.55);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .nav-theme-btn iconify-icon { font-size: 20px; }
     .nav-signin { padding: 11px 15px; color: var(--blue-dark); font-size: 14px; font-weight: 700; }
+
+    html.dark-mode {
+      color-scheme: dark;
+      --ink: #e8eef4;
+      --muted: #9aabb8;
+      --paper: #10161d;
+      --surface: rgba(26, 35, 46, .88);
+      --blue: #7ea8c9;
+      --blue-dark: #97bad4;
+      --sky: #5f8fb8;
+      --sky-soft: #1f3345;
+      --sand: #2c3a4a;
+      --green: #8aab82;
+      --line: rgba(232, 238, 244, .1);
+      --shadow: 0 28px 80px rgba(0, 0, 0, .45);
+    }
+    html.dark-mode body {
+      background:
+        radial-gradient(circle at 88% 6%, rgba(95, 143, 184, 0.22), transparent 32rem),
+        radial-gradient(circle at 8% 90%, rgba(138, 171, 130, 0.10), transparent 28rem),
+        linear-gradient(145deg, #0d1218 0%, #121922 46%, #16202a 100%) fixed !important;
+      color: var(--ink);
+    }
+    html.dark-mode body::before { display: none; }
+    html.dark-mode .site-nav {
+      border-color: rgba(232, 238, 244, .1);
+      background: rgba(16, 22, 29, .86);
+    }
+    html.dark-mode .nav-theme-btn {
+      border-color: rgba(232, 238, 244, .12);
+      background: rgba(36, 49, 64, .85);
+      color: var(--ink);
+    }
 
     .button {
       display: inline-flex;
@@ -485,6 +539,7 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
+
   </style>
 </head>
 <body>
@@ -502,6 +557,9 @@
       <a href="#start">Why BluPrint</a>
     </div>
     <div class="nav-actions">
+      <button id="theme-toggle-btn" type="button" class="nav-theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <iconify-icon icon="ph:moon-duotone"></iconify-icon>
+      </button>
       <a class="nav-signin" href="login.html">Sign in</a>
       <a class="button button-primary" href="login.html">Design my room <span aria-hidden="true">↗</span></a>
     </div>
@@ -671,7 +729,7 @@
     <span>Rooms that work beautifully.</span>
     <div class="footer-links"><a href="#features">Features</a><a href="login.html">Sign in</a></div>
   </footer>
-
+<script src="./theme-toggle.js" defer></script>
   <script>
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {

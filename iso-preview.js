@@ -552,7 +552,7 @@ function renderIsoRoom(room) {
         const d = toNumber(entry.item && entry.item.depthIn, furnDepthIn(cat)) / 12;
         if (w <= 0 || d <= 0) return;
         const x = toNumber(entry.x), y = toNumber(entry.y), rot = toNumber(entry.rotation);
-        const H = furnHeight(cat), hex = furnColor(cat);
+        const H = furnHeight(cat), hex = entry.color || (entry.item && entry.item.color) || furnColor(cat);
 
         if (isoIsWallMounted(cat)) { pieces.push(isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH)); return; }
         if (cat === 'indoor_plants') { pieces.push({ order: (x + w / 2) + (y + d / 2), ops: isoPlantOps(x + w / 2, y + d / 2, w, d) }); return; }
