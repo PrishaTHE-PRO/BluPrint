@@ -1,24 +1,14 @@
-
 <!DOCTYPE html><html lang="en"><head>
-    <script>
-    (function () {
-      try {
-        if (localStorage.getItem('blueprintTheme') === 'dark') {
-          document.documentElement.classList.add('dark-mode');
-        }
-      } catch (e) {}
-    })();
-  </script>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Architecture Editor | BluPrint</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&amp;family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <style>
-    :root {--garden-dark:#0a3323; --garden-moss:#839958; --garden-beige:#f7f4d5; --garden-rosy:#d3968c; --garden-midnight:#105666; --garden-accent:#f5a7b8; --hint-blue:#2F6FAE;}
+    :root {--garden-dark:#0a3323; --garden-moss:#839958; --garden-beige:#f7f4d5; --garden-rosy:#d3968c; --garden-midnight:#105666; --garden-accent:#f5a7b8;}
     h1, h2, h3, h4 {font-family:"Crimson Pro",serif}
     .noise-texture {position:fixed; inset:0; z-index:100; pointer-events:none; opacity:0.03; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")}
     .grid-background {background-image:linear-gradient(rgba(131,153,88,0.07) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(131,153,88,0.07) 1.5px,transparent 1.5px); background-size:50px 50px}
@@ -41,14 +31,6 @@
     .vertex-handle:hover {r:8; fill:#4ade80; filter:drop-shadow(0 0 8px rgba(74, 222, 128, 0.6))}
     .vertex-handle.dragging {fill:#4ade80; r:9; filter:drop-shadow(0 0 12px rgba(74, 222, 128, 0.8))}
     .coord-tooltip {pointer-events:none; font-size:9px; font-weight:bold; fill:#4ade80; text-shadow:0 1px 2px rgba(0, 0, 0, 0.5)}
-    .door-hint-text {
-      font-family: "Caveat", cursive;
-      font-size: 15px;
-      font-weight: 600;
-      fill: var(--hint-blue);
-      letter-spacing: 0.02em;
-    }
-    .door-hint-arrow { stroke: var(--hint-blue); fill: none; stroke-width: 1.55; stroke-linecap: round; stroke-linejoin: round; }
     .element-hoverable {cursor:pointer; transition:filter 0.2s ease}
     .element-hoverable:hover {filter:drop-shadow(0 0 5px #4ade80)}
     .animate-slide-right {animation:slideInRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity:0}
@@ -64,17 +46,13 @@
     .app-nav-links a {display:flex; align-items:center; gap:0.5rem; text-decoration:none}
     .workflow-steps {display:flex; align-items:center; justify-content:center; gap:1rem; padding:2rem 0; background:rgba(10, 51, 35, 0.02)}
     .workflow-step {display:flex; align-items:center; gap:0.75rem; opacity:0.4}
-    .workflow-step.active,
-    a.workflow-step {opacity:1}
-    .workflow-step.active {color:#F7F4D5}
+    .workflow-step.active {opacity:1; color:#F7F4D5}
     .workflow-step span {width:24px; height:24px; border-radius:50%; border:1px solid currentColor; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold}
     .workflow-connector {width:40px; height:1px; background:rgba(247, 244, 213, 0.2)}
   </style>
   <link rel="stylesheet" href="./design-system.css">
 </head>
 <body class="page-dimensions">
-  <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
-
 <div class="min-h-screen relative flex flex-col grid-background bg-[#0A3323] font-['Quicksand',sans-serif] text-[#F7F4D5] overflow-hidden" data-sd-id="1">
   <div class="noise-texture" data-sd-id="2"></div>
   <div id="custom-toast" data-sd-id="3">
@@ -98,46 +76,11 @@
         Projects<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full" data-sd-id="13"></span>
       </a>
     </div>
-      <div class="app-nav-actions" data-sd-id="14">
-          <button id="theme-toggle-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
-              <iconify-icon icon="ph:moon-duotone"></iconify-icon>
-          </button>
-          <div class="profile-menu-wrap">
-              <button id="profile-btn" type="button" class="profile-btn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
-                  <iconify-icon icon="ph:user"></iconify-icon>
-              </button>
-              <div id="profile-popup" class="profile-popup hidden" role="menu">
-                  <div class="profile-popup-header">
-                      <div class="profile-popup-avatar" aria-hidden="true">
-                          <iconify-icon icon="ph:user"></iconify-icon>
-                      </div>
-                      <div class="profile-popup-identity">
-                          <p class="profile-popup-name" data-profile-name>Account</p>
-                          <p class="profile-popup-email" data-profile-email>Manage your BluPrint profile</p>
-                      </div>
-                  </div>
-                  <div class="profile-popup-section">
-                      <p class="profile-popup-label">Account</p>
-                      <button id="settings-btn" type="button" class="profile-popup-item" role="menuitem">
-                          <span class="profile-popup-item-icon"><iconify-icon icon="ph:gear-duotone"></iconify-icon></span>
-                          <span class="profile-popup-item-copy">
-                              <strong>Settings</strong>
-                              <small>Name, birthday &amp; preferences</small>
-                          </span>
-                      </button>
-                  </div>
-                  <div class="profile-popup-footer">
-                      <button id="logout-btn" type="button" class="profile-popup-item profile-popup-item-danger" role="menuitem">
-                          <span class="profile-popup-item-icon"><iconify-icon icon="ph:sign-out-duotone"></iconify-icon></span>
-                          <span class="profile-popup-item-copy">
-                              <strong>Sign out</strong>
-                              <small>Come back anytime</small>
-                          </span>
-                      </button>
-                  </div>
-              </div>
-          </div>
+    <div class="app-nav-actions" data-sd-id="14">
+      <div class="w-10 h-10 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border border-[#0A3323]/20" data-sd-id="15">
+        <iconify-icon icon="ph:user-duotone" class="text-xl text-[#0A3323]"></iconify-icon>
       </div>
+    </div>
   </nav>
   <nav class="workflow-steps" aria-label="Room design progress" data-sd-id="16">
     <div class="workflow-step active" aria-current="step" data-sd-id="17"><span data-sd-id="18">1</span><strong>Define Room</strong></div>
@@ -171,31 +114,30 @@
               <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(247,244,213,0.08)" stroke-width="1.5"></path>
             </pattern>
             <symbol id="door-template">
-              <path d="M 0 0 L 40 0" stroke="#F7F4D5" stroke-width="4" stroke-linecap="round"></path>
-              <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#F7F4D5" stroke-width="2.6" stroke-dasharray="5 2.5" stroke-linecap="round" fill="none"></path>
-              <path d="M 0 0 L 0 40" stroke="var(--garden-rosy)" stroke-width="5.5" stroke-linecap="round"></path>
-              <circle cx="0" cy="0" r="3.5" fill="var(--garden-rosy)"></circle>
-            </symbol>
-            <!-- Invisible full swing area so hover/click works anywhere on the door, not just strokes -->
-            <symbol id="door-hit-template">
-              <path d="M -4 -8 L 44 -8 L 44 8 A 44 44 0 0 1 8 44 L -8 44 L -8 0 Z" fill="rgba(0,0,0,0.001)" stroke="none"></path>
+              <path d="M 0 0 L 40 0" stroke="#3B3B3B" stroke-width="4" stroke-linecap="round"></path>
+              <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#3B3B3B" stroke-width="2.6" stroke-dasharray="5 2.5" stroke-linecap="round" fill="none"></path>
+              <path d="M 0 0 L 0 40" stroke="#3B3B3B" stroke-width="5.5" stroke-linecap="round"></path>
+              <circle cx="0" cy="0" r="3.5" fill="#3B3B3B"></circle>
             </symbol>
             <mask id="room-mask"></mask>
             <clipPath id="room-clip"><path id="room-clip-path"></path></clipPath>
             <symbol id="window-template">
-              <rect x="0" y="-4" width="50" height="8" fill="var(--garden-dark)" stroke="#F7F4D5" stroke-width="1.5"></rect>
-              <line x1="5" y1="-1.5" x2="45" y2="-1.5" stroke="#F7F4D5" stroke-width="1"></line>
-              <line x1="5" y1="1.5" x2="45" y2="1.5" stroke="#F7F4D5" stroke-width="1"></line>
+              <rect x="0" y="-4" width="50" height="8" fill="#D3968D" stroke="#D3968D" stroke-width="1.5"></rect>
+              <line x1="5" y1="-1.5" x2="45" y2="-1.5" stroke="#FFF7F5" stroke-width="1"></line>
+              <line x1="5" y1="1.5" x2="45" y2="1.5" stroke="#FFF7F5" stroke-width="1"></line>
             </symbol>
           </defs>
           <rect id="svg-bg" width="100%" height="100%" fill="url(#largeGrid)"></rect>
           <path id="room-polygon" class="room-path"></path>
+          <g id="finalized-cutouts"></g>
           <g id="edge-highlights"></g>
           <g id="placed-elements">
             <g id="elements-only"></g>
           </g>
           <g id="ghost-element" class="hidden"></g>
+          <g id="drawing-layer"></g>
           <text id="coord-tooltip" class="coord-tooltip hidden" x="0" y="0">0, 0</text>
+          <g id="door-flip-tooltip" class="hidden" pointer-events="none"></g>
           <g id="dimension-labels" pointer-events="none">
             <g id="group-width">
               <line id="line-width" stroke="var(--garden-rosy)" stroke-width="1" opacity="0.6"></line>
@@ -211,12 +153,6 @@
               <text id="label-length-text" text-anchor="middle" fill="var(--garden-rosy)" class="font-bold text-[11px] uppercase tracking-widest"></text>
               <text id="label-length-sub" text-anchor="middle" fill="var(--garden-rosy)" class="italic text-[9px] uppercase tracking-wider opacity-60">LENGTH</text>
             </g>
-          </g>
-          <!-- Drawn last so the tip sits on the grid outside the room -->
-          <g id="door-flip-tooltip" class="hidden" pointer-events="none">
-            <text class="door-hint-text" x="0" y="4">double-click to flip</text>
-            <path class="door-hint-arrow" d="M 108 1 C 118 -7, 128 9, 140 1 C 146 -3, 150 4, 156 0" />
-            <path class="door-hint-arrow" d="M 150 -5 L 158 0 L 150 6" />
           </g>
         </svg>
         <div class="absolute bottom-8 right-8" data-sd-id="35">
@@ -234,7 +170,7 @@
           <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-[0.15em]" data-sd-id="41">DRAG CARDS ONTO THE FLOOR PLAN</p>
           <div class="space-y-3" data-sd-id="42">
             <div draggable="true" data-type="door" id="draggable-door" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-[#D3968C]/10 border border-[#D3968C]/20 hover:bg-[#D3968C]/20 transition-all cursor-grab active:cursor-grabbing group" data-sd-id="43">
-              <div data-drag-preview class="w-16 h-16 bg-[#D3968C]/20 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="44">
+              <div class="w-16 h-16 bg-[#D3968C]/20 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="44">
                 <iconify-icon icon="ph:door-duotone" class="text-3xl text-[#D3968C]"></iconify-icon>
               </div>
               <div class="flex-1 text-left" data-sd-id="45">
@@ -244,7 +180,7 @@
               <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
             </div>
             <div draggable="true" data-type="window" id="draggable-window" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-[#105666]/30 border border-[#105666]/40 hover:bg-[#105666]/50 transition-all cursor-grab active:cursor-grabbing group" data-sd-id="48">
-              <div data-drag-preview class="w-16 h-16 bg-[#105666]/40 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="49">
+              <div class="w-16 h-16 bg-[#105666]/40 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="49">
                 <iconify-icon icon="ph:square-duotone" class="text-3xl text-[#83d4e0]"></iconify-icon>
               </div>
               <div class="flex-1 text-left" data-sd-id="50">
@@ -253,16 +189,26 @@
               </div>
               <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
             </div>
-            <div draggable="true" data-type="cutout" id="draggable-cutout" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-transparent border-2 border-[#839958]/30 border-dashed hover:bg-[#839958]/10 transition-all cursor-grab active:cursor-grabbing group" data-sd-id="53">
-              <div data-drag-preview class="w-16 h-16 bg-[#839958]/20 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="54">
+            <div draggable="true" data-type="cutout" id="draggable-cutout" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-transparent border-2 border-[#839958]/30 border-dashed hover:bg-[#839958]/10 transition-all cursor-grab active:cursor-grabbing group">
+              <div class="w-16 h-16 bg-[#839958]/20 rounded-2xl flex items-center justify-center shrink-0">
                 <iconify-icon icon="ph:scissors-duotone" class="text-3xl text-[#839958]"></iconify-icon>
               </div>
-              <div class="flex-1 text-left" data-sd-id="55">
-                <h4 class="font-bold text-white text-base" data-sd-id="56">Wall Cutout</h4>
-                <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-widest" data-sd-id="57">CLOSET OR NOOK SPACE</p>
+              <div class="flex-1 text-left">
+                <h4 class="font-bold text-white text-base">Wall Cutout</h4>
+                <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-widest">PRESET SQUARE</p>
               </div>
               <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
             </div>
+            <button type="button" id="btn-draw-cutout" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-transparent border-2 border-[#105666]/30 border-dashed hover:bg-[#105666]/10 transition-all cursor-pointer group">
+              <div class="w-16 h-16 bg-[#105666]/20 rounded-2xl flex items-center justify-center shrink-0">
+                <iconify-icon icon="ph:pencil-duotone" class="text-3xl text-[#83d4e0]"></iconify-icon>
+              </div>
+              <div class="flex-1 text-left">
+                <h4 class="font-bold text-white text-base">Draw Cutout</h4>
+                <p class="text-[11px] text-[#F7F4D5]/40 font-bold leading-snug">Click anywhere to create an enclosed shape to add to your blueprint</p>
+              </div>
+              <iconify-icon icon="ph:cursor-click-duotone" class="text-white/20 text-2xl"></iconify-icon>
+            </button>
           </div>
         </div>
         <div class="space-y-4 pt-4 border-t border-[#F7F4D5]/10" data-sd-id="58">
@@ -317,1255 +263,1521 @@
     </section>
   </main>
 </div>
-<div id="settings-overlay" class="settings-overlay hidden">
-    <div class="settings-modal">
-        <button id="settings-close-btn" class="settings-modal-close" aria-label="Close settings">
-            <iconify-icon icon="ph:x-bold"></iconify-icon>
-        </button>
-        <h2>Settings</h2>
-        <p style="color:var(--bp-muted); font-size:14px; margin:0 0 24px;">Update your profile details.</p>
-        <div class="settings-field">
-            <label for="settings-name">Display name</label>
-            <input type="text" id="settings-name" placeholder="Your name">
-        </div>
-        <div class="settings-field">
-            <label for="settings-birthday">Birthday</label>
-            <input type="date" id="settings-birthday">
-        </div>
-        <button id="settings-save-btn" class="settings-save-btn">Save changes</button>
-        <span id="settings-save-status" class="settings-save-status"></span>
-        <hr class="settings-divider">
-        <div class="settings-contact">
-            <h3>Need help?</h3>
-            <ul>
-                <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
-                <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-                <li><strong>Prisha Agarwalla</strong> — <a href="mailto:pagarwalla@wisc.edu">pagarwalla@wisc.edu</a></li>
-                <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
-            </ul>
-        </div>
-    </div>
-</div>
-<script type="module">
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { auth } from "./firebase.js";
+<script>
+const svg = document.getElementById("editor-svg");
+const roomPath = document.getElementById("room-polygon");
+const placedGroup = document.getElementById("placed-elements");
+const highlightsGroup = document.getElementById("edge-highlights");
+const roomClipPath = document.getElementById("room-clip-path");
+const finalizedCutoutsGroup = document.getElementById("finalized-cutouts");
+const ghost = document.getElementById("ghost-element");
+const elementsOnlyGroup = document.getElementById("elements-only");
+const coordTooltip = document.getElementById("coord-tooltip");
+const toast = document.getElementById("custom-toast");
+const toastMsg = document.getElementById("toast-msg");
+const btnUndo = document.getElementById("btn-undo");
+const btnRedo = document.getElementById("btn-redo");
+const widthInput = document.getElementById("room-width");
+const lengthInput = document.getElementById("room-length");
+const areaBadge = document.getElementById("area-badge");
+const labelWidthText = document.getElementById("label-width-text");
+const labelLengthText = document.getElementById("label-length-text");
+const roomNameInput = document.getElementById("room-name");
+const heightInput = document.getElementById("room-height");
 
-    const profileBtn = document.getElementById('profile-btn');
-    const profilePopup = document.getElementById('profile-popup');
-    function setProfilePopupIdentity(name, email) {
-        const nameEl = document.querySelector('[data-profile-name]');
-        const emailEl = document.querySelector('[data-profile-email]');
-        if (nameEl) nameEl.textContent = name || 'Account';
-        if (emailEl) emailEl.textContent = email || 'Manage your BluPrint profile';
-    }
-    setProfilePopupIdentity(localStorage.getItem('blueprintUserName') || 'Account', '');
-    if (profileBtn && profilePopup) {
-        profileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const open = !profilePopup.classList.toggle('hidden');
-            profileBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
-        document.addEventListener('click', (e) => {
-            if (!profilePopup.contains(e.target) && !profileBtn.contains(e.target)) {
-                profilePopup.classList.add('hidden');
-                profileBtn.setAttribute('aria-expanded', 'false');
-            }
-        });
-    }
+const ROOM_LAYOUT_SCALE = 20;
+let currentUnit = "ft";
+const FT_TO_M = 0.3048;
 
-    document.getElementById('logout-btn')?.addEventListener('click', async () => {
-        await signOut(auth);
-        window.location.href = 'login.html';
-    });
+function createDefaultState() {
+  return { roomPoints: [{x:250,y:100},{x:550,y:100},{x:550,y:350},{x:250,y:350}], elements: [], cutouts: [], finalizedCutouts: [] };
+}
 
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    if (localStorage.getItem('blueprintTheme') === 'dark') {
-        document.documentElement.classList.add('dark-mode');
-      document.body.classList.add('dark-mode');
-        if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
-    }
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark-mode');
-            document.documentElement.classList.toggle('dark-mode', isDark);
-            localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
-            themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
-        });
-    }
+let state = createDefaultState();
+let history = [];
+let historyIndex = -1;
+let draggingFromToolbar = null;
+let hoveredElementId = null;
+let hoveredElementType = null;
+let selectedResizeId = null;
+let selectedCutoutId = null;
+let drawingMode = false;
+let drawingPoints = [];
+let pendingCutoutId = null;
 
-    const settingsBtn = document.getElementById('settings-btn');
-    const settingsOverlay = document.getElementById('settings-overlay');
-    const settingsCloseBtn = document.getElementById('settings-close-btn');
-    const settingsNameInput = document.getElementById('settings-name');
-    const settingsBirthdayInput = document.getElementById('settings-birthday');
-    const settingsSaveBtn = document.getElementById('settings-save-btn');
-    const settingsSaveStatus = document.getElementById('settings-save-status');
+function isPointInRoom(x,y) {
+  const pts = state.roomPoints;
+  // Basic bounding box check
+  const minX = Math.min(...pts.map(p=>p.x));
+  const maxX = Math.max(...pts.map(p=>p.x));
+  const minY = Math.min(...pts.map(p=>p.y));
+  const maxY = Math.max(...pts.map(p=>p.y));
+  const buffer = 0.5;
 
-    function openSettingsModal() {
-        if (settingsNameInput) settingsNameInput.value = localStorage.getItem('blueprintUserName') || '';
-        if (settingsBirthdayInput) settingsBirthdayInput.value = localStorage.getItem('blueprintUserBirthday') || '';
-        if (settingsOverlay) settingsOverlay.classList.remove('hidden');
-        if (profilePopup) profilePopup.classList.add('hidden');
-    }
-    function closeSettingsModal() {
-        if (settingsOverlay) settingsOverlay.classList.add('hidden');
-        if (settingsSaveStatus) settingsSaveStatus.textContent = '';
-    }
-    if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
-    if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettingsModal);
-    if (settingsOverlay) settingsOverlay.addEventListener('click', (e) => {
-        if (e.target === settingsOverlay) closeSettingsModal();
-    });
+  // Using the polygon itself for complex shapes
+  if (x < minX - buffer || x > maxX + buffer || y < minY - buffer || y > maxY + buffer) return false;
 
-    if (settingsSaveBtn) {
-        settingsSaveBtn.addEventListener('click', async () => {
-            const newName = settingsNameInput.value.trim();
-            const newBirthday = settingsBirthdayInput.value;
-            try {
-                if (newName) localStorage.setItem('blueprintUserName', newName);
-                if (newBirthday) localStorage.setItem('blueprintUserBirthday', newBirthday);
-                setProfilePopupIdentity(newName || localStorage.getItem('blueprintUserName') || 'Account', '');
-                settingsSaveStatus.textContent = 'Saved!';
-                setTimeout(() => { settingsSaveStatus.textContent = ''; }, 2000);
-            } catch (err) {
-                settingsSaveStatus.textContent = 'Error: ' + err.message;
-            }
-        });
-    }
-  const svg = document.getElementById("editor-svg");
-  const roomPath = document.getElementById("room-polygon");
-  const placedGroup = document.getElementById("placed-elements");
-  const highlightsGroup = document.getElementById("edge-highlights");
-  const roomClipPath = document.getElementById("room-clip-path");
-  const ghost = document.getElementById("ghost-element");
-  const elementsOnlyGroup = document.getElementById("elements-only");
-  const coordTooltip = document.getElementById("coord-tooltip");
-  const toast = document.getElementById("custom-toast");
-  const toastMsg = document.getElementById("toast-msg");
-  const btnUndo = document.getElementById("btn-undo");
-  const btnRedo = document.getElementById("btn-redo");
-  const widthInput = document.getElementById("room-width");
-  const lengthInput = document.getElementById("room-length");
-  const areaBadge = document.getElementById("area-badge");
-  const labelWidthText = document.getElementById("label-width-text");
-  const labelLengthText = document.getElementById("label-length-text");
-  const roomNameInput = document.getElementById("room-name");
-  const heightInput = document.getElementById("room-height");
-
-  const ROOM_LAYOUT_SCALE = 20;
-  let currentUnit = "ft";
-  const FT_TO_M = 0.3048;
-
-  function createDefaultState() {
-    return { roomPoints: [{x:250,y:100},{x:550,y:100},{x:550,y:350},{x:250,y:350}], elements: [], cutouts: [], finalizedCutouts: [] };
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].x, yi = pts[i].y;
+    const xj = pts[j].x, yj = pts[j].y;
+    const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
   }
+  if (!inside) return false;
+  return !(state.finalizedCutouts || []).some(c => isPointInPolygon(x, y, c.points));
+}
 
-  let state = createDefaultState();
-  let history = [];
-  let historyIndex = -1;
-  let draggingFromToolbar = null;
-  let hoveredElementId = null;
-  let hoveredElementType = null;
-  let selectedResizeId = null;
-  let selectedCutoutId = null;
-  let doorFlipFirstHover = null;
+function doesCutoutOverlapRoom(points) {
+  return polygonsOverlap(points, state.roomPoints);
+}
 
-  function isPointInRoom(x,y) {
-    const pts = state.roomPoints;
-    // Basic bounding box check
-    const minX = Math.min(...pts.map(p=>p.x));
-    const maxX = Math.max(...pts.map(p=>p.x));
-    const minY = Math.min(...pts.map(p=>p.y));
-    const maxY = Math.max(...pts.map(p=>p.y));
-    const buffer = 0.5;
-
-    // Using the polygon itself for complex shapes
-    if (x < minX - buffer || x > maxX + buffer || y < minY - buffer || y > maxY + buffer) return false;
-
-    let inside = false;
-    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      const xi = pts[i].x, yi = pts[i].y;
-      const xj = pts[j].x, yj = pts[j].y;
-      const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-    return inside;
+function getElementBounds(el) {
+  if (el.type === 'cutout') {
+    const xs = el.points.map(p => p.x);
+    const ys = el.points.map(p => p.y);
+    return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
   }
+  const buffer = el.type === 'window' ? (el.width || 50) / 2 : 20;
+  return { minX: el.x - buffer, maxX: el.x + buffer, minY: el.y - buffer, maxY: el.y + buffer };
+}
 
-  function getElementBounds(el) {
-    if (el.type === 'cutout') {
-      const xs = el.points.map(p => p.x);
-      const ys = el.points.map(p => p.y);
-      return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
-    }
-    const buffer = el.type === 'window' ? (el.width || 50) / 2 : 20;
-    return { minX: el.x - buffer, maxX: el.x + buffer, minY: el.y - buffer, maxY: el.y + buffer };
-  }
+function getElementDeletePosition(el) {
+  const angleRad = ((el.angle || 0) * Math.PI) / 180;
+  const along = el.type === "window" ? ((el.width || 50) / 2) + 8 : 18;
+  const normalOffset = -9;
+  return {
+    x: el.x + Math.cos(angleRad) * along - Math.sin(angleRad) * normalOffset,
+    y: el.y + Math.sin(angleRad) * along + Math.cos(angleRad) * normalOffset,
+  };
+}
 
-  function checkCollision(newEl, excludeId = null) {
-    const newBounds = getElementBounds(newEl);
-    const allItems = [...state.elements, ...state.cutouts.map(c => ({...c, type: 'cutout'}))];
-    return allItems.some(item => {
-      if (item.id === excludeId) return false;
-      const itemBounds = getElementBounds(item);
-      return !(newBounds.maxX < itemBounds.minX || newBounds.minX > itemBounds.maxX || newBounds.maxY < itemBounds.minY || newBounds.minY > itemBounds.maxY);
-    });
-  }
+function getPolygonCenter(points) {
+  return points.reduce((acc, p) => ({
+    x: acc.x + p.x / points.length,
+    y: acc.y + p.y / points.length,
+  }), { x: 0, y: 0 });
+}
 
-  function isCutoutValid(points) {
-    if (!points || points.length !== 4) return false;
-    const cx = (points[0].x + points[1].x + points[2].x + points[3].x) / 4;
-    const cy = (points[0].y + points[1].y + points[2].y + points[3].y) / 4;
-    // Centroid must sit inside the room (alcove pulled inward)
-    return isPointInRoom(cx, cy);
-  }
+function clampValue(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
-  function validateQuadrilateral(cutout) {
-    return cutout && cutout.points && cutout.points.length === 4;
-  }
+function getArrowHeadPath(side, point) {
+  if (side === "top") return `M ${point.x} ${point.y} L ${point.x - 3} ${point.y - 5} L ${point.x + 3} ${point.y - 5} Z`;
+  if (side === "bottom") return `M ${point.x} ${point.y} L ${point.x - 3} ${point.y + 5} L ${point.x + 3} ${point.y + 5} Z`;
+  if (side === "left") return `M ${point.x} ${point.y} L ${point.x - 5} ${point.y - 3} L ${point.x - 5} ${point.y + 3} Z`;
+  return `M ${point.x} ${point.y} L ${point.x + 5} ${point.y - 3} L ${point.x + 5} ${point.y + 3} Z`;
+}
 
-  function getEdgeFrame(edgeIndex) {
-    const p1 = state.roomPoints[edgeIndex];
-    const p2 = state.roomPoints[(edgeIndex + 1) % state.roomPoints.length];
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const tx = dx / len;
-    const ty = dy / len;
-    let nx = -ty;
-    let ny = tx;
-    const midX = (p1.x + p2.x) / 2;
-    const midY = (p1.y + p2.y) / 2;
-    if (!isPointInRoom(midX + nx * 8, midY + ny * 8)) {
-      nx = -nx;
-      ny = -ny;
-    }
-    return { p1, p2, tx, ty, nx, ny, len, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
-  }
+function showDoorFlipTooltip(el) {
+  const tooltip = document.getElementById("door-flip-tooltip");
+  const labelWidth = 148;
+  const labelHeight = 24;
+  const viewBoxWidth = 800;
+  const viewBoxHeight = 500;
+  const margin = 12;
+  const gap = 12;
+  const target = { x: el.x, y: el.y };
+  const candidates = [
+    {
+      side: "top",
+      fits: target.y - labelHeight - gap >= margin,
+      x: clampValue(target.x - labelWidth / 2, margin, viewBoxWidth - labelWidth - margin),
+      y: target.y - labelHeight - gap,
+    },
+    {
+      side: "right",
+      fits: target.x + labelWidth + gap <= viewBoxWidth - margin,
+      x: target.x + gap,
+      y: clampValue(target.y - labelHeight / 2, margin, viewBoxHeight - labelHeight - margin),
+    },
+    {
+      side: "bottom",
+      fits: target.y + labelHeight + gap <= viewBoxHeight - margin,
+      x: clampValue(target.x - labelWidth / 2, margin, viewBoxWidth - labelWidth - margin),
+      y: target.y + gap,
+    },
+    {
+      side: "left",
+      fits: target.x - labelWidth - gap >= margin,
+      x: target.x - labelWidth - gap,
+      y: clampValue(target.y - labelHeight / 2, margin, viewBoxHeight - labelHeight - margin),
+    },
+  ];
+  const callout = candidates.find(item => item.fits) || candidates[0];
+  const localTip = { x: target.x - callout.x, y: target.y - callout.y };
+  const arrowBase = callout.side === "top"
+    ? { x: clampValue(localTip.x, 12, labelWidth - 12), y: labelHeight }
+    : callout.side === "bottom"
+      ? { x: clampValue(localTip.x, 12, labelWidth - 12), y: 0 }
+      : callout.side === "left"
+        ? { x: labelWidth, y: clampValue(localTip.y, 8, labelHeight - 8) }
+        : { x: 0, y: clampValue(localTip.y, 8, labelHeight - 8) };
 
-  function buildCutoutRect(frame, leftAlong, rightAlong, depth) {
-    const left = Math.min(leftAlong, rightAlong);
-    const right = Math.max(leftAlong, rightAlong);
-    const d = Math.max(12, depth);
-    const p0 = { x: frame.p1.x + frame.tx * left, y: frame.p1.y + frame.ty * left };
-    const p1 = { x: frame.p1.x + frame.tx * right, y: frame.p1.y + frame.ty * right };
-    const p2 = { x: p1.x + frame.nx * d, y: p1.y + frame.ny * d };
-    const p3 = { x: p0.x + frame.nx * d, y: p0.y + frame.ny * d };
-    return [p0, p1, p2, p3];
-  }
+  tooltip.setAttribute("transform", `translate(${callout.x},${callout.y})`);
+  tooltip.innerHTML = `
+    <path class="door-flip-arrow" d="M ${arrowBase.x} ${arrowBase.y} L ${localTip.x} ${localTip.y}" />
+    <path class="door-flip-arrow-head" d="${getArrowHeadPath(callout.side, localTip)}" />
+    <rect class="door-flip-label" x="0" y="0" width="${labelWidth}" height="${labelHeight}" rx="8"></rect>
+    <text x="10" y="16">Double click to flip door!</text>
+  `;
+  tooltip.classList.remove("hidden");
+}
 
-  function getCutoutMetrics(cutout) {
-    const edgeIndex = Number.isInteger(cutout.edgeIndex) ? cutout.edgeIndex : 0;
-    const frame = getEdgeFrame(edgeIndex);
-    const leftAlong =
-      (cutout.points[0].x - frame.p1.x) * frame.tx +
-      (cutout.points[0].y - frame.p1.y) * frame.ty;
-    const rightAlong =
-      (cutout.points[1].x - frame.p1.x) * frame.tx +
-      (cutout.points[1].y - frame.p1.y) * frame.ty;
-    const depth =
-      (cutout.points[3].x - cutout.points[0].x) * frame.nx +
-      (cutout.points[3].y - cutout.points[0].y) * frame.ny;
-    return { frame, edgeIndex, leftAlong, rightAlong, depth: Math.max(12, Math.abs(depth)) };
-  }
+function getCutoutDeletePosition(c) {
+  const clippedPoints = c.source === "drawn" ? [] : clipPolygonToRoom(c.points);
+  const points = clippedPoints.length >= 3 ? clippedPoints : c.points;
+  if (!points.length) return { x: 0, y: 0 };
 
-  /** Keep cutouts as wall-aligned rectangles; drag only along wall or inward normal. */
-  function constrainCutoutVertex(cutout, pIdx, svgP) {
-    let edgeIndex = Number.isInteger(cutout.edgeIndex) ? cutout.edgeIndex : getClosestPointOnPerimeter(svgP.x, svgP.y).edgeIndex;
-    const frame = getEdgeFrame(edgeIndex);
-    const metrics = getCutoutMetrics({ ...cutout, edgeIndex });
-    let { leftAlong, rightAlong, depth } = metrics;
-    const along =
-      (svgP.x - frame.p1.x) * frame.tx +
-      (svgP.y - frame.p1.y) * frame.ty;
-    const into =
-      (svgP.x - frame.p1.x) * frame.nx +
-      (svgP.y - frame.p1.y) * frame.ny;
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const center = getPolygonCenter(points);
+  const inset = 12;
+  const candidates = [
+    { x: maxX - inset, y: minY + inset },
+    { x: maxX - inset, y: maxY - inset },
+    { x: minX + inset, y: minY + inset },
+    center,
+  ];
 
-    if (pIdx === 0 || pIdx === 1) {
-      // Slide that wall corner along the wall (straight line)
-      if (pIdx === 0) leftAlong = Math.min(along, rightAlong - 16);
-      else rightAlong = Math.max(along, leftAlong + 16);
-    } else {
-      // Pull depth straight into the room; optionally nudge that end's width
-      depth = Math.max(12, into);
-      if (pIdx === 3) leftAlong = Math.min(along, rightAlong - 16);
-      if (pIdx === 2) rightAlong = Math.max(along, leftAlong + 16);
-    }
+  return candidates.find(p => isPointInPolygon(p.x, p.y, points)) || center;
+}
 
-    leftAlong = Math.max(2, Math.min(frame.len - 18, leftAlong));
-    rightAlong = Math.max(leftAlong + 16, Math.min(frame.len - 2, rightAlong));
-    const pts = buildCutoutRect(frame, leftAlong, rightAlong, depth);
-    if (!isCutoutValid(pts)) return false;
-    cutout.edgeIndex = edgeIndex;
-    cutout.points = pts;
-    return true;
-  }
-
-  function placeCutoutOnEdge(edgeIndex, centerAlong, width, depth) {
-    const frame = getEdgeFrame(edgeIndex);
-    const half = Math.max(8, width / 2);
-    let center = centerAlong;
-    center = Math.max(half + 2, Math.min(frame.len - half - 2, center));
-    return {
-      points: buildCutoutRect(frame, center - half, center + half, depth),
-      edgeIndex,
-    };
-  }
-
-  function isValidVertexMovement(x, y, cutoutId, vIdx) {
-    const cutout = state.cutouts.find(c => c.id === cutoutId);
-    if (!cutout) return false;
-
-    // Check if point is too close to other vertices in the same cutout
-    for (let i = 0; i < cutout.points.length; i++) {
-      if (i === vIdx) continue;
-      const dist = Math.hypot(x - cutout.points[i].x, y - cutout.points[i].y);
-      if (dist < 10) return false;
-    }
-    return true;
-  }
-
-  function isPointInPolygon(x, y, pts) {
-    let inside = false;
-    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      const xi = pts[i].x, yi = pts[i].y;
-      const xj = pts[j].x, yj = pts[j].y;
-      const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-    return inside;
-  }
-
-  function pointToPathDistance(x, y, pts) {
-    let minD = Infinity;
-    for (let i = 0; i < pts.length; i++) {
-      const p1 = pts[i];
-      const p2 = pts[(i + 1) % pts.length];
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const lenSq = dx * dx + dy * dy;
-      let t = ((x - p1.x) * dx + (y - p1.y) * dy) / (lenSq || 1);
-      t = Math.max(0, Math.min(1, t));
-      const dist = Math.hypot(x - (p1.x + t * dx), y - (p1.y + t * dy));
-      if (dist < minD) minD = dist;
-    }
-    return minD;
-  }
-
-  function cloneObj(obj) { return JSON.parse(JSON.stringify(obj)); }
-
-  function saveState() {
-    if (historyIndex < history.length - 1) { history = history.slice(0, historyIndex + 1); }
-    history.push(cloneObj(state));
-    historyIndex++;
-    updateHistoryUI();
-  }
-
-  function updateHistoryUI() {
-    btnUndo.disabled = historyIndex <= 0;
-    btnRedo.disabled = historyIndex >= history.length - 1;
-  }
-
-  function undo() {
-    if (historyIndex > 0) {
-      historyIndex--;
-      state = cloneObj(history[historyIndex]);
-      renderAll();
-      updateHistoryUI();
-      showToast("Action undone");
-    }
-  }
-
-  function redo() {
-    if (historyIndex < history.length - 1) {
-      historyIndex++;
-      state = cloneObj(history[historyIndex]);
-      renderAll();
-      updateHistoryUI();
-      showToast("Action redone");
-    }
-  }
-
-  function getSVGPoint(e) {
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    const matrix = svg.getScreenCTM();
-    if (!matrix) return {x:0, y:0};
-    const transformed = pt.matrixTransform(matrix.inverse());
-    return { x: transformed.x, y: transformed.y };
-  }
-
-  function getClosestPointOnPerimeter(x,y) {
-    let minDist = Infinity;
-    let closest = null;
-    let edgeIndex = -1;
-    for (let i = 0; i < state.roomPoints.length; i++) {
-      const p1 = state.roomPoints[i];
-      const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const lenSq = dx*dx + dy*dy;
-      let t = ((x - p1.x) * dx + (y - p1.y) * dy) / lenSq;
-      t = Math.max(0, Math.min(1, t));
-      const px = p1.x + t * dx;
-      const py = p1.y + t * dy;
-      const dist = Math.sqrt((x - px)**2 + (y - py)**2);
-      if (dist < minDist) {
-        minDist = dist;
-        closest = { x: px, y: py, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
-        edgeIndex = i;
-      }
-    }
-    return { point: closest, dist: minDist, edgeIndex };
-  }
-
-  function showToast(msg) {
-    toastMsg.innerText = msg;
-    toast.classList.add("visible");
-    setTimeout(() => toast.classList.remove("visible"), 2000);
-  }
-
-  /** Place the handwritten tip horizontally on the grid outside the room. */
-  function showDoorFlipTip(el, hoverSvgP) {
-    const tt = document.getElementById("door-flip-tooltip");
-    if (!tt) return;
-
-    if (doorFlipFirstHover == null || doorFlipFirstHover.doorId !== el.id) {
-      doorFlipFirstHover = {
-        x: hoverSvgP ? hoverSvgP.x : el.x,
-        y: hoverSvgP ? hoverSvgP.y : el.y,
-        doorId: el.id,
-      };
-    }
-
-    const angleRad = (el.angle * Math.PI) / 180;
-    const ty = Math.sin(angleRad);
-    const tx = Math.cos(angleRad);
-    // Outward wall normal (away from room interior)
-    let nx = -ty;
-    let ny = tx;
-    if (isPointInRoom(el.x + nx * 12, el.y + ny * 12)) {
-      nx = -nx;
-      ny = -ny;
-    }
-
-    let outX = doorFlipFirstHover.x;
-    let outY = doorFlipFirstHover.y;
-    if (isPointInRoom(outX, outY)) {
-      outX = el.x + nx * 52;
-      outY = el.y + ny * 52;
-    } else {
-      outX += nx * 30;
-      outY += ny * 30;
-    }
-
-    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-    for (let i = 0; i < 8 && isPointInRoom(outX, outY); i++) {
-      outX += nx * 16;
-      outY += ny * 16;
-    }
-
-    // Keep the label horizontal: place it to the left or right of the door on the grid
-    const tipW = 160;
-    const placeLeft = outX <= el.x;
-    let originX = placeLeft ? el.x - tipW - 18 : el.x + 18;
-    let originY = outY;
-    originX = clamp(originX, 8, 800 - tipW - 8);
-    originY = clamp(originY, 14, 490);
-
-    // If that spot is still inside, push purely outward on Y/X without rotating text
-    if (isPointInRoom(originX + 50, originY)) {
-      originX = clamp(el.x + nx * 60 - (placeLeft ? tipW : 0), 8, 800 - tipW - 8);
-      originY = clamp(el.y + ny * 60, 14, 490);
-    }
-
-    const arrow = tt.querySelectorAll(".door-hint-arrow");
-    const text = tt.querySelector(".door-hint-text");
-    if (placeLeft) {
-      // text left, squiggle arrow pointing right toward the door
-      if (text) {
-        text.setAttribute("x", "0");
-        text.setAttribute("text-anchor", "start");
-      }
-      if (arrow[0]) arrow[0].setAttribute("d", "M 108 1 C 118 -7, 128 9, 140 1 C 146 -3, 150 4, 156 0");
-      if (arrow[1]) arrow[1].setAttribute("d", "M 150 -5 L 158 0 L 150 6");
-    } else {
-      // text right, squiggle arrow pointing left toward the door
-      if (text) {
-        text.setAttribute("x", "158");
-        text.setAttribute("text-anchor", "end");
-      }
-      if (arrow[0]) arrow[0].setAttribute("d", "M 50 1 C 40 -7, 30 9, 18 1 C 12 -3, 8 4, 2 0");
-      if (arrow[1]) arrow[1].setAttribute("d", "M 8 -5 L 0 0 L 8 6");
-    }
-
-    tt.setAttribute("transform", `translate(${originX},${originY})`);
-    tt.classList.remove("hidden");
-  }
-
-  function hideDoorFlipTip() {
-    const tt = document.getElementById("door-flip-tooltip");
-    if (tt) tt.classList.add("hidden");
-  }
-
-  function doorRootTransform(el, mirrorScale) {
-    return `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(-20, 0)`;
-  }
-
-  function renderAll() {
-    renderRoom();
-    renderElements();
-    renderCutouts();
-    updateDimensionsDisplay();
-  }
-
-  function renderRoom() {
-    let d = state.roomPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
-    roomPath.setAttribute("d", d);
-    roomClipPath.setAttribute("d", d);
-
-    const mask = document.getElementById("room-mask");
-    mask.innerHTML = '<rect width="100%" height="100%" fill="white" />';
-    roomPath.setAttribute("mask", "url(#room-mask)");
-
-    highlightsGroup.innerHTML = "";
-    state.roomPoints.forEach((p, i) => {
-      const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", p.x);
-      line.setAttribute("y1", p.y);
-      line.setAttribute("x2", p2.x);
-      line.setAttribute("y2", p2.y);
-      line.classList.add("edge-highlight");
-      line.id = `edge-${i}`;
-      highlightsGroup.appendChild(line);
-    });
-
-
-  }
-
-  function renderElements() {
-    elementsOnlyGroup.innerHTML = "";
-    state.elements.forEach((el) => {
-      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const mirrorScale = el.isMirrored ? -1 : 1;
-      if (el.type === "door") {
-        // Hit path covers the full swing area so hover works anywhere on the door, not just strokes
-        g.innerHTML = `<g class="door-root" transform="${doorRootTransform(el, mirrorScale)}">
-          <use href="#door-hit-template"></use>
-          <use href="#door-template"></use>
-        </g>`;
-      } else {
-        const w = el.width || 50;
-        const offset = -w/2;
-        g.innerHTML = `<g transform="translate(${el.x},${el.y}) rotate(${el.angle})">
-           <rect x="${offset}" y="-4" width="${w}" height="8" fill="var(--garden-dark)" stroke="#F7F4D5" stroke-width="1.5" />
-           <line x1="${offset + 5}" y1="-1.5" x2="${offset + w - 5}" y2="-1.5" stroke="#F7F4D5" stroke-width="1" />
-           <line x1="${offset + 5}" y1="1.5" x2="${offset + w - 5}" y2="1.5" stroke="#F7F4D5" stroke-width="1" />
-         </g>`;
-        if (el.type === "window") {
-          const gTransform = g.querySelector('g');
-          const createHandle = (isRight) => {
-            const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            c.setAttribute("cx", isRight ? w/2 : -w/2);
-            c.setAttribute("cy", 0);
-            c.setAttribute("r", 6);
-            c.setAttribute("fill", "var(--garden-rosy)");
-            c.setAttribute("stroke", "white");
-            c.setAttribute("class", "vertex-handle");
-            c.onmousedown = (e) => {
-              e.stopPropagation();
-              let hasResized = false;
-              const onMove = (mv) => {
-                hasResized = true;
-                const svgP = getSVGPoint(mv);
-                const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-                const p1 = state.roomPoints[snap.edgeIndex];
-                const p2 = state.roomPoints[(snap.edgeIndex + 1) % state.roomPoints.length];
-                const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-                const dx = p2.x - p1.x; const dy = p2.y - p1.y;
-                const u = { x: dx/segLen, y: dy/segLen };
-                const centerDist = (el.x - p1.x) * u.x + (el.y - p1.y) * u.y;
-                const mouseDist = (svgP.x - p1.x) * u.x + (svgP.y - p1.y) * u.y;
-                let newW, newCenterDist;
-                if (isRight) {
-                  const leftEndDist = Math.max(0, centerDist - (el.width || 50)/2);
-                  newW = Math.max(15, mouseDist - leftEndDist);
-                  if (leftEndDist + newW > segLen) newW = segLen - leftEndDist;
-                  newCenterDist = leftEndDist + newW/2;
-                } else {
-                  const rightEndDist = Math.min(segLen, centerDist + (el.width || 50)/2);
-                  newW = Math.max(15, rightEndDist - mouseDist);
-                  if (rightEndDist - newW < 0) newW = rightEndDist;
-                  newCenterDist = rightEndDist - newW/2;
-                }
-                el.width = newW; el.x = p1.x + u.x * newCenterDist; el.y = p1.y + u.y * newCenterDist;
-                const ft = (el.width / 20).toFixed(1);
-                coordTooltip.classList.remove("hidden");
-                coordTooltip.setAttribute("x", svgP.x + 10); coordTooltip.setAttribute("y", svgP.y - 10);
-                coordTooltip.textContent = `${ft} ft (${Math.round(el.width)}px)`;
-                renderAll();
-              };
-              const onUp = () => {
-                window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
-                coordTooltip.classList.add("hidden");
-                if (hasResized) saveState();
-              };
-              window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
-            };
-            return c;
-          };
-          gTransform.appendChild(createHandle(false));
-          gTransform.appendChild(createHandle(true));
-        }
-      }
-      g.classList.add("element-hoverable");
-      g.setAttribute("style", "cursor: grab");
-      if (el.type === "door") {
-        g.addEventListener("mouseenter", (e) => {
-          showDoorFlipTip(el, getSVGPoint(e));
-        });
-        g.addEventListener("mouseleave", () => {
-          hideDoorFlipTip();
-        });
-      }
-      g.addEventListener("dblclick", (e) => {
-        e.stopPropagation();
-        if (el.type === "door") {
-          el.isMirrored = !el.isMirrored; saveState(); renderAll(); showToast("Door swing mirrored");
-        }
-      });
-      g.addEventListener("mouseenter", () => { hoveredElementId = el.id; hoveredElementType = "element"; });
-      g.addEventListener("mouseleave", () => { if (hoveredElementId === el.id) { hoveredElementId = null; hoveredElementType = null; } });
-      g.onmousedown = (e) => {
-        e.stopPropagation();
-        let hasMoved = false;
-        g.setAttribute("style", "cursor: grabbing");
-        const onMouseMove = (mv) => {
-          hasMoved = true;
-          const svgP = getSVGPoint(mv);
-          const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-          const testEl = { ...el, x: snap.point.x, y: snap.point.y };
-          if (checkCollision(testEl, el.id)) return;
-          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-          if (edgeEl) edgeEl.classList.add("active");
-          el.x = snap.point.x; el.y = snap.point.y; el.angle = snap.point.angle;
-          if (el.type === 'door') {
-            const doorRoot = g.querySelector(".door-root");
-            if (doorRoot) doorRoot.setAttribute("transform", doorRootTransform(el, mirrorScale));
-          } else {
-            const w = el.width || 50;
-            const gInner = g.querySelector('g');
-            if (gInner) gInner.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle})`);
-          }
-        };
-        const onMouseUp = () => {
-          window.removeEventListener("mousemove", onMouseMove); window.removeEventListener("mouseup", onMouseUp);
-          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          g.setAttribute("style", "cursor: grab");
-          if (hasMoved) { saveState(); showToast(`${el.type} repositioned`); }
-        };
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
-      };
-      // Add delete button
-      const delBtn = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      delBtn.setAttribute("transform", `translate(${el.x + 15},${el.y - 5})`);
-      delBtn.style.cursor = "pointer";
-      delBtn.style.opacity = "0.8";
-      delBtn.classList.add("delete-btn");
-
-      delBtn.innerHTML = `
-      <circle r="10" fill="rgba(139,58,58,0.3)" stroke="#8B3A3A" stroke-width="1.5" />
-      <text y="4.5" text-anchor="middle" fill="#8B3A3A" style="font-size: 14px; font-weight: bold; pointer-events: none;">×</text>
-    `;
-
-      delBtn.onmouseenter = () => delBtn.style.opacity = "1";
-      delBtn.onmouseleave = () => delBtn.style.opacity = "0.8";
-      delBtn.onmousedown = (e) => {
-        e.stopPropagation();
-        state.elements = state.elements.filter((item) => item.id !== el.id);
-        saveState();
-        renderAll();
-        showToast(`${el.type.charAt(0).toUpperCase() + el.type.slice(1)} deleted`);
-      };
-
-      elementsOnlyGroup.appendChild(g);
-      elementsOnlyGroup.appendChild(delBtn);
-    });
-  }
-
-  function renderCutouts() {
-    placedGroup.querySelectorAll(".cutout-group").forEach((el) => el.remove());
-    state.cutouts.forEach((c) => {
-      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      g.classList.add("cutout-group");
-      g.setAttribute("clip-path", "url(#room-clip)");
-      const d = `M ${c.points[0].x} ${c.points[0].y} L ${c.points[1].x} ${c.points[1].y} L ${c.points[2].x} ${c.points[2].y} L ${c.points[3].x} ${c.points[3].y} Z`;
-
-      if (selectedCutoutId !== c.id) {
-        const visibleOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        visibleOutline.setAttribute("d", d);
-        visibleOutline.setAttribute("fill", "rgba(211, 150, 140, 0.15)");
-        visibleOutline.setAttribute("stroke", "var(--garden-rosy)");
-        visibleOutline.setAttribute("stroke-width", "2");
-        visibleOutline.setAttribute("class", "cursor-pointer element-hoverable");
-        visibleOutline.onmousedown = (e) => {
-          e.stopPropagation();
-          selectedCutoutId = c.id;
-          renderAll();
-        };
-        g.appendChild(visibleOutline);
-      } else {
-        const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        outline.setAttribute("d", d);
-        outline.setAttribute("fill", "rgba(211, 150, 140, 0.15)");
-        outline.setAttribute("stroke", "var(--garden-rosy)");
-        outline.setAttribute("stroke-width", "6");
-        outline.setAttribute("stroke-opacity", "0.1");
-        outline.setAttribute("class", "element-hoverable");
-        outline.setAttribute("style", "cursor: grab");
-        const visualOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        visualOutline.setAttribute("d", d);
-        visualOutline.setAttribute("fill", "none");
-        visualOutline.setAttribute("stroke", "var(--garden-rosy)");
-        visualOutline.setAttribute("stroke-width", "1.5");
-        visualOutline.setAttribute("stroke-dasharray", "4 4");
-        visualOutline.setAttribute("pointer-events", "none");
-        outline.onmousedown = (e) => {
-          e.stopPropagation();
-          let hasMoved = false;
-          outline.setAttribute("style", "cursor: grabbing");
-          const metrics = getCutoutMetrics(c);
-          const width = Math.abs(metrics.rightAlong - metrics.leftAlong);
-          const depth = metrics.depth;
-          const onMouseMove = (mv) => {
-            hasMoved = true;
-            const currentSvgP = getSVGPoint(mv);
-            const snap = getClosestPointOnPerimeter(currentSvgP.x, currentSvgP.y);
-            if (snap.dist > 220) return;
-            const frame = getEdgeFrame(snap.edgeIndex);
-            const centerAlong =
-              (snap.point.x - frame.p1.x) * frame.tx +
-              (snap.point.y - frame.p1.y) * frame.ty;
-            const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, width, depth);
-            if (!isCutoutValid(placed.points)) return;
-            const testCutout = { ...c, ...placed };
-            if (checkCollision(testCutout, c.id)) return;
-            document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-            const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-            if (edgeEl) edgeEl.classList.add("active");
-            c.points = placed.points;
-            c.edgeIndex = placed.edgeIndex;
-            renderAll();
-          };
-          const onMouseUp = () => {
-            window.removeEventListener("mousemove", onMouseMove);
-            window.removeEventListener("mouseup", onMouseUp);
-            document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-            outline.setAttribute("style", "cursor: grab");
-            if (hasMoved) { saveState(); showToast("Cutout repositioned"); }
-          };
-          window.addEventListener("mousemove", onMouseMove);
-          window.addEventListener("mouseup", onMouseUp);
-        };
-        g.appendChild(outline);
-        g.appendChild(visualOutline);
-        c.points.forEach((p, pIdx) => {
-          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          circle.setAttribute("cx", p.x); circle.setAttribute("cy", p.y);
-          circle.setAttribute("r", "4"); circle.setAttribute("fill", "var(--garden-rosy)");
-          circle.setAttribute("stroke", "white"); circle.setAttribute("class", "vertex-handle");
-          circle.onmousedown = (e) => {
-            e.stopPropagation(); circle.classList.add("dragging"); coordTooltip.classList.remove("hidden");
-            const onMove = (mv) => {
-              const svgP = getSVGPoint(mv);
-              const oldPts = cloneObj(c.points);
-              const oldEdge = c.edgeIndex;
-              if (!constrainCutoutVertex(c, pIdx, svgP)) {
-                c.points = oldPts;
-                c.edgeIndex = oldEdge;
-                return;
-              }
-              if (checkCollision({ ...c, type: "cutout" }, c.id)) {
-                c.points = oldPts;
-                c.edgeIndex = oldEdge;
-                return;
-              }
-              const activePoint = c.points[pIdx];
-              coordTooltip.setAttribute("x", activePoint.x + 10); coordTooltip.setAttribute("y", activePoint.y - 10);
-              coordTooltip.textContent = `${Math.round(activePoint.x)}, ${Math.round(activePoint.y)}`;
-              renderAll();
-            };
-            const onUp = () => { circle.classList.remove("dragging"); coordTooltip.classList.add("hidden"); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); saveState(); };
-            window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
-          };
-          g.appendChild(circle);
-        });
-      }
-      g.onmouseenter = () => { hoveredElementId = c.id; hoveredElementType = "cutout"; };
-      g.onmouseleave = () => { if (hoveredElementId === c.id) hoveredElementId = null; };
-      placedGroup.appendChild(g);
-    });
-  }
-
-  function updateDimensionsDisplay() {
-    const pts = state.roomPoints;
-    // Width/Length labels for complex polygons are tricky, use the bounding box
-    const minX = Math.min(...pts.map(p=>p.x));
-    const maxX = Math.max(...pts.map(p=>p.x));
-    const minY = Math.min(...pts.map(p=>p.y));
-    const maxY = Math.max(...pts.map(p=>p.y));
-
-    const widthFt = (maxX - minX) / 20;
-    const lengthFt = (maxY - minY) / 20;
-    const displayWidth = currentUnit === "ft" ? widthFt : widthFt * FT_TO_M;
-    const displayLength = currentUnit === "ft" ? lengthFt : lengthFt * FT_TO_M;
-    widthInput.value = displayWidth.toFixed(currentUnit === "ft" ? 1 : 2);
-    lengthInput.value = displayLength.toFixed(currentUnit === "ft" ? 1 : 2);
-
-    // Area is accurate for any polygon
-    let area = 0;
-    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      area += (pts[j].x + pts[i].x) * (pts[j].y - pts[i].y);
-    }
-    area = Math.abs(area) / 2 / (20 * 20);
-
-    const displayArea = currentUnit === "ft" ? area : area * FT_TO_M * FT_TO_M;
-    areaBadge.innerHTML = `Total Area: ${displayArea.toFixed(currentUnit === "ft" ? 1 : 2)} SQ ${currentUnit === "ft" ? "FT" : "M"}`;
-
-    const midX = (minX + maxX) / 2;
-    const midY = (minY + maxY) / 2;
-    const offset = 35;
-    document.getElementById("line-width").setAttribute("x1", minX); document.getElementById("line-width").setAttribute("x2", maxX);
-    document.getElementById("line-width").setAttribute("y1", minY - offset); document.getElementById("line-width").setAttribute("y2", minY - offset);
-    document.getElementById("tick-width-start").setAttribute("x1", minX); document.getElementById("tick-width-start").setAttribute("x2", minX);
-    document.getElementById("tick-width-start").setAttribute("y1", minY - offset - 5); document.getElementById("tick-width-start").setAttribute("y2", minY - offset + 5);
-    document.getElementById("tick-width-end").setAttribute("x1", maxX); document.getElementById("tick-width-end").setAttribute("x2", maxX);
-    document.getElementById("tick-width-end").setAttribute("y1", minY - offset - 5); document.getElementById("tick-width-end").setAttribute("y2", minY - offset + 5);
-    labelWidthText.setAttribute("x", midX); labelWidthText.setAttribute("y", minY - offset - 10);
-    labelWidthText.textContent = `${displayWidth.toFixed(currentUnit === "ft" ? 1 : 2)} ${currentUnit.toUpperCase()}`;
-    document.getElementById("label-width-sub").setAttribute("x", midX); document.getElementById("label-width-sub").setAttribute("y", minY - offset + 28);
-    document.getElementById("line-length").setAttribute("x1", minX - offset); document.getElementById("line-length").setAttribute("x2", minX - offset);
-    document.getElementById("line-length").setAttribute("y1", minY); document.getElementById("line-length").setAttribute("y2", maxY);
-    document.getElementById("tick-length-start").setAttribute("x1", minX - offset - 5); document.getElementById("tick-length-start").setAttribute("x2", minX - offset + 5);
-    document.getElementById("tick-length-start").setAttribute("y1", minY); document.getElementById("tick-length-start").setAttribute("y2", minY);
-    document.getElementById("tick-length-end").setAttribute("x1", minX - offset - 5); document.getElementById("tick-length-end").setAttribute("x2", minX - offset + 5);
-    document.getElementById("tick-length-end").setAttribute("y1", maxY); document.getElementById("tick-length-end").setAttribute("y2", maxY);
-    labelLengthText.setAttribute("x", minX - offset - 10); labelLengthText.setAttribute("y", midY);
-    labelLengthText.setAttribute("transform", `rotate(-90, ${minX - offset - 10}, ${midY})`);
-    labelLengthText.textContent = `${displayLength.toFixed(currentUnit === "ft" ? 1 : 2)} ${currentUnit.toUpperCase()}`;
-    document.getElementById("label-length-sub").setAttribute("x", minX - offset + 25); document.getElementById("label-length-sub").setAttribute("y", midY + 15);
-    document.getElementById("label-length-sub").setAttribute("transform", `rotate(-90, ${minX - offset + 25}, ${midY + 15})`);
-  }
-
-  function createSnappingCutout(targetX, targetY, size = 30) {
-    const snap = getClosestPointOnPerimeter(targetX, targetY);
-    const frame = getEdgeFrame(snap.edgeIndex);
-    const centerAlong =
-      (snap.point.x - frame.p1.x) * frame.tx +
-      (snap.point.y - frame.p1.y) * frame.ty;
-    return placeCutoutOnEdge(snap.edgeIndex, centerAlong, size, size).points;
-  }
-
-  function finalizeCutouts() {
-    if (state.cutouts.length === 0) return;
-
-    // Sort cutouts by edgeIndex descending to avoid index shifting problems
-    const sortedCutouts = [...state.cutouts].sort((a, b) => b.edgeIndex - a.edgeIndex);
-
-    sortedCutouts.forEach(c => {
-      if (!validateQuadrilateral(c)) {
-        showToast("Invalid cutout shape skipped");
-        return;
-      }
-      const i = c.edgeIndex;
-      const p0 = c.points[0], p1 = c.points[1], p2 = c.points[2], p3 = c.points[3];
-
-      // We replace the segment between roomPoints[i] and roomPoints[(i+1)%len]
-      // with the path: p0 -> p3 -> p2 -> p1
-      // This effectively 'removes' only the section of the wall the cutout touched
-
-      const newPoints = [];
-      for (let j = 0; j < state.roomPoints.length; j++) {
-        newPoints.push(state.roomPoints[j]);
-        if (j === i) {
-          newPoints.push(p0, p3, p2, p1);
-        }
-      }
-      state.roomPoints = newPoints;
-      state.finalizedCutouts.push(cloneObj(c));
-    });
-
-    state.cutouts = [];
-    selectedCutoutId = null;
+function appendCutoutDeleteButton(group, cutout) {
+  const delBtn = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  const deletePosition = getCutoutDeletePosition(cutout);
+  delBtn.setAttribute("transform", `translate(${deletePosition.x},${deletePosition.y})`);
+  delBtn.setAttribute("class", "delete-btn cutout-delete-btn");
+  delBtn.style.cursor = "pointer";
+  delBtn.innerHTML = `
+    <circle class="delete-btn-hit" r="8" fill="transparent" />
+    <circle class="delete-btn-bg" r="5.5" fill="rgba(192,64,64,0.92)" stroke="#fff" stroke-width="1.25" />
+    <text class="delete-btn-mark" y="2.9" text-anchor="middle" fill="#fff" style="font-size: 8px; font-weight: bold; pointer-events: none;">x</text>
+  `;
+  delBtn.onmousedown = (e) => {
+    e.stopPropagation();
+    state.cutouts = state.cutouts.filter(item => item.id !== cutout.id);
+    if (selectedCutoutId === cutout.id) selectedCutoutId = null;
+    if (pendingCutoutId === cutout.id) pendingCutoutId = null;
+    hoveredElementId = null;
+    hoveredElementType = null;
     saveState();
     renderAll();
-    showToast("Room boundary updated");
+    renderDrawing();
+    showToast("Cutout deleted");
+  };
+  group.appendChild(delBtn);
+}
+
+function pointsToPath(points) {
+  if (!Array.isArray(points) || points.length === 0) return "";
+  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+}
+
+function signedPolygonArea(points) {
+  if (!Array.isArray(points) || points.length < 3) return 0;
+  let area = 0;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    area += (points[j].x * points[i].y) - (points[i].x * points[j].y);
+  }
+  return area / 2;
+}
+
+function polygonArea(points) {
+  return Math.abs(signedPolygonArea(points));
+}
+
+function pointOnSegment(point, a, b, tolerance = 0.1) {
+  const cross = (point.y - a.y) * (b.x - a.x) - (point.x - a.x) * (b.y - a.y);
+  if (Math.abs(cross) > tolerance) return false;
+  const dot = (point.x - a.x) * (b.x - a.x) + (point.y - a.y) * (b.y - a.y);
+  if (dot < -tolerance) return false;
+  const lenSq = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+  return dot <= lenSq + tolerance;
+}
+
+function segmentsIntersect(a, b, c, d) {
+  const direction = (p, q, r) => ((r.x - p.x) * (q.y - p.y)) - ((q.x - p.x) * (r.y - p.y));
+  const d1 = direction(c, d, a);
+  const d2 = direction(c, d, b);
+  const d3 = direction(a, b, c);
+  const d4 = direction(a, b, d);
+
+  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+    return true;
+  }
+  return pointOnSegment(a, c, d) || pointOnSegment(b, c, d) || pointOnSegment(c, a, b) || pointOnSegment(d, a, b);
+}
+
+function polygonsOverlap(polyA, polyB) {
+  if (!Array.isArray(polyA) || !Array.isArray(polyB) || polyA.length < 3 || polyB.length < 3) return false;
+  if (polyA.some(p => isPointInPolygon(p.x, p.y, polyB))) return true;
+  if (polyB.some(p => isPointInPolygon(p.x, p.y, polyA))) return true;
+
+  for (let i = 0; i < polyA.length; i++) {
+    const a1 = polyA[i];
+    const a2 = polyA[(i + 1) % polyA.length];
+    for (let j = 0; j < polyB.length; j++) {
+      const b1 = polyB[j];
+      const b2 = polyB[(j + 1) % polyB.length];
+      if (segmentsIntersect(a1, a2, b1, b2)) return true;
+    }
+  }
+  return false;
+}
+
+function lineIntersection(a, b, c, d) {
+  const a1 = b.y - a.y;
+  const b1 = a.x - b.x;
+  const c1 = a1 * a.x + b1 * a.y;
+  const a2 = d.y - c.y;
+  const b2 = c.x - d.x;
+  const c2 = a2 * c.x + b2 * c.y;
+  const det = a1 * b2 - a2 * b1;
+  if (Math.abs(det) < 0.00001) return { ...b };
+  return {
+    x: (b2 * c1 - b1 * c2) / det,
+    y: (a1 * c2 - a2 * c1) / det,
+  };
+}
+
+function clipPolygonToRoom(subjectPoints) {
+  if (!Array.isArray(subjectPoints) || subjectPoints.length < 3 || state.roomPoints.length < 3) return [];
+  const clipClockwise = signedPolygonArea(state.roomPoints) < 0;
+  let output = subjectPoints.map(p => ({ ...p }));
+
+  for (let i = 0; i < state.roomPoints.length; i++) {
+    const edgeStart = state.roomPoints[i];
+    const edgeEnd = state.roomPoints[(i + 1) % state.roomPoints.length];
+    const input = output;
+    output = [];
+    if (input.length === 0) break;
+
+    const isInsideEdge = (point) => {
+      const cross = (edgeEnd.x - edgeStart.x) * (point.y - edgeStart.y) - (edgeEnd.y - edgeStart.y) * (point.x - edgeStart.x);
+      return clipClockwise ? cross <= 0.001 : cross >= -0.001;
+    };
+
+    for (let j = 0; j < input.length; j++) {
+      const current = input[j];
+      const previous = input[(j + input.length - 1) % input.length];
+      const currentInside = isInsideEdge(current);
+      const previousInside = isInsideEdge(previous);
+
+      if (currentInside) {
+        if (!previousInside) output.push(lineIntersection(previous, current, edgeStart, edgeEnd));
+        output.push(current);
+      } else if (previousInside) {
+        output.push(lineIntersection(previous, current, edgeStart, edgeEnd));
+      }
+    }
   }
 
-  document.querySelectorAll('[draggable="true"]').forEach((btn) => {
-    btn.addEventListener("dragstart", (e) => {
-      draggingFromToolbar = btn.getAttribute("data-type");
-      e.dataTransfer.setData("text/plain", draggingFromToolbar);
-      e.dataTransfer.effectAllowed = "copy";
-      btn.style.opacity = "0.45";
+  return output;
+}
 
-      // Drag only the small icon tile, not the whole library card
-      const iconBox = btn.querySelector('[data-drag-preview]') || btn.querySelector('.shrink-0') || btn;
-      const preview = iconBox.cloneNode(true);
-      preview.removeAttribute("data-drag-preview");
-      preview.style.cssText = [
-        "position:fixed",
-        "top:-1000px",
-        "left:-1000px",
-        "width:56px",
-        "height:56px",
-        "display:flex",
-        "align-items:center",
-        "justify-content:center",
-        "border-radius:14px",
-        "box-shadow:0 8px 24px rgba(0,0,0,0.35)",
-        "pointer-events:none",
-        "z-index:9999",
-        "opacity:1",
-      ].join(";");
-      document.body.appendChild(preview);
-      e.dataTransfer.setDragImage(preview, 28, 28);
-      requestAnimationFrame(() => preview.remove());
+function checkCollision(newEl, excludeId = null) {
+  const newBounds = getElementBounds(newEl);
+  const finalized = (state.finalizedCutouts || []).map(c => ({...c, type: 'cutout'}));
+  const allItems = [...state.elements, ...state.cutouts.map(c => ({...c, type: 'cutout'})), ...finalized];
+  return allItems.some(item => {
+    if (item.id === excludeId) return false;
+    const itemBounds = getElementBounds(item);
+    return !(newBounds.maxX < itemBounds.minX || newBounds.minX > itemBounds.maxX || newBounds.maxY < itemBounds.minY || newBounds.minY > itemBounds.maxY);
+  });
+}
+
+function isCutoutValid(points) {
+  return points.length >= 3 && doesCutoutOverlapRoom(points);
+}
+
+function isValidVertexMovement(x, y, cutoutId, vIdx) {
+  const cutout = state.cutouts.find(c => c.id === cutoutId);
+  if (!cutout) return false;
+
+  // Check if point is too close to other vertices in the same cutout
+  for (let i = 0; i < cutout.points.length; i++) {
+    if (i === vIdx) continue;
+    const dist = Math.hypot(x - cutout.points[i].x, y - cutout.points[i].y);
+    if (dist < 10) return false;
+  }
+  return true;
+}
+
+function getRectCutoutDimensions(points) {
+  if (!Array.isArray(points) || points.length < 4) return { widthPx: 0, depthPx: 0 };
+  return {
+    widthPx: Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y),
+    depthPx: Math.hypot(points[3].x - points[0].x, points[3].y - points[0].y),
+  };
+}
+
+function isRectCutoutSizeValid(points) {
+  const dims = getRectCutoutDimensions(points);
+  return dims.widthPx >= 14 && dims.depthPx >= 14;
+}
+
+function formatRectCutoutDimensions(points) {
+  const dims = getRectCutoutDimensions(points);
+  const widthFt = dims.widthPx / ROOM_LAYOUT_SCALE;
+  const depthFt = dims.depthPx / ROOM_LAYOUT_SCALE;
+  const width = currentUnit === "ft" ? widthFt : widthFt * FT_TO_M;
+  const depth = currentUnit === "ft" ? depthFt : depthFt * FT_TO_M;
+  const decimals = currentUnit === "ft" ? 1 : 2;
+  return `${width.toFixed(decimals)} x ${depth.toFixed(decimals)} ${currentUnit}`;
+}
+
+function midpoint(a, b) {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function isPointInPolygon(x, y, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].x, yi = pts[i].y;
+    const xj = pts[j].x, yj = pts[j].y;
+    const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function pointToPathDistance(x, y, pts) {
+  let minD = Infinity;
+  for (let i = 0; i < pts.length; i++) {
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % pts.length];
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const lenSq = dx * dx + dy * dy;
+    let t = ((x - p1.x) * dx + (y - p1.y) * dy) / (lenSq || 1);
+    t = Math.max(0, Math.min(1, t));
+    const dist = Math.hypot(x - (p1.x + t * dx), y - (p1.y + t * dy));
+    if (dist < minD) minD = dist;
+  }
+  return minD;
+}
+
+function isSegmentOnRoomBoundary(a, b, tolerance = 1.5) {
+  const mid = midpoint(a, b);
+  return state.roomPoints.some((wallStart, i) => {
+    const wallEnd = state.roomPoints[(i + 1) % state.roomPoints.length];
+    return pointOnSegment(a, wallStart, wallEnd, tolerance)
+      && pointOnSegment(b, wallStart, wallEnd, tolerance)
+      && pointOnSegment(mid, wallStart, wallEnd, tolerance);
+  });
+}
+
+function reactivateFinalizedCutout(index) {
+  const cutout = state.finalizedCutouts.splice(index, 1)[0];
+  if (!cutout) return;
+  state.cutouts.push(cutout);
+  selectedCutoutId = cutout.id;
+  pendingCutoutId = null;
+  saveState();
+  renderAll();
+  renderDrawing();
+  showToast("Cutout reactivated");
+}
+
+function cloneObj(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+function saveState() {
+  if (historyIndex < history.length - 1) { history = history.slice(0, historyIndex + 1); }
+  history.push(cloneObj(state));
+  historyIndex++;
+  updateHistoryUI();
+}
+
+function updateHistoryUI() {
+  btnUndo.disabled = historyIndex <= 0;
+  btnRedo.disabled = historyIndex >= history.length - 1;
+}
+
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    state = cloneObj(history[historyIndex]);
+    renderAll();
+    updateHistoryUI();
+    showToast("Action undone");
+  }
+}
+
+function redo() {
+  if (historyIndex < history.length - 1) {
+    historyIndex++;
+    state = cloneObj(history[historyIndex]);
+    renderAll();
+    updateHistoryUI();
+    showToast("Action redone");
+  }
+}
+
+function getSVGPoint(e) {
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  const matrix = svg.getScreenCTM();
+  if (!matrix) return {x:0, y:0};
+  const transformed = pt.matrixTransform(matrix.inverse());
+  return { x: transformed.x, y: transformed.y };
+}
+
+function getClosestPointOnPerimeter(x,y) {
+  let minDist = Infinity;
+  let closest = null;
+  let edgeIndex = -1;
+  for (let i = 0; i < state.roomPoints.length; i++) {
+    const p1 = state.roomPoints[i];
+    const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const lenSq = dx*dx + dy*dy;
+    let t = ((x - p1.x) * dx + (y - p1.y) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const px = p1.x + t * dx;
+    const py = p1.y + t * dy;
+    const dist = Math.sqrt((x - px)**2 + (y - py)**2);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = { x: px, y: py, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+      edgeIndex = i;
+    }
+  }
+  return { point: closest, dist: minDist, edgeIndex };
+}
+
+function showToast(msg) {
+  toastMsg.innerText = msg;
+  toast.classList.add("visible");
+  setTimeout(() => toast.classList.remove("visible"), 2000);
+}
+
+function renderAll() {
+  renderRoom();
+  renderElements();
+  renderCutouts();
+  updateDimensionsDisplay();
+}
+
+function renderRoom() {
+  let d = pointsToPath(state.roomPoints);
+  roomPath.setAttribute("d", d);
+  roomClipPath.setAttribute("d", d);
+
+  const mask = document.getElementById("room-mask");
+  mask.innerHTML = '<rect width="100%" height="100%" fill="white" />';
+  (state.finalizedCutouts || []).forEach((cutout) => {
+    const maskPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    maskPath.setAttribute("d", pointsToPath(cutout.points));
+    maskPath.setAttribute("fill", "black");
+    mask.appendChild(maskPath);
+
+    const displayPoints = clipPolygonToRoom(cutout.points);
+    displayPoints.forEach((point, i) => {
+      const nextPoint = displayPoints[(i + 1) % displayPoints.length];
+      if (!isSegmentOnRoomBoundary(point, nextPoint)) return;
+
+      const wallMaskLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      wallMaskLine.setAttribute("x1", point.x);
+      wallMaskLine.setAttribute("y1", point.y);
+      wallMaskLine.setAttribute("x2", nextPoint.x);
+      wallMaskLine.setAttribute("y2", nextPoint.y);
+      wallMaskLine.setAttribute("stroke", "black");
+      wallMaskLine.setAttribute("stroke-width", "12");
+      wallMaskLine.setAttribute("stroke-linecap", "butt");
+      mask.appendChild(wallMaskLine);
     });
-    btn.addEventListener("dragend", () => { btn.style.opacity = "1"; });
+  });
+  roomPath.setAttribute("mask", "url(#room-mask)");
+
+  finalizedCutoutsGroup.innerHTML = "";
+  (state.finalizedCutouts || []).forEach((cutout) => {
+    const displayPoints = clipPolygonToRoom(cutout.points);
+    if (displayPoints.length < 3) return;
+    const displayPath = pointsToPath(displayPoints);
+
+    const hitArea = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    hitArea.setAttribute("d", displayPath);
+    hitArea.setAttribute("fill", "transparent");
+    hitArea.setAttribute("stroke", "transparent");
+    hitArea.setAttribute("stroke-width", "22");
+    hitArea.setAttribute("class", "finalized-cutout-hit");
+    hitArea.setAttribute("pointer-events", "all");
+    hitArea.onmousedown = (e) => {
+      e.stopPropagation();
+      const index = state.finalizedCutouts.findIndex(item => item.id === cutout.id);
+      if (index !== -1) reactivateFinalizedCutout(index);
+    };
+
+    finalizedCutoutsGroup.appendChild(hitArea);
+    displayPoints.forEach((point, i) => {
+      const nextPoint = displayPoints[(i + 1) % displayPoints.length];
+      if (isSegmentOnRoomBoundary(point, nextPoint)) return;
+
+      const edgeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      edgeLine.setAttribute("x1", point.x);
+      edgeLine.setAttribute("y1", point.y);
+      edgeLine.setAttribute("x2", nextPoint.x);
+      edgeLine.setAttribute("y2", nextPoint.y);
+      edgeLine.setAttribute("class", "finalized-cutout-edge");
+      edgeLine.setAttribute("pointer-events", "none");
+      edgeLine.setAttribute("vector-effect", "non-scaling-stroke");
+      finalizedCutoutsGroup.appendChild(edgeLine);
+    });
   });
 
-  svg.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    if (!draggingFromToolbar) return;
-    const svgP = getSVGPoint(e);
-    const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-    if (snap.dist < 200) {
-      document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
-      const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-      if (edgeEl) edgeEl.classList.add("active");
-      ghost.classList.remove("hidden");
-      if (draggingFromToolbar === "cutout") {
-        const frame = getEdgeFrame(snap.edgeIndex);
-        const centerAlong =
-          (snap.point.x - frame.p1.x) * frame.tx +
-          (snap.point.y - frame.p1.y) * frame.ty;
-        const pts = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 35, 35).points;
-        ghost.innerHTML = `<path d="M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z" fill="rgba(211, 150, 140, 0.4)" stroke="white" stroke-dasharray="2 2" />`;
-      } else {
-        const offset = draggingFromToolbar === "door" ? -20 : -25;
-        ghost.innerHTML = `<use href="#${draggingFromToolbar}-template" transform="translate(${snap.point.x},${snap.point.y}) rotate(${snap.point.angle}) translate(${offset}, 0)" />`;
-      }
+  highlightsGroup.innerHTML = "";
+  state.roomPoints.forEach((p, i) => {
+    const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", p.x);
+    line.setAttribute("y1", p.y);
+    line.setAttribute("x2", p2.x);
+    line.setAttribute("y2", p2.y);
+    line.classList.add("edge-highlight");
+    line.id = `edge-${i}`;
+    highlightsGroup.appendChild(line);
+  });
+
+
+}
+
+function renderElements() {
+  elementsOnlyGroup.innerHTML = "";
+  state.elements.forEach((el) => {
+    const itemGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    itemGroup.classList.add("placed-element-group");
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const mirrorScale = el.isMirrored ? -1 : 1;
+    if (el.type === "door") {
+      const offset = -20;
+      g.innerHTML = `<use href="#door-template" transform="translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(${offset}, 0)" />`;
     } else {
-      ghost.classList.add("hidden");
-      document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
-    }
-  });
-
-  svg.addEventListener("mousedown", (e) => {
-    if (e.target === svg || e.target.id === 'svg-bg') {
-      const svgP = getSVGPoint(e);
-      const isOutside = !isPointInRoom(svgP.x, svgP.y);
-
-      if (isOutside && state.cutouts.length > 0) {
-        finalizeCutouts();
-      } else if (state.cutouts.length === 0) {
-        let reactivated = false;
-        if (state.finalizedCutouts) {
-          for (let i = state.finalizedCutouts.length - 1; i >= 0; i--) {
-            const fc = state.finalizedCutouts[i];
-            const dist = pointToPathDistance(svgP.x, svgP.y, fc.points);
-            const inside = isPointInPolygon(svgP.x, svgP.y, fc.points);
-            if (dist < 15 || inside) {
-              const p0 = fc.points[0];
-              const idx = state.roomPoints.findIndex(rp => Math.hypot(rp.x - p0.x, rp.y - p0.y) < 0.5);
-              if (idx !== -1) {
-                state.roomPoints.splice(idx, 4);
-                state.cutouts.push(state.finalizedCutouts.splice(i, 1)[0]);
-                selectedCutoutId = fc.id;
-                reactivated = true;
-                showToast("Cutout reactivated");
-                break;
+      const w = el.width || 50;
+      const offset = -w/2;
+      g.innerHTML = `<g transform="translate(${el.x},${el.y}) rotate(${el.angle})">
+           <rect x="${offset}" y="-4" width="${w}" height="8" fill="var(--dimension-window, #d3968d)" stroke="var(--dimension-window, #d3968d)" stroke-width="1.5" />
+           <line x1="${offset + 5}" y1="-1.5" x2="${offset + w - 5}" y2="-1.5" stroke="#fff7f5" stroke-width="1" />
+           <line x1="${offset + 5}" y1="1.5" x2="${offset + w - 5}" y2="1.5" stroke="#fff7f5" stroke-width="1" />
+         </g>`;
+      if (el.type === "window") {
+        const gTransform = g.querySelector('g');
+        const createHandle = (isRight) => {
+          const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          c.setAttribute("cx", isRight ? w/2 : -w/2);
+          c.setAttribute("cy", 0);
+          c.setAttribute("r", 6);
+          c.setAttribute("fill", "var(--garden-rosy)");
+          c.setAttribute("stroke", "white");
+          c.setAttribute("class", "vertex-handle window-resize-handle");
+          c.onmousedown = (e) => {
+            e.stopPropagation();
+            let hasResized = false;
+            const onMove = (mv) => {
+              hasResized = true;
+              const svgP = getSVGPoint(mv);
+              const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+              const p1 = state.roomPoints[snap.edgeIndex];
+              const p2 = state.roomPoints[(snap.edgeIndex + 1) % state.roomPoints.length];
+              const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+              const dx = p2.x - p1.x; const dy = p2.y - p1.y;
+              const u = { x: dx/segLen, y: dy/segLen };
+              const centerDist = (el.x - p1.x) * u.x + (el.y - p1.y) * u.y;
+              const mouseDist = (svgP.x - p1.x) * u.x + (svgP.y - p1.y) * u.y;
+              let newW, newCenterDist;
+              if (isRight) {
+                const leftEndDist = Math.max(0, centerDist - (el.width || 50)/2);
+                newW = Math.max(15, mouseDist - leftEndDist);
+                if (leftEndDist + newW > segLen) newW = segLen - leftEndDist;
+                newCenterDist = leftEndDist + newW/2;
+              } else {
+                const rightEndDist = Math.min(segLen, centerDist + (el.width || 50)/2);
+                newW = Math.max(15, rightEndDist - mouseDist);
+                if (rightEndDist - newW < 0) newW = rightEndDist;
+                newCenterDist = rightEndDist - newW/2;
               }
-            }
-          }
-        }
-        if (!reactivated) selectedCutoutId = null;
-      } else {
-        selectedCutoutId = null;
+              el.width = newW; el.x = p1.x + u.x * newCenterDist; el.y = p1.y + u.y * newCenterDist;
+              const ft = (el.width / 20).toFixed(1);
+              coordTooltip.classList.remove("hidden");
+              coordTooltip.setAttribute("x", svgP.x + 10); coordTooltip.setAttribute("y", svgP.y - 10);
+              coordTooltip.textContent = `${ft} ft (${Math.round(el.width)}px)`;
+              renderAll();
+            };
+            const onUp = () => {
+              window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
+              coordTooltip.classList.add("hidden");
+              if (hasResized) saveState();
+            };
+            window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+          };
+          return c;
+        };
+        gTransform.appendChild(createHandle(false));
+        gTransform.appendChild(createHandle(true));
       }
-
-      selectedResizeId = null;
-      renderAll();
     }
-  });
+    g.classList.add("element-hoverable");
+    g.setAttribute("style", "cursor: grab");
+    if (el.type === "door") {
+      g.addEventListener("mouseenter", (e) => {
+        showDoorFlipTooltip(el);
+      });
+      g.addEventListener("mouseleave", () => {
+        document.getElementById("door-flip-tooltip").classList.add("hidden");
+      });
+    }
+    g.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      if (el.type === "door") {
+        el.isMirrored = !el.isMirrored; saveState(); renderAll(); showToast("Door swing mirrored");
+      }
+    });
+    itemGroup.addEventListener("mouseenter", () => { hoveredElementId = el.id; hoveredElementType = "element"; });
+    itemGroup.addEventListener("mouseleave", () => { if (hoveredElementId === el.id) { hoveredElementId = null; hoveredElementType = null; } });
+    g.onmousedown = (e) => {
+      e.stopPropagation();
+      let hasMoved = false;
+      g.setAttribute("style", "cursor: grabbing");
+      const onMouseMove = (mv) => {
+        hasMoved = true;
+        const svgP = getSVGPoint(mv);
+        const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+        const testEl = { ...el, x: snap.point.x, y: snap.point.y };
+        if (checkCollision(testEl, el.id)) return;
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+        if (edgeEl) edgeEl.classList.add("active");
+        el.x = snap.point.x; el.y = snap.point.y; el.angle = snap.point.angle;
+        if (el.type === 'door') {
+          const useEl = g.querySelector("use"); const moveMirror = el.isMirrored ? -1 : 1;
+          useEl.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(-20, 0)`);
+        } else {
+          const w = el.width || 50;
+          const gInner = g.querySelector('g');
+          if (gInner) gInner.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle})`);
+        }
+        const nextDeletePosition = getElementDeletePosition(el);
+        delBtn.setAttribute("transform", `translate(${nextDeletePosition.x},${nextDeletePosition.y})`);
+      };
+      const onMouseUp = () => {
+        window.removeEventListener("mousemove", onMouseMove); window.removeEventListener("mouseup", onMouseUp);
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        g.setAttribute("style", "cursor: grab");
+        if (hasMoved) { saveState(); showToast(`${el.type} repositioned`); }
+      };
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    };
 
-  svg.addEventListener("drop", (e) => {
-    e.preventDefault();
-    if (!draggingFromToolbar) return;
-    const svgP = getSVGPoint(e);
-    const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-    if (snap.dist < 200) {
-      if (draggingFromToolbar === "cutout") {
-        const frame = getEdgeFrame(snap.edgeIndex);
-        const centerAlong =
-          (snap.point.x - frame.p1.x) * frame.tx +
-          (snap.point.y - frame.p1.y) * frame.ty;
-        const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 35, 35);
-        if (isCutoutValid(placed.points)) {
-          const newCutout = { id: Date.now(), type: "cutout", points: placed.points, edgeIndex: placed.edgeIndex };
-          if (checkCollision(newCutout)) {
-            showToast("Cutout cannot intersect with existing items");
-            ghost.classList.add("hidden");
+    const delBtn = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const deletePosition = getElementDeletePosition(el);
+    delBtn.setAttribute("transform", `translate(${deletePosition.x},${deletePosition.y})`);
+    delBtn.style.cursor = "pointer";
+    delBtn.classList.add("delete-btn");
+
+    delBtn.innerHTML = `
+      <circle class="delete-btn-hit" r="10" fill="transparent" />
+      <circle class="delete-btn-bg" r="6.5" fill="rgba(192,64,64,0.92)" stroke="#fff" stroke-width="1.5" />
+      <text class="delete-btn-mark" y="3.2" text-anchor="middle" fill="#fff" style="font-size: 9px; font-weight: bold; pointer-events: none;">x</text>
+    `;
+
+    delBtn.onmousedown = (e) => {
+      e.stopPropagation();
+      state.elements = state.elements.filter((item) => item.id !== el.id);
+      saveState();
+      renderAll();
+      showToast(`${el.type.charAt(0).toUpperCase() + el.type.slice(1)} deleted`);
+    };
+
+    itemGroup.appendChild(g);
+    itemGroup.appendChild(delBtn);
+    elementsOnlyGroup.appendChild(itemGroup);
+  });
+}
+
+function renderCutouts() {
+  placedGroup.querySelectorAll(".cutout-group").forEach((el) => el.remove());
+  state.cutouts.forEach((c) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.classList.add("cutout-group");
+    if (selectedCutoutId === c.id) g.classList.add("is-selected");
+    if (!(selectedCutoutId === c.id && c.source === "drawn")) {
+      g.setAttribute("clip-path", "url(#room-clip)");
+    }
+    const d = pointsToPath(c.points);
+
+    if (selectedCutoutId !== c.id) {
+      const visibleOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      visibleOutline.setAttribute("d", d);
+      visibleOutline.setAttribute("fill", "rgba(211, 150, 140, 0.15)");
+      visibleOutline.setAttribute("stroke", "var(--garden-rosy)");
+      visibleOutline.setAttribute("stroke-width", "2");
+      visibleOutline.setAttribute("class", "cutout-preview-outline cursor-pointer element-hoverable");
+      visibleOutline.setAttribute("vector-effect", "non-scaling-stroke");
+      visibleOutline.onmousedown = (e) => {
+        e.stopPropagation();
+        selectedCutoutId = c.id;
+        renderAll();
+      };
+      g.appendChild(visibleOutline);
+    } else {
+      const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      outline.setAttribute("d", d);
+      outline.setAttribute("fill", "rgba(211, 150, 140, 0.15)");
+      outline.setAttribute("stroke", "var(--garden-rosy)");
+      outline.setAttribute("stroke-width", "6");
+      outline.setAttribute("stroke-opacity", "0.1");
+      outline.setAttribute("class", "cutout-move-hit element-hoverable");
+      outline.setAttribute("style", "cursor: grab");
+      const visualOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      visualOutline.setAttribute("d", d);
+      visualOutline.setAttribute("fill", "none");
+      visualOutline.setAttribute("stroke", "var(--garden-rosy)");
+      visualOutline.setAttribute("stroke-width", "1.5");
+      visualOutline.setAttribute("stroke-dasharray", "4 4");
+      visualOutline.setAttribute("class", "cutout-active-outline");
+      visualOutline.setAttribute("vector-effect", "non-scaling-stroke");
+      visualOutline.setAttribute("pointer-events", "none");
+      outline.onmousedown = (e) => {
+      e.stopPropagation();
+      let hasMoved = false;
+      outline.setAttribute("style", "cursor: grabbing");
+      const startSvgP = getSVGPoint(e);
+      const originalPoints = c.points.map((p) => ({ ...p }));
+      const onMouseMove = (mv) => {
+        hasMoved = true;
+        const currentSvgP = getSVGPoint(mv);
+        const snap = getClosestPointOnPerimeter(currentSvgP.x, currentSvgP.y);
+        const dx = c.source === "drawn" ? currentSvgP.x - startSvgP.x : snap.point.x - originalPoints[0].x;
+        const dy = c.source === "drawn" ? currentSvgP.y - startSvgP.y : snap.point.y - originalPoints[0].y;
+        const testPoints = originalPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
+        if (isCutoutValid(testPoints)) {
+          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+          if (c.source !== "drawn") {
+            const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+            if (edgeEl) edgeEl.classList.add("active");
+          }
+          c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
+          renderAll();
+        }
+      };
+      const onMouseUp = () => {
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        outline.setAttribute("style", "cursor: grab");
+        if (hasMoved) { saveState(); showToast("Cutout repositioned"); }
+      };
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    };
+    g.appendChild(outline);
+    g.appendChild(visualOutline);
+
+    const showCutoutSizeTooltip = (anchorPoint) => {
+      coordTooltip.classList.remove("hidden");
+      coordTooltip.setAttribute("x", anchorPoint.x + 10);
+      coordTooltip.setAttribute("y", anchorPoint.y - 12);
+      coordTooltip.textContent = c.source === "drawn"
+        ? `${Math.round(anchorPoint.x)}, ${Math.round(anchorPoint.y)}`
+        : formatRectCutoutDimensions(c.points);
+    };
+
+    const addPresetResizeHandle = (point, resizeKind) => {
+      const handleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      handleGroup.setAttribute("transform", `translate(${point.x},${point.y})`);
+      handleGroup.setAttribute("class", `cutout-resize-handle-group cutout-resize-${resizeKind}`);
+
+      const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      hit.setAttribute("r", "14");
+      hit.setAttribute("class", "cutout-resize-handle-hit");
+
+      const visual = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      visual.setAttribute("r", "6");
+      visual.setAttribute("class", "cutout-resize-handle");
+      visual.setAttribute("pointer-events", "none");
+
+      handleGroup.appendChild(hit);
+      handleGroup.appendChild(visual);
+      handleGroup.onmousedown = (e) => {
+        e.stopPropagation();
+        let hasResized = false;
+        const startMouseP = getSVGPoint(e);
+        const originalPoints = c.points.map(p => ({ ...p }));
+        const wallLen = Math.hypot(originalPoints[1].x - originalPoints[0].x, originalPoints[1].y - originalPoints[0].y);
+        const depthLen = Math.hypot(originalPoints[3].x - originalPoints[0].x, originalPoints[3].y - originalPoints[0].y);
+        if (wallLen < 0.1 || depthLen < 0.1) return;
+        const ux = (originalPoints[1].x - originalPoints[0].x) / wallLen;
+        const uy = (originalPoints[1].y - originalPoints[0].y) / wallLen;
+        const nx = (originalPoints[3].x - originalPoints[0].x) / depthLen;
+        const ny = (originalPoints[3].y - originalPoints[0].y) / depthLen;
+
+        const onMove = (mv) => {
+          const svgP = getSVGPoint(mv);
+          const nextPoints = originalPoints.map(p => ({ ...p }));
+          const deltaU = (svgP.x - startMouseP.x) * ux + (svgP.y - startMouseP.y) * uy;
+          const deltaN = (svgP.x - startMouseP.x) * nx + (svgP.y - startMouseP.y) * ny;
+
+          if (resizeKind === "start") {
+            [0, 3].forEach(idx => {
+              nextPoints[idx].x += ux * deltaU;
+              nextPoints[idx].y += uy * deltaU;
+            });
+          } else if (resizeKind === "end") {
+            [1, 2].forEach(idx => {
+              nextPoints[idx].x += ux * deltaU;
+              nextPoints[idx].y += uy * deltaU;
+            });
+          } else {
+            [2, 3].forEach(idx => {
+              nextPoints[idx].x += nx * deltaN;
+              nextPoints[idx].y += ny * deltaN;
+            });
+          }
+
+          if (!isRectCutoutSizeValid(nextPoints) || !isCutoutValid(nextPoints)) return;
+          c.points = nextPoints;
+          hasResized = true;
+          showCutoutSizeTooltip(svgP);
+          renderAll();
+        };
+
+        const onUp = () => {
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+          coordTooltip.classList.add("hidden");
+          if (hasResized) {
+            const snap = getClosestPointOnPerimeter(c.points[0].x, c.points[0].y);
+            c.edgeIndex = snap.edgeIndex;
+            saveState();
+            showToast("Cutout resized");
+          }
+        };
+
+        coordTooltip.classList.remove("hidden");
+        showCutoutSizeTooltip(point);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+      };
+
+      g.appendChild(handleGroup);
+    };
+
+    if (c.source !== "drawn" && c.points.length >= 4) {
+      addPresetResizeHandle(midpoint(c.points[0], c.points[3]), "start");
+      addPresetResizeHandle(midpoint(c.points[1], c.points[2]), "end");
+      addPresetResizeHandle(midpoint(c.points[2], c.points[3]), "depth");
+    }
+
+    c.points.forEach((p, pIdx) => {
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", p.x); circle.setAttribute("cy", p.y);
+      circle.setAttribute("r", c.source === "drawn" ? "6" : "7"); circle.setAttribute("fill", "var(--garden-rosy)");
+      circle.setAttribute("stroke", "white"); circle.setAttribute("class", "vertex-handle");
+      circle.onmousedown = (e) => {
+        e.stopPropagation(); circle.classList.add("dragging"); coordTooltip.classList.remove("hidden");
+        let hasResized = false;
+        const originalVertex = { x: p.x, y: p.y };
+        const originalPoints = c.points.map(item => ({ ...item }));
+        const onMove = (mv) => {
+          const svgP = getSVGPoint(mv);
+          const previousPts = cloneObj(c.points);
+
+          if (c.source === "drawn") {
+            c.points[pIdx].x = svgP.x;
+            c.points[pIdx].y = svgP.y;
+            if (!isValidVertexMovement(c.points[pIdx].x, c.points[pIdx].y, c.id, pIdx) || !isCutoutValid(c.points)) {
+              c.points = previousPts;
+              return;
+            }
+            hasResized = true;
+            showCutoutSizeTooltip(svgP);
+            renderAll();
             return;
           }
-          state.cutouts.push(newCutout);
-          selectedCutoutId = newCutout.id;
-        }
-        else { showToast("Cutout must overlap room interior"); ghost.classList.add("hidden"); return; }
-      } else {
-        const newEl = { id: Date.now(), type: draggingFromToolbar, x: snap.point.x, y: snap.point.y, angle: snap.point.angle, isMirrored: false, width: draggingFromToolbar === 'window' ? 50 : undefined };
-        if (checkCollision(newEl)) {
-          showToast("Element cannot intersect with existing items");
-          ghost.classList.add("hidden");
-          return;
-        }
-        state.elements.push(newEl);
-      }
-      saveState(); renderAll(); showToast(`${draggingFromToolbar} added`);
+
+          // Standard cutout: Keep it rectangular by constraining movement to its perpendicular axis
+          const snap = getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y);
+          const angleRad = (snap.point.angle * Math.PI) / 180;
+          const nx = Math.cos(angleRad + Math.PI / 2); // Perpendicular vector (into room)
+          const ny = Math.sin(angleRad + Math.PI / 2);
+          const ux = Math.cos(angleRad); // Parallel vector (along wall)
+          const uy = Math.sin(angleRad);
+          const nextPoints = originalPoints.map(item => ({ ...item }));
+
+          if (pIdx === 0 || pIdx === 1) {
+             // Wall vertices move only along the wall
+             const baseP = originalVertex;
+             const dist = (svgP.x - baseP.x) * ux + (svgP.y - baseP.y) * uy;
+             nextPoints[pIdx].x = baseP.x + ux * dist;
+             nextPoints[pIdx].y = baseP.y + uy * dist;
+             // Mirror to corresponding interior vertex to keep rectangle shape
+             const interiorIdx = pIdx === 0 ? 3 : 2;
+             nextPoints[interiorIdx].x = originalPoints[interiorIdx].x + (nextPoints[pIdx].x - originalPoints[pIdx].x);
+             nextPoints[interiorIdx].y = originalPoints[interiorIdx].y + (nextPoints[pIdx].y - originalPoints[pIdx].y);
+          } else {
+             // Interior vertices move only along the normal (depth adjustment)
+             const baseP = originalVertex;
+             const dist = (svgP.x - baseP.x) * nx + (svgP.y - baseP.y) * ny;
+             // Update both interior vertices to keep depth consistent across the face
+             const dX = nx * dist; const dY = ny * dist;
+             nextPoints[2].x = originalPoints[2].x + dX; nextPoints[2].y = originalPoints[2].y + dY;
+             nextPoints[3].x = originalPoints[3].x + dX; nextPoints[3].y = originalPoints[3].y + dY;
+          }
+
+          c.points = nextPoints;
+
+          // Validation: Vertex spacing and room inclusion
+          const collisionCheck = isValidVertexMovement(c.points[pIdx].x, c.points[pIdx].y, c.id, pIdx);
+          const roomCheck = isCutoutValid(c.points) && isRectCutoutSizeValid(c.points);
+
+          if (!collisionCheck || !roomCheck) {
+            c.points = previousPts;
+            return;
+          }
+
+          const activePoint = c.points[pIdx];
+          hasResized = true;
+          showCutoutSizeTooltip(activePoint);
+          renderAll();
+        };
+        const onUp = () => {
+          circle.classList.remove("dragging");
+          coordTooltip.classList.add("hidden");
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+          if (hasResized) {
+            const snap = getClosestPointOnPerimeter(c.points[0].x, c.points[0].y);
+            c.edgeIndex = snap.edgeIndex;
+            saveState();
+            showToast("Cutout resized");
+          }
+        };
+        window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+      };
+      g.appendChild(circle);
+    });
+
     }
+    appendCutoutDeleteButton(g, c);
+    g.onmouseenter = () => { hoveredElementId = c.id; hoveredElementType = "cutout"; };
+    g.onmouseleave = () => { if (hoveredElementId === c.id) hoveredElementId = null; };
+    placedGroup.appendChild(g);
+  });
+}
+
+function updateDimensionsDisplay() {
+  const pts = state.roomPoints;
+  // Width/Length labels for complex polygons are tricky, use the bounding box
+  const minX = Math.min(...pts.map(p=>p.x));
+  const maxX = Math.max(...pts.map(p=>p.x));
+  const minY = Math.min(...pts.map(p=>p.y));
+  const maxY = Math.max(...pts.map(p=>p.y));
+
+  const widthFt = (maxX - minX) / 20;
+  const lengthFt = (maxY - minY) / 20;
+  const displayWidth = currentUnit === "ft" ? widthFt : widthFt * FT_TO_M;
+  const displayLength = currentUnit === "ft" ? lengthFt : lengthFt * FT_TO_M;
+  widthInput.value = displayWidth.toFixed(currentUnit === "ft" ? 1 : 2);
+  lengthInput.value = displayLength.toFixed(currentUnit === "ft" ? 1 : 2);
+
+  let area = polygonArea(pts);
+  (state.finalizedCutouts || []).forEach((cutout) => {
+    area -= polygonArea(clipPolygonToRoom(cutout.points));
+  });
+  area = Math.max(0, area) / (20 * 20);
+
+  const displayArea = currentUnit === "ft" ? area : area * FT_TO_M * FT_TO_M;
+  areaBadge.innerHTML = `Total Area: ${displayArea.toFixed(currentUnit === "ft" ? 1 : 2)} SQ ${currentUnit === "ft" ? "FT" : "M"}`;
+
+  const midX = (minX + maxX) / 2;
+  const midY = (minY + maxY) / 2;
+  const offset = 35;
+  document.getElementById("line-width").setAttribute("x1", minX); document.getElementById("line-width").setAttribute("x2", maxX);
+  document.getElementById("line-width").setAttribute("y1", minY - offset); document.getElementById("line-width").setAttribute("y2", minY - offset);
+  document.getElementById("tick-width-start").setAttribute("x1", minX); document.getElementById("tick-width-start").setAttribute("x2", minX);
+  document.getElementById("tick-width-start").setAttribute("y1", minY - offset - 5); document.getElementById("tick-width-start").setAttribute("y2", minY - offset + 5);
+  document.getElementById("tick-width-end").setAttribute("x1", maxX); document.getElementById("tick-width-end").setAttribute("x2", maxX);
+  document.getElementById("tick-width-end").setAttribute("y1", minY - offset - 5); document.getElementById("tick-width-end").setAttribute("y2", minY - offset + 5);
+  labelWidthText.setAttribute("x", midX); labelWidthText.setAttribute("y", minY - offset - 10);
+  labelWidthText.textContent = `${displayWidth.toFixed(currentUnit === "ft" ? 1 : 2)} ${currentUnit.toUpperCase()}`;
+  document.getElementById("label-width-sub").setAttribute("x", midX); document.getElementById("label-width-sub").setAttribute("y", minY - offset + 28);
+  document.getElementById("line-length").setAttribute("x1", minX - offset); document.getElementById("line-length").setAttribute("x2", minX - offset);
+  document.getElementById("line-length").setAttribute("y1", minY); document.getElementById("line-length").setAttribute("y2", maxY);
+  document.getElementById("tick-length-start").setAttribute("x1", minX - offset - 5); document.getElementById("tick-length-start").setAttribute("x2", minX - offset + 5);
+  document.getElementById("tick-length-start").setAttribute("y1", minY); document.getElementById("tick-length-start").setAttribute("y2", minY);
+  document.getElementById("tick-length-end").setAttribute("x1", minX - offset - 5); document.getElementById("tick-length-end").setAttribute("x2", minX - offset + 5);
+  document.getElementById("tick-length-end").setAttribute("y1", maxY); document.getElementById("tick-length-end").setAttribute("y2", maxY);
+  labelLengthText.setAttribute("x", minX - offset - 10); labelLengthText.setAttribute("y", midY);
+  labelLengthText.setAttribute("transform", `rotate(-90, ${minX - offset - 10}, ${midY})`);
+  labelLengthText.textContent = `${displayLength.toFixed(currentUnit === "ft" ? 1 : 2)} ${currentUnit.toUpperCase()}`;
+  document.getElementById("label-length-sub").setAttribute("x", minX - offset + 25); document.getElementById("label-length-sub").setAttribute("y", midY + 15);
+  document.getElementById("label-length-sub").setAttribute("transform", `rotate(-90, ${minX - offset + 25}, ${midY + 15})`);
+}
+
+function createSnappingCutout(targetX, targetY, size = 30) {
+  const snap = getClosestPointOnPerimeter(targetX, targetY);
+  const angleRad = (snap.point.angle * Math.PI) / 180;
+  const nx = Math.cos(angleRad + Math.PI / 2);
+  const ny = Math.sin(angleRad + Math.PI / 2);
+  const halfSize = size / 2;
+  const p0 = { x: snap.point.x - Math.cos(angleRad) * halfSize, y: snap.point.y - Math.sin(angleRad) * halfSize };
+  const p1 = { x: snap.point.x + Math.cos(angleRad) * halfSize, y: snap.point.y + Math.sin(angleRad) * halfSize };
+  const p2 = { x: p1.x + nx * size, y: p1.y + ny * size };
+  const p3 = { x: p0.x + nx * size, y: p0.y + ny * size };
+  return [p0, p1, p2, p3];
+}
+
+function finalizeCutouts() {
+  if (state.cutouts.length === 0) return;
+
+  const remainingCutouts = [];
+  let appliedCount = 0;
+
+  state.cutouts.forEach(c => {
+    if (!isCutoutValid(c.points)) {
+      remainingCutouts.push(c);
+      return;
+    }
+
+    state.finalizedCutouts.push(cloneObj(c));
+    appliedCount++;
+  });
+
+  state.cutouts = remainingCutouts;
+  selectedCutoutId = pendingCutoutId && remainingCutouts.some(c => c.id === pendingCutoutId)
+    ? pendingCutoutId
+    : remainingCutouts.length ? remainingCutouts[0].id : null;
+  pendingCutoutId = remainingCutouts.some(c => c.id === pendingCutoutId) ? pendingCutoutId : null;
+  if (appliedCount > 0) saveState();
+  renderAll();
+  renderDrawing();
+  if (appliedCount > 0) showToast("Room boundary updated");
+  else showToast("Move the cutout so it crosses a room wall.");
+}
+
+document.querySelectorAll('[draggable="true"]').forEach((btn) => {
+  btn.addEventListener("dragstart", (e) => {
+    draggingFromToolbar = btn.getAttribute("data-type");
+    e.dataTransfer.setData("text/plain", draggingFromToolbar);
+    e.dataTransfer.effectAllowed = "copy";
+    btn.style.opacity = "0.45";
+  });
+  btn.addEventListener("dragend", () => { btn.style.opacity = "1"; });
+});
+
+svg.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  if (!draggingFromToolbar) return;
+  const svgP = getSVGPoint(e);
+  const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+  if (snap.dist < 200) {
+    document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
+    const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+    if (edgeEl) edgeEl.classList.add("active");
+    ghost.classList.remove("hidden");
+    if (draggingFromToolbar === "cutout") {
+      const pts = createSnappingCutout(svgP.x, svgP.y, 35);
+      ghost.innerHTML = `<path d="M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z" fill="rgba(211, 150, 140, 0.4)" stroke="white" stroke-dasharray="2 2" />`;
+    } else {
+      const offset = draggingFromToolbar === "door" ? -20 : -25;
+      ghost.innerHTML = `<use href="#${draggingFromToolbar}-template" transform="translate(${snap.point.x},${snap.point.y}) rotate(${snap.point.angle}) translate(${offset}, 0)" />`;
+    }
+  } else {
     ghost.classList.add("hidden");
     document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
-    draggingFromToolbar = null;
+  }
+});
+
+svg.addEventListener("mousedown", (e) => {
+  if (drawingMode) {
+    const svgP = getSVGPoint(e);
+    if (drawingPoints.length >= 3) {
+      const startP = drawingPoints[0];
+      const dist = Math.hypot(svgP.x - startP.x, svgP.y - startP.y);
+      if (dist < 15) {
+        finalizeDrawnCutout();
+        return;
+      }
+    }
+    drawingPoints.push(svgP);
+    renderDrawing();
+    if (drawingPoints.length === 3) showToast("Click the first point to close the shape!");
+    return;
+  }
+  if (pendingCutoutId) {
+    finalizeCutouts();
+    return;
+  }
+  if ((e.target === svg || e.target.id === 'svg-bg') && !e.target.closest('#drawing-layer')) {
+    const svgP = getSVGPoint(e);
+
+    if (state.cutouts.length > 0) {
+      finalizeCutouts();
+      return;
+    } else {
+      let reactivated = false;
+      if (state.finalizedCutouts) {
+        for (let i = state.finalizedCutouts.length - 1; i >= 0; i--) {
+          const fc = state.finalizedCutouts[i];
+          const activePoints = clipPolygonToRoom(fc.points);
+          if (activePoints.length < 3) continue;
+          const dist = pointToPathDistance(svgP.x, svgP.y, activePoints);
+          const inside = isPointInPolygon(svgP.x, svgP.y, activePoints);
+          if (dist < 15 || inside) {
+            reactivateFinalizedCutout(i);
+            reactivated = true;
+            break;
+          }
+        }
+      }
+      if (!reactivated) {
+        selectedCutoutId = null;
+      }
+    }
+
+    selectedResizeId = null;
+    renderAll();
+  }
+});
+
+document.addEventListener("mousedown", (e) => {
+  if (drawingMode || state.cutouts.length === 0) return;
+  if (svg.contains(e.target)) return;
+  finalizeCutouts();
+});
+
+svg.addEventListener("drop", (e) => {
+  e.preventDefault();
+  if (!draggingFromToolbar) return;
+  const svgP = getSVGPoint(e);
+  const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+  if (snap.dist < 200) {
+    if (draggingFromToolbar === "cutout") {
+      const newPts = createSnappingCutout(svgP.x, svgP.y, 35);
+      if (isCutoutValid(newPts)) {
+        const newCutout = { id: Date.now(), type: "cutout", points: newPts, edgeIndex: snap.edgeIndex, source: "preset" };
+        if (checkCollision(newCutout)) {
+           showToast("Cutout cannot intersect with existing items");
+           ghost.classList.add("hidden");
+           return;
+        }
+        state.cutouts.push(newCutout);
+        selectedCutoutId = newCutout.id;
+      }
+      else { showToast("Cutout must overlap room interior"); ghost.classList.add("hidden"); return; }
+    } else {
+      const newEl = { id: Date.now(), type: draggingFromToolbar, x: snap.point.x, y: snap.point.y, angle: snap.point.angle, isMirrored: false, width: draggingFromToolbar === 'window' ? 50 : undefined };
+      if (checkCollision(newEl)) {
+        showToast("Element cannot intersect with existing items");
+        ghost.classList.add("hidden");
+        return;
+      }
+      state.elements.push(newEl);
+    }
+    saveState(); renderAll(); showToast(`${draggingFromToolbar} added`);
+  }
+  ghost.classList.add("hidden");
+  document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
+  draggingFromToolbar = null;
+});
+
+btnUndo.onclick = undo;
+btnRedo.onclick = redo;
+window.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === "z") { e.preventDefault(); undo(); return; }
+    if (e.key === "y") { e.preventDefault(); redo(); return; }
+  }
+  if (drawingMode) {
+    if (e.key === "Escape") {
+      drawingMode = false; drawingPoints = [];
+      document.body.style.cursor = "default";
+      renderDrawing(); showToast("Drawing cancelled");
+    }
+    if (e.key === "Enter") {
+      if (drawingPoints.length >= 3) {
+        finalizeDrawnCutout();
+      } else {
+        showToast("Add at least 3 points");
+      }
+    }
+    return;
+  }
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if ((e.key === "Delete" || e.key === "Backspace") && hoveredElementId) {
+    if (hoveredElementType === "element") { state.elements = state.elements.filter((el) => el.id !== hoveredElementId); }
+    else {
+      state.cutouts = state.cutouts.filter((c) => c.id !== hoveredElementId);
+      if (selectedCutoutId === hoveredElementId) selectedCutoutId = null;
+      if (pendingCutoutId === hoveredElementId) pendingCutoutId = null;
+    }
+    hoveredElementId = null; hoveredElementType = null; saveState(); renderAll(); renderDrawing(); showToast("Element deleted");
+  }
+});
+
+widthInput.oninput = lengthInput.oninput = (e) => {
+  const rawW = widthInput.value; const rawL = lengthInput.value;
+  if (rawW === "" || rawL === "") return;
+  let wVal = parseFloat(rawW); let lVal = parseFloat(rawL);
+  if (isNaN(wVal) || isNaN(lVal) || wVal <= 0 || lVal <= 0) return;
+  if (currentUnit === "m") { wVal /= FT_TO_M; lVal /= FT_TO_M; }
+
+  const clampedW = Math.min(50, Math.max(5, wVal));
+  const clampedL = Math.min(50, Math.max(5, lVal));
+
+  if (clampedW !== wVal || clampedL !== lVal) {
+    showToast("Room dimensions must be between 5 and 50 feet");
+    wVal = clampedW;
+    lVal = clampedL;
+  }
+  const newWidth = wVal * 20; const newLength = lVal * 20;
+  const cx = 400; const cy = 250;
+
+  // For complex polygons, dimension scaling just scales all points from center
+  const minX = Math.min(...state.roomPoints.map(p=>p.x));
+  const maxX = Math.max(...state.roomPoints.map(p=>p.x));
+  const minY = Math.min(...state.roomPoints.map(p=>p.y));
+  const maxY = Math.max(...state.roomPoints.map(p=>p.y));
+  const oldWidth = maxX - minX;
+  const oldLength = maxY - minY;
+
+  const scaleX = newWidth / (oldWidth || 1);
+  const scaleY = newLength / (oldLength || 1);
+
+  state.roomPoints.forEach(p => {
+    p.x = cx + (p.x - cx) * scaleX;
+    p.y = cy + (p.y - cy) * scaleY;
   });
-
-  btnUndo.onclick = undo;
-  btnRedo.onclick = redo;
-  window.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      if (e.key === "z") { e.preventDefault(); undo(); return; }
-      if (e.key === "y") { e.preventDefault(); redo(); return; }
-    }
-    const tag = document.activeElement?.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA") return;
-    if ((e.key === "Delete" || e.key === "Backspace") && hoveredElementId) {
-      if (hoveredElementType === "element") { state.elements = state.elements.filter((el) => el.id !== hoveredElementId); }
-      else { state.cutouts = state.cutouts.filter((c) => c.id !== hoveredElementId); }
-      hoveredElementId = null; hoveredElementType = null; saveState(); renderAll(); showToast("Element deleted");
-    }
+  state.elements.forEach(el => {
+    el.x = cx + (el.x - cx) * scaleX;
+    el.y = cy + (el.y - cy) * scaleY;
   });
-
-  widthInput.oninput = lengthInput.oninput = (e) => {
-    const rawW = widthInput.value; const rawL = lengthInput.value;
-    if (rawW === "" || rawL === "") return;
-    let wVal = parseFloat(rawW); let lVal = parseFloat(rawL);
-    if (isNaN(wVal) || isNaN(lVal) || wVal <= 0 || lVal <= 0) return;
-    if (currentUnit === "m") { wVal /= FT_TO_M; lVal /= FT_TO_M; }
-
-    const clampedW = Math.min(50, Math.max(5, wVal));
-    const clampedL = Math.min(50, Math.max(5, lVal));
-
-    if (clampedW !== wVal || clampedL !== lVal) {
-      showToast("Room dimensions must be between 5 and 50 feet");
-      wVal = clampedW;
-      lVal = clampedL;
-    }
-    const newWidth = wVal * 20; const newLength = lVal * 20;
-    const cx = 400; const cy = 250;
-
-    // For complex polygons, dimension scaling just scales all points from center
-    const minX = Math.min(...state.roomPoints.map(p=>p.x));
-    const maxX = Math.max(...state.roomPoints.map(p=>p.x));
-    const minY = Math.min(...state.roomPoints.map(p=>p.y));
-    const maxY = Math.max(...state.roomPoints.map(p=>p.y));
-    const oldWidth = maxX - minX;
-    const oldLength = maxY - minY;
-
-    const scaleX = newWidth / (oldWidth || 1);
-    const scaleY = newLength / (oldLength || 1);
-
-    state.roomPoints.forEach(p => {
+  state.cutouts.forEach(c => {
+    c.points.forEach(p => {
       p.x = cx + (p.x - cx) * scaleX;
       p.y = cy + (p.y - cy) * scaleY;
     });
-    state.elements.forEach(el => {
-      el.x = cx + (el.x - cx) * scaleX;
-      el.y = cy + (el.y - cy) * scaleY;
-    });
-    state.cutouts.forEach(c => {
+  });
+  if (state.finalizedCutouts) {
+    state.finalizedCutouts.forEach(c => {
       c.points.forEach(p => {
         p.x = cx + (p.x - cx) * scaleX;
         p.y = cy + (p.y - cy) * scaleY;
       });
     });
-    if (state.finalizedCutouts) {
-      state.finalizedCutouts.forEach(c => {
-        c.points.forEach(p => {
-          p.x = cx + (p.x - cx) * scaleX;
-          p.y = cy + (p.y - cy) * scaleY;
-        });
-      });
-    }
-
-    roomPath.classList.remove("flip-anim");
-    void roomPath.offsetWidth;
-    roomPath.classList.add("flip-anim");
-    renderAll(); saveState();
-  };
-
-  const toggleFt = document.getElementById("toggle-ft");
-  const toggleM = document.getElementById("toggle-m");
-  const unitIndicators = document.querySelectorAll(".unit-indicator");
-  function setUnit(unit) {
-    if (currentUnit === unit) return;
-    currentUnit = unit;
-    toggleFt.classList.toggle("is-active", unit === "ft");
-    toggleM.classList.toggle("is-active", unit === "m");
-    toggleFt.classList.toggle("bg-[#D3968C]", unit === "ft");
-    toggleFt.classList.toggle("text-[#0A3323]", unit === "ft");
-    toggleM.classList.toggle("bg-[#D3968C]", unit === "m");
-    toggleM.classList.toggle("text-[#0A3323]", unit === "m");
-    unitIndicators.forEach((span) => (span.textContent = unit));
-    renderAll();
   }
-  toggleFt.onclick = () => setUnit("ft");
-  toggleM.onclick = () => setUnit("m");
-  saveState(); renderAll();
 
-/* ── Save & Continue ─────────────────────────────────────────────────────── */
-const ROOM_LAYOUT_STORAGE_KEY = "blueprintRoomLayout";
-const ROOM_LAYOUT_VERSION = 1;
-const ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
+  roomPath.classList.remove("flip-anim");
+  void roomPath.offsetWidth;
+  roomPath.classList.add("flip-anim");
+  renderAll(); saveState();
+};
 
-function getStateDimensionsFt() {
-  const xs = state.roomPoints.map((p) => p.x);
-  const ys = state.roomPoints.map((p) => p.y);
-  return {
-    widthFt:  (Math.max(...xs) - Math.min(...xs)) / ROOM_LAYOUT_SCALE,
-    lengthFt: (Math.max(...ys) - Math.min(...ys)) / ROOM_LAYOUT_SCALE,
-  };
-}
-
-function captureRoomLayoutSnapshot() {
-  const dims = getStateDimensionsFt();
-  const heightFt = parseFloat(heightInput.value) || 8;
-  const roomName = (roomNameInput && roomNameInput.value.trim()) || "My Room";
-  const cutouts = [
-    ...cloneObj(state.cutouts || []),
-    ...cloneObj(state.finalizedCutouts || []),
-  ];
-  return {
-    version:    ROOM_LAYOUT_VERSION,
-    roomId:     localStorage.getItem("blueprintCurrentRoomId") || undefined,
-    roomName,
-    widthFt:    Number(dims.widthFt.toFixed(1)),
-    lengthFt:   Number(dims.lengthFt.toFixed(1)),
-    heightFt:   Number(heightFt.toFixed(1)),
-    sqft:       Math.round(dims.widthFt * dims.lengthFt),
-    scale:      ROOM_LAYOUT_SCALE,
-    viewBox:    ROOM_LAYOUT_VIEWBOX,
-    roomPoints: cloneObj(state.roomPoints),
-    elements:   cloneObj(state.elements),
-    cutouts,
-    savedAt:    new Date().toISOString(),
-  };
-}
-
-function persistRoomLayout(layout) {
-  localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
-}
-
-function restorePersistedLayout() {
-  let raw;
-  try { raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY); } catch { return false; }
-  if (!raw) return false;
-  let layout;
-  try { layout = JSON.parse(raw); } catch { return false; }
-  if (!layout || layout.version !== ROOM_LAYOUT_VERSION) return false;
-  const currentRoomId = localStorage.getItem("blueprintCurrentRoomId");
-  if (layout.roomId && currentRoomId && layout.roomId !== currentRoomId) return false;
-  if (Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 3) {
-    state.roomPoints = cloneObj(layout.roomPoints);
-  }
-  if (Array.isArray(layout.elements)) state.elements = cloneObj(layout.elements);
-  if (Array.isArray(layout.cutouts)) {
-    state.cutouts = [];
-    state.finalizedCutouts = cloneObj(layout.cutouts);
-  }
-  if (roomNameInput && layout.roomName) roomNameInput.value = layout.roomName;
-  if (heightInput && Number.isFinite(layout.heightFt)) {
-    heightInput.value = String(layout.heightFt);
-  }
-  return true;
-}
-
-if (restorePersistedLayout()) {
-  history = [];
-  historyIndex = -1;
-  saveState();
+const toggleFt = document.getElementById("toggle-ft");
+const toggleM = document.getElementById("toggle-m");
+const unitIndicators = document.querySelectorAll(".unit-indicator");
+function setUnit(unit) {
+  if (currentUnit === unit) return;
+  currentUnit = unit;
+  toggleFt.classList.toggle("is-active", unit === "ft");
+  toggleM.classList.toggle("is-active", unit === "m");
+  unitIndicators.forEach((span) => (span.textContent = unit));
   renderAll();
 }
+toggleFt.onclick = () => setUnit("ft");
+toggleM.onclick = () => setUnit("m");
 
-document.getElementById("cta-save-continue").addEventListener("click", async () => {
-  const btn = document.getElementById("cta-save-continue");
-  const userId = localStorage.getItem("blueprintUserId");
-  if (!userId) {
-    window.location.href = "login.html";
-    return;
+document.getElementById("btn-draw-cutout").onclick = (e) => {
+  e.stopPropagation();
+  drawingMode = true;
+  drawingPoints = [];
+  document.body.style.cursor = "crosshair";
+  showToast("Click to draw points. Enter: Finish | Esc: Cancel");
+  renderDrawing();
+};
+
+function finalizeDrawnCutout() {
+  if (drawingPoints.length < 3) return;
+  const finalPoints = drawingPoints.map(p => ({ ...p }));
+  const snap = getClosestPointOnPerimeter(finalPoints[0].x, finalPoints[0].y);
+  const newId = Date.now();
+  const newCutout = { id: newId, type: "cutout", points: finalPoints, edgeIndex: snap.edgeIndex, source: "drawn" };
+  state.cutouts.push(newCutout);
+  selectedCutoutId = newId;
+  pendingCutoutId = newId;
+  drawingMode = false;
+  drawingPoints = [];
+  document.body.style.cursor = "default";
+  saveState();
+  renderAll();
+  renderDrawing();
+  showToast("Custom cutout added. Now drag it to move!");
+}
+
+function renderDrawing() {
+  const layer = document.getElementById("drawing-layer");
+  layer.innerHTML = "";
+
+  if (pendingCutoutId) {
+    const c = state.cutouts.find(item => item.id === pendingCutoutId);
+    if (c) {
+      const pts = c.points;
+      const d = pointsToPath(pts);
+      const centroid = getPolygonCenter(pts);
+      const bounds = {
+        minX: Math.min(...pts.map(p => p.x)),
+        maxX: Math.max(...pts.map(p => p.x)),
+        minY: Math.min(...pts.map(p => p.y)),
+        maxY: Math.max(...pts.map(p => p.y)),
+      };
+      const calloutWidth = 202;
+      const calloutHeight = 24;
+      const viewBoxWidth = 800;
+      const viewBoxHeight = 500;
+      const margin = 12;
+      const gap = 10;
+      const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+      const clampBetween = (value, a, b) => clamp(value, Math.min(a, b), Math.max(a, b));
+      const edgePoint = {
+        top: { x: clampBetween(centroid.x, bounds.minX, bounds.maxX), y: bounds.minY },
+        right: { x: bounds.maxX, y: clampBetween(centroid.y, bounds.minY, bounds.maxY) },
+        bottom: { x: clampBetween(centroid.x, bounds.minX, bounds.maxX), y: bounds.maxY },
+        left: { x: bounds.minX, y: clampBetween(centroid.y, bounds.minY, bounds.maxY) },
+      };
+      const candidates = [
+        {
+          side: "top",
+          fits: bounds.minY - calloutHeight - gap >= margin,
+          x: clamp(centroid.x - calloutWidth / 2, margin, viewBoxWidth - calloutWidth - margin),
+          y: bounds.minY - calloutHeight - gap,
+          tip: edgePoint.top,
+        },
+        {
+          side: "right",
+          fits: bounds.maxX + calloutWidth + gap <= viewBoxWidth - margin,
+          x: bounds.maxX + gap,
+          y: clamp(centroid.y - calloutHeight / 2, margin, viewBoxHeight - calloutHeight - margin),
+          tip: edgePoint.right,
+        },
+        {
+          side: "bottom",
+          fits: bounds.maxY + calloutHeight + gap <= viewBoxHeight - margin,
+          x: clamp(centroid.x - calloutWidth / 2, margin, viewBoxWidth - calloutWidth - margin),
+          y: bounds.maxY + gap,
+          tip: edgePoint.bottom,
+        },
+        {
+          side: "left",
+          fits: bounds.minX - calloutWidth - gap >= margin,
+          x: bounds.minX - calloutWidth - gap,
+          y: clamp(centroid.y - calloutHeight / 2, margin, viewBoxHeight - calloutHeight - margin),
+          tip: edgePoint.left,
+        },
+      ];
+      const callout = candidates.find(item => item.fits) || {
+        ...candidates[0],
+        x: clamp(candidates[0].x, margin, viewBoxWidth - calloutWidth - margin),
+        y: clamp(candidates[0].y, margin, viewBoxHeight - calloutHeight - margin),
+      };
+      const localTip = { x: callout.tip.x - callout.x, y: callout.tip.y - callout.y };
+      const arrowBase = callout.side === "top"
+        ? { x: clamp(localTip.x, 12, calloutWidth - 12), y: calloutHeight }
+        : callout.side === "bottom"
+          ? { x: clamp(localTip.x, 12, calloutWidth - 12), y: 0 }
+          : callout.side === "left"
+            ? { x: calloutWidth, y: clamp(localTip.y, 8, calloutHeight - 8) }
+            : { x: 0, y: clamp(localTip.y, 8, calloutHeight - 8) };
+      const arrowHead = callout.side === "top"
+        ? `M ${localTip.x} ${localTip.y} L ${localTip.x - 3} ${localTip.y - 5} L ${localTip.x + 3} ${localTip.y - 5} Z`
+        : callout.side === "bottom"
+          ? `M ${localTip.x} ${localTip.y} L ${localTip.x - 3} ${localTip.y + 5} L ${localTip.x + 3} ${localTip.y + 5} Z`
+          : callout.side === "left"
+            ? `M ${localTip.x} ${localTip.y} L ${localTip.x - 5} ${localTip.y - 3} L ${localTip.x - 5} ${localTip.y + 3} Z`
+            : `M ${localTip.x} ${localTip.y} L ${localTip.x + 5} ${localTip.y - 3} L ${localTip.x + 5} ${localTip.y + 3} Z`;
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.innerHTML = `
+        <path class="pending-cutout-preview" d="${d}" fill="rgba(74, 222, 128, 0.4)" stroke="#4ade80" stroke-width="4" style="cursor: grab; filter: drop-shadow(0 0 15px rgba(74, 222, 128, 0.6));" />
+        <g class="draw-cutout-callout" transform="translate(${callout.x},${callout.y})" pointer-events="none">
+          <path class="draw-cutout-arrow" d="M ${arrowBase.x} ${arrowBase.y} L ${localTip.x} ${localTip.y}" />
+          <path class="draw-cutout-arrow-head" d="${arrowHead}" />
+          <rect class="draw-cutout-label" x="0" y="0" width="${calloutWidth}" height="${calloutHeight}" rx="8"></rect>
+          <text x="12" y="16">drag into the blueprint to add cutout</text>
+        </g>
+      `;
+      g.onmousedown = (e) => {
+        e.stopPropagation();
+        let hasMoved = false;
+        const path = g.querySelector('path');
+        path.style.cursor = 'grabbing';
+        const startMouseP = getSVGPoint(e);
+        const originalPoints = c.points.map(p => ({...p}));
+        const onMouseMove = (mv) => {
+          hasMoved = true;
+          const currentMouseP = getSVGPoint(mv);
+          const dx = currentMouseP.x - startMouseP.x;
+          const dy = currentMouseP.y - startMouseP.y;
+          const testPoints = originalPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
+
+          if (doesCutoutOverlapRoom(testPoints)) {
+            c.points.forEach((p, idx) => {
+              p.x = testPoints[idx].x;
+              p.y = testPoints[idx].y;
+            });
+            renderAll();
+            renderDrawing();
+          }
+        };
+        const onMouseUp = () => {
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+          path.style.cursor = 'grab';
+          if (hasMoved) {
+            // Update edgeIndex on release to maintain app logic consistency
+            const snap = getClosestPointOnPerimeter(c.points[0].x, c.points[0].y);
+            c.edgeIndex = snap.edgeIndex;
+            saveState();
+          }
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      };
+      layer.appendChild(g);
+    }
   }
 
-  const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
-  const layoutSnapshot = {
-    ...captureRoomLayoutSnapshot(),
-    roomId: existingRoomId || undefined,
-  };
-  const { widthFt, lengthFt, heightFt, roomName } = layoutSnapshot;
+  if (!drawingMode) return;
 
-  if (!roomName || widthFt <= 0 || lengthFt <= 0 || heightFt <= 0) {
-    showToast("Enter valid room details");
-    return;
-  }
+  drawingPoints.forEach((p, i) => {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", p.x); circle.setAttribute("cy", p.y);
+    circle.setAttribute("r", "5"); circle.setAttribute("fill", "#4ade80");
+    layer.appendChild(circle);
 
-  localStorage.setItem("blueprintCurrentRoomName", roomName);
-  localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
-  localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
-  localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
-  persistRoomLayout(layoutSnapshot);
+    if (i > 0) {
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", drawingPoints[i-1].x); line.setAttribute("y1", drawingPoints[i-1].y);
+      line.setAttribute("x2", p.x); line.setAttribute("y2", p.y);
+      line.setAttribute("stroke", "#4ade80"); line.setAttribute("stroke-width", "2");
+      layer.appendChild(line);
+    }
+    if (i === 0 && drawingPoints.length >= 3) {
+      circle.setAttribute("r", "8");
+      circle.style.filter = "drop-shadow(0 0 8px rgba(74, 222, 128, 0.8))";
+      circle.style.cursor = "pointer";
+    }
+  });
+}
 
-  btn.disabled = true;
-  btn.innerHTML = "Saving...";
-  try {
-    const res = await fetch(
-      existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-      {
-        method: existingRoomId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          name: roomName,
-          widthFt,
-          lengthFt,
-          heightFt,
-          sqft: layoutSnapshot.sqft,
-          layout: layoutSnapshot,
-        }),
-      },
-    );
-    if (!res.ok) throw new Error("save failed (" + res.status + ")");
-    const room = await res.json();
-    localStorage.setItem("blueprintCurrentRoomId", room._id);
-    persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
-  } catch (err) {
-    console.warn("[save room]", err);
-    showToast("Saved locally — continuing");
-  }
-  window.location.href = "inspo-upload.html";
-});
+saveState(); renderAll();
 </script>
 
 </body></html>
