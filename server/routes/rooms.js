@@ -47,6 +47,11 @@ function sanitizeLayout(layout, roomFields) {
             x: toNumber(element && element.x),
             y: toNumber(element && element.y),
             angle: toNumber(element && element.angle),
+            // Windows carry a resizable width (editor px); keep it so the preview
+            // can render them at their true size.
+            ...(element && element.type === 'window' && element.width != null
+                ? { width: toNumber(element.width) }
+                : {}),
         })),
         cutouts: layout.cutouts.map((cutout) => ({
             id: cutout && cutout.id !== undefined ? cutout.id : '',
