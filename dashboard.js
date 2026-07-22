@@ -1,4 +1,4 @@
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "./firebase.js";
 
 var logoutBtn = document.getElementById('logout-btn');
@@ -12,6 +12,63 @@ if (profileBtn && profilePopup) {
     document.addEventListener('click', function (e) {
         if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
             profilePopup.classList.add('hidden');
+        }
+    });
+}
+var themeToggleBtn = document.getElementById('theme-toggle-btn');
+if (localStorage.getItem('blueprintTheme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
+}
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', function () {
+        var isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
+        themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
+    });
+}
+
+var settingsBtn = document.getElementById('settings-btn');
+var settingsOverlay = document.getElementById('settings-overlay');
+var settingsCloseBtn = document.getElementById('settings-close-btn');
+var settingsNameInput = document.getElementById('settings-name');
+var settingsBirthdayInput = document.getElementById('settings-birthday');
+var settingsSaveBtn = document.getElementById('settings-save-btn');
+var settingsSaveStatus = document.getElementById('settings-save-status');
+
+function openSettingsModal() {
+    if (settingsNameInput) settingsNameInput.value = localStorage.getItem('blueprintUserName') || '';
+    if (settingsBirthdayInput) settingsBirthdayInput.value = localStorage.getItem('blueprintUserBirthday') || '';
+    if (settingsOverlay) settingsOverlay.classList.remove('hidden');
+    if (profilePopup) profilePopup.classList.add('hidden');
+}
+function closeSettingsModal() {
+    if (settingsOverlay) settingsOverlay.classList.add('hidden');
+    if (settingsSaveStatus) settingsSaveStatus.textContent = '';
+}
+if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
+if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettingsModal);
+if (settingsOverlay) settingsOverlay.addEventListener('click', function (e) {
+    if (e.target === settingsOverlay) closeSettingsModal();
+});
+
+if (settingsSaveBtn) {
+    settingsSaveBtn.addEventListener('click', async function () {
+        var newName = settingsNameInput.value.trim();
+        var newBirthday = settingsBirthdayInput.value;
+        try {
+            if (newName) {
+                localStorage.setItem('blueprintUserName', newName);
+                if (auth.currentUser) {
+                    await updateProfile(auth.currentUser, { displayName: newName });
+                }
+                if (userNameEl) userNameEl.textContent = newName + '!';
+            }
+            if (newBirthday) localStorage.setItem('blueprintUserBirthday', newBirthday);
+            settingsSaveStatus.textContent = 'Saved!';
+            setTimeout(function () { settingsSaveStatus.textContent = ''; }, 2000);
+        } catch (err) {
+            settingsSaveStatus.textContent = 'Error: ' + err.message;
         }
     });
 }
