@@ -414,6 +414,11 @@ document.getElementById("cta-save-continue").addEventListener("click", async () 
   };
   const { widthFt, lengthFt, heightFt, roomName } = layoutSnapshot;
 
+  if (!roomName || widthFt <= 0 || lengthFt <= 0 || heightFt <= 0) {
+    showToast("Enter valid room details");
+    return;
+  }
+
   // Write locally first so the next page still works if the API call fails.
   localStorage.setItem("blueprintCurrentRoomName", roomName);
   localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
@@ -450,82 +455,6 @@ document.getElementById("cta-save-continue").addEventListener("click", async () 
   }
   window.location.href = "inspo-upload.html";
 });
-</script>
-<script>
-  document.getElementById("cta-save-continue").addEventListener("click", async () => {
-    const button = document.getElementById("cta-save-continue");
-    const userId = localStorage.getItem("blueprintUserId");
-    const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
-    const roomName = roomNameInput.value.trim();
-    const widthFt = Math.hypot(
-      state.roomPoints[1].x - state.roomPoints[0].x,
-      state.roomPoints[1].y - state.roomPoints[0].y
-    ) / ROOM_LAYOUT_SCALE;
-    const lengthFt = Math.hypot(
-      state.roomPoints[2].x - state.roomPoints[1].x,
-      state.roomPoints[2].y - state.roomPoints[1].y
-    ) / ROOM_LAYOUT_SCALE;
-    const heightFt = Number(heightInput.value);
-
-    if (!userId) {
-      showToast("Please sign in before saving");
-      return;
-    }
-    if (!roomName || widthFt <= 0 || lengthFt <= 0 || heightFt <= 0) {
-      showToast("Enter valid room details");
-      return;
-    }
-
-    const layout = {
-      version: 1,
-      roomId: existingRoomId || undefined,
-      roomName,
-      widthFt,
-      lengthFt,
-      heightFt,
-      sqft: widthFt * lengthFt,
-      scale: ROOM_LAYOUT_SCALE,
-      viewBox: { width: 800, height: 500 },
-      roomPoints: state.roomPoints,
-      elements: state.elements,
-      cutouts: state.cutouts,
-      savedAt: new Date().toISOString()
-    };
-    const payload = { userId, name: roomName, widthFt, lengthFt, heightFt, layout };
-
-    button.disabled = true;
-    button.textContent = "Saving...";
-
-    try {
-      const response = await fetch(
-        existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-        {
-          method: existingRoomId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }
-      );
-      const savedRoom = await response.json();
-      if (!response.ok) {
-        throw new Error(savedRoom.error || "Could not save room");
-      }
-
-      const roomId = String(savedRoom._id || existingRoomId);
-      layout.roomId = roomId;
-      localStorage.setItem("blueprintCurrentRoomId", roomId);
-      localStorage.setItem("blueprintCurrentRoomName", roomName);
-      localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
-      localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
-      localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
-      localStorage.setItem("blueprintRoomLayout", JSON.stringify(layout));
-      window.location.href = "inspo-upload.html";
-    } catch (error) {
-      console.error("Room save failed:", error);
-      showToast(error.message || "Could not save room");
-      button.disabled = false;
-      button.innerHTML = 'Save &amp; Continue <iconify-icon icon="ph:arrow-right-bold" class="text-xl"></iconify-icon>';
-    }
-  });
 </script>
 </body>
 </html>
