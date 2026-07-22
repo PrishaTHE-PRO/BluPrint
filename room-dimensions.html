@@ -1049,6 +1049,136 @@
   toggleFt.onclick = () => setUnit("ft");
   toggleM.onclick = () => setUnit("m");
   saveState(); renderAll();
+
+/* ── Save & Continue ─────────────────────────────────────────────────────── */
+const ROOM_LAYOUT_STORAGE_KEY = "blueprintRoomLayout";
+const ROOM_LAYOUT_VERSION = 1;
+const ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
+
+function getStateDimensionsFt() {
+  const xs = state.roomPoints.map((p) => p.x);
+  const ys = state.roomPoints.map((p) => p.y);
+  return {
+    widthFt:  (Math.max(...xs) - Math.min(...xs)) / ROOM_LAYOUT_SCALE,
+    lengthFt: (Math.max(...ys) - Math.min(...ys)) / ROOM_LAYOUT_SCALE,
+  };
+}
+
+function captureRoomLayoutSnapshot() {
+  const dims = getStateDimensionsFt();
+  const heightFt = parseFloat(heightInput.value) || 8;
+  const roomName = (roomNameInput && roomNameInput.value.trim()) || "My Room";
+  const cutouts = [
+    ...cloneObj(state.cutouts || []),
+    ...cloneObj(state.finalizedCutouts || []),
+  ];
+  return {
+    version:    ROOM_LAYOUT_VERSION,
+    roomId:     localStorage.getItem("blueprintCurrentRoomId") || undefined,
+    roomName,
+    widthFt:    Number(dims.widthFt.toFixed(1)),
+    lengthFt:   Number(dims.lengthFt.toFixed(1)),
+    heightFt:   Number(heightFt.toFixed(1)),
+    sqft:       Math.round(dims.widthFt * dims.lengthFt),
+    scale:      ROOM_LAYOUT_SCALE,
+    viewBox:    ROOM_LAYOUT_VIEWBOX,
+    roomPoints: cloneObj(state.roomPoints),
+    elements:   cloneObj(state.elements),
+    cutouts,
+    savedAt:    new Date().toISOString(),
+  };
+}
+
+function persistRoomLayout(layout) {
+  localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+}
+
+function restorePersistedLayout() {
+  let raw;
+  try { raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY); } catch { return false; }
+  if (!raw) return false;
+  let layout;
+  try { layout = JSON.parse(raw); } catch { return false; }
+  if (!layout || layout.version !== ROOM_LAYOUT_VERSION) return false;
+  const currentRoomId = localStorage.getItem("blueprintCurrentRoomId");
+  if (layout.roomId && currentRoomId && layout.roomId !== currentRoomId) return false;
+  if (Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 3) {
+    state.roomPoints = cloneObj(layout.roomPoints);
+  }
+  if (Array.isArray(layout.elements)) state.elements = cloneObj(layout.elements);
+  if (Array.isArray(layout.cutouts)) {
+    state.cutouts = [];
+    state.finalizedCutouts = cloneObj(layout.cutouts);
+  }
+  if (roomNameInput && layout.roomName) roomNameInput.value = layout.roomName;
+  if (heightInput && Number.isFinite(layout.heightFt)) {
+    heightInput.value = String(layout.heightFt);
+  }
+  return true;
+}
+
+if (restorePersistedLayout()) {
+  history = [];
+  historyIndex = -1;
+  saveState();
+  renderAll();
+}
+
+document.getElementById("cta-save-continue").addEventListener("click", async () => {
+  const btn = document.getElementById("cta-save-continue");
+  const userId = localStorage.getItem("blueprintUserId");
+  if (!userId) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
+  const layoutSnapshot = {
+    ...captureRoomLayoutSnapshot(),
+    roomId: existingRoomId || undefined,
+  };
+  const { widthFt, lengthFt, heightFt, roomName } = layoutSnapshot;
+
+  if (!roomName || widthFt <= 0 || lengthFt <= 0 || heightFt <= 0) {
+    showToast("Enter valid room details");
+    return;
+  }
+
+  localStorage.setItem("blueprintCurrentRoomName", roomName);
+  localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
+  localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
+  localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
+  persistRoomLayout(layoutSnapshot);
+
+  btn.disabled = true;
+  btn.innerHTML = "Saving...";
+  try {
+    const res = await fetch(
+      existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
+      {
+        method: existingRoomId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          name: roomName,
+          widthFt,
+          lengthFt,
+          heightFt,
+          sqft: layoutSnapshot.sqft,
+          layout: layoutSnapshot,
+        }),
+      },
+    );
+    if (!res.ok) throw new Error("save failed (" + res.status + ")");
+    const room = await res.json();
+    localStorage.setItem("blueprintCurrentRoomId", room._id);
+    persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
+  } catch (err) {
+    console.warn("[save room]", err);
+    showToast("Saved locally — continuing");
+  }
+  window.location.href = "inspo-upload.html";
+});
 </script>
 
 </body></html>

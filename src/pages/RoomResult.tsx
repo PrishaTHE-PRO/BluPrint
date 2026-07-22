@@ -488,6 +488,13 @@ export default function RoomResult() {
               </p>
             </div>
             <div className="flex gap-3">
+              <Link000
+                href="/dashboard.html"
+                className="px-6 py-3 bg-[#105666] hover:bg-[#156a7d] text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm"
+              >
+                <iconify-icon icon="ph:house-duotone" />
+                Return to Homepage
+              </Link000>
               <button
                 onClick={handleSaveLayout}
                 disabled={saveStatus === 'saving'}
