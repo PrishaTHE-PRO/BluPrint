@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+    <script>
+    (function () {
+      try {
+        if (localStorage.getItem('blueprintTheme') === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Analyze Style | BluPrint</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -41,6 +50,8 @@
   <link rel="stylesheet" href="./design-system.css">
 </head>
 <body class="page-inspo">
+  <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
+
   <div class="noise-texture"></div>
   <div class="min-h-screen relative flex flex-col grid-background">
 
@@ -58,16 +69,38 @@
       </div>
       <div class="app-nav-actions">
         <div class="profile-menu-wrap">
-          <button id="profile-btn" type="button" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
-            <iconify-icon icon="ph:user-circle-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+          <button id="profile-btn" type="button" class="profile-btn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
+            <iconify-icon icon="ph:user"></iconify-icon>
           </button>
-          <div id="profile-popup" class="profile-popup hidden">
-            <button id="settings-btn" type="button" class="profile-popup-item">
-              <iconify-icon icon="ph:gear-duotone"></iconify-icon> Settings
-            </button>
-            <button id="logout-btn" class="profile-popup-item profile-popup-item-danger">
-              <iconify-icon icon="ph:sign-out-duotone"></iconify-icon> Sign out
-            </button>
+          <div id="profile-popup" class="profile-popup hidden" role="menu">
+            <div class="profile-popup-header">
+              <div class="profile-popup-avatar" aria-hidden="true">
+                <iconify-icon icon="ph:user"></iconify-icon>
+              </div>
+              <div class="profile-popup-identity">
+                <p class="profile-popup-name" data-profile-name>Account</p>
+                <p class="profile-popup-email" data-profile-email>Manage your BluPrint profile</p>
+              </div>
+            </div>
+            <div class="profile-popup-section">
+              <p class="profile-popup-label">Account</p>
+              <button id="settings-btn" type="button" class="profile-popup-item" role="menuitem">
+                <span class="profile-popup-item-icon"><iconify-icon icon="ph:gear-duotone"></iconify-icon></span>
+                <span class="profile-popup-item-copy">
+                  <strong>Settings</strong>
+                  <small>Name, birthday &amp; preferences</small>
+                </span>
+              </button>
+            </div>
+            <div class="profile-popup-footer">
+              <button id="logout-btn" type="button" class="profile-popup-item profile-popup-item-danger" role="menuitem">
+                <span class="profile-popup-item-icon"><iconify-icon icon="ph:sign-out-duotone"></iconify-icon></span>
+                <span class="profile-popup-item-copy">
+                  <strong>Sign out</strong>
+                  <small>Come back anytime</small>
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -95,8 +128,10 @@
     <main class="relative z-10 flex-1 p-8 lg:p-16 max-w-5xl mx-auto w-full flex flex-col gap-12">
 
       <!-- Header -->
-      <header class="animate-reveal text-center space-y-4">
+      <header class="analyze-hero animate-reveal text-center space-y-4">
+        <span class="analyze-eyebrow"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon> Your creative direction</span>
         <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Analyze Style</h1>
+        <p>Give BluPrint a little context, then let it turn your taste into a room-ready plan.</p>
       </header>
 
       <!-- Stepper -->
@@ -122,7 +157,7 @@
           <input type="text" id="room-type-other" placeholder="Describe your room type..."
             class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
 
-          <div class="pt-6 mt-2 border-t border-[#F7F4D5]/10 space-y-4">
+          <div class="budget-zone pt-6 mt-2 border-t border-[#F7F4D5]/10 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 class="text-2xl font-bold flex items-center gap-2">
@@ -160,50 +195,26 @@
           <p class="text-center text-sm text-[#F7F4D5]/50">Choose a room first, then let BluPrint randomly select the style, mood, colors, and features.</p>
         </div>
 
-        <!-- Room Type -->
-        <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
-          <h3 class="text-2xl font-bold">Room Type <span style="color:#ef4444;">*</span></h3>
-          <p class="text-[#F7F4D5]/60">What kind of room are you designing? Pick one or choose "Other" to type your own.</p>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="room-type-grid"></div>
-          <input type="text" id="room-type-other" placeholder="Describe your room type..."
-            class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
-        </div>
-
         <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
           <h2 class="text-4xl font-bold">Step 1: Visual Inspiration <span style="color:#ef4444;">*</span></h2>
-          <p class="text-lg text-[#F7F4D5]/60">Upload a photo or paste a Pinterest image URL that captures your room vision.</p>
+          <p class="text-lg text-[#F7F4D5]/60">Upload up to 3 photos that capture your room vision.</p>
 
           <div class="grid gap-6">
             <!-- File drop -->
             <div id="file-drop-area" class="p-12 border-2 border-dashed border-[#F7F4D5]/20 rounded-3xl bg-white/5 text-center cursor-pointer hover:bg-white/10 transition-all flex flex-col items-center gap-3">
               <iconify-icon icon="ph:cloud-arrow-up-duotone" class="text-5xl text-[#D3968C]"></iconify-icon>
-              <p class="font-bold">Click to upload an image</p>
-              <p class="text-xs text-[#F7F4D5]/40">PNG, JPG, WEBP up to 5MB</p>
-              <input type="file" id="file-input" class="hidden" accept="image/*">
-            </div>
-
-            <div class="relative flex items-center gap-4">
-              <div class="flex-1 h-px bg-[#F7F4D5]/10"></div>
-              <span class="text-[#F7F4D5]/20 font-bold uppercase text-xs">or use a link</span>
-              <div class="flex-1 h-px bg-[#F7F4D5]/10"></div>
-            </div>
-
-            <input type="text" id="pinterest-url"
-              class="w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg"
-              placeholder="https://i.pinimg.com/originals/...  or a Pinterest board URL">
-          </div>
-
-          <!-- Image preview -->
-          <div id="pinterest-preview-wrap" class="hidden pt-2 flex justify-center">
-            <div class="relative inline-block">
-              <img id="pinterest-preview" class="max-w-xs rounded-3xl shadow-2xl border-4 border-[#F7F4D5]/10" alt="Inspiration preview">
-              <div class="absolute -top-3 -right-3 p-2 bg-[#D3968C] rounded-full shadow-lg animate-bounce">
-                <iconify-icon icon="ph:magic-wand-duotone" class="text-2xl text-white"></iconify-icon>
-              </div>
+              <p class="font-bold">Upload up to 3 inspiration images</p>
+              <p class="text-xs text-[#F7F4D5]/40">Select together or add one at a time · PNG, JPG, WEBP up to 5MB each</p>
+              <span id="image-count" class="text-xs font-bold text-[#D3968C]">0 of 3 selected</span>
+              <input type="file" id="file-input" class="hidden" accept="image/png,image/jpeg,image/webp" multiple>
             </div>
           </div>
 
-          <!-- Status -->
+          <!-- Image previews -->
+          <div id="image-preview-wrap" class="hidden pt-2">
+            <div id="image-preview-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+          </div>
+
           <!-- Status -->
           <div id="vision-status" class="hidden p-6 rounded-2xl text-lg font-medium"></div>
 
@@ -267,6 +278,23 @@
       </div>
 
       <aside id="how-it-works-panel" class="how-it-works-panel">
+          <div id="how-it-works-glow" aria-hidden="true"></div>
+          <div class="inspo-character" aria-hidden="true">
+            <svg viewBox="0 0 240 150" fill="none">
+              <ellipse cx="120" cy="137" rx="75" ry="8" fill="#294F7D" opacity=".1"/>
+              <path d="M82 50c0-24 18-39 40-39s40 15 40 39v48c0 22-17 38-40 38s-40-16-40-38V50Z" fill="#D3968C"/>
+              <path d="M90 49c8-19 20-28 38-28 13 0 24 5 33 16-5-19-20-31-39-31-22 0-40 16-40 39v8c2-1 5-2 8-4Z" fill="#F3DEDA"/>
+              <circle cx="107" cy="67" r="4" fill="#294F7D"/>
+              <circle cx="139" cy="67" r="4" fill="#294F7D"/>
+              <path d="M112 84c7 7 15 7 22 0" stroke="#294F7D" stroke-width="4" stroke-linecap="round"/>
+              <path d="M83 87 52 111M161 87l29 22" stroke="#D3968C" stroke-width="13" stroke-linecap="round"/>
+              <rect x="45" y="104" width="58" height="18" rx="6" transform="rotate(-8 45 104)" fill="#F7F4D5" stroke="#294F7D" stroke-width="3"/>
+              <path d="m55 108 2 8m10-10 2 8m10-10 2 8m10-10 2 8" stroke="#294F7D" stroke-width="2"/>
+              <path d="m179 102 18 15 20-36-23 8-15 13Z" fill="#B8D4E8" stroke="#294F7D" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M104 135v-14m37 14v-14" stroke="#294F7D" stroke-width="9" stroke-linecap="round"/>
+            </svg>
+            <span>I'll help turn your ideas into a plan.</span>
+          </div>
           <p class="how-it-works-label">How it works</p>
           <div>
             <span>1</span>
@@ -350,25 +378,36 @@
 
     const profileBtn = document.getElementById('profile-btn');
     const profilePopup = document.getElementById('profile-popup');
+    function setProfilePopupIdentity(name, email) {
+      const nameEl = document.querySelector('[data-profile-name]');
+      const emailEl = document.querySelector('[data-profile-email]');
+      if (nameEl) nameEl.textContent = name || 'Account';
+      if (emailEl) emailEl.textContent = email || 'Manage your BluPrint profile';
+    }
+    setProfilePopupIdentity(localStorage.getItem('blueprintUserName') || 'Account', '');
     if (profileBtn && profilePopup) {
       profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        profilePopup.classList.toggle('hidden');
+        const open = !profilePopup.classList.toggle('hidden');
+        profileBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
       document.addEventListener('click', (e) => {
-        if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+        if (!profilePopup.contains(e.target) && !profileBtn.contains(e.target)) {
           profilePopup.classList.add('hidden');
+          profileBtn.setAttribute('aria-expanded', 'false');
         }
       });
     }
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     if (localStorage.getItem('blueprintTheme') === 'dark') {
+      document.documentElement.classList.add('dark-mode');
       document.body.classList.add('dark-mode');
       if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
     }
     if (themeToggleBtn) {
       themeToggleBtn.addEventListener('click', () => {
         const isDark = document.body.classList.toggle('dark-mode');
+        document.documentElement.classList.toggle('dark-mode', isDark);
         localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
         themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
       });
@@ -405,6 +444,7 @@
         try {
           if (newName) localStorage.setItem('blueprintUserName', newName);
           if (newBirthday) localStorage.setItem('blueprintUserBirthday', newBirthday);
+          setProfilePopupIdentity(newName || localStorage.getItem('blueprintUserName') || 'Account', '');
           settingsSaveStatus.textContent = 'Saved!';
           setTimeout(() => { settingsSaveStatus.textContent = ''; }, 2000);
         } catch (err) {
@@ -465,8 +505,8 @@
       selectedMood:     null,
       selectedColors:   [],
       selectedFeatures: [],
-      visionUrl:        '',
-      uploadedFile:     null,
+      uploadedFiles:    [],
+      previewUrls:      [],
       aiResult:         null,
       budgetTotal:      null,
     };
@@ -477,9 +517,6 @@
     const PICKS_KEY = 'blueprintInspoPicks';
     function persistPicks() {
       try {
-        // Blob URLs (uploaded files) don't survive navigation — only keep
-        // a real remote URL so the preview can be restored.
-        const visionUrl = /^https?:/i.test(state.visionUrl) ? state.visionUrl : '';
         localStorage.setItem(PICKS_KEY, JSON.stringify({
           roomId:           ROOM_ID || null,
           selectedRoomType: state.selectedRoomType,
@@ -488,7 +525,6 @@
           selectedMood:     state.selectedMood,
           selectedColors:   state.selectedColors,
           selectedFeatures: state.selectedFeatures,
-          visionUrl,
         }));
       } catch {}
     }
@@ -508,21 +544,14 @@
         state.selectedColors = saved.selectedColors.filter(c => c && typeof c.hex === 'string').slice(0, 3);
       if (Array.isArray(saved.selectedFeatures))
         state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string').slice(0, 3);
-      if (typeof saved.visionUrl === 'string') state.visionUrl = saved.visionUrl;
     }
-    // Restore the step-1 image and "Other" room-type fields into the DOM
-    // (grids reflect state on build; these inputs need explicit hydration).
+    // Restore the "Other" room-type field into the DOM. Local image files
+    // cannot be restored after navigation and must be selected again.
     function hydrateRestoredUi() {
       const other = document.getElementById('room-type-other');
       if (other && state.roomTypeIsOther) {
         other.classList.remove('hidden');
         if (state.selectedRoomType) other.value = state.selectedRoomType;
-      }
-      if (/^https?:/i.test(state.visionUrl)) {
-        const urlInput = document.getElementById('pinterest-url');
-        if (urlInput) urlInput.value = state.visionUrl;
-        showPreview(state.visionUrl);
-        checkStep1Valid();
       }
       checkStep2Valid();
     }
@@ -561,6 +590,8 @@
     }
 
     function checkStep1Valid() {
+      document.getElementById('step1-next').disabled =
+        state.uploadedFiles.length === 0 || !state.selectedRoomType;
       document.getElementById('wild-card-btn').disabled = !state.selectedRoomType;
       document.getElementById('step1-error').classList.add('hidden');
     }
@@ -607,38 +638,82 @@
     fileDrop.addEventListener('drop', e => {
       e.preventDefault();
       fileDrop.classList.remove('bg-white/10');
-      if (e.dataTransfer.files.length) handleFileChosen(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
     });
     fileInput.addEventListener('change', e => {
-      if (e.target.files.length) handleFileChosen(e.target.files[0]);
+      if (e.target.files.length) addFiles(e.target.files);
+      e.target.value = '';
     });
 
-    function handleFileChosen(file) {
-      state.uploadedFile = file;
-      state.visionUrl    = URL.createObjectURL(file);
-      showPreview(state.visionUrl);
-      setVisionStatus('Image ready. Click "Next: Your Picks" to continue.', 'success');
+    function addFiles(fileList) {
+      const availableSlots = 3 - state.uploadedFiles.length;
+      if (availableSlots <= 0) {
+        setVisionStatus('You already selected the maximum of 3 images.', 'error');
+        return;
+      }
+
+      const existing = new Set(
+        state.uploadedFiles.map(file => `${file.name}:${file.size}:${file.lastModified}`)
+      );
+      const validFiles = Array.from(fileList)
+        .filter(file => ['image/png', 'image/jpeg', 'image/webp'].includes(file.type))
+        .filter(file => file.size <= 5 * 1024 * 1024)
+        .filter(file => !existing.has(`${file.name}:${file.size}:${file.lastModified}`));
+      const selectedFiles = validFiles.slice(0, availableSlots);
+
+      if (selectedFiles.length === 0) {
+        setVisionStatus('Choose PNG, JPG, or WEBP images under 5MB each.', 'error');
+        return;
+      }
+
+      state.uploadedFiles.push(...selectedFiles);
+      renderImagePreviews();
+      const count = state.uploadedFiles.length;
+      const skipped = Array.from(fileList).length - selectedFiles.length;
+      setVisionStatus(
+        `${count} ${count === 1 ? 'image' : 'images'} ready.${skipped > 0 ? ' Some files were skipped.' : ''}`,
+        'success'
+      );
       checkStep1Valid();
     }
 
-    // ── Pinterest / image URL ─────────────────────────────────────────
-    document.getElementById('pinterest-url').addEventListener('input', function () {
-      const url = this.value.trim();
-      state.visionUrl = url;
-      checkStep1Valid();
-      if (url.match(/\.(jpg|jpeg|png|webp)/i) || url.includes('pinimg.com')) {
-        showPreview(url);
-      } else {
-        document.getElementById('pinterest-preview-wrap').classList.add('hidden');
-      }
-    });
+    function renderImagePreviews() {
+      state.previewUrls.forEach(url => URL.revokeObjectURL(url));
+      state.previewUrls = state.uploadedFiles.map(file => URL.createObjectURL(file));
 
-    function showPreview(src) {
-      const img  = document.getElementById('pinterest-preview');
-      const wrap = document.getElementById('pinterest-preview-wrap');
-      img.src     = src;
-      img.onerror = () => wrap.classList.add('hidden');
-      wrap.classList.remove('hidden');
+      const wrap = document.getElementById('image-preview-wrap');
+      const grid = document.getElementById('image-preview-grid');
+      const count = document.getElementById('image-count');
+      grid.innerHTML = '';
+
+      state.uploadedFiles.forEach((file, index) => {
+        const card = document.createElement('div');
+        card.className = 'inspo-preview-card';
+
+        const image = document.createElement('img');
+        image.src = state.previewUrls[index];
+        image.alt = `Inspiration image ${index + 1}: ${file.name}`;
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'inspo-preview-remove';
+        remove.setAttribute('aria-label', `Remove ${file.name}`);
+        remove.innerHTML = '<iconify-icon icon="ph:x-bold"></iconify-icon>';
+        remove.addEventListener('click', () => {
+          state.uploadedFiles.splice(index, 1);
+          renderImagePreviews();
+          checkStep1Valid();
+          if (state.uploadedFiles.length === 0) {
+            document.getElementById('vision-status').classList.add('hidden');
+          }
+        });
+
+        card.append(image, remove);
+        grid.appendChild(card);
+      });
+
+      count.textContent = `${state.uploadedFiles.length} of 3 selected`;
+      wrap.classList.toggle('hidden', state.uploadedFiles.length === 0);
     }
 
     document.getElementById('step1-next').addEventListener('click', () => {
@@ -649,8 +724,8 @@
         errorBubble.classList.remove('hidden');
         return;
       }
-      if (!state.visionUrl) {
-        errorBubble.textContent = 'Please upload an image or paste a link';
+      if (!state.uploadedFiles.length) {
+        errorBubble.textContent = 'Please upload at least one inspiration image';
         errorBubble.classList.remove('hidden');
         return;
       }
@@ -835,7 +910,7 @@
         const res = await fetch(`/api/rooms/${ROOM_ID}/analyze-style`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ imageUrl: (state.visionUrl && !state.visionUrl.startsWith('blob:')) ? state.visionUrl : undefined }),
+          body:    JSON.stringify({}),
         });
         if (!res.ok) {
           let msg = `Server error (${res.status})`;
@@ -910,9 +985,9 @@
     async function saveToBackend(roomId) {
       const base = '/api/rooms/' + roomId;
       try {
-        if (state.uploadedFile) {
+        if (state.uploadedFiles.length) {
           const form = new FormData();
-          form.append('images', state.uploadedFile);
+          state.uploadedFiles.forEach(file => form.append('images', file));
           const r = await fetch(base + '/images', { method: 'POST', body: form });
           if (!r.ok) {
             let msg = 'Image upload failed';
@@ -951,7 +1026,6 @@
       state.selectedMood     = MOODS[Math.floor(Math.random() * MOODS.length)];
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
       state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
-      state.visionUrl        = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop';
       localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
       localStorage.setItem('blueprintStyleResult', JSON.stringify({
         roomType:     state.selectedRoomType,
@@ -975,5 +1049,6 @@
     hydrateRestoredUi();
     showStep(1);
   </script>
+  <script type="module" src="/src/inspo-glow.jsx"></script>
 </body>
 </html>

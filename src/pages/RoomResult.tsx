@@ -4,7 +4,10 @@ import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../type
 import RoomSVG from '../components/RoomSVG';
 import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
+import IsoRoomPreview from '../components/IsoRoomPreview';
+import type { IsoFurnitureEntry, IsoRoomInput } from '../utils/isoRoomRender';
 import { Link000 } from '@/components/ui/skiper-ui/skiper40';
+import ProfileMenu from '../components/ProfileMenu';
 import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
 import { orderedFurniture } from '../utils/furnitureLayout';
 import {
@@ -15,6 +18,10 @@ import {
   saveFurniturePlacementLocally,
 } from '../utils/furniturePlacement';
 import type { FurniturePlacement } from '../utils/furniturePlacement';
+import { resolveFurnitureColors, paletteFallback, colorFromName } from '../utils/furnitureColor';
+
+const EMPTY_PLACEMENT: Placement = { positions: {}, rotations: {}, scales: {} };
+const ISO_THROTTLE_MS = 70;
 
 const FALLBACK_ROOM: Room = {
   roomId:   'fallback',
@@ -76,14 +83,49 @@ export default function RoomResult() {
   const [renamedName,      setRenamedName]      = useState<string | null>(null);
   const [editingName,      setEditingName]      = useState(false);
   const [nameDraft,        setNameDraft]        = useState('');
+  const [isDarkMode,       setIsDarkMode]       = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark-mode'),
+  );
 
-  // Live positions/rotations from RoomSVG. Held in a ref, not state — dragging
-  // fires this on every pointer move and re-rendering the page would stutter.
-  const placementRef = useRef<Placement>({ positions: {}, rotations: {}, scales: {} });
+  // Live positions/rotations from RoomSVG. Held in a ref for saves, plus a
+  // throttled state copy so the isometric preview can follow without stuttering.
+  const placementRef = useRef<Placement>({ ...EMPTY_PLACEMENT });
+  const [livePlacement, setLivePlacement] = useState<Placement>({ ...EMPTY_PLACEMENT });
+  const [colorByCategory, setColorByCategory] = useState<Record<string, string>>({});
+  const colorSourceIdsRef = useRef<Record<string, string>>({});
+  const isoThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef  = useRef(false);
+
+  useEffect(() => {
+    const dark = localStorage.getItem('blueprintTheme') === 'dark';
+    document.documentElement.classList.toggle('dark-mode', dark);
+    document.body.classList.toggle('dark-mode', dark);
+    setIsDarkMode(dark);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    const next = !document.documentElement.classList.contains('dark-mode');
+    document.documentElement.classList.toggle('dark-mode', next);
+    document.body.classList.toggle('dark-mode', next);
+    localStorage.setItem('blueprintTheme', next ? 'dark' : 'light');
+    setIsDarkMode(next);
+  }, []);
 
   const handlePlacementChange = useCallback((placement: Placement) => {
     placementRef.current = placement;
+    if (isoThrottleRef.current) clearTimeout(isoThrottleRef.current);
+    isoThrottleRef.current = setTimeout(() => {
+      setLivePlacement({
+        positions: { ...placement.positions },
+        rotations: { ...placement.rotations },
+        scales: { ...placement.scales },
+      });
+      isoThrottleRef.current = null;
+    }, ISO_THROTTLE_MS);
+  }, []);
+
+  useEffect(() => () => {
+    if (isoThrottleRef.current) clearTimeout(isoThrottleRef.current);
   }, []);
 
   // A saved layout only applies while the room is still in the style it was
@@ -133,6 +175,11 @@ export default function RoomResult() {
           rotations: restored.rotations,
           scales: restored.scales,
         };
+        setLivePlacement({
+          positions: { ...restored.positions },
+          rotations: { ...restored.rotations },
+          scales: { ...restored.scales },
+        });
       }
     } else if (!restoredRef.current) {
       setHiddenCategories(new Set());
@@ -353,6 +400,128 @@ export default function RoomResult() {
       .finally(() => setFurnitureLoading(false));
   }
 
+  // Hooks must stay above any conditional returns.
+  const layoutRoomPreview = useMemo(
+    () => buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM),
+    [savedLayout, room],
+  );
+
+  const layoutFurniturePreview = useMemo(() => {
+    if (!style) return [] as FurnitureItem[];
+    const slotted = orderedFurniture(furnitureSlots, style.roomType);
+    const placeable = slotted.length > 0
+      ? slotted
+      : orderedFurniture(
+          Object.fromEntries(furniture.map((item) => [item.category, item])),
+          style.roomType,
+        );
+    return placeable.filter((item) => !hiddenCategories.has(item.category));
+  }, [style, furnitureSlots, furniture, hiddenCategories]);
+
+  // Only re-sample colors for pieces whose product id changed (swap / first load).
+  // Moving furniture must not touch colors; swapping one piece must not recolor others.
+  useEffect(() => {
+    if (layoutFurniturePreview.length === 0) {
+      setColorByCategory({});
+      colorSourceIdsRef.current = {};
+      return;
+    }
+
+    const palette = style?.colorPalette ?? [];
+    const changed = layoutFurniturePreview.filter(
+      (item) => colorSourceIdsRef.current[item.category] !== item.id,
+    );
+
+    // Keep existing colors (including for temporarily hidden pieces). Seed only changed ids.
+    setColorByCategory((prev) => {
+      const next: Record<string, string> = { ...prev };
+      for (const item of changed) {
+        next[item.category] =
+          colorFromName(item.name) ||
+          paletteFallback(item.category, palette);
+      }
+      // Ensure every visible piece has a color even if it was wiped earlier.
+      for (const item of layoutFurniturePreview) {
+        if (!next[item.category]) {
+          next[item.category] =
+            colorFromName(item.name) ||
+            paletteFallback(item.category, palette);
+        }
+      }
+      return next;
+    });
+
+    if (changed.length === 0) return;
+
+    const sampledFor = Object.fromEntries(changed.map((item) => [item.category, item.id]));
+    let cancelled = false;
+    resolveFurnitureColors(
+      changed.map((item) => ({
+        category: item.category,
+        imageUrl: item.imageUrl,
+        name: item.name,
+        id: item.id,
+      })),
+      palette,
+    ).then((colors) => {
+      if (cancelled) return;
+      setColorByCategory((prev) => {
+        const next = { ...prev };
+        for (const item of changed) {
+          // Ignore stale results if the user swapped again before this finished.
+          if (sampledFor[item.category] !== item.id) continue;
+          const latest = layoutFurniturePreview.find((i) => i.category === item.category);
+          if (!latest || latest.id !== item.id) continue;
+          if (colors[item.category]) next[item.category] = colors[item.category];
+          colorSourceIdsRef.current[item.category] = item.id;
+        }
+        return next;
+      });
+    });
+
+    return () => { cancelled = true; };
+  }, [layoutFurniturePreview, style?.colorPalette]);
+
+  const isoRoom = useMemo<IsoRoomInput>(() => {
+    const items: IsoFurnitureEntry[] = layoutFurniturePreview.map((item) => {
+      const pos = livePlacement.positions[item.category];
+      const color = colorByCategory[item.category];
+      return {
+        category: item.category,
+        x: pos?.x ?? 0,
+        y: pos?.y ?? 0,
+        rotation: livePlacement.rotations[item.category] ?? 0,
+        scale: livePlacement.scales[item.category] ?? 1,
+        hidden: false,
+        color,
+        item: {
+          widthIn: item.widthIn,
+          depthIn: item.depthIn,
+          name: item.name,
+          color,
+        },
+      };
+    });
+
+    return {
+      widthFt: layoutRoomPreview.widthFt,
+      lengthFt: layoutRoomPreview.lengthFt,
+      roomName: layoutRoomPreview.name,
+      id: layoutRoomPreview.roomId || 'result-room',
+      elements: (savedLayout?.elements ?? [])
+        .filter((el) => el.type === 'door' || el.type === 'window')
+        .map((el) => ({
+          type: el.type as 'door' | 'window',
+          x: el.x,
+          y: el.y,
+          angle: el.angle,
+          ...(el.type === 'window' && el.width != null ? { width: el.width } : {}),
+        })),
+      roomPoints: savedLayout?.roomPoints,
+      items,
+    };
+  }, [layoutFurniturePreview, livePlacement, layoutRoomPreview, savedLayout, colorByCategory]);
+
   if (loading) {
     return (
       <div className="min-h-screen grid-background flex items-center justify-center">
@@ -373,17 +542,9 @@ export default function RoomResult() {
   }
 
   const s = style!;
-  const layoutRoom = buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM);
+  const layoutRoom = layoutRoomPreview;
   const roomName = renamedName ?? layoutRoom.name;
-  const slottedFurniture = orderedFurniture(furnitureSlots, s.roomType);
-  const placeableFurniture = slottedFurniture.length > 0
-    ? slottedFurniture
-    : orderedFurniture(
-        Object.fromEntries(furniture.map((item) => [item.category, item])),
-        s.roomType,
-      );
-  // The floor plan shows only what's currently placed; the sidebar keeps every card.
-  const layoutFurniture = placeableFurniture.filter((item) => !hiddenCategories.has(item.category));
+  const layoutFurniture = layoutFurniturePreview;
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -420,9 +581,16 @@ export default function RoomResult() {
           </Link000>
         </div>
         <div className="app-nav-actions">
-          <div className="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm cursor-pointer">
-            <iconify-icon icon="ph:user-duotone" class="text-2xl text-[#0A3323]" />
-          </div>
+          <button
+            id="theme-toggle-btn"
+            type="button"
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode"
+            onClick={toggleTheme}
+          >
+            <iconify-icon icon={isDarkMode ? 'ph:sun-duotone' : 'ph:moon-duotone'} />
+          </button>
+          <ProfileMenu />
         </div>
       </nav>
 
@@ -543,7 +711,11 @@ export default function RoomResult() {
               onRemove={handleRemoveFromRoom}
               initialPlacement={initialPlacement}
               onPlacementChange={handlePlacementChange}
+              colorByCategory={colorByCategory}
             />
+          }
+          isoContent={
+            <IsoRoomPreview room={isoRoom} label="3D preview · follows 2D" />
           }
         />
 

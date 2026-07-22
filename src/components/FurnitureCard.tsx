@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FurnitureItem } from '../types';
 import { CATEGORY_LABELS } from '../utils/furnitureLayout';
-import { Link001 } from '@/components/ui/skiper-ui/skiper40';
 
 interface Props {
   item:             FurnitureItem;
@@ -13,6 +12,40 @@ interface Props {
   onLinkCategory?:  (category: string | null) => void;
   inRoom:           boolean;
   onToggleInRoom:   () => void;
+}
+
+const BUY_BTN_CLASS =
+  'buy-btn group relative inline-flex items-center justify-center overflow-hidden ' +
+  'bg-[#D3968C] text-white font-bold shadow transition-colors hover:bg-[#c1867b] whitespace-nowrap';
+
+function BuyButton({ href, className = '' }: { href: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`${BUY_BTN_CLASS} ${className}`.trim()}
+    >
+      <span className="inline-block transition-transform duration-300 ease-out group-hover:-translate-x-1.5">
+        Buy
+      </span>
+      <svg
+        className="pointer-events-none absolute right-1.5 size-[0.7em] opacity-0 translate-x-1 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:translate-x-0"
+        fill="none"
+        viewBox="0 0 10 10"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path
+          d="M1.004 9.166 9.337.833m0 0v8.333m0-8.333H1.004"
+          stroke="currentColor"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </a>
+  );
 }
 
 const CATEGORY_FALLBACK: Record<string, string> = {
@@ -112,8 +145,8 @@ export default function FurnitureCard({
 
   if (variant === 'compact') {
     return (
-      <div className={`${shellClass} p-2.5 flex gap-2.5`} style={{ animationDelay: animDelay }} {...linkProps}>
-        <div className="w-14 h-14 bg-[#F7F4D5]/10 rounded-lg overflow-hidden shadow-inner flex-shrink-0 relative">
+      <div className={`${shellClass} p-4 flex gap-4 items-stretch`} style={{ animationDelay: animDelay }} {...linkProps}>
+        <div className="w-28 h-28 bg-[#F7F4D5]/10 rounded-2xl overflow-hidden shadow-inner flex-shrink-0 relative">
           <img
             src={imgSrc}
             alt={item.name}
@@ -122,29 +155,27 @@ export default function FurnitureCard({
             onError={() => setImgSrc(CATEGORY_FALLBACK[item.category] ?? '')}
           />
         </div>
-        <div className="flex-1 flex flex-col justify-between min-w-0">
+        <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
           <div className="min-w-0">
             <div className="flex items-center justify-between gap-1">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-[#839958] truncate">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#839958] truncate">
                 {categoryLabel}{item.brand ? ` · ${item.brand}` : ''}
               </p>
               {inRoomToggle}
             </div>
-            <h3 className="text-xs font-bold leading-tight line-clamp-2 mt-0.5">{item.name}</h3>
+            <h3 className="text-base font-bold leading-snug line-clamp-2 mt-1.5">{item.name}</h3>
           </div>
-          <div className="flex items-center justify-between gap-1 mt-1.5">
-            <span className="text-sm font-bold text-[#F7F4D5] flex-shrink-0">
+          <div className="flex items-center justify-between gap-2 mt-3">
+            <span className="text-lg font-bold text-[#F7F4D5] flex-shrink-0">
               {item.price > 0 ? `$${item.price.toLocaleString()}` : '—'}
             </span>
-            <div className="flex gap-1 flex-shrink-0">
+            <div className="flex gap-2 flex-shrink-0">
               {canSwap && (
-                <button onClick={onSwap} className="px-2 py-0.5 border border-white/10 rounded text-[10px] font-bold hover:bg-white/5 transition-all">
+                <button onClick={onSwap} className="px-3 py-1.5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/5 transition-all">
                   Swap
                 </button>
               )}
-              <Link001 href={item.buyUrl} className="before:hidden px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap">
-                Buy
-              </Link001>
+              <BuyButton href={item.buyUrl} className="px-3 py-1.5 rounded-lg text-xs min-w-[3.25rem]" />
             </div>
           </div>
         </div>
@@ -188,12 +219,7 @@ export default function FurnitureCard({
                 Swap
               </button>
             )}
-            <Link001
-              href={item.buyUrl}
-              className="before:hidden px-2 py-0.5 bg-[#D3968C] text-white rounded text-[10px] font-bold hover:bg-[#c1867b] shadow transition-all whitespace-nowrap"
-            >
-              Buy
-            </Link001>
+            <BuyButton href={item.buyUrl} className="px-2.5 py-0.5 rounded text-[10px] min-w-[2.75rem]" />
           </div>
         </div>
       </div>

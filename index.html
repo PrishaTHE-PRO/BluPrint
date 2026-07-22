@@ -30,13 +30,47 @@
     body {
       margin: 0;
       overflow-x: hidden;
+      isolation: isolate;
       color: var(--ink);
       font-family: "DM Sans", sans-serif;
       background:
         radial-gradient(circle at 92% 4%, rgba(184, 212, 232, .7), transparent 28rem),
         radial-gradient(circle at 4% 42%, rgba(233, 223, 210, .75), transparent 30rem),
         linear-gradient(145deg, #fbf8f3 0%, #f5f7f7 48%, #eaf4fa 100%);
+      background-size: 130% 130%, 145% 145%, 190% 190%;
+      animation: landing-sky-shift 20s ease-in-out infinite alternate;
     }
+    body::before {
+      position: fixed;
+      z-index: -2;
+      top: 7%;
+      left: -18%;
+      width: 92vw;
+      height: 360px;
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+      opacity: .62;
+      filter: blur(22px);
+      background:
+        radial-gradient(ellipse 24% 35% at 24% 62%, rgba(255,255,255,.92) 0 96%, transparent 100%),
+        radial-gradient(ellipse 28% 48% at 44% 48%, rgba(255,255,255,.82) 0 96%, transparent 100%),
+        radial-gradient(ellipse 27% 38% at 65% 61%, rgba(255,255,255,.76) 0 96%, transparent 100%),
+        radial-gradient(ellipse 42% 26% at 48% 75%, rgba(255,255,255,.8) 0 96%, transparent 100%);
+      animation: landing-cloud-drift 30s ease-in-out infinite alternate;
+    }
+    .ambient-orb {
+      position: absolute;
+      z-index: -1;
+      border-radius: 999px;
+      opacity: .55;
+      filter: blur(1px);
+      pointer-events: none;
+      animation: ambient-drift 12s ease-in-out infinite;
+    }
+    .ambient-one { top: 125px; left: -80px; width: 230px; height: 230px; background: rgba(211,150,140,.2); }
+    .ambient-two { top: 760px; right: -100px; width: 310px; height: 310px; background: rgba(143,197,231,.28); animation-delay: -4s; }
+    .ambient-three { top: 1550px; left: 8%; width: 150px; height: 150px; background: rgba(94,125,102,.12); animation-delay: -8s; }
     a { color: inherit; text-decoration: none; }
     button, a { -webkit-tap-highlight-color: transparent; }
     h1, h2, h3, p { margin-top: 0; }
@@ -137,6 +171,18 @@
     .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #6e9b76; box-shadow: 0 0 0 5px rgba(110,155,118,.13); }
     .hero h1 { max-width: 620px; margin-bottom: 24px; font-size: clamp(52px, 6.6vw, 88px); line-height: .96; }
     .hero h1 em { color: var(--blue); font-style: italic; }
+    .blur-hero-title {
+      max-width: 650px;
+      margin-bottom: 24px;
+      color: var(--ink);
+      font-family: "Fraunces", serif;
+      font-size: clamp(52px, 6.6vw, 88px);
+      font-weight: 500;
+      letter-spacing: -.045em;
+      line-height: .96;
+    }
+    .blur-title-line { line-height: inherit; }
+    .blur-title-emphasis { color: var(--blue); font-style: italic; }
     .hero-copy { max-width: 550px; margin-bottom: 32px; color: var(--muted); font-size: clamp(17px, 1.8vw, 20px); line-height: 1.65; }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 30px; }
     .hero-actions .button { min-height: 54px; padding-inline: 24px; font-size: 15px; }
@@ -207,11 +253,40 @@
     .note-one { top: 4px; right: -20px; }
     .note-two { bottom: 8px; left: -18px; animation-delay: -2.4s; }
 
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 120px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.48); backdrop-filter: blur(18px); }
-    .stat { padding: 28px; text-align: center; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 120px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.48); box-shadow: 0 14px 42px rgba(43,54,61,.08); backdrop-filter: blur(18px); transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease; }
+    .stats:hover { transform: translateY(-7px); box-shadow: 0 24px 60px rgba(43,54,61,.14); }
+    .stat { padding: 28px; text-align: center; transition: background .25s ease; }
+    .stat:hover { background: rgba(255,255,255,.52); }
     .stat + .stat { border-left: 1px solid var(--line); }
     .stat strong { display: block; margin-bottom: 4px; color: var(--blue-dark); font-family: "Fraunces", serif; font-size: 30px; font-weight: 500; }
     .stat span { color: var(--muted); font-size: 13px; }
+    .marquee {
+      overflow: hidden;
+      margin: -82px 0 112px;
+      padding: 13px 0;
+      border-block: 1px solid var(--line);
+      color: var(--blue-dark);
+      background: rgba(255,255,255,.36);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee-scroll 24s linear infinite;
+    }
+    .marquee-group {
+      display: flex;
+      min-width: 100vw;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: space-around;
+      gap: 34px;
+      padding-right: 34px;
+    }
+    .marquee-track span::after { margin-left: 34px; color: var(--bp-rose, #d3968c); content: "✦"; }
 
     .section { padding: 36px 0 120px; }
     .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 42px; }
@@ -224,18 +299,86 @@
       border: 1px solid rgba(255,255,255,.8);
       border-radius: 24px;
       background: var(--surface);
-      box-shadow: 0 14px 45px rgba(43,54,61,.07);
+      box-shadow: 0 16px 46px rgba(43,54,61,.1);
       backdrop-filter: blur(16px);
-      transition: transform .3s ease, box-shadow .3s ease;
+      transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease, border-color .32s ease;
     }
-    .feature-card:hover { transform: translateY(-7px); box-shadow: 0 24px 60px rgba(43,54,61,.12); }
-    .feature-icon { display: grid; width: 48px; height: 48px; margin-bottom: 38px; place-items: center; border-radius: 14px; color: var(--blue); background: var(--sky-soft); font-size: 25px; }
+    .feature-card:hover { transform: translateY(-10px); border-color: rgba(255,255,255,.98); box-shadow: 0 30px 68px rgba(43,54,61,.16); }
+    .feature-icon { display: grid; width: 44px; height: 44px; margin-bottom: 0; place-items: center; border-radius: 13px; color: var(--blue); background: var(--sky-soft); font-size: 23px; }
     .feature-card:nth-child(2) .feature-icon { color: #6f624f; background: #f0e7dc; }
     .feature-card:nth-child(3) .feature-icon { color: var(--green); background: #e5eee6; }
     .feature-card:nth-child(5) .feature-icon { color: #6f624f; background: #f0e7dc; }
     .feature-card:nth-child(6) .feature-icon { color: var(--green); background: #e5eee6; }
-    .feature-card h3 { margin-bottom: 12px; font-size: 28px; }
-    .feature-card p { margin-bottom: 0; color: var(--muted); line-height: 1.65; }
+    .feature-card h3 { margin-bottom: 8px; font-size: 26px; }
+    .feature-card p { margin-bottom: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .feature-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .feature-visual {
+      position: relative;
+      height: 132px;
+      margin: 22px 0 24px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(145deg, rgba(233,243,249,.9), rgba(255,255,255,.72));
+    }
+    .feature-visual > * { transition: transform .35s cubic-bezier(.22,1,.36,1); }
+    .feature-card:hover .mini-room,
+    .feature-card:hover .upload-stack,
+    .feature-card:hover .swatch-row,
+    .feature-card:hover .budget-meter,
+    .feature-card:hover .shop-stack { transform: translateY(-4px) rotate(.5deg); }
+    .feature-card:hover .transform-demo { transform: translateX(-50%) rotate(2deg) scale(1.04); }
+    .mini-room { position: absolute; inset: 18px 28px; border: 3px solid var(--blue); border-radius: 5px; }
+    .mini-room::before { position: absolute; left: 14%; bottom: 14%; width: 48%; height: 29%; border-radius: 7px; content: ""; background: var(--sky); }
+    .mini-room::after { position: absolute; top: 18%; right: 12%; width: 25%; height: 34%; border-radius: 6px; content: ""; background: #e3d5c5; }
+    .room-dimension {
+      position: absolute;
+      z-index: 2;
+      padding: 2px 6px;
+      border: 1px solid rgba(61,90,128,.14);
+      border-radius: 999px;
+      color: var(--blue-dark);
+      background: rgba(255,255,255,.88);
+      box-shadow: 0 3px 10px rgba(41,69,99,.08);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .room-dimension-width { bottom: -15px; left: 50%; transform: translateX(-50%); }
+    .room-dimension-depth { top: 50%; left: -23px; transform: translateY(-50%) rotate(-90deg); }
+    .upload-stack { position: absolute; inset: 22px 38px; }
+    .upload-stack span { position: absolute; inset: 0; border-radius: 12px; background: #fff; box-shadow: 0 9px 22px rgba(44,55,63,.1); }
+    .upload-stack span:nth-child(1) { transform: rotate(-7deg) translateX(-16px); background: #e5d8cb; }
+    .upload-stack span:nth-child(2) { transform: rotate(6deg) translateX(16px); background: #cfe0e9; }
+    .upload-stack span:nth-child(3) { display: grid; place-items: center; color: var(--blue); font-size: 30px; }
+    .swatch-row { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .swatch-row span { width: 37px; height: 72px; border-radius: 999px; box-shadow: inset 0 0 0 3px rgba(255,255,255,.6); }
+    .budget-meter { position: absolute; inset: 23px; display: grid; align-content: center; gap: 13px; }
+    .budget-meter strong { color: var(--blue-dark); font-size: 24px; }
+    .budget-track { height: 10px; overflow: hidden; border-radius: 999px; background: #e8e3dc; }
+    .budget-track::after { display: block; width: 82%; height: 100%; border-radius: inherit; content: ""; background: #d3968c; animation: meter-pulse 3s ease-in-out infinite; }
+    .transform-demo { position: absolute; top: 25px; left: 50%; width: 110px; height: 75px; transform: translateX(-50%) rotate(-5deg); border: 2px solid var(--blue); border-radius: 10px; background: var(--sky); }
+    .transform-demo i { position: absolute; width: 13px; height: 13px; border: 2px solid #fff; border-radius: 50%; background: #d3968c; }
+    .transform-demo i:nth-child(1) { top: -8px; left: -8px; }
+    .transform-demo i:nth-child(2) { right: -8px; bottom: -8px; }
+    .shop-stack { position: absolute; inset: 18px; display: flex; gap: 9px; }
+    .shop-stack span { position: relative; flex: 1; overflow: hidden; border-radius: 11px; background: #fff; box-shadow: 0 8px 20px rgba(43,54,61,.08); }
+    .shop-stack span::before { display: block; height: 70%; border-radius: 11px 11px 5px 5px; content: ""; background: linear-gradient(145deg, #d7e6ee, #e7dbcf); }
+    .shop-stack span:nth-child(2) { transform: translateY(10px); }
+    .shop-stack span:nth-child(3)::before { background: linear-gradient(145deg, #dbe8da, #e7dbcf); }
+    .shop-stack iconify-icon {
+      position: absolute;
+      top: 17px;
+      left: 50%;
+      z-index: 1;
+      color: var(--blue-dark);
+      font-size: 29px;
+      filter: drop-shadow(0 3px 3px rgba(41,69,99,.1));
+      transform: translateX(-50%);
+    }
+    .shop-stack span:nth-child(2) iconify-icon { color: #8f725c; }
+    .shop-stack span:nth-child(3) iconify-icon { color: var(--green); }
     .feature-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 22px; }
     .feature-list span {
       padding: 6px 9px;
@@ -269,11 +412,13 @@
     }
     .capability iconify-icon { color: var(--blue); font-size: 18px; }
 
-    .process-wrap { padding: 58px; border: 1px solid rgba(255,255,255,.76); border-radius: 30px; background: linear-gradient(145deg, rgba(61,90,128,.96), rgba(41,69,99,.98)); box-shadow: 0 30px 80px rgba(41,69,99,.2); }
+    .process-wrap { padding: 58px; border: 1px solid rgba(255,255,255,.76); border-radius: 30px; background: linear-gradient(145deg, rgba(61,90,128,.96), rgba(41,69,99,.98)); box-shadow: 0 30px 80px rgba(41,69,99,.2); transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease; }
+    .process-wrap:hover { transform: translateY(-7px); box-shadow: 0 42px 95px rgba(41,69,99,.3); }
     .process-wrap .section-heading h2, .process-wrap .section-heading p { color: #fff; }
     .process-wrap .section-heading p { opacity: .7; }
     .process { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .process-step { position: relative; padding: 24px; border: 1px solid rgba(255,255,255,.13); border-radius: 18px; color: #fff; background: rgba(255,255,255,.07); }
+    .process-step { position: relative; padding: 24px; border: 1px solid rgba(255,255,255,.13); border-radius: 18px; color: #fff; background: rgba(255,255,255,.07); box-shadow: 0 10px 28px rgba(19,35,52,.12); transition: transform .3s cubic-bezier(.22,1,.36,1), background .3s ease, box-shadow .3s ease; }
+    .process-step:hover { transform: translateY(-8px); background: rgba(255,255,255,.12); box-shadow: 0 20px 38px rgba(19,35,52,.24); }
     .process-number { display: grid; width: 30px; height: 30px; margin-bottom: 42px; place-items: center; border-radius: 50%; color: var(--blue-dark); background: #fff; font-size: 12px; font-weight: 800; }
     .process-step h3 { margin-bottom: 8px; color: #fff; font-family: "DM Sans", sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 0; }
     .process-step p { margin-bottom: 0; color: rgba(255,255,255,.66); font-size: 13px; line-height: 1.55; }
@@ -289,6 +434,19 @@
     .reveal.visible { opacity: 1; transform: translateY(0); }
     @keyframes app-float { 0%,100% { transform: rotateY(-4deg) rotateX(2deg) translateY(0); } 50% { transform: rotateY(-2deg) rotateX(1deg) translateY(-8px); } }
     @keyframes note-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+    @keyframes ambient-drift { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(22px,-28px,0) scale(1.08); } }
+    @keyframes marquee-scroll { to { transform: translateX(-50%); } }
+    @keyframes meter-pulse { 0%,100% { width: 82%; } 50% { width: 88%; } }
+    @keyframes landing-sky-shift {
+      0% { background-position: 100% 0%, 0% 38%, 0% 50%; }
+      50% { background-position: 72% 14%, 18% 54%, 55% 45%; }
+      100% { background-position: 94% 24%, 4% 68%, 100% 50%; }
+    }
+    @keyframes landing-cloud-drift {
+      0% { transform: translate3d(-8vw, 0, 0) scale(.98); }
+      50% { transform: translate3d(18vw, -24px, 0) scale(1.06); }
+      100% { transform: translate3d(37vw, 12px, 0) scale(1); }
+    }
 
     @media (max-width: 900px) {
       .nav-links { display: none; }
@@ -299,7 +457,7 @@
       .section-heading p { margin-top: 20px; }
       .feature-grid { grid-template-columns: 1fr; }
       .feature-card { min-height: 260px; }
-      .feature-icon { margin-bottom: 38px; }
+      .feature-icon { margin-bottom: 0; }
       .capability-grid { grid-template-columns: repeat(2, 1fr); }
       .process { grid-template-columns: 1fr; }
     }
@@ -330,6 +488,9 @@
   </style>
 </head>
 <body>
+  <span class="ambient-orb ambient-one"></span>
+  <span class="ambient-orb ambient-two"></span>
+  <span class="ambient-orb ambient-three"></span>
   <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html" aria-label="BluPrint home">
       <span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>
@@ -350,8 +511,10 @@
     <section class="hero shell">
       <div>
         <div class="eyebrow"><span class="eyebrow-dot"></span> Interior planning, made personal</div>
-        <h1>Your room, <em>thoughtfully</em> planned.</h1>
-        <p class="hero-copy">Turn inspiration into a practical 2D room plan with furniture that fits your space, style, features, and real-world budget.</p>
+        <div id="blur-headline-root">
+          <h1>Your room, <em>thoughtfully</em> planned.</h1>
+        </div>
+        <p class="hero-copy">Turn inspiration into a room plan that fits your space, style, and budget.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="login.html">Start designing <iconify-icon icon="ph:arrow-up-right-bold"></iconify-icon></a>
           <a class="button button-secondary" href="#how-it-works"><iconify-icon icon="ph:play-circle-duotone"></iconify-icon> See how it works</a>
@@ -402,6 +565,16 @@
       <div class="stat"><strong>Real products</strong><span>Recommendations you can buy</span></div>
       <div class="stat"><strong>Your budget</strong><span>Optimized across the whole room</span></div>
     </section>
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <div class="marquee-group">
+          <span>Measure</span><span>Inspire</span><span>Analyze</span><span>Arrange</span><span>Resize</span><span>Shop</span><span>Save</span>
+        </div>
+        <div class="marquee-group">
+          <span>Measure</span><span>Inspire</span><span>Analyze</span><span>Arrange</span><span>Resize</span><span>Shop</span><span>Save</span>
+        </div>
+      </div>
+    </div>
 
     <section class="section shell" id="features">
       <div class="section-heading reveal">
@@ -410,51 +583,52 @@
       </div>
       <div class="feature-grid">
         <article class="feature-card reveal">
-          <div class="feature-icon"><iconify-icon icon="ph:ruler-duotone"></iconify-icon></div>
+          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:ruler-duotone"></iconify-icon></div><span>01</span></div>
+          <div class="feature-visual">
+            <div class="mini-room">
+              <span class="room-dimension room-dimension-width">14 ft</span>
+              <span class="room-dimension room-dimension-depth">12 ft</span>
+            </div>
+          </div>
           <h3>Build the real room</h3>
-          <p>Enter exact dimensions and add the architectural details that determine what can go where.</p>
-          <div class="feature-list"><span>Feet or meters</span><span>Doors</span><span>Windows</span><span>Cutouts</span></div>
+          <p>Dimensions, doors, windows, and cutouts.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-icon"><iconify-icon icon="ph:image-square-duotone"></iconify-icon></div>
-          <h3>Bring your inspiration</h3>
-          <p>Upload an image or paste a visual reference, then use AI to translate it into a design direction.</p>
-          <div class="feature-list"><span>Image upload</span><span>URL input</span><span>AI analysis</span></div>
+          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:image-square-duotone"></iconify-icon></div><span>02</span></div>
+          <div class="feature-visual"><div class="upload-stack"><span></span><span></span><span><iconify-icon icon="ph:cloud-arrow-up-duotone"></iconify-icon></span></div></div>
+          <h3>Bring inspiration</h3>
+          <p>Upload an image. AI reads the direction.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-icon"><iconify-icon icon="ph:palette-duotone"></iconify-icon></div>
-          <h3>Make the style yours</h3>
-          <p>Choose the room type, style, mood, colors, and must-have features instead of accepting a generic result.</p>
-          <div class="feature-list"><span>Room type</span><span>Mood</span><span>Palette</span><span>Features</span></div>
+          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:palette-duotone"></iconify-icon></div><span>03</span></div>
+          <div class="feature-visual"><div class="swatch-row"><span style="background:#b8d4e8"></span><span style="background:#d3968c"></span><span style="background:#839958"></span><span style="background:#e5d8c8"></span></div></div>
+          <h3>Choose the feeling</h3>
+          <p>Style, mood, palette, and must-haves.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-icon"><iconify-icon icon="ph:wallet-duotone"></iconify-icon></div>
-          <h3>Design to a budget</h3>
-          <p>Set an optional whole-room budget and BluPrint chooses a furniture combination that gets as close as possible.</p>
-          <div class="feature-list"><span>Optional budget</span><span>Live estimate</span><span>Swap options</span></div>
+          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:wallet-duotone"></iconify-icon></div><span>04</span></div>
+          <div class="feature-visual"><div class="budget-meter"><strong>$4,920</strong><div class="budget-track"></div><small>of $5,000</small></div></div>
+          <h3>Stay near budget</h3>
+          <p>One target, optimized across the room.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-icon"><iconify-icon icon="ph:cursor-click-duotone"></iconify-icon></div>
-          <h3>Refine the 2D layout</h3>
-          <p>Work directly on the floor plan until the arrangement fits how you actually want to use the room.</p>
-          <div class="feature-list"><span>Drag</span><span>Rotate</span><span>Resize</span><span>Add or remove</span></div>
+          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:cursor-click-duotone"></iconify-icon></div><span>05</span></div>
+          <div class="feature-visual"><div class="transform-demo"><i></i><i></i></div></div>
+          <h3>Move everything</h3>
+          <p>Drag, rotate, resize, swap, or remove.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-icon"><iconify-icon icon="ph:shopping-bag-open-duotone"></iconify-icon></div>
+          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:shopping-bag-open-duotone"></iconify-icon></div><span>06</span></div>
+          <div class="feature-visual">
+            <div class="shop-stack">
+              <span><iconify-icon icon="ph:armchair-duotone"></iconify-icon></span>
+              <span><iconify-icon icon="ph:lamp-duotone"></iconify-icon></span>
+              <span><iconify-icon icon="ph:couch-duotone"></iconify-icon></span>
+            </div>
+          </div>
           <h3>Shop and save</h3>
-          <p>Compare real products, open buying links, save the complete layout, and return to the project later.</p>
-          <div class="feature-list"><span>Real products</span><span>Buy links</span><span>Saved projects</span></div>
+          <p>Real products, buy links, saved projects.</p>
         </article>
-      </div>
-      <div class="capability-grid reveal" aria-label="Additional BluPrint capabilities">
-        <div class="capability"><iconify-icon icon="ph:dice-five-duotone"></iconify-icon>Wild Card mode</div>
-        <div class="capability"><iconify-icon icon="ph:plant-duotone"></iconify-icon>Required room features</div>
-        <div class="capability"><iconify-icon icon="ph:arrows-clockwise-duotone"></iconify-icon>Furniture swapping</div>
-        <div class="capability"><iconify-icon icon="ph:floppy-disk-duotone"></iconify-icon>Persistent layouts</div>
-        <div class="capability"><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon>Project renaming</div>
-        <div class="capability"><iconify-icon icon="ph:clock-counter-clockwise-duotone"></iconify-icon>Undo and redo</div>
-        <div class="capability"><iconify-icon icon="ph:devices-duotone"></iconify-icon>Responsive workspace</div>
-        <div class="capability"><iconify-icon icon="ph:arrow-left-duotone"></iconify-icon>Step-by-step navigation</div>
       </div>
     </section>
 
@@ -462,23 +636,23 @@
       <div class="process-wrap reveal">
         <div class="section-heading">
           <h2>A clear path to a room you love.</h2>
-          <p>No design degree, complicated software, or endless open tabs required.</p>
+          <p>Three quick steps. One complete plan.</p>
         </div>
         <div class="process">
           <article class="process-step">
             <span class="process-number">1</span>
             <h3>Define your room</h3>
-            <p>Enter dimensions and mark the architectural details that affect placement.</p>
+            <p>Measure the space.</p>
           </article>
           <article class="process-step">
             <span class="process-number">2</span>
             <h3>Share your vision</h3>
-            <p>Add inspiration, choose your style, and tell us which features are non-negotiable.</p>
+            <p>Pick the feeling.</p>
           </article>
           <article class="process-step">
             <span class="process-number">3</span>
             <h3>Refine your plan</h3>
-            <p>Move, rotate, resize, swap, and shop furniture inside your personalized 2D layout.</p>
+            <p>Arrange and shop.</p>
           </article>
         </div>
       </div>
@@ -509,5 +683,6 @@
     }, { threshold: 0.14 });
     document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
   </script>
+  <script type="module" src="/src/landing.jsx"></script>
 </body>
 </html>

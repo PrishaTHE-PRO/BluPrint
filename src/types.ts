@@ -42,6 +42,7 @@ export interface ArchitectureElement {
   x:     number;
   y:     number;
   angle: number;
+  width?: number;
 }
 
 export interface ArchitectureCutout {

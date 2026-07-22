@@ -1,15 +1,24 @@
 
 <!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8">
+    <script>
+    (function () {
+      try {
+        if (localStorage.getItem('blueprintTheme') === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Architecture Editor | BluPrint</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&amp;family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {--garden-dark:#0a3323; --garden-moss:#839958; --garden-beige:#f7f4d5; --garden-rosy:#d3968c; --garden-midnight:#105666; --garden-accent:#f5a7b8;}
+    :root {--garden-dark:#0a3323; --garden-moss:#839958; --garden-beige:#f7f4d5; --garden-rosy:#d3968c; --garden-midnight:#105666; --garden-accent:#f5a7b8; --hint-blue:#2F6FAE;}
     h1, h2, h3, h4 {font-family:"Crimson Pro",serif}
     .noise-texture {position:fixed; inset:0; z-index:100; pointer-events:none; opacity:0.03; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")}
     .grid-background {background-image:linear-gradient(rgba(131,153,88,0.07) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(131,153,88,0.07) 1.5px,transparent 1.5px); background-size:50px 50px}
@@ -32,6 +41,14 @@
     .vertex-handle:hover {r:8; fill:#4ade80; filter:drop-shadow(0 0 8px rgba(74, 222, 128, 0.6))}
     .vertex-handle.dragging {fill:#4ade80; r:9; filter:drop-shadow(0 0 12px rgba(74, 222, 128, 0.8))}
     .coord-tooltip {pointer-events:none; font-size:9px; font-weight:bold; fill:#4ade80; text-shadow:0 1px 2px rgba(0, 0, 0, 0.5)}
+    .door-hint-text {
+      font-family: "Caveat", cursive;
+      font-size: 15px;
+      font-weight: 600;
+      fill: var(--hint-blue);
+      letter-spacing: 0.02em;
+    }
+    .door-hint-arrow { stroke: var(--hint-blue); fill: none; stroke-width: 1.55; stroke-linecap: round; stroke-linejoin: round; }
     .element-hoverable {cursor:pointer; transition:filter 0.2s ease}
     .element-hoverable:hover {filter:drop-shadow(0 0 5px #4ade80)}
     .animate-slide-right {animation:slideInRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity:0}
@@ -47,13 +64,17 @@
     .app-nav-links a {display:flex; align-items:center; gap:0.5rem; text-decoration:none}
     .workflow-steps {display:flex; align-items:center; justify-content:center; gap:1rem; padding:2rem 0; background:rgba(10, 51, 35, 0.02)}
     .workflow-step {display:flex; align-items:center; gap:0.75rem; opacity:0.4}
-    .workflow-step.active {opacity:1; color:#F7F4D5}
+    .workflow-step.active,
+    a.workflow-step {opacity:1}
+    .workflow-step.active {color:#F7F4D5}
     .workflow-step span {width:24px; height:24px; border-radius:50%; border:1px solid currentColor; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold}
     .workflow-connector {width:40px; height:1px; background:rgba(247, 244, 213, 0.2)}
   </style>
   <link rel="stylesheet" href="./design-system.css">
 </head>
 <body class="page-dimensions">
+  <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
+
 <div class="min-h-screen relative flex flex-col grid-background bg-[#0A3323] font-['Quicksand',sans-serif] text-[#F7F4D5] overflow-hidden" data-sd-id="1">
   <div class="noise-texture" data-sd-id="2"></div>
   <div id="custom-toast" data-sd-id="3">
@@ -82,16 +103,38 @@
               <iconify-icon icon="ph:moon-duotone"></iconify-icon>
           </button>
           <div class="profile-menu-wrap">
-              <button id="profile-btn" type="button" class="w-10 h-10 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border border-[#0A3323]/20">
-                  <iconify-icon icon="ph:user-circle-duotone" class="text-xl text-[#0A3323]"></iconify-icon>
+              <button id="profile-btn" type="button" class="profile-btn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
+                  <iconify-icon icon="ph:user"></iconify-icon>
               </button>
-              <div id="profile-popup" class="profile-popup hidden">
-                  <button id="settings-btn" type="button" class="profile-popup-item">
-                      <iconify-icon icon="ph:gear-duotone"></iconify-icon> Settings
-                  </button>
-                  <button id="logout-btn" class="profile-popup-item profile-popup-item-danger">
-                      <iconify-icon icon="ph:sign-out-duotone"></iconify-icon> Sign out
-                  </button>
+              <div id="profile-popup" class="profile-popup hidden" role="menu">
+                  <div class="profile-popup-header">
+                      <div class="profile-popup-avatar" aria-hidden="true">
+                          <iconify-icon icon="ph:user"></iconify-icon>
+                      </div>
+                      <div class="profile-popup-identity">
+                          <p class="profile-popup-name" data-profile-name>Account</p>
+                          <p class="profile-popup-email" data-profile-email>Manage your BluPrint profile</p>
+                      </div>
+                  </div>
+                  <div class="profile-popup-section">
+                      <p class="profile-popup-label">Account</p>
+                      <button id="settings-btn" type="button" class="profile-popup-item" role="menuitem">
+                          <span class="profile-popup-item-icon"><iconify-icon icon="ph:gear-duotone"></iconify-icon></span>
+                          <span class="profile-popup-item-copy">
+                              <strong>Settings</strong>
+                              <small>Name, birthday &amp; preferences</small>
+                          </span>
+                      </button>
+                  </div>
+                  <div class="profile-popup-footer">
+                      <button id="logout-btn" type="button" class="profile-popup-item profile-popup-item-danger" role="menuitem">
+                          <span class="profile-popup-item-icon"><iconify-icon icon="ph:sign-out-duotone"></iconify-icon></span>
+                          <span class="profile-popup-item-copy">
+                              <strong>Sign out</strong>
+                              <small>Come back anytime</small>
+                          </span>
+                      </button>
+                  </div>
               </div>
           </div>
       </div>
@@ -133,6 +176,10 @@
               <path d="M 0 0 L 0 40" stroke="var(--garden-rosy)" stroke-width="5.5" stroke-linecap="round"></path>
               <circle cx="0" cy="0" r="3.5" fill="var(--garden-rosy)"></circle>
             </symbol>
+            <!-- Invisible full swing area so hover/click works anywhere on the door, not just strokes -->
+            <symbol id="door-hit-template">
+              <path d="M -4 -8 L 44 -8 L 44 8 A 44 44 0 0 1 8 44 L -8 44 L -8 0 Z" fill="rgba(0,0,0,0.001)" stroke="none"></path>
+            </symbol>
             <mask id="room-mask"></mask>
             <clipPath id="room-clip"><path id="room-clip-path"></path></clipPath>
             <symbol id="window-template">
@@ -149,10 +196,6 @@
           </g>
           <g id="ghost-element" class="hidden"></g>
           <text id="coord-tooltip" class="coord-tooltip hidden" x="0" y="0">0, 0</text>
-          <g id="door-flip-tooltip" class="hidden" pointer-events="none">
-            <rect x="-60" y="-20" width="120" height="24" rx="6" fill="rgba(16, 86, 102, 0.9)"></rect>
-            <text x="0" y="-4" text-anchor="middle" fill="white" style="font-size: 10px; font-weight: bold;">Double-click to flip</text>
-          </g>
           <g id="dimension-labels" pointer-events="none">
             <g id="group-width">
               <line id="line-width" stroke="var(--garden-rosy)" stroke-width="1" opacity="0.6"></line>
@@ -168,6 +211,12 @@
               <text id="label-length-text" text-anchor="middle" fill="var(--garden-rosy)" class="font-bold text-[11px] uppercase tracking-widest"></text>
               <text id="label-length-sub" text-anchor="middle" fill="var(--garden-rosy)" class="italic text-[9px] uppercase tracking-wider opacity-60">LENGTH</text>
             </g>
+          </g>
+          <!-- Drawn last so the tip sits on the grid outside the room -->
+          <g id="door-flip-tooltip" class="hidden" pointer-events="none">
+            <text class="door-hint-text" x="0" y="4">double-click to flip</text>
+            <path class="door-hint-arrow" d="M 108 1 C 118 -7, 128 9, 140 1 C 146 -3, 150 4, 156 0" />
+            <path class="door-hint-arrow" d="M 150 -5 L 158 0 L 150 6" />
           </g>
         </svg>
         <div class="absolute bottom-8 right-8" data-sd-id="35">
@@ -185,7 +234,7 @@
           <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-[0.15em]" data-sd-id="41">DRAG CARDS ONTO THE FLOOR PLAN</p>
           <div class="space-y-3" data-sd-id="42">
             <div draggable="true" data-type="door" id="draggable-door" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-[#D3968C]/10 border border-[#D3968C]/20 hover:bg-[#D3968C]/20 transition-all cursor-grab active:cursor-grabbing group" data-sd-id="43">
-              <div class="w-16 h-16 bg-[#D3968C]/20 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="44">
+              <div data-drag-preview class="w-16 h-16 bg-[#D3968C]/20 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="44">
                 <iconify-icon icon="ph:door-duotone" class="text-3xl text-[#D3968C]"></iconify-icon>
               </div>
               <div class="flex-1 text-left" data-sd-id="45">
@@ -195,7 +244,7 @@
               <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
             </div>
             <div draggable="true" data-type="window" id="draggable-window" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-[#105666]/30 border border-[#105666]/40 hover:bg-[#105666]/50 transition-all cursor-grab active:cursor-grabbing group" data-sd-id="48">
-              <div class="w-16 h-16 bg-[#105666]/40 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="49">
+              <div data-drag-preview class="w-16 h-16 bg-[#105666]/40 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="49">
                 <iconify-icon icon="ph:square-duotone" class="text-3xl text-[#83d4e0]"></iconify-icon>
               </div>
               <div class="flex-1 text-left" data-sd-id="50">
@@ -205,7 +254,7 @@
               <iconify-icon icon="ph:dots-six-vertical-bold" class="text-white/20 text-2xl"></iconify-icon>
             </div>
             <div draggable="true" data-type="cutout" id="draggable-cutout" class="toolbar-btn !w-full !h-auto flex items-center gap-4 p-4 rounded-3xl bg-transparent border-2 border-[#839958]/30 border-dashed hover:bg-[#839958]/10 transition-all cursor-grab active:cursor-grabbing group" data-sd-id="53">
-              <div class="w-16 h-16 bg-[#839958]/20 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="54">
+              <div data-drag-preview class="w-16 h-16 bg-[#839958]/20 rounded-2xl flex items-center justify-center shrink-0" data-sd-id="54">
                 <iconify-icon icon="ph:scissors-duotone" class="text-3xl text-[#839958]"></iconify-icon>
               </div>
               <div class="flex-1 text-left" data-sd-id="55">
@@ -303,14 +352,23 @@
 
     const profileBtn = document.getElementById('profile-btn');
     const profilePopup = document.getElementById('profile-popup');
+    function setProfilePopupIdentity(name, email) {
+        const nameEl = document.querySelector('[data-profile-name]');
+        const emailEl = document.querySelector('[data-profile-email]');
+        if (nameEl) nameEl.textContent = name || 'Account';
+        if (emailEl) emailEl.textContent = email || 'Manage your BluPrint profile';
+    }
+    setProfilePopupIdentity(localStorage.getItem('blueprintUserName') || 'Account', '');
     if (profileBtn && profilePopup) {
         profileBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            profilePopup.classList.toggle('hidden');
+            const open = !profilePopup.classList.toggle('hidden');
+            profileBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
         document.addEventListener('click', (e) => {
-            if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+            if (!profilePopup.contains(e.target) && !profileBtn.contains(e.target)) {
                 profilePopup.classList.add('hidden');
+                profileBtn.setAttribute('aria-expanded', 'false');
             }
         });
     }
@@ -322,12 +380,14 @@
 
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     if (localStorage.getItem('blueprintTheme') === 'dark') {
-        document.body.classList.add('dark-mode');
+        document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
         if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
     }
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', () => {
             const isDark = document.body.classList.toggle('dark-mode');
+            document.documentElement.classList.toggle('dark-mode', isDark);
             localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
             themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
         });
@@ -364,6 +424,7 @@
             try {
                 if (newName) localStorage.setItem('blueprintUserName', newName);
                 if (newBirthday) localStorage.setItem('blueprintUserBirthday', newBirthday);
+                setProfilePopupIdentity(newName || localStorage.getItem('blueprintUserName') || 'Account', '');
                 settingsSaveStatus.textContent = 'Saved!';
                 setTimeout(() => { settingsSaveStatus.textContent = ''; }, 2000);
             } catch (err) {
@@ -407,6 +468,7 @@
   let hoveredElementType = null;
   let selectedResizeId = null;
   let selectedCutoutId = null;
+  let doorFlipFirstHover = null;
 
   function isPointInRoom(x,y) {
     const pts = state.roomPoints;
@@ -451,12 +513,104 @@
   }
 
   function isCutoutValid(points) {
-    // Must have at least one point in room or be partially overlapping
-    return points.some(p => isPointInRoom(p.x, p.y)) && points.length === 4;
+    if (!points || points.length !== 4) return false;
+    const cx = (points[0].x + points[1].x + points[2].x + points[3].x) / 4;
+    const cy = (points[0].y + points[1].y + points[2].y + points[3].y) / 4;
+    // Centroid must sit inside the room (alcove pulled inward)
+    return isPointInRoom(cx, cy);
   }
 
   function validateQuadrilateral(cutout) {
     return cutout && cutout.points && cutout.points.length === 4;
+  }
+
+  function getEdgeFrame(edgeIndex) {
+    const p1 = state.roomPoints[edgeIndex];
+    const p2 = state.roomPoints[(edgeIndex + 1) % state.roomPoints.length];
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const tx = dx / len;
+    const ty = dy / len;
+    let nx = -ty;
+    let ny = tx;
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2;
+    if (!isPointInRoom(midX + nx * 8, midY + ny * 8)) {
+      nx = -nx;
+      ny = -ny;
+    }
+    return { p1, p2, tx, ty, nx, ny, len, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+  }
+
+  function buildCutoutRect(frame, leftAlong, rightAlong, depth) {
+    const left = Math.min(leftAlong, rightAlong);
+    const right = Math.max(leftAlong, rightAlong);
+    const d = Math.max(12, depth);
+    const p0 = { x: frame.p1.x + frame.tx * left, y: frame.p1.y + frame.ty * left };
+    const p1 = { x: frame.p1.x + frame.tx * right, y: frame.p1.y + frame.ty * right };
+    const p2 = { x: p1.x + frame.nx * d, y: p1.y + frame.ny * d };
+    const p3 = { x: p0.x + frame.nx * d, y: p0.y + frame.ny * d };
+    return [p0, p1, p2, p3];
+  }
+
+  function getCutoutMetrics(cutout) {
+    const edgeIndex = Number.isInteger(cutout.edgeIndex) ? cutout.edgeIndex : 0;
+    const frame = getEdgeFrame(edgeIndex);
+    const leftAlong =
+      (cutout.points[0].x - frame.p1.x) * frame.tx +
+      (cutout.points[0].y - frame.p1.y) * frame.ty;
+    const rightAlong =
+      (cutout.points[1].x - frame.p1.x) * frame.tx +
+      (cutout.points[1].y - frame.p1.y) * frame.ty;
+    const depth =
+      (cutout.points[3].x - cutout.points[0].x) * frame.nx +
+      (cutout.points[3].y - cutout.points[0].y) * frame.ny;
+    return { frame, edgeIndex, leftAlong, rightAlong, depth: Math.max(12, Math.abs(depth)) };
+  }
+
+  /** Keep cutouts as wall-aligned rectangles; drag only along wall or inward normal. */
+  function constrainCutoutVertex(cutout, pIdx, svgP) {
+    let edgeIndex = Number.isInteger(cutout.edgeIndex) ? cutout.edgeIndex : getClosestPointOnPerimeter(svgP.x, svgP.y).edgeIndex;
+    const frame = getEdgeFrame(edgeIndex);
+    const metrics = getCutoutMetrics({ ...cutout, edgeIndex });
+    let { leftAlong, rightAlong, depth } = metrics;
+    const along =
+      (svgP.x - frame.p1.x) * frame.tx +
+      (svgP.y - frame.p1.y) * frame.ty;
+    const into =
+      (svgP.x - frame.p1.x) * frame.nx +
+      (svgP.y - frame.p1.y) * frame.ny;
+
+    if (pIdx === 0 || pIdx === 1) {
+      // Slide that wall corner along the wall (straight line)
+      if (pIdx === 0) leftAlong = Math.min(along, rightAlong - 16);
+      else rightAlong = Math.max(along, leftAlong + 16);
+    } else {
+      // Pull depth straight into the room; optionally nudge that end's width
+      depth = Math.max(12, into);
+      if (pIdx === 3) leftAlong = Math.min(along, rightAlong - 16);
+      if (pIdx === 2) rightAlong = Math.max(along, leftAlong + 16);
+    }
+
+    leftAlong = Math.max(2, Math.min(frame.len - 18, leftAlong));
+    rightAlong = Math.max(leftAlong + 16, Math.min(frame.len - 2, rightAlong));
+    const pts = buildCutoutRect(frame, leftAlong, rightAlong, depth);
+    if (!isCutoutValid(pts)) return false;
+    cutout.edgeIndex = edgeIndex;
+    cutout.points = pts;
+    return true;
+  }
+
+  function placeCutoutOnEdge(edgeIndex, centerAlong, width, depth) {
+    const frame = getEdgeFrame(edgeIndex);
+    const half = Math.max(8, width / 2);
+    let center = centerAlong;
+    center = Math.max(half + 2, Math.min(frame.len - half - 2, center));
+    return {
+      points: buildCutoutRect(frame, center - half, center + half, depth),
+      edgeIndex,
+    };
   }
 
   function isValidVertexMovement(x, y, cutoutId, vIdx) {
@@ -573,6 +727,93 @@
     setTimeout(() => toast.classList.remove("visible"), 2000);
   }
 
+  /** Place the handwritten tip horizontally on the grid outside the room. */
+  function showDoorFlipTip(el, hoverSvgP) {
+    const tt = document.getElementById("door-flip-tooltip");
+    if (!tt) return;
+
+    if (doorFlipFirstHover == null || doorFlipFirstHover.doorId !== el.id) {
+      doorFlipFirstHover = {
+        x: hoverSvgP ? hoverSvgP.x : el.x,
+        y: hoverSvgP ? hoverSvgP.y : el.y,
+        doorId: el.id,
+      };
+    }
+
+    const angleRad = (el.angle * Math.PI) / 180;
+    const ty = Math.sin(angleRad);
+    const tx = Math.cos(angleRad);
+    // Outward wall normal (away from room interior)
+    let nx = -ty;
+    let ny = tx;
+    if (isPointInRoom(el.x + nx * 12, el.y + ny * 12)) {
+      nx = -nx;
+      ny = -ny;
+    }
+
+    let outX = doorFlipFirstHover.x;
+    let outY = doorFlipFirstHover.y;
+    if (isPointInRoom(outX, outY)) {
+      outX = el.x + nx * 52;
+      outY = el.y + ny * 52;
+    } else {
+      outX += nx * 30;
+      outY += ny * 30;
+    }
+
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    for (let i = 0; i < 8 && isPointInRoom(outX, outY); i++) {
+      outX += nx * 16;
+      outY += ny * 16;
+    }
+
+    // Keep the label horizontal: place it to the left or right of the door on the grid
+    const tipW = 160;
+    const placeLeft = outX <= el.x;
+    let originX = placeLeft ? el.x - tipW - 18 : el.x + 18;
+    let originY = outY;
+    originX = clamp(originX, 8, 800 - tipW - 8);
+    originY = clamp(originY, 14, 490);
+
+    // If that spot is still inside, push purely outward on Y/X without rotating text
+    if (isPointInRoom(originX + 50, originY)) {
+      originX = clamp(el.x + nx * 60 - (placeLeft ? tipW : 0), 8, 800 - tipW - 8);
+      originY = clamp(el.y + ny * 60, 14, 490);
+    }
+
+    const arrow = tt.querySelectorAll(".door-hint-arrow");
+    const text = tt.querySelector(".door-hint-text");
+    if (placeLeft) {
+      // text left, squiggle arrow pointing right toward the door
+      if (text) {
+        text.setAttribute("x", "0");
+        text.setAttribute("text-anchor", "start");
+      }
+      if (arrow[0]) arrow[0].setAttribute("d", "M 108 1 C 118 -7, 128 9, 140 1 C 146 -3, 150 4, 156 0");
+      if (arrow[1]) arrow[1].setAttribute("d", "M 150 -5 L 158 0 L 150 6");
+    } else {
+      // text right, squiggle arrow pointing left toward the door
+      if (text) {
+        text.setAttribute("x", "158");
+        text.setAttribute("text-anchor", "end");
+      }
+      if (arrow[0]) arrow[0].setAttribute("d", "M 50 1 C 40 -7, 30 9, 18 1 C 12 -3, 8 4, 2 0");
+      if (arrow[1]) arrow[1].setAttribute("d", "M 8 -5 L 0 0 L 8 6");
+    }
+
+    tt.setAttribute("transform", `translate(${originX},${originY})`);
+    tt.classList.remove("hidden");
+  }
+
+  function hideDoorFlipTip() {
+    const tt = document.getElementById("door-flip-tooltip");
+    if (tt) tt.classList.add("hidden");
+  }
+
+  function doorRootTransform(el, mirrorScale) {
+    return `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(-20, 0)`;
+  }
+
   function renderAll() {
     renderRoom();
     renderElements();
@@ -611,8 +852,11 @@
       const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const mirrorScale = el.isMirrored ? -1 : 1;
       if (el.type === "door") {
-        const offset = -20;
-        g.innerHTML = `<use href="#door-template" transform="translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(${offset}, 0)" />`;
+        // Hit path covers the full swing area so hover works anywhere on the door, not just strokes
+        g.innerHTML = `<g class="door-root" transform="${doorRootTransform(el, mirrorScale)}">
+          <use href="#door-hit-template"></use>
+          <use href="#door-template"></use>
+        </g>`;
       } else {
         const w = el.width || 50;
         const offset = -w/2;
@@ -681,12 +925,10 @@
       g.setAttribute("style", "cursor: grab");
       if (el.type === "door") {
         g.addEventListener("mouseenter", (e) => {
-          const tt = document.getElementById("door-flip-tooltip");
-          tt.setAttribute("transform", `translate(${el.x},${el.y-30})`);
-          tt.classList.remove("hidden");
+          showDoorFlipTip(el, getSVGPoint(e));
         });
         g.addEventListener("mouseleave", () => {
-          document.getElementById("door-flip-tooltip").classList.add("hidden");
+          hideDoorFlipTip();
         });
       }
       g.addEventListener("dblclick", (e) => {
@@ -712,8 +954,8 @@
           if (edgeEl) edgeEl.classList.add("active");
           el.x = snap.point.x; el.y = snap.point.y; el.angle = snap.point.angle;
           if (el.type === 'door') {
-            const useEl = g.querySelector("use"); const moveMirror = el.isMirrored ? -1 : 1;
-            useEl.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(-20, 0)`);
+            const doorRoot = g.querySelector(".door-root");
+            if (doorRoot) doorRoot.setAttribute("transform", doorRootTransform(el, mirrorScale));
           } else {
             const w = el.width || 50;
             const gInner = g.querySelector('g');
@@ -797,22 +1039,28 @@
           e.stopPropagation();
           let hasMoved = false;
           outline.setAttribute("style", "cursor: grabbing");
-          const startSvgP = getSVGPoint(e);
-          const originalPoints = c.points.map((p) => ({ ...p }));
+          const metrics = getCutoutMetrics(c);
+          const width = Math.abs(metrics.rightAlong - metrics.leftAlong);
+          const depth = metrics.depth;
           const onMouseMove = (mv) => {
             hasMoved = true;
             const currentSvgP = getSVGPoint(mv);
             const snap = getClosestPointOnPerimeter(currentSvgP.x, currentSvgP.y);
-            const dx = snap.point.x - originalPoints[0].x;
-            const dy = snap.point.y - originalPoints[0].y;
-            const testPoints = originalPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
-            if (isCutoutValid(testPoints)) {
-              document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-              const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-              if (edgeEl) edgeEl.classList.add("active");
-              c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
-              renderAll();
-            }
+            if (snap.dist > 220) return;
+            const frame = getEdgeFrame(snap.edgeIndex);
+            const centerAlong =
+              (snap.point.x - frame.p1.x) * frame.tx +
+              (snap.point.y - frame.p1.y) * frame.ty;
+            const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, width, depth);
+            if (!isCutoutValid(placed.points)) return;
+            const testCutout = { ...c, ...placed };
+            if (checkCollision(testCutout, c.id)) return;
+            document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+            const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+            if (edgeEl) edgeEl.classList.add("active");
+            c.points = placed.points;
+            c.edgeIndex = placed.edgeIndex;
+            renderAll();
           };
           const onMouseUp = () => {
             window.removeEventListener("mousemove", onMouseMove);
@@ -833,24 +1081,20 @@
           circle.setAttribute("stroke", "white"); circle.setAttribute("class", "vertex-handle");
           circle.onmousedown = (e) => {
             e.stopPropagation(); circle.classList.add("dragging"); coordTooltip.classList.remove("hidden");
-            const originalVertex = { x: p.x, y: p.y };
             const onMove = (mv) => {
               const svgP = getSVGPoint(mv);
               const oldPts = cloneObj(c.points);
-
-              // Apply new free-form position directly
-              c.points[pIdx].x = svgP.x;
-              c.points[pIdx].y = svgP.y;
-
-              // Validation: Vertex spacing and room inclusion
-              const collisionCheck = isValidVertexMovement(c.points[pIdx].x, c.points[pIdx].y, c.id, pIdx);
-              const roomCheck = isCutoutValid(c.points);
-
-              if (!collisionCheck || !roomCheck) {
+              const oldEdge = c.edgeIndex;
+              if (!constrainCutoutVertex(c, pIdx, svgP)) {
                 c.points = oldPts;
+                c.edgeIndex = oldEdge;
                 return;
               }
-
+              if (checkCollision({ ...c, type: "cutout" }, c.id)) {
+                c.points = oldPts;
+                c.edgeIndex = oldEdge;
+                return;
+              }
               const activePoint = c.points[pIdx];
               coordTooltip.setAttribute("x", activePoint.x + 10); coordTooltip.setAttribute("y", activePoint.y - 10);
               coordTooltip.textContent = `${Math.round(activePoint.x)}, ${Math.round(activePoint.y)}`;
@@ -920,15 +1164,11 @@
 
   function createSnappingCutout(targetX, targetY, size = 30) {
     const snap = getClosestPointOnPerimeter(targetX, targetY);
-    const angleRad = (snap.point.angle * Math.PI) / 180;
-    const nx = Math.cos(angleRad + Math.PI / 2);
-    const ny = Math.sin(angleRad + Math.PI / 2);
-    const halfSize = size / 2;
-    const p0 = { x: snap.point.x - Math.cos(angleRad) * halfSize, y: snap.point.y - Math.sin(angleRad) * halfSize };
-    const p1 = { x: snap.point.x + Math.cos(angleRad) * halfSize, y: snap.point.y + Math.sin(angleRad) * halfSize };
-    const p2 = { x: p1.x + nx * size, y: p1.y + ny * size };
-    const p3 = { x: p0.x + nx * size, y: p0.y + ny * size };
-    return [p0, p1, p2, p3];
+    const frame = getEdgeFrame(snap.edgeIndex);
+    const centerAlong =
+      (snap.point.x - frame.p1.x) * frame.tx +
+      (snap.point.y - frame.p1.y) * frame.ty;
+    return placeCutoutOnEdge(snap.edgeIndex, centerAlong, size, size).points;
   }
 
   function finalizeCutouts() {
@@ -973,6 +1213,29 @@
       e.dataTransfer.setData("text/plain", draggingFromToolbar);
       e.dataTransfer.effectAllowed = "copy";
       btn.style.opacity = "0.45";
+
+      // Drag only the small icon tile, not the whole library card
+      const iconBox = btn.querySelector('[data-drag-preview]') || btn.querySelector('.shrink-0') || btn;
+      const preview = iconBox.cloneNode(true);
+      preview.removeAttribute("data-drag-preview");
+      preview.style.cssText = [
+        "position:fixed",
+        "top:-1000px",
+        "left:-1000px",
+        "width:56px",
+        "height:56px",
+        "display:flex",
+        "align-items:center",
+        "justify-content:center",
+        "border-radius:14px",
+        "box-shadow:0 8px 24px rgba(0,0,0,0.35)",
+        "pointer-events:none",
+        "z-index:9999",
+        "opacity:1",
+      ].join(";");
+      document.body.appendChild(preview);
+      e.dataTransfer.setDragImage(preview, 28, 28);
+      requestAnimationFrame(() => preview.remove());
     });
     btn.addEventListener("dragend", () => { btn.style.opacity = "1"; });
   });
@@ -988,7 +1251,11 @@
       if (edgeEl) edgeEl.classList.add("active");
       ghost.classList.remove("hidden");
       if (draggingFromToolbar === "cutout") {
-        const pts = createSnappingCutout(svgP.x, svgP.y, 35);
+        const frame = getEdgeFrame(snap.edgeIndex);
+        const centerAlong =
+          (snap.point.x - frame.p1.x) * frame.tx +
+          (snap.point.y - frame.p1.y) * frame.ty;
+        const pts = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 35, 35).points;
         ghost.innerHTML = `<path d="M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z" fill="rgba(211, 150, 140, 0.4)" stroke="white" stroke-dasharray="2 2" />`;
       } else {
         const offset = draggingFromToolbar === "door" ? -20 : -25;
@@ -1045,15 +1312,20 @@
     const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
     if (snap.dist < 200) {
       if (draggingFromToolbar === "cutout") {
-        const newPts = createSnappingCutout(svgP.x, svgP.y, 35);
-        if (isCutoutValid(newPts)) {
-          const newCutout = { id: Date.now(), type: "cutout", points: newPts, edgeIndex: snap.edgeIndex };
+        const frame = getEdgeFrame(snap.edgeIndex);
+        const centerAlong =
+          (snap.point.x - frame.p1.x) * frame.tx +
+          (snap.point.y - frame.p1.y) * frame.ty;
+        const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 35, 35);
+        if (isCutoutValid(placed.points)) {
+          const newCutout = { id: Date.now(), type: "cutout", points: placed.points, edgeIndex: placed.edgeIndex };
           if (checkCollision(newCutout)) {
             showToast("Cutout cannot intersect with existing items");
             ghost.classList.add("hidden");
             return;
           }
           state.cutouts.push(newCutout);
+          selectedCutoutId = newCutout.id;
         }
         else { showToast("Cutout must overlap room interior"); ghost.classList.add("hidden"); return; }
       } else {

@@ -45,7 +45,7 @@ function normalizeStringArray(value) {
 }
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 3 },
 });
 
 /* -------- Pinterest (priority) --------
@@ -65,9 +65,9 @@ router.post("/:roomId/pinterest", async (req, res) => {
 });
 
 /* -------- Direct upload (fallback) --------
- * POST /api/rooms/:roomId/images   multipart/form-data, field "images" (<=5)
+ * POST /api/rooms/:roomId/images   multipart/form-data, field "images" (<=3)
  */
-router.post("/:roomId/images", upload.array("images", 5), async (req, res) => {
+router.post("/:roomId/images", upload.array("images", 3), async (req, res) => {
   try {
     const urls = await Promise.all(
       (req.files || []).map((f) => uploadToCloudinary(f.buffer, f.mimetype))

@@ -11,6 +11,7 @@ interface Props {
   loading:          boolean;
   roomType?:        string;
   centerContent?:   ReactNode;
+  isoContent?:      ReactNode;
   linkedCategory?:  string | null;
   onLinkCategory?:  (category: string | null) => void;
   hiddenCategories: Set<string>;
@@ -25,29 +26,31 @@ export default function FurniturePanel({
   loading,
   roomType,
   centerContent,
+  isoContent,
   linkedCategory,
   onLinkCategory,
   hiddenCategories,
   onToggleInRoom,
 }: Props) {
   const displayed = orderedFurniture(slots, roomType);
-  // Pieces taken off the floor plan don't count toward the estimate.
-  const total     = displayed
+  const total = displayed
     .filter((item) => !hiddenCategories.has(item.category))
     .reduce((sum, item) => sum + item.price, 0);
 
   const cards = displayed.map((item, i) => (
-    <FurnitureCard
-      key={item.category}
-      item={item}
-      canSwap={items.filter((x) => x.category === item.category).length > 1}
-      onSwap={() => onSwap(item.category)}
-      animDelay={`${0.45 + i * 0.07}s`}
-      linkedCategory={linkedCategory}
-      onLinkCategory={onLinkCategory}
-      inRoom={!hiddenCategories.has(item.category)}
-      onToggleInRoom={() => onToggleInRoom(item.category)}
-    />
+    <div key={item.category} className="furniture-strip-card shrink-0">
+      <FurnitureCard
+        item={item}
+        canSwap={items.filter((x) => x.category === item.category).length > 1}
+        onSwap={() => onSwap(item.category)}
+        animDelay={`${0.45 + i * 0.07}s`}
+        variant="compact"
+        linkedCategory={linkedCategory}
+        onLinkCategory={onLinkCategory}
+        inRoom={!hiddenCategories.has(item.category)}
+        onToggleInRoom={() => onToggleInRoom(item.category)}
+      />
+    </div>
   ));
 
   const header = (
@@ -76,70 +79,60 @@ export default function FurniturePanel({
     </div>
   );
 
+  const views = (
+    <div className="result-dual-pane">
+      <div className="result-dual-pane__view result-dual-pane__view--iso">
+        {isoContent}
+      </div>
+      <div className="result-dual-pane__view">
+        {centerContent}
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
-      <section className="mb-10">
-        <div className="result-workspace grid lg:grid-cols-12 gap-7 items-start">
-          <div className="lg:col-span-8">
-            <div className="rounded-2xl aspect-[4/3] animate-pulse bg-[#EDE8E1]" />
-          </div>
-          <aside className="lg:col-span-4 furniture-scroll-panel">
-            {header}
-            <div className="flex flex-col gap-3 max-h-[70vh] overflow-hidden">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
-                  <div className="aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg mb-2" />
-                  <div className="h-2.5 bg-[#F7F4D5]/10 rounded w-1/3 mb-1.5" />
-                  <div className="h-3 bg-[#F7F4D5]/10 rounded w-3/4" />
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-[#F7F4D5]/30 text-center animate-pulse mt-4">
-              Searching for your {style.styleTag} style...
-            </p>
-          </aside>
+      <section className="mb-10 result-furniture-section">
+        {header}
+        <div className="result-dual-pane">
+          <div className="rounded-2xl aspect-[4/3] animate-pulse bg-[#EDE8E1]" />
+          <div className="rounded-2xl aspect-[4/3] animate-pulse bg-[#EDE8E1]" />
         </div>
+        <div className="furniture-h-strip mt-5">
+          <div className="furniture-h-strip__track">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="furniture-strip-card shrink-0 garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
+                <div className="h-14 bg-[#F7F4D5]/10 rounded-lg" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-xs text-[#F7F4D5]/30 text-center animate-pulse mt-4">
+          Searching for your {style.styleTag} style...
+        </p>
       </section>
     );
   }
 
   if (displayed.length === 0) {
     return (
-      <section className="mb-10">
-        <div className="result-workspace grid lg:grid-cols-12 gap-7 items-start">
-          <div className="lg:col-span-8">
-            {centerContent}
-          </div>
-          <aside className="lg:col-span-4 furniture-scroll-panel">
-            {header}
-            <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found — try re-analyzing your room.</p>
-          </aside>
-        </div>
+      <section className="mb-10 result-furniture-section">
+        {header}
+        {views}
+        <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found — try re-analyzing your room.</p>
       </section>
     );
   }
 
   return (
-    <section className="mb-10">
-      <div className="lg:hidden flex flex-col gap-4">
-        <div>{centerContent}</div>
-        {header}
-        <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1 custom-furniture-scroll">
+    <section className="mb-10 result-furniture-section">
+      {header}
+      {views}
+      <div className="furniture-h-strip mt-5 animate-reveal" style={{ animationDelay: '0.5s' }}>
+        <div className="furniture-h-strip__label">Shop pieces</div>
+        <div className="furniture-h-strip__track custom-furniture-scroll">
           {cards}
         </div>
-      </div>
-
-      <div className="result-workspace hidden lg:grid lg:grid-cols-12 gap-7 items-start">
-        <div className="col-span-8 min-w-0">
-          {centerContent && <div className="w-full">{centerContent}</div>}
-        </div>
-
-        <aside className="col-span-4 furniture-scroll-panel flex flex-col min-h-0 h-full">
-          {header}
-          <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto overscroll-contain pr-2 custom-furniture-scroll">
-            {cards}
-          </div>
-        </aside>
       </div>
     </section>
   );
