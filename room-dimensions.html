@@ -1,15 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+
+<!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Architecture Editor | BluPrint</title>
-  <script src="https://cdn.tailwindcss.com"></script><script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&amp;family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-  <style>:root{--garden-dark:#0a3323;--garden-moss:#839958;--garden-beige:#f7f4d5;--garden-rosy:#d3968c;--garden-midnight:#105666;--garden-accent:#f5a7b8}h1,h2,h3,h4{font-family:"Crimson Pro",serif}.noise-texture{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")} .grid-background{background-image:linear-gradient(rgba(131,153,88,0.07) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(131,153,88,0.07) 1.5px,transparent 1.5px);background-size:50px 50px}.ghibli-border{border:2px solid rgba(247,244,213,0.15);border-radius:40px 60px 45px 70px / 65px 45px 75px 45px}.garden-card{background:rgba(16, 86, 102, 0.2);backdrop-filter:blur(12px);border:1px solid rgba(247,244,213,0.05)}.canvas-area{background:rgba(10, 51, 35, 0.4);border:2px dashed rgba(247, 244, 213, 0.1);border-radius:3rem;cursor:crosshair}.toolbar-btn{width:52px;height:52px;background:rgba(247,244,213,0.05);border:1px solid rgba(247,244,213,0.1);border-radius:14px;display:flex;align-items:center;justify-content:center;transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1);cursor:grab}.toolbar-btn:active{cursor:grabbing;transform:scale(0.95)}.toolbar-btn:hover:not(:disabled){background:var(--garden-rosy);color:white;border-color:var(--garden-rosy);box-shadow:0 10px 20px -5px rgba(211, 150, 140, 0.4)}.dimension-input{background:rgba(10, 51, 35, 0.4);border:2px solid rgba(247, 244, 213, 0.1);border-radius:12px;padding:10px 14px;color:var(--garden-beige);font-size:0.95rem;font-weight:600;transition:all 0.3s ease;width:100%}.dimension-input:focus{outline:none;border-color:var(--garden-rosy);background:rgba(10, 51, 35, 0.6)}.room-path{fill:rgba(211, 150, 140, 0.05);stroke:var(--garden-rosy);stroke-width:3.5;transition:stroke 0.3s ease;transform-origin:center}.flip-anim{animation:roomFlip 0.6s cubic-bezier(0.4, 0, 0.2, 1)}@keyframes roomFlip{0%{transform:perspective(1000px) rotateY(0deg)}50%{transform:perspective(1000px) rotateY(180deg);opacity:0.7}100%{transform:perspective(1000px) rotateY(360deg)}}.edge-highlight{stroke:#4ade80;stroke-width:6;stroke-linecap:round;opacity:0;transition:opacity 0.2s ease;pointer-events:none}.edge-highlight.active{opacity:1}#custom-toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--garden-midnight);border:1px solid var(--garden-rosy);color:white;padding:12px 24px;border-radius:999px;font-weight:600;z-index:200;transition:all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);display:flex;align-items:center;gap:10px}#custom-toast.visible{transform:translateX(-50%) translateY(0)}.vertex-handle{cursor:crosshair;transition:r 0.2s ease,fill 0.2s ease;pointer-events:all}.vertex-handle:hover{r:8;fill:#4ade80;filter:drop-shadow(0 0 8px rgba(74, 222, 128, 0.6))}.vertex-handle.dragging{fill:#4ade80;r:9;filter:drop-shadow(0 0 12px rgba(74, 222, 128, 0.8))}.coord-tooltip{pointer-events:none;font-size:9px;font-weight:bold;fill:#4ade80;text-shadow:0 1px 2px rgba(0, 0, 0, 0.5)}.element-hoverable{cursor:pointer;transition:filter 0.2s ease}.element-hoverable:hover{filter:drop-shadow(0 0 5px #4ade80)}.animate-slide-right{animation:slideInRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;opacity:0}@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}kbd{font-family:ui-monospace,monospace}.custom-scrollbar::-webkit-scrollbar{width:6px}.custom-scrollbar::-webkit-scrollbar-track{background:transparent}.custom-scrollbar::-webkit-scrollbar-thumb{background:rgba(211, 150, 140, 0.2);border-radius:10px}.custom-scrollbar::-webkit-scrollbar-thumb:hover{background:rgba(211, 150, 140, 0.4)}.app-nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:#F7F4D5;border-bottom:1px solid rgba(10, 51, 35, 0.1)}.app-brand{display:flex;align-items:center;gap:0.75rem;text-decoration:none}.app-nav-links{display:flex;align-items:center;gap:2rem;color:#0A3323}.app-nav-links a{display:flex;align-items:center;gap:0.5rem;text-decoration:none}.workflow-steps{display:flex;align-items:center;justify-content:center;gap:1rem;padding:2rem 0;background:rgba(10, 51, 35, 0.02)}.workflow-step{display:flex;align-items:center;gap:0.75rem;opacity:0.4}.workflow-step.active{opacity:1;color:#F7F4D5}.workflow-step span{width:24px;height:24px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold}.workflow-connector{width:40px;height:1px;background:rgba(247, 244, 213, 0.2)}</style>
-  <link rel="stylesheet" href="./design-system.css" />
+  <style>
+    :root {--garden-dark:#0a3323; --garden-moss:#839958; --garden-beige:#f7f4d5; --garden-rosy:#d3968c; --garden-midnight:#105666; --garden-accent:#f5a7b8;}
+    h1, h2, h3, h4 {font-family:"Crimson Pro",serif}
+    .noise-texture {position:fixed; inset:0; z-index:100; pointer-events:none; opacity:0.03; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")}
+    .grid-background {background-image:linear-gradient(rgba(131,153,88,0.07) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(131,153,88,0.07) 1.5px,transparent 1.5px); background-size:50px 50px}
+    .ghibli-border {border:2px solid rgba(247,244,213,0.15); border-radius:40px 60px 45px 70px / 65px 45px 75px 45px}
+    .garden-card {background:rgba(16, 86, 102, 0.2); backdrop-filter:blur(12px); border:1px solid rgba(247,244,213,0.05)}
+    .canvas-area {background:rgba(10, 51, 35, 0.4); border:2px dashed rgba(247, 244, 213, 0.1); border-radius:3rem; cursor:crosshair}
+    .toolbar-btn {width:52px; height:52px; background:rgba(247,244,213,0.05); border:1px solid rgba(247,244,213,0.1); border-radius:14px; display:flex; align-items:center; justify-content:center; transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1); cursor:grab}
+    .toolbar-btn:active {cursor:grabbing; transform:scale(0.95)}
+    .toolbar-btn:hover:not(:disabled) {background:var(--garden-rosy); color:white; border-color:var(--garden-rosy); box-shadow:0 10px 20px -5px rgba(211, 150, 140, 0.4)}
+    .dimension-input {background:rgba(10, 51, 35, 0.4); border:2px solid rgba(247, 244, 213, 0.1); border-radius:12px; padding:10px 14px; color:var(--garden-beige); font-size:0.95rem; font-weight:600; transition:all 0.3s ease; width:100%}
+    .dimension-input:focus {outline:none; border-color:var(--garden-rosy); background:rgba(10, 51, 35, 0.6)}
+    .room-path {fill:rgba(211, 150, 140, 0.05); stroke:var(--garden-rosy); stroke-width:3.5; transition:stroke 0.3s ease; transform-origin:center}
+    .flip-anim {animation:roomFlip 0.6s cubic-bezier(0.4, 0, 0.2, 1)}
+    @keyframes roomFlip {0%{transform:perspective(1000px) rotateY(0deg)} 50%{transform:perspective(1000px) rotateY(180deg); opacity:0.7} 100%{transform:perspective(1000px) rotateY(360deg)}}
+    .edge-highlight {stroke:#4ade80; stroke-width:6; stroke-linecap:round; opacity:0; transition:opacity 0.2s ease; pointer-events:none}
+    .edge-highlight.active {opacity:1}
+    #custom-toast {position:fixed; bottom:40px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--garden-midnight); border:1px solid var(--garden-rosy); color:white; padding:12px 24px; border-radius:999px; font-weight:600; z-index:200; transition:all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); display:flex; align-items:center; gap:10px}
+    #custom-toast.visible {transform:translateX(-50%) translateY(0)}
+    .vertex-handle {cursor:crosshair; transition:r 0.2s ease,fill 0.2s ease; pointer-events:all}
+    .vertex-handle:hover {r:8; fill:#4ade80; filter:drop-shadow(0 0 8px rgba(74, 222, 128, 0.6))}
+    .vertex-handle.dragging {fill:#4ade80; r:9; filter:drop-shadow(0 0 12px rgba(74, 222, 128, 0.8))}
+    .coord-tooltip {pointer-events:none; font-size:9px; font-weight:bold; fill:#4ade80; text-shadow:0 1px 2px rgba(0, 0, 0, 0.5)}
+    .element-hoverable {cursor:pointer; transition:filter 0.2s ease}
+    .element-hoverable:hover {filter:drop-shadow(0 0 5px #4ade80)}
+    .animate-slide-right {animation:slideInRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity:0}
+    @keyframes slideInRight {from{opacity:0; transform:translateX(30px)} to{opacity:1; transform:translateX(0)}}
+    kbd {font-family:ui-monospace,monospace}
+    .custom-scrollbar::-webkit-scrollbar {width:6px}
+    .custom-scrollbar::-webkit-scrollbar-track {background:transparent}
+    .custom-scrollbar::-webkit-scrollbar-thumb {background:rgba(211, 150, 140, 0.2); border-radius:10px}
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {background:rgba(211, 150, 140, 0.4)}
+    .app-nav {display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; background:#F7F4D5; border-bottom:1px solid rgba(10, 51, 35, 0.1)}
+    .app-brand {display:flex; align-items:center; gap:0.75rem; text-decoration:none}
+    .app-nav-links {display:flex; align-items:center; gap:2rem; color:#0A3323}
+    .app-nav-links a {display:flex; align-items:center; gap:0.5rem; text-decoration:none}
+    .workflow-steps {display:flex; align-items:center; justify-content:center; gap:1rem; padding:2rem 0; background:rgba(10, 51, 35, 0.02)}
+    .workflow-step {display:flex; align-items:center; gap:0.75rem; opacity:0.4}
+    .workflow-step.active {opacity:1; color:#F7F4D5}
+    .workflow-step span {width:24px; height:24px; border-radius:50%; border:1px solid currentColor; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold}
+    .workflow-connector {width:40px; height:1px; background:rgba(247, 244, 213, 0.2)}
+  </style>
+  <link rel="stylesheet" href="./design-system.css">
 </head>
 <body class="page-dimensions">
 <div class="min-h-screen relative flex flex-col grid-background bg-[#0A3323] font-['Quicksand',sans-serif] text-[#F7F4D5] overflow-hidden" data-sd-id="1">
@@ -78,13 +120,15 @@
               <path d="M 0 0 L 0 40" stroke="var(--garden-rosy)" stroke-width="5.5" stroke-linecap="round"></path>
               <circle cx="0" cy="0" r="3.5" fill="var(--garden-rosy)"></circle>
             </symbol>
+            <mask id="room-mask"></mask>
+            <clipPath id="room-clip"><path id="room-clip-path"></path></clipPath>
             <symbol id="window-template">
               <rect x="0" y="-4" width="50" height="8" fill="var(--garden-dark)" stroke="#F7F4D5" stroke-width="1.5"></rect>
               <line x1="5" y1="-1.5" x2="45" y2="-1.5" stroke="#F7F4D5" stroke-width="1"></line>
               <line x1="5" y1="1.5" x2="45" y2="1.5" stroke="#F7F4D5" stroke-width="1"></line>
             </symbol>
           </defs>
-          <rect width="100%" height="100%" fill="url(#largeGrid)"></rect>
+          <rect id="svg-bg" width="100%" height="100%" fill="url(#largeGrid)"></rect>
           <path id="room-polygon" class="room-path"></path>
           <g id="edge-highlights"></g>
           <g id="placed-elements">
@@ -122,7 +166,7 @@
       <div class="garden-card ghibli-border p-6 flex-1 overflow-y-auto flex flex-col gap-6 custom-scrollbar" data-sd-id="38">
         <div class="space-y-4" data-sd-id="39">
           <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]" data-sd-id="40">
-            <iconify-icon icon="ph:shapes-duotone" class="text-3xl text-[#D3968C]"></iconify-icon>
+            <iconify-icon icon="ph:shapes-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>
             Element Library
           </h2>
           <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-[0.15em]" data-sd-id="41">DRAG CARDS ONTO THE FLOOR PLAN</p>
@@ -162,21 +206,33 @@
         <div class="space-y-4 pt-4 border-t border-[#F7F4D5]/10" data-sd-id="58">
           <div class="flex items-center justify-between" data-sd-id="59">
             <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]" data-sd-id="60">
-              <iconify-icon icon="ph:ruler-duotone" class="text-3xl text-[#D3968C]"></iconify-icon>
+              <iconify-icon icon="ph:ruler-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>
               Room Geometry
             </h2>
-            <div class="flex items-center bg-black/40 p-0.5 rounded-lg border border-white/10 shrink-0" data-sd-id="61"><button id="toggle-ft" class="px-2 py-1 text-[9px] font-bold rounded bg-[#D3968C] text-[#0A3323] transition-all" data-sd-id="62">FT</button><button id="toggle-m" class="px-2 py-1 text-[9px] font-bold rounded text-[#F7F4D5]/40 hover:text-[#F7F4D5] transition-all" data-sd-id="63">M</button></div>
+            <div class="unit-toggle flex items-center bg-black/40 p-0.5 rounded-lg border border-white/10 shrink-0" data-sd-id="61">
+              <button id="toggle-ft" class="is-active px-2 py-1 text-[9px] font-bold rounded transition-all" data-sd-id="62">FT</button>
+              <button id="toggle-m" class="px-2 py-1 text-[9px] font-bold rounded text-[#F7F4D5]/40 hover:text-[#F7F4D5] transition-all" data-sd-id="63">M</button>
+            </div>
           </div>
           <div class="space-y-6" data-sd-id="64">
-            <div class="space-y-3" data-sd-id="65"><label for="room-name" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="66">ROOM NAME</label><input type="text" id="room-name" value="Serenity Loft" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67"></div>
+            <div class="space-y-3" data-sd-id="65">
+              <label for="room-name" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="66">ROOM NAME</label>
+              <input type="text" id="room-name" value="Serenity Loft" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67">
+            </div>
             <div class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
-                <div class="relative" data-sd-id="71"><input type="number" id="room-width" value="15" step="0.1" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72"><span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="73">ft</span></div>
+                <div class="relative" data-sd-id="71">
+                  <input type="number" id="room-width" value="15" step="0.1" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
+                  <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="73">ft</span>
+                </div>
               </div>
               <div class="space-y-3" data-sd-id="74">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="75">LENGTH</label>
-                <div class="relative" data-sd-id="76"><input type="number" id="room-length" value="12" step="0.1" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77"><span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="78">ft</span></div>
+                <div class="relative" data-sd-id="76">
+                  <input type="number" id="room-length" value="12" step="0.1" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
+                  <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="78">ft</span>
+                </div>
               </div>
             </div>
             <input type="hidden" id="room-height" value="9.5" data-sd-id="79">
@@ -199,333 +255,800 @@
     </section>
   </main>
 </div>
-<script>const svg=document.getElementById("editor-svg");const roomPath=document.getElementById("room-polygon");const placedGroup=document.getElementById("placed-elements");const highlightsGroup=document.getElementById("edge-highlights");const ghost=document.getElementById("ghost-element");const elementsOnlyGroup=document.getElementById("elements-only");const coordTooltip=document.getElementById("coord-tooltip");const toast=document.getElementById("custom-toast");const toastMsg=document.getElementById("toast-msg");const btnUndo=document.getElementById("btn-undo");const btnRedo=document.getElementById("btn-redo");const widthInput=document.getElementById("room-width");const lengthInput=document.getElementById("room-length");const areaBadge=document.getElementById("area-badge");const labelWidthText=document.getElementById("label-width-text");const labelLengthText=document.getElementById("label-length-text");const ROOM_LAYOUT_SCALE=20;const roomNameInput=document.getElementById("room-name");const heightInput=document.getElementById("room-height");let currentUnit="ft";const FT_TO_M=0.3048;function createDefaultState(){return{roomPoints:[{x:250,y:100},{x:550,y:100},{x:550,y:350},{x:250,y:350}],elements:[],cutouts:[]}}let state=createDefaultState();let history=[];let historyIndex=-1;let draggingFromToolbar=null;let hoveredElementId=null;let hoveredElementType=null;let selectedResizeId=null;function isPointInRoom(x,y){const pts=state.roomPoints;const minX=Math.min(...pts.map(p=>p.x));const maxX=Math.max(...pts.map(p=>p.x));const minY=Math.min(...pts.map(p=>p.y));const maxY=Math.max(...pts.map(p=>p.y));const buffer=0.1;return x>=minX-buffer && x<=maxX+buffer && y>=minY-buffer && y<=maxY+buffer}function isCutoutValid(points){return points.every(p=>isPointInRoom(p.x,p.y))}function cloneObj(obj){return JSON.parse(JSON.stringify(obj))}function saveState(){if(historyIndex<history.length-1){history=history.slice(0,historyIndex+1)}history.push(cloneObj(state));historyIndex++;updateHistoryUI()}function updateHistoryUI(){btnUndo.disabled=historyIndex<=0;btnRedo.disabled=historyIndex>=history.length-1}function undo(){if(historyIndex>0){historyIndex--;state=cloneObj(history[historyIndex]);renderAll();updateHistoryUI();showToast("Action undone")}}function redo(){if(historyIndex<history.length-1){historyIndex++;state=cloneObj(history[historyIndex]);renderAll();updateHistoryUI();showToast("Action redone")}}function getSVGPoint(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const matrix=svg.getScreenCTM();if(!matrix)return{x:0,y:0};const transformed=pt.matrixTransform(matrix.inverse());return{x:transformed.x,y:transformed.y}}function getClosestPointOnPerimeter(x,y){let minDist=Infinity;let closest=null;let edgeIndex=-1;for(let i=0;i<state.roomPoints.length;i++){const p1=state.roomPoints[i];const p2=state.roomPoints[(i+1)%state.roomPoints.length];const dx=p2.x-p1.x;const dy=p2.y-p1.y;const lenSq=dx*dx+dy*dy;let t=((x-p1.x)*dx+(y-p1.y)*dy)/lenSq;t=Math.max(0,Math.min(1,t));const px=p1.x+t*dx;const py=p1.y+t*dy;const dist=Math.sqrt((x-px)**2+(y-py)**2);if(dist<minDist){minDist=dist;closest={x:px,y:py,angle:(Math.atan2(dy,dx)*180)/Math.PI};edgeIndex=i}}return{point:closest,dist:minDist,edgeIndex}}function showToast(msg){toastMsg.innerText=msg;toast.classList.add("visible");setTimeout(()=>toast.classList.remove("visible"),2000)}function renderAll(){renderRoom();renderElements();renderCutouts();updateDimensionsDisplay()}function renderRoom(){let d=state.roomPoints.map((p,i)=>`${i===0?"M":"L"} ${p.x} ${p.y}`).join(" ")+" Z";state.cutouts.forEach((c)=>{const p=c.points;d+=` M ${p[0].x} ${p[0].y} L ${p[1].x} ${p[1].y} L ${p[2].x} ${p[2].y} L ${p[3].x} ${p[3].y} Z`});roomPath.setAttribute("d",d);roomPath.setAttribute("fill-rule","evenodd");highlightsGroup.innerHTML="";state.roomPoints.forEach((p,i)=>{const p2=state.roomPoints[(i+1)%state.roomPoints.length];const line=document.createElementNS("http://www.w3.org/2000/svg","line");line.setAttribute("x1",p.x);line.setAttribute("y1",p.y);line.setAttribute("x2",p2.x);line.setAttribute("y2",p2.y);line.classList.add("edge-highlight");line.id=`edge-${i}`;highlightsGroup.appendChild(line)})}function renderElements(){elementsOnlyGroup.innerHTML="";state.elements.forEach((el)=>{const g=document.createElementNS("http://www.w3.org/2000/svg","g");const mirrorScale = el.isMirrored ? -1 : 1;
-  if (el.type === "door") {
-    const offset = -20;
-    g.innerHTML = `<use href="#door-template" transform="translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(${offset}, 0)" />`;
-  } else {
-    const w = el.width || 50;
-    const offset = -w/2;
-    g.innerHTML = `<g transform="translate(${el.x},${el.y}) rotate(${el.angle})">
+<script>
+  const svg = document.getElementById("editor-svg");
+  const roomPath = document.getElementById("room-polygon");
+  const placedGroup = document.getElementById("placed-elements");
+  const highlightsGroup = document.getElementById("edge-highlights");
+  const roomClipPath = document.getElementById("room-clip-path");
+  const ghost = document.getElementById("ghost-element");
+  const elementsOnlyGroup = document.getElementById("elements-only");
+  const coordTooltip = document.getElementById("coord-tooltip");
+  const toast = document.getElementById("custom-toast");
+  const toastMsg = document.getElementById("toast-msg");
+  const btnUndo = document.getElementById("btn-undo");
+  const btnRedo = document.getElementById("btn-redo");
+  const widthInput = document.getElementById("room-width");
+  const lengthInput = document.getElementById("room-length");
+  const areaBadge = document.getElementById("area-badge");
+  const labelWidthText = document.getElementById("label-width-text");
+  const labelLengthText = document.getElementById("label-length-text");
+  const roomNameInput = document.getElementById("room-name");
+  const heightInput = document.getElementById("room-height");
+
+  const ROOM_LAYOUT_SCALE = 20;
+  let currentUnit = "ft";
+  const FT_TO_M = 0.3048;
+
+  function createDefaultState() {
+    return { roomPoints: [{x:250,y:100},{x:550,y:100},{x:550,y:350},{x:250,y:350}], elements: [], cutouts: [], finalizedCutouts: [] };
+  }
+
+  let state = createDefaultState();
+  let history = [];
+  let historyIndex = -1;
+  let draggingFromToolbar = null;
+  let hoveredElementId = null;
+  let hoveredElementType = null;
+  let selectedResizeId = null;
+  let selectedCutoutId = null;
+
+  function isPointInRoom(x,y) {
+    const pts = state.roomPoints;
+    // Basic bounding box check
+    const minX = Math.min(...pts.map(p=>p.x));
+    const maxX = Math.max(...pts.map(p=>p.x));
+    const minY = Math.min(...pts.map(p=>p.y));
+    const maxY = Math.max(...pts.map(p=>p.y));
+    const buffer = 0.5;
+
+    // Using the polygon itself for complex shapes
+    if (x < minX - buffer || x > maxX + buffer || y < minY - buffer || y > maxY + buffer) return false;
+
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i].x, yi = pts[i].y;
+      const xj = pts[j].x, yj = pts[j].y;
+      const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  function getElementBounds(el) {
+    if (el.type === 'cutout') {
+      const xs = el.points.map(p => p.x);
+      const ys = el.points.map(p => p.y);
+      return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+    }
+    const buffer = el.type === 'window' ? (el.width || 50) / 2 : 20;
+    return { minX: el.x - buffer, maxX: el.x + buffer, minY: el.y - buffer, maxY: el.y + buffer };
+  }
+
+  function checkCollision(newEl, excludeId = null) {
+    const newBounds = getElementBounds(newEl);
+    const allItems = [...state.elements, ...state.cutouts.map(c => ({...c, type: 'cutout'}))];
+    return allItems.some(item => {
+      if (item.id === excludeId) return false;
+      const itemBounds = getElementBounds(item);
+      return !(newBounds.maxX < itemBounds.minX || newBounds.minX > itemBounds.maxX || newBounds.maxY < itemBounds.minY || newBounds.minY > itemBounds.maxY);
+    });
+  }
+
+  function isCutoutValid(points) {
+    // Must have at least one point in room or be partially overlapping
+    return points.some(p => isPointInRoom(p.x, p.y)) && points.length === 4;
+  }
+
+  function validateQuadrilateral(cutout) {
+    return cutout && cutout.points && cutout.points.length === 4;
+  }
+
+  function isValidVertexMovement(x, y, cutoutId, vIdx) {
+    const cutout = state.cutouts.find(c => c.id === cutoutId);
+    if (!cutout) return false;
+
+    // Check if point is too close to other vertices in the same cutout
+    for (let i = 0; i < cutout.points.length; i++) {
+      if (i === vIdx) continue;
+      const dist = Math.hypot(x - cutout.points[i].x, y - cutout.points[i].y);
+      if (dist < 10) return false;
+    }
+    return true;
+  }
+
+  function isPointInPolygon(x, y, pts) {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i].x, yi = pts[i].y;
+      const xj = pts[j].x, yj = pts[j].y;
+      const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  function pointToPathDistance(x, y, pts) {
+    let minD = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % pts.length];
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const lenSq = dx * dx + dy * dy;
+      let t = ((x - p1.x) * dx + (y - p1.y) * dy) / (lenSq || 1);
+      t = Math.max(0, Math.min(1, t));
+      const dist = Math.hypot(x - (p1.x + t * dx), y - (p1.y + t * dy));
+      if (dist < minD) minD = dist;
+    }
+    return minD;
+  }
+
+  function cloneObj(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  function saveState() {
+    if (historyIndex < history.length - 1) { history = history.slice(0, historyIndex + 1); }
+    history.push(cloneObj(state));
+    historyIndex++;
+    updateHistoryUI();
+  }
+
+  function updateHistoryUI() {
+    btnUndo.disabled = historyIndex <= 0;
+    btnRedo.disabled = historyIndex >= history.length - 1;
+  }
+
+  function undo() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      state = cloneObj(history[historyIndex]);
+      renderAll();
+      updateHistoryUI();
+      showToast("Action undone");
+    }
+  }
+
+  function redo() {
+    if (historyIndex < history.length - 1) {
+      historyIndex++;
+      state = cloneObj(history[historyIndex]);
+      renderAll();
+      updateHistoryUI();
+      showToast("Action redone");
+    }
+  }
+
+  function getSVGPoint(e) {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return {x:0, y:0};
+    const transformed = pt.matrixTransform(matrix.inverse());
+    return { x: transformed.x, y: transformed.y };
+  }
+
+  function getClosestPointOnPerimeter(x,y) {
+    let minDist = Infinity;
+    let closest = null;
+    let edgeIndex = -1;
+    for (let i = 0; i < state.roomPoints.length; i++) {
+      const p1 = state.roomPoints[i];
+      const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const lenSq = dx*dx + dy*dy;
+      let t = ((x - p1.x) * dx + (y - p1.y) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      const px = p1.x + t * dx;
+      const py = p1.y + t * dy;
+      const dist = Math.sqrt((x - px)**2 + (y - py)**2);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = { x: px, y: py, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+        edgeIndex = i;
+      }
+    }
+    return { point: closest, dist: minDist, edgeIndex };
+  }
+
+  function showToast(msg) {
+    toastMsg.innerText = msg;
+    toast.classList.add("visible");
+    setTimeout(() => toast.classList.remove("visible"), 2000);
+  }
+
+  function renderAll() {
+    renderRoom();
+    renderElements();
+    renderCutouts();
+    updateDimensionsDisplay();
+  }
+
+  function renderRoom() {
+    let d = state.roomPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+    roomPath.setAttribute("d", d);
+    roomClipPath.setAttribute("d", d);
+
+    const mask = document.getElementById("room-mask");
+    mask.innerHTML = '<rect width="100%" height="100%" fill="white" />';
+    roomPath.setAttribute("mask", "url(#room-mask)");
+
+    highlightsGroup.innerHTML = "";
+    state.roomPoints.forEach((p, i) => {
+      const p2 = state.roomPoints[(i + 1) % state.roomPoints.length];
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", p.x);
+      line.setAttribute("y1", p.y);
+      line.setAttribute("x2", p2.x);
+      line.setAttribute("y2", p2.y);
+      line.classList.add("edge-highlight");
+      line.id = `edge-${i}`;
+      highlightsGroup.appendChild(line);
+    });
+
+
+  }
+
+  function renderElements() {
+    elementsOnlyGroup.innerHTML = "";
+    state.elements.forEach((el) => {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const mirrorScale = el.isMirrored ? -1 : 1;
+      if (el.type === "door") {
+        const offset = -20;
+        g.innerHTML = `<use href="#door-template" transform="translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(${offset}, 0)" />`;
+      } else {
+        const w = el.width || 50;
+        const offset = -w/2;
+        g.innerHTML = `<g transform="translate(${el.x},${el.y}) rotate(${el.angle})">
            <rect x="${offset}" y="-4" width="${w}" height="8" fill="var(--garden-dark)" stroke="#F7F4D5" stroke-width="1.5" />
            <line x1="${offset + 5}" y1="-1.5" x2="${offset + w - 5}" y2="-1.5" stroke="#F7F4D5" stroke-width="1" />
            <line x1="${offset + 5}" y1="1.5" x2="${offset + w - 5}" y2="1.5" stroke="#F7F4D5" stroke-width="1" />
          </g>`;
-
-    if (selectedResizeId === el.id) {
-      const gTransform = g.querySelector('g');
-      const createHandle = (isRight) => {
-        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        c.setAttribute("cx", isRight ? w/2 : -w/2);
-        c.setAttribute("cy", 0);
-        c.setAttribute("r", 6);
-        c.setAttribute("fill", "var(--garden-rosy)");
-        c.setAttribute("stroke", "white");
-        c.setAttribute("class", "vertex-handle");
-        c.onmousedown = (e) => {
-          e.stopPropagation();
-          let hasResized = false;
-          const onMove = (mv) => {
-            hasResized = true;
-            const svgP = getSVGPoint(mv);
-            const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
-            const p1 = state.roomPoints[snap.edgeIndex];
-            const p2 = state.roomPoints[(snap.edgeIndex + 1) % state.roomPoints.length];
-            const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-            const dx = p2.x - p1.x; const dy = p2.y - p1.y;
-            const u = { x: dx/segLen, y: dy/segLen };
-            const centerDist = (el.x - p1.x) * u.x + (el.y - p1.y) * u.y;
-            const mouseDist = (svgP.x - p1.x) * u.x + (svgP.y - p1.y) * u.y;
-            let newW, newCenterDist;
-            if (isRight) {
-              const leftEndDist = centerDist - (el.width || 50)/2;
-              newW = Math.max(15, mouseDist - leftEndDist);
-              if (leftEndDist + newW > segLen) newW = segLen - leftEndDist;
-              newCenterDist = leftEndDist + newW/2;
-            } else {
-              const rightEndDist = centerDist + (el.width || 50)/2;
-              newW = Math.max(15, rightEndDist - mouseDist);
-              if (rightEndDist - newW < 0) newW = rightEndDist;
-              newCenterDist = rightEndDist - newW/2;
-            }
-            el.width = newW; el.x = p1.x + u.x * newCenterDist; el.y = p1.y + u.y * newCenterDist;
-            const ft = (el.width / 20).toFixed(1);
-            coordTooltip.classList.remove("hidden");
-            coordTooltip.setAttribute("x", svgP.x + 10); coordTooltip.setAttribute("y", svgP.y - 10);
-            coordTooltip.textContent = `${ft} ft (${Math.round(el.width)}px)`;
-            renderAll();
+        if (el.type === "window") {
+          const gTransform = g.querySelector('g');
+          const createHandle = (isRight) => {
+            const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            c.setAttribute("cx", isRight ? w/2 : -w/2);
+            c.setAttribute("cy", 0);
+            c.setAttribute("r", 6);
+            c.setAttribute("fill", "var(--garden-rosy)");
+            c.setAttribute("stroke", "white");
+            c.setAttribute("class", "vertex-handle");
+            c.onmousedown = (e) => {
+              e.stopPropagation();
+              let hasResized = false;
+              const onMove = (mv) => {
+                hasResized = true;
+                const svgP = getSVGPoint(mv);
+                const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+                const p1 = state.roomPoints[snap.edgeIndex];
+                const p2 = state.roomPoints[(snap.edgeIndex + 1) % state.roomPoints.length];
+                const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                const dx = p2.x - p1.x; const dy = p2.y - p1.y;
+                const u = { x: dx/segLen, y: dy/segLen };
+                const centerDist = (el.x - p1.x) * u.x + (el.y - p1.y) * u.y;
+                const mouseDist = (svgP.x - p1.x) * u.x + (svgP.y - p1.y) * u.y;
+                let newW, newCenterDist;
+                if (isRight) {
+                  const leftEndDist = Math.max(0, centerDist - (el.width || 50)/2);
+                  newW = Math.max(15, mouseDist - leftEndDist);
+                  if (leftEndDist + newW > segLen) newW = segLen - leftEndDist;
+                  newCenterDist = leftEndDist + newW/2;
+                } else {
+                  const rightEndDist = Math.min(segLen, centerDist + (el.width || 50)/2);
+                  newW = Math.max(15, rightEndDist - mouseDist);
+                  if (rightEndDist - newW < 0) newW = rightEndDist;
+                  newCenterDist = rightEndDist - newW/2;
+                }
+                el.width = newW; el.x = p1.x + u.x * newCenterDist; el.y = p1.y + u.y * newCenterDist;
+                const ft = (el.width / 20).toFixed(1);
+                coordTooltip.classList.remove("hidden");
+                coordTooltip.setAttribute("x", svgP.x + 10); coordTooltip.setAttribute("y", svgP.y - 10);
+                coordTooltip.textContent = `${ft} ft (${Math.round(el.width)}px)`;
+                renderAll();
+              };
+              const onUp = () => {
+                window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
+                coordTooltip.classList.add("hidden");
+                if (hasResized) saveState();
+              };
+              window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+            };
+            return c;
           };
-          const onUp = () => {
-            window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
-            coordTooltip.classList.add("hidden");
-            if (hasResized) saveState();
-          };
-          window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
-        };
-        return c;
-      };
-      gTransform.appendChild(createHandle(false));
-      gTransform.appendChild(createHandle(true));
-    }
-  }g.classList.add("element-hoverable");g.setAttribute("style","cursor: grab");if (el.type === "door") {
-    g.addEventListener("mouseenter", (e) => {
-      const tt = document.getElementById("door-flip-tooltip");
-      tt.setAttribute("x", el.x);
-      tt.setAttribute("y", el.y - 30);
-      tt.classList.remove("hidden");
-    });
-    g.addEventListener("mouseleave", () => {
-      document.getElementById("door-flip-tooltip").classList.add("hidden");
-    });
-  } g.addEventListener("dblclick", (e) => {
-    e.stopPropagation();
-    if (el.type === "door") {
-      el.isMirrored = !el.isMirrored; saveState(); renderAll(); showToast("Door swing mirrored");
-    } else if (el.type === "window") {
-      selectedResizeId = (selectedResizeId === el.id) ? null : el.id;
-      renderAll();
-      if (selectedResizeId) showToast("Window resize mode active");
-    }
-  }); g.addEventListener("mouseenter",()=>{hoveredElementId=el.id;hoveredElementType="element"});g.addEventListener("mouseleave",()=>{if(hoveredElementId===el.id){hoveredElementId=null;hoveredElementType=null}});g.onmousedown=(e)=>{e.stopPropagation();let hasMoved=false;g.setAttribute("style","cursor: grabbing");const onMouseMove=(mv)=>{hasMoved=true;const svgP=getSVGPoint(mv);const snap=getClosestPointOnPerimeter(svgP.x,svgP.y);document.querySelectorAll(".edge-highlight").forEach((h)=>h.classList.remove("active"));const edgeEl=document.getElementById(`edge-${snap.edgeIndex}`);if(edgeEl)edgeEl.classList.add("active");el.x=snap.point.x;el.y=snap.point.y;el.angle=snap.point.angle;
-    if (el.type === 'door') {
-      const useEl=g.querySelector("use"); const moveMirror = el.isMirrored ? -1 : 1;
-      useEl.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${moveMirror}, 1) translate(-20, 0)`);
-    } else {
-      const w = el.width || 50;
-      const gInner = g.querySelector('g');
-      if (gInner) gInner.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle})`);
-    }
-  };const onMouseUp=()=>{window.removeEventListener("mousemove",onMouseMove);window.removeEventListener("mouseup",onMouseUp);document.querySelectorAll(".edge-highlight").forEach((h)=>h.classList.remove("active"));g.setAttribute("style","cursor: grab");if(hasMoved){saveState();showToast(`${el.type} repositioned`)}};window.addEventListener("mousemove",onMouseMove);window.addEventListener("mouseup",onMouseUp)};elementsOnlyGroup.appendChild(g)})}function renderCutouts(){placedGroup.querySelectorAll(".cutout-group").forEach((el)=>el.remove());state.cutouts.forEach((c)=>{const g=document.createElementNS("http://www.w3.org/2000/svg","g");g.classList.add("cutout-group");const outline=document.createElementNS("http://www.w3.org/2000/svg","path");const d=`M ${c.points[0].x} ${c.points[0].y} L ${c.points[1].x} ${c.points[1].y} L ${c.points[2].x} ${c.points[2].y} L ${c.points[3].x} ${c.points[3].y} Z`;outline.setAttribute("d",d);outline.setAttribute("fill","rgba(211, 150, 140, 0.15)");outline.setAttribute("stroke","var(--garden-rosy)");outline.setAttribute("stroke-width","6");outline.setAttribute("stroke-opacity","0.1");outline.setAttribute("class","element-hoverable");outline.setAttribute("style","cursor: grab");const visualOutline=document.createElementNS("http://www.w3.org/2000/svg","path");visualOutline.setAttribute("d",d);visualOutline.setAttribute("fill","none");visualOutline.setAttribute("stroke","var(--garden-rosy)");visualOutline.setAttribute("stroke-width","1.5");visualOutline.setAttribute("stroke-dasharray","4 4");visualOutline.setAttribute("pointer-events","none");outline.onmousedown=(e)=>{e.stopPropagation();let hasMoved=false;outline.setAttribute("style","cursor: grabbing");const startSvgP=getSVGPoint(e);const originalPoints=c.points.map((p)=>({...p}));const onMouseMove=(mv)=>{hasMoved=true;const currentSvgP=getSVGPoint(mv);const snap=getClosestPointOnPerimeter(currentSvgP.x,currentSvgP.y);document.querySelectorAll(".edge-highlight").forEach((h)=>h.classList.remove("active"));const edgeEl=document.getElementById(`edge-${snap.edgeIndex}`);if(edgeEl)edgeEl.classList.add("active");const dx=snap.point.x-originalPoints[0].x;const dy=snap.point.y-originalPoints[0].y;const testPoints=originalPoints.map(p=>({x:p.x+dx,y:p.y+dy}));if(isCutoutValid(testPoints)){c.points.forEach((p,idx)=>{p.x=testPoints[idx].x;p.y=testPoints[idx].y});renderAll()}else{const edgeEl=document.getElementById(`edge-${snap.edgeIndex}`);if(edgeEl)edgeEl.classList.remove("active");}};const onMouseUp=()=>{window.removeEventListener("mousemove",onMouseMove);window.removeEventListener("mouseup",onMouseUp);document.querySelectorAll(".edge-highlight").forEach((h)=>h.classList.remove("active"));outline.setAttribute("style","cursor: grab");if(hasMoved){saveState();showToast("Cutout repositioned")}};window.addEventListener("mousemove",onMouseMove);window.addEventListener("mouseup",onMouseUp)};g.appendChild(outline);g.appendChild(visualOutline);c.points.forEach((p,pIdx)=>{const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");circle.setAttribute("cx",p.x);circle.setAttribute("cy",p.y);circle.setAttribute("r","4");circle.setAttribute("fill","var(--garden-rosy)");circle.setAttribute("stroke","white");circle.setAttribute("class","vertex-handle");circle.onmousedown=(e)=>{e.stopPropagation();circle.classList.add("dragging");coordTooltip.classList.remove("hidden");const originalVertex={x:p.x,y:p.y};const onMove=(mv)=>{const svgP=getSVGPoint(mv);const pts=c.points;const tx=pts[1].x-pts[0].x;const ty=pts[1].y-pts[0].y;const openingLength=Math.hypot(tx,ty)||1;const ux=tx/openingLength;const uy=ty/openingLength;const depthDirection=Math.sign((pts[2].x-pts[1].x)*-uy+(pts[2].y-pts[1].y)*ux)||1;const nx=-uy*depthDirection;const ny=ux*depthDirection;const currentDepth=Math.max(8,(pts[2].x-pts[1].x)*nx+(pts[2].y-pts[1].y)*ny);if(pIdx===0){const along=(svgP.x-pts[1].x)*ux+(svgP.y-pts[1].y)*uy;const distance=Math.min(-8,along);pts[0]={x:pts[1].x+ux*distance,y:pts[1].y+uy*distance};pts[3]={x:pts[0].x+nx*currentDepth,y:pts[0].y+ny*currentDepth}}else if(pIdx===1){const along=(svgP.x-pts[0].x)*ux+(svgP.y-pts[0].y)*uy;const distance=Math.max(8,along);pts[1]={x:pts[0].x+ux*distance,y:pts[0].y+uy*distance};pts[2]={x:pts[1].x+nx*currentDepth,y:pts[1].y+ny*currentDepth}}else{const base=pIdx===2?pts[1]:pts[0];const depth=Math.max(8,(svgP.x-base.x)*nx+(svgP.y-base.y)*ny);pts[2]={x:pts[1].x+nx*depth,y:pts[1].y+ny*depth};pts[3]={x:pts[0].x+nx*depth,y:pts[0].y+ny*depth}}const activePoint=pts[pIdx];if(!isPointInRoom(activePoint.x,activePoint.y)){pts[pIdx]={...originalVertex}}coordTooltip.setAttribute("x",activePoint.x+10);coordTooltip.setAttribute("y",activePoint.y-10);coordTooltip.textContent=`${Math.round(activePoint.x)}, ${Math.round(activePoint.y)}`;renderAll()};const onUp=()=>{circle.classList.remove("dragging");coordTooltip.classList.add("hidden");window.removeEventListener("mousemove",onMove);window.removeEventListener("mouseup",onUp);saveState()};window.addEventListener("mousemove",onMove);window.addEventListener("mouseup",onUp)};g.appendChild(circle)});g.onmouseenter=()=>{hoveredElementId=c.id;hoveredElementType="cutout"};g.onmouseleave=()=>{if(hoveredElementId===c.id)hoveredElementId=null};placedGroup.appendChild(g)})}function updateDimensionsDisplay(){const p1=state.roomPoints[0];const p2=state.roomPoints[1];const p3=state.roomPoints[2];const widthFt=Math.sqrt((p2.x-p1.x)**2+(p2.y-p1.y)**2)/20;const lengthFt=Math.sqrt((p3.x-p2.x)**2+(p3.y-p2.y)**2)/20;const displayWidth=currentUnit==="ft"?widthFt:widthFt*FT_TO_M;const displayLength=currentUnit==="ft"?lengthFt:lengthFt*FT_TO_M;widthInput.value=displayWidth.toFixed(currentUnit==="ft"?1:2);lengthInput.value=displayLength.toFixed(currentUnit==="ft"?1:2);const totalArea=currentUnit==="ft"?widthFt*lengthFt:widthFt*lengthFt*FT_TO_M*FT_TO_M;areaBadge.innerHTML=`Total Area: ${totalArea.toFixed(currentUnit==="ft"?1:2)} SQ ${currentUnit==="ft"?"FT":"M"}`;const minX=Math.min(...state.roomPoints.map((p)=>p.x));const maxX=Math.max(...state.roomPoints.map((p)=>p.x));const minY=Math.min(...state.roomPoints.map((p)=>p.y));const maxY=Math.max(...state.roomPoints.map((p)=>p.y));const midX=(minX+maxX)/2;const midY=(minY+maxY)/2;const offset=35;document.getElementById("line-width").setAttribute("x1",minX);document.getElementById("line-width").setAttribute("x2",maxX);document.getElementById("line-width").setAttribute("y1",minY-offset);document.getElementById("line-width").setAttribute("y2",minY-offset);document.getElementById("tick-width-start").setAttribute("x1",minX);document.getElementById("tick-width-start").setAttribute("x2",minX);document.getElementById("tick-width-start").setAttribute("y1",minY-offset-5);document.getElementById("tick-width-start").setAttribute("y2",minY-offset+5);document.getElementById("tick-width-end").setAttribute("x1",maxX);document.getElementById("tick-width-end").setAttribute("x2",maxX);document.getElementById("tick-width-end").setAttribute("y1",minY-offset-5);document.getElementById("tick-width-end").setAttribute("y2",minY-offset+5);labelWidthText.setAttribute("x",midX);labelWidthText.setAttribute("y",minY-offset-10);labelWidthText.textContent=`${displayWidth.toFixed(currentUnit==="ft"?1:2)} ${currentUnit.toUpperCase()}`;document.getElementById("label-width-sub").setAttribute("x",midX);document.getElementById("label-width-sub").setAttribute("y",minY-offset+28);document.getElementById("line-length").setAttribute("x1",minX-offset);document.getElementById("line-length").setAttribute("x2",minX-offset);document.getElementById("line-length").setAttribute("y1",minY);document.getElementById("line-length").setAttribute("y2",maxY);document.getElementById("tick-length-start").setAttribute("x1",minX-offset-5);document.getElementById("tick-length-start").setAttribute("x2",minX-offset+5);document.getElementById("tick-length-start").setAttribute("y1",minY);document.getElementById("tick-length-start").setAttribute("y2",minY);document.getElementById("tick-length-end").setAttribute("x1",minX-offset-5);document.getElementById("tick-length-end").setAttribute("x2",minX-offset+5);document.getElementById("tick-length-end").setAttribute("y1",maxY);document.getElementById("tick-length-end").setAttribute("y2",maxY);labelLengthText.setAttribute("x",minX-offset-10);labelLengthText.setAttribute("y",midY);labelLengthText.setAttribute("transform",`rotate(-90, ${minX-offset-10}, ${midY})`);labelLengthText.textContent=`${displayLength.toFixed(currentUnit==="ft"?1:2)} ${currentUnit.toUpperCase()}`;document.getElementById("label-length-sub").setAttribute("x",minX-offset+25);document.getElementById("label-length-sub").setAttribute("y",midY+15);document.getElementById("label-length-sub").setAttribute("transform",`rotate(-90, ${minX-offset+25}, ${midY+15})`)}function createSnappingCutout(targetX,targetY,size=30){const snap=getClosestPointOnPerimeter(targetX,targetY);const angleRad=(snap.point.angle*Math.PI)/180;const nx=Math.cos(angleRad+Math.PI/2);const ny=Math.sin(angleRad+Math.PI/2);const halfSize=size/2;const p0={x:snap.point.x-Math.cos(angleRad)*halfSize,y:snap.point.y-Math.sin(angleRad)*halfSize};const p1={x:snap.point.x+Math.cos(angleRad)*halfSize,y:snap.point.y+Math.sin(angleRad)*halfSize};const p2={x:p1.x+nx*size,y:p1.y+ny*size};const p3={x:p0.x+nx*size,y:p0.y+ny*size};return[p0,p1,p2,p3]}document.querySelectorAll('[draggable="true"]').forEach((btn)=>{btn.addEventListener("dragstart",(e)=>{draggingFromToolbar=btn.getAttribute("data-type");e.dataTransfer.setData("text/plain",draggingFromToolbar);e.dataTransfer.effectAllowed="copy";const icon=btn.querySelector(".w-16")||btn.firstElementChild;if(icon){const dragGhost=icon.cloneNode(true);dragGhost.style.cssText="position:absolute;top:-9999px;left:-9999px;width:64px;height:64px;margin:0;pointer-events:none;z-index:9999;";document.body.appendChild(dragGhost);e.dataTransfer.setDragImage(dragGhost,32,32);requestAnimationFrame(()=>dragGhost.remove())}btn.style.opacity="0.45"});btn.addEventListener("dragend",()=>{btn.style.opacity="1"})});svg.addEventListener("dragover",(e)=>{e.preventDefault();if(!draggingFromToolbar)return;const svgP=getSVGPoint(e);const snap=getClosestPointOnPerimeter(svgP.x,svgP.y);if(snap.dist<200){document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"));const edgeEl=document.getElementById(`edge-${snap.edgeIndex}`);if(edgeEl)edgeEl.classList.add("active");ghost.classList.remove("hidden");if(draggingFromToolbar==="cutout"){const pts=createSnappingCutout(svgP.x,svgP.y,35);ghost.innerHTML=`<path d="M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z" fill="rgba(211, 150, 140, 0.4)" stroke="white" stroke-dasharray="2 2" />`}else{const offset=draggingFromToolbar==="door"?-20:-25;ghost.innerHTML=`<use href="#${draggingFromToolbar}-template" transform="translate(${snap.point.x},${snap.point.y}) rotate(${snap.point.angle}) translate(${offset}, 0)" />`}}else{ghost.classList.add("hidden");document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"))}});svg.addEventListener("mousedown", (e) => {
-  if (e.target === svg) {
-    selectedResizeId = null;
-    renderAll();
-  }
-});
-svg.addEventListener("drop",(e)=>{e.preventDefault();if(!draggingFromToolbar)return;const svgP=getSVGPoint(e);const snap=getClosestPointOnPerimeter(svgP.x,svgP.y);if(snap.dist<200){if(draggingFromToolbar==="cutout"){const newPts=createSnappingCutout(svgP.x,svgP.y,35);if(isCutoutValid(newPts)){state.cutouts.push({id:Date.now(),type:"cutout",points:newPts})}else{showToast("Invalid position: Cutout must be inside room");ghost.classList.add("hidden");return}}else {
-  state.elements.push({
-    id: Date.now(),
-    type: draggingFromToolbar,
-    x: snap.point.x,
-    y: snap.point.y,
-    angle: snap.point.angle,
-    isMirrored: false,
-    width: draggingFromToolbar === 'window' ? 50 : undefined
-  });
-} saveState();renderAll();showToast(`${draggingFromToolbar} added`)}ghost.classList.add("hidden");document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"));draggingFromToolbar=null});btnUndo.onclick=undo;btnRedo.onclick=redo;window.addEventListener("keydown",(e)=>{if(e.ctrlKey||e.metaKey){if(e.key==="z"){e.preventDefault();undo();return}if(e.key==="y"){e.preventDefault();redo();return}}const tag=document.activeElement?.tagName;if(tag==="INPUT"||tag==="TEXTAREA")return;if((e.key==="Delete"||e.key==="Backspace")&&hoveredElementId){if(hoveredElementType==="element"){state.elements=state.elements.filter((el)=>el.id!==hoveredElementId)}else{state.cutouts=state.cutouts.filter((c)=>c.id!==hoveredElementId)}hoveredElementId=null;hoveredElementType=null;saveState();renderAll();showToast("Element deleted")}});widthInput.oninput=lengthInput.oninput=(e)=>{const rawW=widthInput.value;const rawL=lengthInput.value;if(rawW===""||rawL==="")return;let wVal=parseFloat(rawW);let lVal=parseFloat(rawL);if(isNaN(wVal)||isNaN(lVal)||wVal<=0||lVal<=0)return;if(currentUnit==="m"){wVal/=FT_TO_M;lVal/=FT_TO_M}const newWidth=wVal*20;const newLength=lVal*20;const cx=400;const cy=250;state.elements.forEach((el)=>{const snap=getClosestPointOnPerimeter(el.x,el.y);el.origEdge=snap.edgeIndex});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{const snap=getClosestPointOnPerimeter(p.x,p.y);p.origEdge=snap.edgeIndex})});const oldP1=state.roomPoints[0];const oldP2=state.roomPoints[1];const oldP3=state.roomPoints[2];const oldWidth=Math.abs(oldP2.x-oldP1.x);const oldLength=Math.abs(oldP3.y-oldP2.y);const scaleX=newWidth/oldWidth;const scaleY=newLength/oldLength;state.elements.forEach((el)=>{el.x=cx+(el.x-cx)*scaleX;el.y=cy+(el.y-cy)*scaleY});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{p.x=cx+(p.x-cx)*scaleX;p.y=cy+(p.y-cy)*scaleY})});state.roomPoints=[{x:cx-newWidth/2,y:cy-newLength/2},{x:cx+newWidth/2,y:cy-newLength/2},{x:cx+newWidth/2,y:cy+newLength/2},{x:cx-newWidth/2,y:cy+newLength/2}];state.elements.forEach((el)=>{const p1=state.roomPoints[el.origEdge];const p2=state.roomPoints[(el.origEdge+1)%4];const dx=p2.x-p1.x;const dy=p2.y-p1.y;const lenSq=dx*dx+dy*dy;if(lenSq===0)return;let t=((el.x-p1.x)*dx+(el.y-p1.y)*dy)/lenSq;t=Math.max(0,Math.min(1,t));el.x=p1.x+t*dx;el.y=p1.y+t*dy;el.angle=(Math.atan2(dy,dx)*180)/Math.PI});state.cutouts.forEach((c)=>{c.points.forEach((p)=>{const p1=state.roomPoints[p.origEdge];const p2=state.roomPoints[(p.origEdge+1)%4];const dx=p2.x-p1.x;const dy=p2.y-p1.y;const lenSq=dx*dx+dy*dy;if(lenSq===0)return;let t=((p.x-p1.x)*dx+(p.y-p1.y)*dy)/lenSq;t=Math.max(0,Math.min(1,t));p.x=p1.x+t*dx;p.y=p1.y+t*dy})});roomPath.classList.remove("flip-anim");void roomPath.offsetWidth;roomPath.classList.add("flip-anim");renderAll();saveState()};svg.addEventListener("dragleave",()=>{ghost.classList.add("hidden");document.querySelectorAll(".edge-highlight").forEach((el)=>el.classList.remove("active"))});const toggleFt=document.getElementById("toggle-ft");const toggleM=document.getElementById("toggle-m");const unitIndicators=document.querySelectorAll(".unit-indicator");function setUnit(unit){if(currentUnit===unit)return;currentUnit=unit;toggleFt.classList.toggle("bg-[#D3968C]",unit==="ft");toggleFt.classList.toggle("text-[#0A3323]",unit==="ft");toggleFt.classList.toggle("text-[#F7F4D5]/40",unit==="m");toggleM.classList.toggle("bg-[#D3968C]",unit==="m");toggleM.classList.toggle("text-[#0A3323]",unit==="m");toggleM.classList.toggle("text-[#F7F4D5]/40",unit==="ft");unitIndicators.forEach((span)=>(span.textContent=unit));renderAll()}toggleFt.onclick=()=>setUnit("ft");toggleM.onclick=()=>setUnit("m");saveState();renderAll();
-
-/* ── Save & Continue ───────────────────────────────────────────────────────
-   Persists the layout to localStorage (read back by the results page via
-   src/utils/roomLayout.ts) and to the API, then moves on to inspiration. */
-const ROOM_LAYOUT_STORAGE_KEY = "blueprintRoomLayout";
-const ROOM_LAYOUT_VERSION = 1;
-const ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
-
-function getStateDimensionsFt() {
-  const [p1, p2, p3] = state.roomPoints;
-  return {
-    widthFt:  Math.hypot(p2.x - p1.x, p2.y - p1.y) / ROOM_LAYOUT_SCALE,
-    lengthFt: Math.hypot(p3.x - p2.x, p3.y - p2.y) / ROOM_LAYOUT_SCALE,
-  };
-}
-
-function captureRoomLayoutSnapshot() {
-  const dims = getStateDimensionsFt();
-  // The hidden height input is always in feet — setUnit() doesn't convert it.
-  const heightFt = parseFloat(heightInput.value) || 8;
-  const roomName = (roomNameInput && roomNameInput.value.trim()) || "My Room";
-  return {
-    version:    ROOM_LAYOUT_VERSION,
-    roomId:     localStorage.getItem("blueprintCurrentRoomId") || undefined,
-    roomName,
-    widthFt:    Number(dims.widthFt.toFixed(1)),
-    lengthFt:   Number(dims.lengthFt.toFixed(1)),
-    heightFt:   Number(heightFt.toFixed(1)),
-    sqft:       Math.round(dims.widthFt * dims.lengthFt),
-    scale:      ROOM_LAYOUT_SCALE,
-    viewBox:    ROOM_LAYOUT_VIEWBOX,
-    roomPoints: cloneObj(state.roomPoints),
-    elements:   cloneObj(state.elements),
-    cutouts:    cloneObj(state.cutouts),
-    savedAt:    new Date().toISOString(),
-  };
-}
-
-function persistRoomLayout(layout) {
-  localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
-}
-
-/* Rehydrate a previously saved layout so navigating back to this page — e.g.
-   via the workflow stepper above — keeps the user's room instead of resetting
-   to the default. New rooms clear this key, so it's a no-op for a fresh start. */
-function restorePersistedLayout() {
-  let raw;
-  try {
-    raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY);
-  } catch {
-    return false;
-  }
-  if (!raw) return false;
-
-  let layout;
-  try {
-    layout = JSON.parse(raw);
-  } catch {
-    return false;
-  }
-  if (!layout || layout.version !== ROOM_LAYOUT_VERSION) return false;
-
-  // Don't rehydrate one room's layout onto another.
-  const currentRoomId = localStorage.getItem("blueprintCurrentRoomId");
-  if (layout.roomId && currentRoomId && layout.roomId !== currentRoomId) return false;
-
-  if (Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 3) {
-    state.roomPoints = cloneObj(layout.roomPoints);
-  }
-  if (Array.isArray(layout.elements)) state.elements = cloneObj(layout.elements);
-  if (Array.isArray(layout.cutouts)) state.cutouts = cloneObj(layout.cutouts);
-  if (roomNameInput && layout.roomName) roomNameInput.value = layout.roomName;
-  // currentUnit is "ft" at init, matching the stored heightFt.
-  if (heightInput && Number.isFinite(layout.heightFt)) {
-    heightInput.value = String(layout.heightFt);
-  }
-  return true;
-}
-
-if (restorePersistedLayout()) {
-  // Drop the default-room history entry so Undo doesn't jump back to it.
-  history = [];
-  historyIndex = -1;
-  saveState();
-  renderAll();
-}
-
-document.getElementById("cta-save-continue").addEventListener("click", async () => {
-  const btn = document.getElementById("cta-save-continue");
-  const userId = localStorage.getItem("blueprintUserId");
-  if (!userId) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
-  const layoutSnapshot = {
-    ...captureRoomLayoutSnapshot(),
-    roomId: existingRoomId || undefined,
-  };
-  const { widthFt, lengthFt, heightFt, roomName } = layoutSnapshot;
-
-  // Write locally first so the next page still works if the API call fails.
-  localStorage.setItem("blueprintCurrentRoomName", roomName);
-  localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
-  localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
-  localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
-  persistRoomLayout(layoutSnapshot);
-
-  btn.disabled = true;
-  btn.innerHTML = "Saving...";
-  try {
-    const res = await fetch(
-      existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-      {
-        method: existingRoomId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          name: roomName,
-          widthFt,
-          lengthFt,
-          heightFt,
-          sqft: layoutSnapshot.sqft,
-          layout: layoutSnapshot,
-        }),
-      },
-    );
-    if (!res.ok) throw new Error("save failed (" + res.status + ")");
-    const room = await res.json();
-    localStorage.setItem("blueprintCurrentRoomId", room._id);
-    persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
-  } catch (err) {
-    console.warn("[save room]", err);
-    showToast("Saved locally — continuing");
-  }
-  window.location.href = "inspo-upload.html";
-});
-</script>
-<script>
-  document.getElementById("cta-save-continue").addEventListener("click", async () => {
-    const button = document.getElementById("cta-save-continue");
-    const userId = localStorage.getItem("blueprintUserId");
-    const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
-    const roomName = roomNameInput.value.trim();
-    const widthFt = Math.hypot(
-      state.roomPoints[1].x - state.roomPoints[0].x,
-      state.roomPoints[1].y - state.roomPoints[0].y
-    ) / ROOM_LAYOUT_SCALE;
-    const lengthFt = Math.hypot(
-      state.roomPoints[2].x - state.roomPoints[1].x,
-      state.roomPoints[2].y - state.roomPoints[1].y
-    ) / ROOM_LAYOUT_SCALE;
-    const heightFt = Number(heightInput.value);
-
-    if (!userId) {
-      showToast("Please sign in before saving");
-      return;
-    }
-    if (!roomName || widthFt <= 0 || lengthFt <= 0 || heightFt <= 0) {
-      showToast("Enter valid room details");
-      return;
-    }
-
-    const layout = {
-      version: 1,
-      roomId: existingRoomId || undefined,
-      roomName,
-      widthFt,
-      lengthFt,
-      heightFt,
-      sqft: widthFt * lengthFt,
-      scale: ROOM_LAYOUT_SCALE,
-      viewBox: { width: 800, height: 500 },
-      roomPoints: state.roomPoints,
-      elements: state.elements,
-      cutouts: state.cutouts,
-      savedAt: new Date().toISOString()
-    };
-    const payload = { userId, name: roomName, widthFt, lengthFt, heightFt, layout };
-
-    button.disabled = true;
-    button.textContent = "Saving...";
-
-    try {
-      const response = await fetch(
-        existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-        {
-          method: existingRoomId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          gTransform.appendChild(createHandle(false));
+          gTransform.appendChild(createHandle(true));
         }
-      );
-      const savedRoom = await response.json();
-      if (!response.ok) {
-        throw new Error(savedRoom.error || "Could not save room");
+      }
+      g.classList.add("element-hoverable");
+      g.setAttribute("style", "cursor: grab");
+      if (el.type === "door") {
+        g.addEventListener("mouseenter", (e) => {
+          const tt = document.getElementById("door-flip-tooltip");
+          tt.setAttribute("transform", `translate(${el.x},${el.y-30})`);
+          tt.classList.remove("hidden");
+        });
+        g.addEventListener("mouseleave", () => {
+          document.getElementById("door-flip-tooltip").classList.add("hidden");
+        });
+      }
+      g.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        if (el.type === "door") {
+          el.isMirrored = !el.isMirrored; saveState(); renderAll(); showToast("Door swing mirrored");
+        }
+      });
+      g.addEventListener("mouseenter", () => { hoveredElementId = el.id; hoveredElementType = "element"; });
+      g.addEventListener("mouseleave", () => { if (hoveredElementId === el.id) { hoveredElementId = null; hoveredElementType = null; } });
+      g.onmousedown = (e) => {
+        e.stopPropagation();
+        let hasMoved = false;
+        g.setAttribute("style", "cursor: grabbing");
+        const onMouseMove = (mv) => {
+          hasMoved = true;
+          const svgP = getSVGPoint(mv);
+          const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+          const testEl = { ...el, x: snap.point.x, y: snap.point.y };
+          if (checkCollision(testEl, el.id)) return;
+          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+          const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+          if (edgeEl) edgeEl.classList.add("active");
+          el.x = snap.point.x; el.y = snap.point.y; el.angle = snap.point.angle;
+          if (el.type === 'door') {
+            const useEl = g.querySelector("use"); const moveMirror = el.isMirrored ? -1 : 1;
+            useEl.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(-20, 0)`);
+          } else {
+            const w = el.width || 50;
+            const gInner = g.querySelector('g');
+            if (gInner) gInner.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle})`);
+          }
+        };
+        const onMouseUp = () => {
+          window.removeEventListener("mousemove", onMouseMove); window.removeEventListener("mouseup", onMouseUp);
+          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+          g.setAttribute("style", "cursor: grab");
+          if (hasMoved) { saveState(); showToast(`${el.type} repositioned`); }
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      };
+      // Add delete button
+      const delBtn = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      delBtn.setAttribute("transform", `translate(${el.x + 15},${el.y - 5})`);
+      delBtn.style.cursor = "pointer";
+      delBtn.style.opacity = "0.8";
+      delBtn.classList.add("delete-btn");
+
+      delBtn.innerHTML = `
+      <circle r="10" fill="rgba(139,58,58,0.3)" stroke="#8B3A3A" stroke-width="1.5" />
+      <text y="4.5" text-anchor="middle" fill="#8B3A3A" style="font-size: 14px; font-weight: bold; pointer-events: none;">×</text>
+    `;
+
+      delBtn.onmouseenter = () => delBtn.style.opacity = "1";
+      delBtn.onmouseleave = () => delBtn.style.opacity = "0.8";
+      delBtn.onmousedown = (e) => {
+        e.stopPropagation();
+        state.elements = state.elements.filter((item) => item.id !== el.id);
+        saveState();
+        renderAll();
+        showToast(`${el.type.charAt(0).toUpperCase() + el.type.slice(1)} deleted`);
+      };
+
+      elementsOnlyGroup.appendChild(g);
+      elementsOnlyGroup.appendChild(delBtn);
+    });
+  }
+
+  function renderCutouts() {
+    placedGroup.querySelectorAll(".cutout-group").forEach((el) => el.remove());
+    state.cutouts.forEach((c) => {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.classList.add("cutout-group");
+      g.setAttribute("clip-path", "url(#room-clip)");
+      const d = `M ${c.points[0].x} ${c.points[0].y} L ${c.points[1].x} ${c.points[1].y} L ${c.points[2].x} ${c.points[2].y} L ${c.points[3].x} ${c.points[3].y} Z`;
+
+      if (selectedCutoutId !== c.id) {
+        const visibleOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        visibleOutline.setAttribute("d", d);
+        visibleOutline.setAttribute("fill", "rgba(211, 150, 140, 0.15)");
+        visibleOutline.setAttribute("stroke", "var(--garden-rosy)");
+        visibleOutline.setAttribute("stroke-width", "2");
+        visibleOutline.setAttribute("class", "cursor-pointer element-hoverable");
+        visibleOutline.onmousedown = (e) => {
+          e.stopPropagation();
+          selectedCutoutId = c.id;
+          renderAll();
+        };
+        g.appendChild(visibleOutline);
+      } else {
+        const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        outline.setAttribute("d", d);
+        outline.setAttribute("fill", "rgba(211, 150, 140, 0.15)");
+        outline.setAttribute("stroke", "var(--garden-rosy)");
+        outline.setAttribute("stroke-width", "6");
+        outline.setAttribute("stroke-opacity", "0.1");
+        outline.setAttribute("class", "element-hoverable");
+        outline.setAttribute("style", "cursor: grab");
+        const visualOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        visualOutline.setAttribute("d", d);
+        visualOutline.setAttribute("fill", "none");
+        visualOutline.setAttribute("stroke", "var(--garden-rosy)");
+        visualOutline.setAttribute("stroke-width", "1.5");
+        visualOutline.setAttribute("stroke-dasharray", "4 4");
+        visualOutline.setAttribute("pointer-events", "none");
+        outline.onmousedown = (e) => {
+          e.stopPropagation();
+          let hasMoved = false;
+          outline.setAttribute("style", "cursor: grabbing");
+          const startSvgP = getSVGPoint(e);
+          const originalPoints = c.points.map((p) => ({ ...p }));
+          const onMouseMove = (mv) => {
+            hasMoved = true;
+            const currentSvgP = getSVGPoint(mv);
+            const snap = getClosestPointOnPerimeter(currentSvgP.x, currentSvgP.y);
+            const dx = snap.point.x - originalPoints[0].x;
+            const dy = snap.point.y - originalPoints[0].y;
+            const testPoints = originalPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
+            if (isCutoutValid(testPoints)) {
+              document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+              const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+              if (edgeEl) edgeEl.classList.add("active");
+              c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
+              renderAll();
+            }
+          };
+          const onMouseUp = () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+            document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+            outline.setAttribute("style", "cursor: grab");
+            if (hasMoved) { saveState(); showToast("Cutout repositioned"); }
+          };
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onMouseUp);
+        };
+        g.appendChild(outline);
+        g.appendChild(visualOutline);
+        c.points.forEach((p, pIdx) => {
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", p.x); circle.setAttribute("cy", p.y);
+          circle.setAttribute("r", "4"); circle.setAttribute("fill", "var(--garden-rosy)");
+          circle.setAttribute("stroke", "white"); circle.setAttribute("class", "vertex-handle");
+          circle.onmousedown = (e) => {
+            e.stopPropagation(); circle.classList.add("dragging"); coordTooltip.classList.remove("hidden");
+            const originalVertex = { x: p.x, y: p.y };
+            const onMove = (mv) => {
+              const svgP = getSVGPoint(mv);
+              const oldPts = cloneObj(c.points);
+
+              // Apply new free-form position directly
+              c.points[pIdx].x = svgP.x;
+              c.points[pIdx].y = svgP.y;
+
+              // Validation: Vertex spacing and room inclusion
+              const collisionCheck = isValidVertexMovement(c.points[pIdx].x, c.points[pIdx].y, c.id, pIdx);
+              const roomCheck = isCutoutValid(c.points);
+
+              if (!collisionCheck || !roomCheck) {
+                c.points = oldPts;
+                return;
+              }
+
+              const activePoint = c.points[pIdx];
+              coordTooltip.setAttribute("x", activePoint.x + 10); coordTooltip.setAttribute("y", activePoint.y - 10);
+              coordTooltip.textContent = `${Math.round(activePoint.x)}, ${Math.round(activePoint.y)}`;
+              renderAll();
+            };
+            const onUp = () => { circle.classList.remove("dragging"); coordTooltip.classList.add("hidden"); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); saveState(); };
+            window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+          };
+          g.appendChild(circle);
+        });
+      }
+      g.onmouseenter = () => { hoveredElementId = c.id; hoveredElementType = "cutout"; };
+      g.onmouseleave = () => { if (hoveredElementId === c.id) hoveredElementId = null; };
+      placedGroup.appendChild(g);
+    });
+  }
+
+  function updateDimensionsDisplay() {
+    const pts = state.roomPoints;
+    // Width/Length labels for complex polygons are tricky, use the bounding box
+    const minX = Math.min(...pts.map(p=>p.x));
+    const maxX = Math.max(...pts.map(p=>p.x));
+    const minY = Math.min(...pts.map(p=>p.y));
+    const maxY = Math.max(...pts.map(p=>p.y));
+
+    const widthFt = (maxX - minX) / 20;
+    const lengthFt = (maxY - minY) / 20;
+    const displayWidth = currentUnit === "ft" ? widthFt : widthFt * FT_TO_M;
+    const displayLength = currentUnit === "ft" ? lengthFt : lengthFt * FT_TO_M;
+    widthInput.value = displayWidth.toFixed(currentUnit === "ft" ? 1 : 2);
+    lengthInput.value = displayLength.toFixed(currentUnit === "ft" ? 1 : 2);
+
+    // Area is accurate for any polygon
+    let area = 0;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      area += (pts[j].x + pts[i].x) * (pts[j].y - pts[i].y);
+    }
+    area = Math.abs(area) / 2 / (20 * 20);
+
+    const displayArea = currentUnit === "ft" ? area : area * FT_TO_M * FT_TO_M;
+    areaBadge.innerHTML = `Total Area: ${displayArea.toFixed(currentUnit === "ft" ? 1 : 2)} SQ ${currentUnit === "ft" ? "FT" : "M"}`;
+
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    const offset = 35;
+    document.getElementById("line-width").setAttribute("x1", minX); document.getElementById("line-width").setAttribute("x2", maxX);
+    document.getElementById("line-width").setAttribute("y1", minY - offset); document.getElementById("line-width").setAttribute("y2", minY - offset);
+    document.getElementById("tick-width-start").setAttribute("x1", minX); document.getElementById("tick-width-start").setAttribute("x2", minX);
+    document.getElementById("tick-width-start").setAttribute("y1", minY - offset - 5); document.getElementById("tick-width-start").setAttribute("y2", minY - offset + 5);
+    document.getElementById("tick-width-end").setAttribute("x1", maxX); document.getElementById("tick-width-end").setAttribute("x2", maxX);
+    document.getElementById("tick-width-end").setAttribute("y1", minY - offset - 5); document.getElementById("tick-width-end").setAttribute("y2", minY - offset + 5);
+    labelWidthText.setAttribute("x", midX); labelWidthText.setAttribute("y", minY - offset - 10);
+    labelWidthText.textContent = `${displayWidth.toFixed(currentUnit === "ft" ? 1 : 2)} ${currentUnit.toUpperCase()}`;
+    document.getElementById("label-width-sub").setAttribute("x", midX); document.getElementById("label-width-sub").setAttribute("y", minY - offset + 28);
+    document.getElementById("line-length").setAttribute("x1", minX - offset); document.getElementById("line-length").setAttribute("x2", minX - offset);
+    document.getElementById("line-length").setAttribute("y1", minY); document.getElementById("line-length").setAttribute("y2", maxY);
+    document.getElementById("tick-length-start").setAttribute("x1", minX - offset - 5); document.getElementById("tick-length-start").setAttribute("x2", minX - offset + 5);
+    document.getElementById("tick-length-start").setAttribute("y1", minY); document.getElementById("tick-length-start").setAttribute("y2", minY);
+    document.getElementById("tick-length-end").setAttribute("x1", minX - offset - 5); document.getElementById("tick-length-end").setAttribute("x2", minX - offset + 5);
+    document.getElementById("tick-length-end").setAttribute("y1", maxY); document.getElementById("tick-length-end").setAttribute("y2", maxY);
+    labelLengthText.setAttribute("x", minX - offset - 10); labelLengthText.setAttribute("y", midY);
+    labelLengthText.setAttribute("transform", `rotate(-90, ${minX - offset - 10}, ${midY})`);
+    labelLengthText.textContent = `${displayLength.toFixed(currentUnit === "ft" ? 1 : 2)} ${currentUnit.toUpperCase()}`;
+    document.getElementById("label-length-sub").setAttribute("x", minX - offset + 25); document.getElementById("label-length-sub").setAttribute("y", midY + 15);
+    document.getElementById("label-length-sub").setAttribute("transform", `rotate(-90, ${minX - offset + 25}, ${midY + 15})`);
+  }
+
+  function createSnappingCutout(targetX, targetY, size = 30) {
+    const snap = getClosestPointOnPerimeter(targetX, targetY);
+    const angleRad = (snap.point.angle * Math.PI) / 180;
+    const nx = Math.cos(angleRad + Math.PI / 2);
+    const ny = Math.sin(angleRad + Math.PI / 2);
+    const halfSize = size / 2;
+    const p0 = { x: snap.point.x - Math.cos(angleRad) * halfSize, y: snap.point.y - Math.sin(angleRad) * halfSize };
+    const p1 = { x: snap.point.x + Math.cos(angleRad) * halfSize, y: snap.point.y + Math.sin(angleRad) * halfSize };
+    const p2 = { x: p1.x + nx * size, y: p1.y + ny * size };
+    const p3 = { x: p0.x + nx * size, y: p0.y + ny * size };
+    return [p0, p1, p2, p3];
+  }
+
+  function finalizeCutouts() {
+    if (state.cutouts.length === 0) return;
+
+    // Sort cutouts by edgeIndex descending to avoid index shifting problems
+    const sortedCutouts = [...state.cutouts].sort((a, b) => b.edgeIndex - a.edgeIndex);
+
+    sortedCutouts.forEach(c => {
+      if (!validateQuadrilateral(c)) {
+        showToast("Invalid cutout shape skipped");
+        return;
+      }
+      const i = c.edgeIndex;
+      const p0 = c.points[0], p1 = c.points[1], p2 = c.points[2], p3 = c.points[3];
+
+      // We replace the segment between roomPoints[i] and roomPoints[(i+1)%len]
+      // with the path: p0 -> p3 -> p2 -> p1
+      // This effectively 'removes' only the section of the wall the cutout touched
+
+      const newPoints = [];
+      for (let j = 0; j < state.roomPoints.length; j++) {
+        newPoints.push(state.roomPoints[j]);
+        if (j === i) {
+          newPoints.push(p0, p3, p2, p1);
+        }
+      }
+      state.roomPoints = newPoints;
+      state.finalizedCutouts.push(cloneObj(c));
+    });
+
+    state.cutouts = [];
+    selectedCutoutId = null;
+    saveState();
+    renderAll();
+    showToast("Room boundary updated");
+  }
+
+  document.querySelectorAll('[draggable="true"]').forEach((btn) => {
+    btn.addEventListener("dragstart", (e) => {
+      draggingFromToolbar = btn.getAttribute("data-type");
+      e.dataTransfer.setData("text/plain", draggingFromToolbar);
+      e.dataTransfer.effectAllowed = "copy";
+      btn.style.opacity = "0.45";
+    });
+    btn.addEventListener("dragend", () => { btn.style.opacity = "1"; });
+  });
+
+  svg.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    if (!draggingFromToolbar) return;
+    const svgP = getSVGPoint(e);
+    const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+    if (snap.dist < 200) {
+      document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
+      const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+      if (edgeEl) edgeEl.classList.add("active");
+      ghost.classList.remove("hidden");
+      if (draggingFromToolbar === "cutout") {
+        const pts = createSnappingCutout(svgP.x, svgP.y, 35);
+        ghost.innerHTML = `<path d="M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z" fill="rgba(211, 150, 140, 0.4)" stroke="white" stroke-dasharray="2 2" />`;
+      } else {
+        const offset = draggingFromToolbar === "door" ? -20 : -25;
+        ghost.innerHTML = `<use href="#${draggingFromToolbar}-template" transform="translate(${snap.point.x},${snap.point.y}) rotate(${snap.point.angle}) translate(${offset}, 0)" />`;
+      }
+    } else {
+      ghost.classList.add("hidden");
+      document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
+    }
+  });
+
+  svg.addEventListener("mousedown", (e) => {
+    if (e.target === svg || e.target.id === 'svg-bg') {
+      const svgP = getSVGPoint(e);
+      const isOutside = !isPointInRoom(svgP.x, svgP.y);
+
+      if (isOutside && state.cutouts.length > 0) {
+        finalizeCutouts();
+      } else if (state.cutouts.length === 0) {
+        let reactivated = false;
+        if (state.finalizedCutouts) {
+          for (let i = state.finalizedCutouts.length - 1; i >= 0; i--) {
+            const fc = state.finalizedCutouts[i];
+            const dist = pointToPathDistance(svgP.x, svgP.y, fc.points);
+            const inside = isPointInPolygon(svgP.x, svgP.y, fc.points);
+            if (dist < 15 || inside) {
+              const p0 = fc.points[0];
+              const idx = state.roomPoints.findIndex(rp => Math.hypot(rp.x - p0.x, rp.y - p0.y) < 0.5);
+              if (idx !== -1) {
+                state.roomPoints.splice(idx, 4);
+                state.cutouts.push(state.finalizedCutouts.splice(i, 1)[0]);
+                selectedCutoutId = fc.id;
+                reactivated = true;
+                showToast("Cutout reactivated");
+                break;
+              }
+            }
+          }
+        }
+        if (!reactivated) selectedCutoutId = null;
+      } else {
+        selectedCutoutId = null;
       }
 
-      const roomId = String(savedRoom._id || existingRoomId);
-      layout.roomId = roomId;
-      localStorage.setItem("blueprintCurrentRoomId", roomId);
-      localStorage.setItem("blueprintCurrentRoomName", roomName);
-      localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
-      localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
-      localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
-      localStorage.setItem("blueprintRoomLayout", JSON.stringify(layout));
-      window.location.href = "inspo-upload.html";
-    } catch (error) {
-      console.error("Room save failed:", error);
-      showToast(error.message || "Could not save room");
-      button.disabled = false;
-      button.innerHTML = 'Save &amp; Continue <iconify-icon icon="ph:arrow-right-bold" class="text-xl"></iconify-icon>';
+      selectedResizeId = null;
+      renderAll();
     }
   });
+
+  svg.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (!draggingFromToolbar) return;
+    const svgP = getSVGPoint(e);
+    const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
+    if (snap.dist < 200) {
+      if (draggingFromToolbar === "cutout") {
+        const newPts = createSnappingCutout(svgP.x, svgP.y, 35);
+        if (isCutoutValid(newPts)) {
+          const newCutout = { id: Date.now(), type: "cutout", points: newPts, edgeIndex: snap.edgeIndex };
+          if (checkCollision(newCutout)) {
+            showToast("Cutout cannot intersect with existing items");
+            ghost.classList.add("hidden");
+            return;
+          }
+          state.cutouts.push(newCutout);
+        }
+        else { showToast("Cutout must overlap room interior"); ghost.classList.add("hidden"); return; }
+      } else {
+        const newEl = { id: Date.now(), type: draggingFromToolbar, x: snap.point.x, y: snap.point.y, angle: snap.point.angle, isMirrored: false, width: draggingFromToolbar === 'window' ? 50 : undefined };
+        if (checkCollision(newEl)) {
+          showToast("Element cannot intersect with existing items");
+          ghost.classList.add("hidden");
+          return;
+        }
+        state.elements.push(newEl);
+      }
+      saveState(); renderAll(); showToast(`${draggingFromToolbar} added`);
+    }
+    ghost.classList.add("hidden");
+    document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
+    draggingFromToolbar = null;
+  });
+
+  btnUndo.onclick = undo;
+  btnRedo.onclick = redo;
+  window.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === "z") { e.preventDefault(); undo(); return; }
+      if (e.key === "y") { e.preventDefault(); redo(); return; }
+    }
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if ((e.key === "Delete" || e.key === "Backspace") && hoveredElementId) {
+      if (hoveredElementType === "element") { state.elements = state.elements.filter((el) => el.id !== hoveredElementId); }
+      else { state.cutouts = state.cutouts.filter((c) => c.id !== hoveredElementId); }
+      hoveredElementId = null; hoveredElementType = null; saveState(); renderAll(); showToast("Element deleted");
+    }
+  });
+
+  widthInput.oninput = lengthInput.oninput = (e) => {
+    const rawW = widthInput.value; const rawL = lengthInput.value;
+    if (rawW === "" || rawL === "") return;
+    let wVal = parseFloat(rawW); let lVal = parseFloat(rawL);
+    if (isNaN(wVal) || isNaN(lVal) || wVal <= 0 || lVal <= 0) return;
+    if (currentUnit === "m") { wVal /= FT_TO_M; lVal /= FT_TO_M; }
+
+    const clampedW = Math.min(50, Math.max(5, wVal));
+    const clampedL = Math.min(50, Math.max(5, lVal));
+
+    if (clampedW !== wVal || clampedL !== lVal) {
+      showToast("Room dimensions must be between 5 and 50 feet");
+      wVal = clampedW;
+      lVal = clampedL;
+    }
+    const newWidth = wVal * 20; const newLength = lVal * 20;
+    const cx = 400; const cy = 250;
+
+    // For complex polygons, dimension scaling just scales all points from center
+    const minX = Math.min(...state.roomPoints.map(p=>p.x));
+    const maxX = Math.max(...state.roomPoints.map(p=>p.x));
+    const minY = Math.min(...state.roomPoints.map(p=>p.y));
+    const maxY = Math.max(...state.roomPoints.map(p=>p.y));
+    const oldWidth = maxX - minX;
+    const oldLength = maxY - minY;
+
+    const scaleX = newWidth / (oldWidth || 1);
+    const scaleY = newLength / (oldLength || 1);
+
+    state.roomPoints.forEach(p => {
+      p.x = cx + (p.x - cx) * scaleX;
+      p.y = cy + (p.y - cy) * scaleY;
+    });
+    state.elements.forEach(el => {
+      el.x = cx + (el.x - cx) * scaleX;
+      el.y = cy + (el.y - cy) * scaleY;
+    });
+    state.cutouts.forEach(c => {
+      c.points.forEach(p => {
+        p.x = cx + (p.x - cx) * scaleX;
+        p.y = cy + (p.y - cy) * scaleY;
+      });
+    });
+    if (state.finalizedCutouts) {
+      state.finalizedCutouts.forEach(c => {
+        c.points.forEach(p => {
+          p.x = cx + (p.x - cx) * scaleX;
+          p.y = cy + (p.y - cy) * scaleY;
+        });
+      });
+    }
+
+    roomPath.classList.remove("flip-anim");
+    void roomPath.offsetWidth;
+    roomPath.classList.add("flip-anim");
+    renderAll(); saveState();
+  };
+
+  const toggleFt = document.getElementById("toggle-ft");
+  const toggleM = document.getElementById("toggle-m");
+  const unitIndicators = document.querySelectorAll(".unit-indicator");
+  function setUnit(unit) {
+    if (currentUnit === unit) return;
+    currentUnit = unit;
+    toggleFt.classList.toggle("is-active", unit === "ft");
+    toggleM.classList.toggle("is-active", unit === "m");
+    toggleFt.classList.toggle("bg-[#D3968C]", unit === "ft");
+    toggleFt.classList.toggle("text-[#0A3323]", unit === "ft");
+    toggleM.classList.toggle("bg-[#D3968C]", unit === "m");
+    toggleM.classList.toggle("text-[#0A3323]", unit === "m");
+    unitIndicators.forEach((span) => (span.textContent = unit));
+    renderAll();
+  }
+  toggleFt.onclick = () => setUnit("ft");
+  toggleM.onclick = () => setUnit("m");
+  saveState(); renderAll();
 </script>
-</body>
-</html>
+
+</body></html>
