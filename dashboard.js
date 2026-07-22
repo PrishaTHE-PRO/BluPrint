@@ -422,6 +422,7 @@ const FURN_HEIGHTS = {
     bed: 2, crib: 3, nightstand: 2, desk: 2.5, dining_table: 2.5, island_cart: 3,
     dresser: 2.8, nursery_dresser: 2.8, sideboard: 2.8, vanity: 2.8, kitchen_storage: 3, bar_cabinet: 3.5,
     wardrobe: 6, bookshelf: 5, storage_cabinet: 4, kitchen_shelf: 4, bath_storage: 3, nursery_shelf: 4,
+    reading_nook: 2.8, workspace_desk: 2.5, vanity_station: 2.8, bookcase: 5, indoor_plants: 3, smart_lighting: 4.6,
 };
 // Furniture colours — shades of blue, with a light cream accent for lamps.
 const FURN_COLORS = {
@@ -433,6 +434,7 @@ const FURN_COLORS = {
     wardrobe: '#5c7ca4', bookshelf: '#5c7ca4', storage_cabinet: '#5c7ca4', kitchen_shelf: '#5c7ca4', bath_storage: '#5c7ca4', nursery_shelf: '#5c7ca4',
     floor_lamp: '#f1e7c4', bedside_lamp: '#f1e7c4', desk_lamp: '#f1e7c4',
     wall_art: '#5c7ca4', floating_shelves: '#a7bdd6',
+    reading_nook: '#8aa6c4', workspace_desk: '#b7c6d8', vanity_station: '#94adca', bookcase: '#5c7ca4', smart_lighting: '#f1e7c4', full_length_mirror: '#6f8fb2',
 };
 // Default footprint (inches) when a saved item omits its own dimensions — keyed
 // per category so a bed falls back to a bed's size, not a generic small box.
@@ -446,6 +448,7 @@ const FURN_DEFAULT_W = {
     dining_table: 60, dining_chair: 18, dining_rug: 96, sideboard: 54, dining_light: 18, bar_cabinet: 36,
     crib: 52, nursery_dresser: 36, rocking_chair: 28, nursery_rug: 72, nursery_shelf: 30, nursery_lamp: 10,
     wall_art: 42, floating_shelves: 44,
+    reading_nook: 34, workspace_desk: 60, vanity_station: 40, bookcase: 36, indoor_plants: 22, smart_lighting: 12, full_length_mirror: 26,
 };
 const FURN_DEFAULT_D = {
     sofa: 36, accent_chair: 32, coffee_table: 24, rug: 72, floor_lamp: 12, side_table: 18,
@@ -456,6 +459,7 @@ const FURN_DEFAULT_D = {
     dining_table: 36, dining_chair: 18, dining_rug: 72, sideboard: 18, dining_light: 18, bar_cabinet: 18,
     crib: 28, nursery_dresser: 18, rocking_chair: 30, nursery_rug: 60, nursery_shelf: 12, nursery_lamp: 10,
     wall_art: 3, floating_shelves: 10,
+    reading_nook: 34, workspace_desk: 30, vanity_station: 18, bookcase: 14, indoor_plants: 22, smart_lighting: 12, full_length_mirror: 4,
 };
 const furnHeight  = (cat) => FURN_HEIGHTS[cat] ?? 2.5;
 const furnColor   = (cat) => FURN_COLORS[cat] || '#9fb2c8';
@@ -497,16 +501,17 @@ function isoPenOptions(fill) {
 function isoArchetype(cat) {
     if (cat === 'bed' || cat === 'crib') return 'bed';
     if (cat === 'sofa') return 'sofa';
-    if (['accent_chair', 'dining_chair', 'office_chair', 'bar_stool', 'rocking_chair'].includes(cat)) return 'chair';
-    if (['coffee_table', 'dining_table', 'side_table', 'desk', 'monitor_stand', 'island_cart'].includes(cat)) return 'table';
-    if (['floor_lamp', 'desk_lamp', 'bedside_lamp'].includes(cat)) return 'lamp';
+    if (['accent_chair', 'dining_chair', 'office_chair', 'bar_stool', 'rocking_chair', 'reading_nook'].includes(cat)) return 'chair';
+    if (['coffee_table', 'dining_table', 'side_table', 'desk', 'monitor_stand', 'island_cart', 'workspace_desk'].includes(cat)) return 'table';
+    if (['floor_lamp', 'desk_lamp', 'bedside_lamp', 'smart_lighting'].includes(cat)) return 'lamp';
+    if (['bookcase', 'bookshelf', 'kitchen_shelf', 'nursery_shelf'].includes(cat)) return 'openshelf';
     return 'box';
 }
 
 // Cabinet-type pieces get sketched front-face detail (drawers / shelves / doors).
 function isoSeamFor(cat) {
     if (cat === 'nightstand') return { type: 'drawer', rows: 2 };
-    if (['dresser', 'nursery_dresser', 'sideboard', 'vanity', 'kitchen_storage'].includes(cat)) return { type: 'drawer', rows: 3 };
+    if (['dresser', 'nursery_dresser', 'sideboard', 'vanity', 'kitchen_storage', 'vanity_station'].includes(cat)) return { type: 'drawer', rows: 3 };
     if (['bookshelf', 'kitchen_shelf', 'nursery_shelf', 'bath_storage'].includes(cat)) return { type: 'shelf', rows: 4 };
     if (['wardrobe', 'storage_cabinet', 'bar_cabinet'].includes(cat)) return { type: 'door' };
     return null;
@@ -569,6 +574,17 @@ function isoModelParts(cat, w, d, hex, H) {
                 { lx: cx - shadeW / 2, ly: cy - shadeW / 2, lw: shadeW, ld: shadeW, z0: SH - 0.8, h: 0.7,       color: '#f4eccf' },            // shade
             ];
         }
+        case 'openshelf': {
+            // Open étagère: thin plank shelves held by two thin side panels, NO
+            // back — like the floating shelves, just connected at the ends.
+            const st = Math.max(0.1, w * 0.045), bd = Math.max(0.12, d * 0.12);
+            const comps = Math.max(2, Math.round(H / 1.7));
+            const parts = [];
+            for (let i = 0; i <= comps; i++) { const z = (H - bd) * (i / comps); parts.push({ lx: 0, ly: 0, lw: w, ld: d, z0: z, h: bd, color: hex }); }
+            parts.push({ lx: 0,      ly: 0, lw: st, ld: d, z0: 0, h: H, color: isoShade(hex, -0.04) });
+            parts.push({ lx: w - st, ly: 0, lw: st, ld: d, z0: 0, h: H, color: isoShade(hex, -0.04) });
+            return parts;
+        }
         default: // plain box (cabinets/shelves) with optional drawer/shelf/door detail
             return [{ lx: 0, ly: 0, lw: w, ld: d, z0: 0, h: H, color: hex, seam: isoSeamFor(cat) }];
     }
@@ -627,7 +643,7 @@ function isoPartOps(ox, oy, cxR, cyR, rot, lx, ly, lw, ld, z0, h, color, seam) {
 }
 
 // Wall-mounted pieces render flat on / attached to a wall, not as floor boxes.
-function isoIsWallMounted(cat) { return cat === 'wall_art' || cat === 'floating_shelves'; }
+function isoIsWallMounted(cat) { return cat === 'wall_art' || cat === 'floating_shelves' || cat === 'full_length_mirror'; }
 
 // Returns { order, ops } for a wall-mounted item on whichever visible back wall
 // (y=0 or x=0) it sits nearest. Walls are drawn short (WH ft) so pieces stay
@@ -649,6 +665,16 @@ function isoWallMounted(cat, cx, cy, w, d, hex, WH) {
         return { order: -500 + along, ops };
     }
 
+    if (cat === 'full_length_mirror') {
+        const mw = Math.max(1.0, w), z1 = 0.1, z2 = WH - 0.1, off = 0.06, ins = 0.1;
+        const rect = (o, i) => onBack
+            ? [P(cx - mw / 2 + i, o, z1 + i), P(cx + mw / 2 - i, o, z1 + i), P(cx + mw / 2 - i, o, z2 - i), P(cx - mw / 2 + i, o, z2 - i)]
+            : [P(o, cy - mw / 2 + i, z1 + i), P(o, cy + mw / 2 - i, z1 + i), P(o, cy + mw / 2 - i, z2 - i), P(o, cy - mw / 2 + i, z2 - i)];
+        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade('#6f8fb2', -0.05) }); // frame
+        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#cfe0ee' });         // mirror surface
+        return { order: -495 + along, ops };
+    }
+
     // floating_shelves — two thin slabs cantilevered off the wall
     const sw = Math.max(1.6, w), sd = Math.max(0.55, Math.min(1.0, d || 0.8));
     [WH * 0.5, WH * 0.8].forEach((z0) => {
@@ -657,6 +683,38 @@ function isoWallMounted(cat, cx, cy, w, d, hex, WH) {
         isoPartOps(0, 0, 0, 0, 0, ox, oy, lw, ld, z0, 0.14, hex, null).forEach((op) => ops.push(op));
     });
     return { order: -490 + along, ops };
+}
+
+// A sketchy leaf: a pointed oval from base (bx,by) along `ang` for `len`, `wid` wide.
+function isoLeafPath(bx, by, ang, len, wid) {
+    const dx = Math.sin(ang), dy = -Math.cos(ang), px = -dy, py = dx;
+    const tx = bx + dx * len, ty = by + dy * len, mx = bx + dx * len * 0.5, my = by + dy * len * 0.5, f = (n) => n.toFixed(1);
+    return `M ${f(bx)} ${f(by)} Q ${f(mx + px * wid)} ${f(my + py * wid)} ${f(tx)} ${f(ty)} Q ${f(mx - px * wid)} ${f(my - py * wid)} ${f(bx)} ${f(by)} Z`;
+}
+
+// Indoor plant — a real 3-D isometric pot (extruded, shaded like everything
+// else) with sketchy leaf paths emerging from around its rim in 3-D: back leaves
+// dark, front leaves lighter. Short dark-green leaves, drawn in front of the pot.
+function isoPlantOps(cx, cy, w, d) {
+    const sc = Math.max(0.85, Math.min(w, d)) * ISO.unit;
+    const potWf = Math.max(0.5, Math.min(w, d) * 0.55), rimW = potWf * 1.14, potHf = 0.72, rim = potWf * 0.4, top = potHf;
+    const dark = '#3e6a45', mid = '#4c7a51', lite = '#5d8a62', pot = '#cbb896';
+    const ops = [];
+    // 3-D pot first, so the leaves sit in front of it
+    isoPartOps(0, 0, 0, 0, 0, cx - potWf / 2, cy - potWf / 2, potWf, potWf, 0, potHf - 0.12, pot, null).forEach((op) => ops.push(op));
+    isoPartOps(0, 0, 0, 0, 0, cx - rimW / 2, cy - rimW / 2, rimW, rimW, potHf - 0.12, 0.12, isoShade(pot, 0.05), null).forEach((op) => ops.push(op));
+    const L = (ox, oy, ang, len, wid, col, i) => { const o = isoProject(ox, oy, top); ops.push({ kind: 'path', d: isoLeafPath(o.px, o.py, ang, len * sc, wid * sc), fill: col, seed: i }); };
+    // leaves emerge from around the rim, back (dark) → front (light)
+    L(cx, cy - rim, -0.12, 1.3, 0.34, dark, 1);
+    L(cx - rim * 0.7, cy - rim * 0.6, -0.7, 1.0, 0.3, dark, 2);
+    L(cx + rim * 0.7, cy - rim * 0.6,  0.7, 1.0, 0.3, dark, 3);
+    L(cx - rim, cy, -1.05, 0.9, 0.3, mid, 4);
+    L(cx + rim, cy,  1.05, 0.9, 0.3, mid, 5);
+    L(cx, cy, 0.0, 1.35, 0.36, mid, 6);
+    L(cx - rim * 0.5, cy + rim * 0.6, -0.35, 1.0, 0.32, lite, 7);
+    L(cx + rim * 0.5, cy + rim * 0.6,  0.35, 1.0, 0.32, lite, 8);
+    L(cx, cy + rim, -0.08, 1.15, 0.34, lite, 9);
+    return ops;
 }
 
 function renderIsoRoom(room) {
@@ -685,6 +743,8 @@ function renderIsoRoom(room) {
         if (op.kind === 'poly') svg.appendChild(rc.polygon(op.pts, isoPenOptions(op.fill)));
         else if (op.kind === 'line') svg.appendChild(rc.line(op.a[0], op.a[1], op.b[0], op.b[1], LINE_OPTS));
         else if (op.kind === 'knob') svg.appendChild(rc.circle(op.c[0], op.c[1], 3.4, KNOB_OPTS));
+        else if (op.kind === 'disc') svg.appendChild(rc.circle(op.c[0], op.c[1], op.d, { fill: op.fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.8, bowing: 1.2, seed: 1 }));
+        else if (op.kind === 'path') svg.appendChild(rc.path(op.d, { fill: op.fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.3, bowing: 1.1, seed: op.seed || 1 }));
     };
 
     // Painted back-to-front: shell first, then rugs, then furniture pieces by
@@ -712,6 +772,7 @@ function renderIsoRoom(room) {
         const H = furnHeight(cat), hex = furnColor(cat);
 
         if (isoIsWallMounted(cat)) { pieces.push(isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH)); return; }
+        if (cat === 'indoor_plants') { pieces.push({ order: (x + w / 2) + (y + d / 2), ops: isoPlantOps(x + w / 2, y + d / 2, w, d) }); return; }
 
         if (H < 0.1) {
             // Rug — a flat pad just above the floor.
@@ -722,8 +783,19 @@ function renderIsoRoom(room) {
             return;
         }
         const cxR = x + w / 2, cyR = y + d / 2;
+        let parts = isoModelParts(cat, w, d, hex, H);
+        // Open shelf & sofa: order parts by depth so far parts draw behind and
+        // near parts in front (which is which depends on rotation).
+        const arch = isoArchetype(cat);
+        if (arch === 'openshelf' || arch === 'sofa') {
+            const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
+            parts = parts.map((p) => {
+                const dx = (x + p.lx + p.lw / 2) - cxR, dy = (y + p.ly + p.ld / 2) - cyR;
+                return { p, k: (cxR + dx * c - dy * s) + (cyR + dx * s + dy * c) };
+            }).sort((a, b) => a.k - b.k).map((o) => o.p);
+        }
         let ops = [];
-        isoModelParts(cat, w, d, hex, H).forEach((p) => {
+        parts.forEach((p) => {
             ops = ops.concat(isoPartOps(x, y, cxR, cyR, rot, p.lx, p.ly, p.lw, p.ld, p.z0, p.h, p.color, p.seam));
         });
         pieces.push({ order: cxR + cyR, ops });
