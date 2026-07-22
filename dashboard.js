@@ -402,7 +402,7 @@ function renderArchitectureElement(element) {
 // depth-sorted (painter's algorithm). Non-rectangular layouts currently render
 // as their bounding box; true polygon walls are future work. Falls back to the
 // flat top-down preview if Rough.js is unavailable.
-const ISO = { angle: Math.PI / 6, unit: 26, wallHeightFt: 3.2, pad: 30 };
+const ISO = { angle: Math.PI / 6, unit: 26, wallHeightFt: 4.2, pad: 30 };
 const ISO_COLORS = {
     floor:    '#faf3e1',
     wallTop:  '#f5eed9',
@@ -717,6 +717,39 @@ function isoPlantOps(cx, cy, w, d) {
     return ops;
 }
 
+// Door/window from the room layout (positions in editor px, 20px/ft). Rendered
+// flat on a wall, but ONLY on the two visible walls (back y=0, left x=0);
+// elements on the front walls are skipped since those walls aren't drawn.
+function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
+    const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
+    const fx = spanX > 0 ? (el.x - minX) / spanX : 0.5;
+    const fy = spanY > 0 ? (el.y - minY) / spanY : 0.5;
+    const m = Math.min(fy, 1 - fy, fx, 1 - fx);
+    let onBack, along;
+    if (m === fy) { onBack = true; along = fx * W; }          // back wall (y=0)
+    else if (m === fx) { onBack = false; along = fy * L; }    // left wall (x=0)
+    else return null;                                        // front wall → skip
+    const rectAt = (hw, z1, z2, off, ins) => onBack
+        ? [P(along - hw + ins, off, z1 + ins), P(along + hw - ins, off, z1 + ins), P(along + hw - ins, off, z2 - ins), P(along - hw + ins, off, z2 - ins)]
+        : [P(off, along - hw + ins, z1 + ins), P(off, along + hw - ins, z1 + ins), P(off, along + hw - ins, z2 - ins), P(off, along - hw + ins, z2 - ins)];
+    const ops = [];
+    if (el.type === 'window') {
+        const hw = 1.5, z1 = WH * 0.32, z2 = WH * 0.78, off = 0.03, midZ = (z1 + z2) / 2;
+        ops.push({ kind: 'poly', pts: rectAt(hw, z1, z2, off, 0), fill: '#cfe0ee' });   // glass
+        const vt = onBack ? [P(along, off + 0.01, z1), P(along, off + 0.01, z2)] : [P(off + 0.01, along, z1), P(off + 0.01, along, z2)];
+        const hz = onBack ? [P(along - hw, off + 0.01, midZ), P(along + hw, off + 0.01, midZ)] : [P(off + 0.01, along - hw, midZ), P(off + 0.01, along + hw, midZ)];
+        ops.push({ kind: 'line', a: vt[0], b: vt[1] });                                 // mullion cross
+        ops.push({ kind: 'line', a: hz[0], b: hz[1] });
+        return { order: -470 + along, ops };
+    }
+    // door — light-blue leaf panel + inner panel + knob
+    const hw = 1.35, z1 = 0.02, z2 = WH * 0.92, off = 0.03, knobZ = (z1 + z2) / 2, ka = along + hw * 0.7;
+    ops.push({ kind: 'poly', pts: rectAt(hw, z1, z2, off, 0), fill: '#a7bdd6' });
+    ops.push({ kind: 'poly', pts: rectAt(hw, z1, z2, off + 0.005, 0.12), fill: '#c2d3e4' });
+    ops.push({ kind: 'knob', c: onBack ? P(ka, off + 0.02, knobZ) : P(off + 0.02, ka, knobZ) });
+    return { order: -480 + along, ops };
+}
+
 function renderIsoRoom(room) {
     const rough = window.rough;
     if (!rough) return null;
@@ -800,6 +833,18 @@ function renderIsoRoom(room) {
         });
         pieces.push({ order: cxR + cyR, ops });
     });
+
+    // Doors & windows from the room layout — only on the two visible walls.
+    const elements = Array.isArray(layout.elements) ? layout.elements : [];
+    if (elements.length && Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 2) {
+        const xs = layout.roomPoints.map((p) => p.x), ys = layout.roomPoints.map((p) => p.y);
+        const eMinX = Math.min(...xs), eMinY = Math.min(...ys);
+        const eSpanX = Math.max(...xs) - eMinX, eSpanY = Math.max(...ys) - eMinY;
+        elements.forEach((el) => {
+            const g = isoArchElement(el, W, L, WH, eMinX, eMinY, eSpanX, eSpanY);
+            if (g) pieces.push(g);
+        });
+    }
 
     // Fit the viewBox to the projected room bounding box (walls define the extent).
     const bounds = [
