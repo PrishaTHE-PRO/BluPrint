@@ -59,9 +59,22 @@
             <button type="button" title="Notifications" aria-label="Notifications">
                 <iconify-icon icon="ph:bell-duotone"></iconify-icon>
             </button>
-            <button id="logout-btn" title="Sign out" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
-                <iconify-icon icon="ph:sign-out-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+            <button id="theme-toggle-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
+                <iconify-icon icon="ph:moon-duotone"></iconify-icon>
             </button>
+            <div class="profile-menu-wrap">
+                <button id="profile-btn" type="button" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
+                    <iconify-icon icon="ph:user-circle-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+                </button>
+                <div id="profile-popup" class="profile-popup hidden">
+                    <button id="settings-btn" type="button" class="profile-popup-item">
+                        <iconify-icon icon="ph:gear-duotone"></iconify-icon> Settings
+                    </button>
+                    <button id="logout-btn" class="profile-popup-item profile-popup-item-danger">
+                        <iconify-icon icon="ph:sign-out-duotone"></iconify-icon> Sign out
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -87,12 +100,104 @@
         </div>
     </main>
 </div>
-
+<div id="settings-overlay" class="settings-overlay hidden">
+    <div class="settings-modal">
+        <button id="settings-close-btn" class="settings-modal-close" aria-label="Close settings">
+            <iconify-icon icon="ph:x-bold"></iconify-icon>
+        </button>
+        <h2>Settings</h2>
+        <p style="color:var(--bp-muted); font-size:14px; margin:0 0 24px;">Update your profile details.</p>
+        <div class="settings-field">
+            <label for="settings-name">Display name</label>
+            <input type="text" id="settings-name" placeholder="Your name">
+        </div>
+        <div class="settings-field">
+            <label for="settings-birthday">Birthday</label>
+            <input type="date" id="settings-birthday">
+        </div>
+        <button id="settings-save-btn" class="settings-save-btn">Save changes</button>
+        <span id="settings-save-status" class="settings-save-status"></span>
+        <hr class="settings-divider">
+        <div class="settings-contact">
+            <h3>Need help?</h3>
+            <ul>
+                <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
+                <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
+                <li><strong>Prisha Agarwalla</strong> — <a href="mailto:pagarwalla@wisc.edu">pagarwalla@wisc.edu</a></li>
+                <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { auth, isFirebaseConfigured } from "./firebase.js";
 
     const logoutBtn = document.getElementById('logout-btn');
+    const profileBtn = document.getElementById('profile-btn');
+    const profilePopup = document.getElementById('profile-popup');
+    if (profileBtn && profilePopup) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profilePopup.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+                profilePopup.classList.add('hidden');
+            }
+        });
+    }
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    if (localStorage.getItem('blueprintTheme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (themeToggleBtn) themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', 'ph:sun-duotone');
+    }
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
+            themeToggleBtn.querySelector('iconify-icon').setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
+        });
+    }
+
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const settingsCloseBtn = document.getElementById('settings-close-btn');
+    const settingsNameInput = document.getElementById('settings-name');
+    const settingsBirthdayInput = document.getElementById('settings-birthday');
+    const settingsSaveBtn = document.getElementById('settings-save-btn');
+    const settingsSaveStatus = document.getElementById('settings-save-status');
+
+    function openSettingsModal() {
+        if (settingsNameInput) settingsNameInput.value = localStorage.getItem('blueprintUserName') || '';
+        if (settingsBirthdayInput) settingsBirthdayInput.value = localStorage.getItem('blueprintUserBirthday') || '';
+        if (settingsOverlay) settingsOverlay.classList.remove('hidden');
+        if (profilePopup) profilePopup.classList.add('hidden');
+    }
+    function closeSettingsModal() {
+        if (settingsOverlay) settingsOverlay.classList.add('hidden');
+        if (settingsSaveStatus) settingsSaveStatus.textContent = '';
+    }
+    if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
+    if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettingsModal);
+    if (settingsOverlay) settingsOverlay.addEventListener('click', (e) => {
+        if (e.target === settingsOverlay) closeSettingsModal();
+    });
+
+    if (settingsSaveBtn) {
+        settingsSaveBtn.addEventListener('click', async () => {
+            const newName = settingsNameInput.value.trim();
+            const newBirthday = settingsBirthdayInput.value;
+            try {
+                if (newName) localStorage.setItem('blueprintUserName', newName);
+                if (newBirthday) localStorage.setItem('blueprintUserBirthday', newBirthday);
+                settingsSaveStatus.textContent = 'Saved!';
+                setTimeout(() => { settingsSaveStatus.textContent = ''; }, 2000);
+            } catch (err) {
+                settingsSaveStatus.textContent = 'Error: ' + err.message;
+            }
+        });
+    }
     const grid = document.getElementById('all-projects-grid');
     const filters = document.getElementById('project-filters');
     const projectCount = document.getElementById('project-count');
