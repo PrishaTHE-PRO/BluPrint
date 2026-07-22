@@ -828,6 +828,13 @@ function renderIsoRoom(room) {
                 const dx = (x + p.lx + p.lw / 2) - cxR, dy = (y + p.ly + p.ld / 2) - cyR;
                 return { p, k: (cxR + dx * c - dy * s) + (cyR + dx * s + dy * c) };
             }).sort((a, b) => a.k - b.k).map((o) => o.p);
+        } else if (arch === 'bed') {
+            // Keep the mattress→pillows stack, but move the headboard (parts[0])
+            // to the front of the paint order when the bed is rotated so its head
+            // faces the camera (otherwise the mattress paints over it).
+            const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
+            const hb = parts[0], dx = (x + hb.lx + hb.lw / 2) - cxR, dy = (y + hb.ly + hb.ld / 2) - cyR;
+            if ((cxR + dx * c - dy * s) + (cyR + dx * s + dy * c) > cxR + cyR) parts = [...parts.slice(1), hb];
         }
         let ops = [];
         parts.forEach((p) => {
