@@ -2,6 +2,19 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "./firebase.js";
 
 var logoutBtn = document.getElementById('logout-btn');
+var profileBtn = document.getElementById('profile-btn');
+var profilePopup = document.getElementById('profile-popup');
+if (profileBtn && profilePopup) {
+    profileBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        profilePopup.classList.toggle('hidden');
+    });
+    document.addEventListener('click', function (e) {
+        if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+            profilePopup.classList.add('hidden');
+        }
+    });
+}
 var userNameEl = document.getElementById('user-name');
 var ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
 var ROOM_LAYOUT_VERSION = 1;

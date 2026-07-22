@@ -59,9 +59,19 @@
             <button type="button" title="Notifications" aria-label="Notifications">
                 <iconify-icon icon="ph:bell-duotone"></iconify-icon>
             </button>
-            <button id="logout-btn" title="Sign out" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
-                <iconify-icon icon="ph:sign-out-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
-            </button>
+            <div class="profile-menu-wrap">
+                <button id="profile-btn" type="button" class="w-12 h-12 rounded-full bg-[#0A3323]/10 flex items-center justify-center cursor-pointer border-2 border-[#0A3323]/20 hover:bg-[#0A3323]/20 transition-all shadow-sm">
+                    <iconify-icon icon="ph:user-circle-duotone" class="text-2xl text-[#0A3323]"></iconify-icon>
+                </button>
+                <div id="profile-popup" class="profile-popup hidden">
+                    <a href="settings.html" class="profile-popup-item">
+                        <iconify-icon icon="ph:gear-duotone"></iconify-icon> Settings
+                    </a>
+                    <button id="logout-btn" class="profile-popup-item profile-popup-item-danger">
+                        <iconify-icon icon="ph:sign-out-duotone"></iconify-icon> Sign out
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -93,6 +103,19 @@
     import { auth, isFirebaseConfigured } from "./firebase.js";
 
     const logoutBtn = document.getElementById('logout-btn');
+    const profileBtn = document.getElementById('profile-btn');
+    const profilePopup = document.getElementById('profile-popup');
+    if (profileBtn && profilePopup) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profilePopup.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+                profilePopup.classList.add('hidden');
+            }
+        });
+    }
     const grid = document.getElementById('all-projects-grid');
     const filters = document.getElementById('project-filters');
     const projectCount = document.getElementById('project-count');
