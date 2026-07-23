@@ -2366,8 +2366,40 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-inspo .ai-analysis-panel { margin-top: 24px; }
   .page-inspo .how-it-works-panel,
   .page-inspo .ai-analysis-panel { position: static; }
-  .page-dimensions main { overflow-y: auto !important; flex-direction: column; }
-  .page-dimensions main > section { width: 100% !important; min-height: 520px; }
+  .page-dimensions > .min-h-screen {
+    min-height: 100dvh !important;
+    overflow-y: auto !important;
+  }
+  .page-dimensions main {
+    overflow: visible !important;
+    flex-direction: column;
+    width: min(100% - 32px, 760px) !important;
+    padding: 18px 0 96px !important;
+    gap: 18px !important;
+  }
+  .page-dimensions main > section:first-child,
+  .page-dimensions main > section:last-child {
+    width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
+    margin-top: 0 !important;
+    overflow: visible !important;
+  }
+  .page-dimensions main > section:first-child {
+    gap: 14px !important;
+  }
+  .page-dimensions .canvas-area {
+    min-height: clamp(340px, 62vh, 560px) !important;
+    aspect-ratio: 8 / 5;
+  }
+  .page-dimensions main > section:last-child > div {
+    overflow: visible !important;
+  }
+  .page-dimensions .placed-element-group .delete-btn,
+  .page-dimensions .cutout-group .cutout-delete-btn {
+    opacity: 1;
+    pointer-events: all;
+  }
 }
 
 @media (max-width: 600px) {
@@ -2375,15 +2407,175 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .dashboard-container { width: min(100% - 40px, 1152px); }
   body:not(.page-login) .app-nav {
     width: calc(100% - 20px);
+    min-height: 48px;
     margin-top: 10px;
-    padding: 0 14px !important;
-    gap: 9px !important;
+    padding: 0 10px !important;
+    gap: 8px !important;
+    overflow: visible;
   }
-  .app-brand > span { display: inline !important; font-size: 11px !important; }
+  body:not(.page-login) .app-nav:hover {
+    transform: none;
+  }
+  .app-brand {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .app-brand > span {
+    display: inline !important;
+    max-width: 104px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px !important;
+  }
+  .app-nav-actions {
+    flex: 0 0 auto;
+    gap: 6px !important;
+    margin-left: 0;
+    min-width: 0;
+  }
+  .nav-theme-switch,
+  [data-theme-switch].nav-theme-switch {
+    min-width: 44px !important;
+    width: 44px !important;
+    margin: 0 !important;
+    overflow: visible;
+  }
+  .nav-theme-switch button.theme-switch-btn,
+  [data-theme-switch].nav-theme-switch button.theme-switch-btn {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    transform-origin: center;
+  }
+  .app-nav-actions > .profile-menu-wrap {
+    margin-left: 0 !important;
+  }
+  .profile-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
   .app-nav-links > a { padding-inline: 9px; }
   .page-inspo main {
     width: calc(100% - 40px);
     padding: 24px 20px 60px !important;
+  }
+  .page-dimensions .app-nav {
+    position: static !important;
+  }
+  .page-dimensions .app-nav-links {
+    display: none !important;
+  }
+  .page-dimensions .workflow-steps {
+    justify-content: flex-start;
+    gap: 8px !important;
+    padding: 12px 16px !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .page-dimensions .workflow-steps::-webkit-scrollbar {
+    display: none;
+  }
+  .page-dimensions .workflow-step {
+    flex: 0 0 auto;
+    gap: 7px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+  .page-dimensions .workflow-step span {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 11px !important;
+  }
+  .page-dimensions .workflow-connector {
+    width: 18px !important;
+    flex: 0 0 18px;
+  }
+  .page-dimensions main {
+    width: calc(100% - 24px) !important;
+    padding-top: 14px !important;
+    padding-bottom: 84px !important;
+  }
+  .page-dimensions h1 {
+    font-size: 26px !important;
+    line-height: 1.05 !important;
+  }
+  .page-dimensions header p {
+    font-size: 13px !important;
+  }
+  .page-dimensions header .flex {
+    margin-top: 12px !important;
+  }
+  .page-dimensions .canvas-area {
+    min-height: 330px !important;
+    border-radius: 14px !important;
+  }
+  .page-dimensions #editor-svg {
+    padding: 4px !important;
+    touch-action: none;
+  }
+  .page-dimensions #area-badge {
+    right: 12px !important;
+    bottom: 12px !important;
+    max-width: calc(100% - 24px);
+    padding: 8px 10px !important;
+    font-size: 10px !important;
+  }
+  .page-dimensions main > section:last-child > div {
+    padding: 16px !important;
+    gap: 14px !important;
+    border-radius: 16px !important;
+  }
+  .page-dimensions .element-library-panel .space-y-3 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .page-dimensions #draggable-door,
+  .page-dimensions #draggable-window,
+  .page-dimensions #draggable-cutout {
+    min-height: 58px;
+    padding: 10px 12px !important;
+    cursor: pointer !important;
+  }
+  .page-dimensions #draggable-door > div:first-child,
+  .page-dimensions #draggable-window > div:first-child,
+  .page-dimensions #draggable-cutout > div:first-child {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .page-dimensions #draggable-door h4,
+  .page-dimensions #draggable-window h4,
+  .page-dimensions #draggable-cutout h4 {
+    font-size: 12px !important;
+  }
+  .page-dimensions #draggable-door p,
+  .page-dimensions #draggable-window p,
+  .page-dimensions #draggable-cutout p {
+    font-size: 9px !important;
+    overflow-wrap: anywhere;
+  }
+  .page-dimensions main > section:last-child .grid {
+    grid-template-columns: 1fr !important;
+  }
+  .page-dimensions main > section:last-child h2 {
+    font-size: 18px !important;
+  }
+  .page-dimensions main > section:last-child .dimension-input {
+    min-height: 46px;
+    font-size: 16px;
+  }
+  .page-dimensions #cta-save-continue {
+    min-height: 50px;
+  }
+  .page-dimensions #custom-toast {
+    width: calc(100% - 28px);
+    justify-content: center;
+    bottom: 18px !important;
+    padding: 11px 14px !important;
+    text-align: center;
   }
   .page-dashboard #projects-grid { grid-template-columns: 1fr !important; }
   .page-dashboard .dashboard-hero-layout {

@@ -1711,6 +1711,103 @@ document.querySelectorAll('[draggable="true"]').forEach((btn) => {
   });
 });
 
+function isPhoneLikeViewport() {
+  return window.matchMedia("(max-width: 700px), (pointer: coarse)").matches;
+}
+
+function getLongestRoomEdgeIndex() {
+  let longestIndex = 0;
+  let longestLength = -1;
+  for (let i = 0; i < state.roomPoints.length; i++) {
+    const a = state.roomPoints[i];
+    const b = state.roomPoints[(i + 1) % state.roomPoints.length];
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    if (length > longestLength) {
+      longestLength = length;
+      longestIndex = i;
+    }
+  }
+  return longestIndex;
+}
+
+function getToolbarPlacementCandidates(type) {
+  const preferred = getLongestRoomEdgeIndex();
+  const indices = [
+    preferred,
+    ...state.roomPoints.map((_, index) => index).filter((index) => index !== preferred),
+  ];
+
+  const alongRatios = type === "cutout" ? [0.5, 0.35, 0.65] : [0.5, 0.3, 0.7];
+  const candidates = [];
+  indices.forEach((edgeIndex) => {
+    const frame = getEdgeFrame(edgeIndex);
+    const edgeLength = Math.hypot(frame.p2.x - frame.p1.x, frame.p2.y - frame.p1.y);
+    alongRatios.forEach((ratio) => {
+      const along = clampValue(edgeLength * ratio, 24, Math.max(24, edgeLength - 24));
+      candidates.push({ edgeIndex, frame, along });
+    });
+  });
+  return candidates;
+}
+
+function addToolbarElementToRoom(type) {
+  for (const candidate of getToolbarPlacementCandidates(type)) {
+    const { edgeIndex, frame, along } = candidate;
+    if (type === "cutout") {
+      bakeActiveCutouts();
+      const placed = placeCutoutOnEdge(edgeIndex, along, 40, 40);
+      const newCutout = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        type: "cutout",
+        points: placed.points,
+        edgeIndex: placed.edgeIndex,
+        source: "preset",
+      };
+      if (!isCutoutValid(newCutout.points) || checkCollision(newCutout)) continue;
+      state.cutouts.push(newCutout);
+      selectedCutoutId = newCutout.id;
+      saveState();
+      renderAll();
+      showToast("Wall cutout added");
+      return true;
+    }
+
+    const point = {
+      x: frame.p1.x + frame.tx * along,
+      y: frame.p1.y + frame.ty * along,
+      angle: Math.atan2(frame.ty, frame.tx) * 180 / Math.PI,
+    };
+    const newEl = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      type,
+      x: point.x,
+      y: point.y,
+      angle: point.angle,
+      isMirrored: false,
+      width: type === "window" ? 50 : undefined,
+    };
+    if (checkCollision(newEl)) continue;
+    state.elements.push(newEl);
+    saveState();
+    renderAll();
+    showToast(`${type} added`);
+    return true;
+  }
+
+  showToast("No clear wall space found");
+  return false;
+}
+
+document.querySelectorAll('[draggable="true"]').forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    if (!isPhoneLikeViewport()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const type = btn.getAttribute("data-type");
+    if (type) addToolbarElementToRoom(type);
+  });
+});
+
 svg.addEventListener("dragover", (e) => {
   e.preventDefault();
   e.stopPropagation();
