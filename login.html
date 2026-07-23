@@ -69,26 +69,159 @@
         <span class="bp-wordmark-rest">Print</span>
       </a>
 
-      <svg class="login-plan" viewBox="0 0 420 320" fill="none" aria-hidden="true">
-        <g opacity=".22" stroke="currentColor" stroke-width=".7" stroke-dasharray="7 10">
-          <path d="M42 82H378M42 151H378M42 220H378"/>
-          <path d="M126 32V264M224 32V264M322 32V264"/>
-        </g>
-        <rect x="42" y="32" width="336" height="232" rx="5" fill="rgba(255,255,255,.5)" stroke="currentColor" stroke-width="3"/>
-        <rect x="56" y="47" width="194" height="146" rx="5" fill="rgba(232,228,220,.75)" stroke="#b8a898" stroke-dasharray="6 5"/>
-        <rect x="67" y="59" width="142" height="55" rx="8" fill="#b8d4e8"/>
-        <rect x="67" y="59" width="142" height="15" rx="8" fill="#98bdd8"/>
-        <rect x="91" y="134" width="83" height="46" rx="6" fill="#d4c5b0"/>
-        <rect x="266" y="58" width="65" height="65" rx="8" fill="#e8d5c8"/>
-        <rect x="309" y="143" width="52" height="98" rx="4" fill="#d0c8b8"/>
-        <path d="M42 228Q72 228 72 264" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
-        <rect x="234" y="27" width="92" height="10" rx="4" fill="#b8d4e8" stroke="currentColor"/>
-        <text x="210" y="297" text-anchor="middle" fill="#7a7060" font-family="DM Sans" font-size="12">12 ft</text>
-      </svg>
+      <div class="login-room-showcase">
+        <svg class="login-room-symbols" aria-hidden="true" focusable="false">
+          <symbol id="login-iso-shell" viewBox="0 0 260 180">
+            <polygon class="iso-shadow" points="40 144 130 91 222 143 132 169"/>
+            <polygon class="iso-wall iso-wall-left" points="38 68 130 15 130 45 38 98"/>
+            <polygon class="iso-wall iso-wall-right" points="130 15 224 66 224 96 130 45"/>
+            <polygon class="iso-floor" points="38 98 130 45 224 96 132 154"/>
+            <path class="iso-grid-line" d="M57 109L149 57M78 122L170 70M99 135L191 83M120 148L212 96M59 86L153 137M80 74L174 125M101 62L195 113"/>
+            <path class="iso-edge" d="M38 98L130 45L224 96L132 154Z"/>
+          </symbol>
+          <symbol id="login-iso-bedroom" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <polygon class="iso-rug" points="74 121 125 91 178 121 127 151"/>
+            <polygon class="iso-side iso-blue-side" points="76 84 133 116 133 138 76 107"/>
+            <polygon class="iso-front iso-blue-front" points="133 116 184 88 184 110 133 138"/>
+            <polygon class="iso-top iso-blue-top" points="76 84 126 57 184 88 133 116"/>
+            <polygon class="iso-top iso-pillow" points="89 82 111 70 136 84 114 96"/>
+            <polygon class="iso-top iso-pillow" points="118 66 140 54 165 68 143 80"/>
+            <polygon class="iso-side iso-wood-side" points="58 102 74 111 74 127 58 118"/>
+            <polygon class="iso-top iso-wood-top" points="58 102 75 92 91 101 74 111"/>
+            <polygon class="iso-front iso-wood-front" points="74 111 91 101 91 117 74 127"/>
+            <polygon class="iso-side iso-wood-side" points="185 72 202 82 202 127 185 117"/>
+            <polygon class="iso-top iso-wood-top" points="185 72 202 62 219 72 202 82"/>
+            <polygon class="iso-front iso-wood-front" points="202 82 219 72 219 117 202 127"/>
+          </symbol>
+          <symbol id="login-iso-living" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <polygon class="iso-rug" points="70 112 130 77 192 112 131 147"/>
+            <polygon class="iso-side iso-moss-side" points="66 84 95 100 95 129 66 113"/>
+            <polygon class="iso-top iso-moss-top" points="66 84 95 68 124 84 95 100"/>
+            <polygon class="iso-front iso-moss-front" points="95 100 124 84 124 113 95 129"/>
+            <polygon class="iso-side iso-moss-side" points="94 113 144 142 144 158 94 129"/>
+            <polygon class="iso-front iso-moss-front" points="144 142 196 112 196 128 144 158"/>
+            <polygon class="iso-top iso-moss-top" points="94 113 146 84 196 112 144 142"/>
+            <polygon class="iso-side iso-wood-side" points="107 108 130 121 130 132 107 119"/>
+            <polygon class="iso-front iso-wood-front" points="130 121 153 108 153 119 130 132"/>
+            <polygon class="iso-top iso-wood-top" points="107 108 130 95 153 108 130 121"/>
+            <polygon class="iso-front iso-blue-front" points="179 63 205 48 205 86 179 101"/>
+            <path class="iso-plant" d="M203 122c-8-16-1-23 8-29 2 10 0 20-8 29Zm-8 2c-13-9-12-19-5-29 7 7 10 17 5 29Z"/>
+          </symbol>
+          <symbol id="login-iso-kitchen" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <polygon class="iso-counter-side" points="72 72 130 105 130 121 72 88"/>
+            <polygon class="iso-counter-front" points="130 105 205 62 205 78 130 121"/>
+            <polygon class="iso-counter-top" points="72 72 147 29 205 62 130 105"/>
+            <polygon class="iso-front iso-rose-front" points="179 78 205 63 205 118 179 133"/>
+            <polygon class="iso-side iso-rose-side" points="158 67 179 78 179 133 158 122"/>
+            <ellipse class="iso-sink" cx="140" cy="74" rx="13" ry="6"/>
+            <polygon class="iso-side iso-wood-side" points="94 112 130 132 130 147 94 127"/>
+            <polygon class="iso-front iso-wood-front" points="130 132 166 112 166 127 130 147"/>
+            <polygon class="iso-top iso-wood-top" points="94 112 130 92 166 112 130 132"/>
+            <path class="iso-edge" d="M84 77l46 26M101 67l46 26M119 57l46 26"/>
+          </symbol>
+          <symbol id="login-iso-bath" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <path class="iso-grid-line" d="M65 119l91-52M82 129l91-52M99 139l91-52M74 83l95 53M95 71l95 53"/>
+            <ellipse class="iso-tub-top" cx="111" cy="93" rx="40" ry="20"/>
+            <ellipse class="iso-tub-inner" cx="111" cy="91" rx="28" ry="12"/>
+            <path class="iso-tub-front" d="M72 94c9 20 68 20 78 0v15c-9 21-68 21-78 0Z"/>
+            <polygon class="iso-glass" points="165 54 204 76 204 122 165 100"/>
+            <path class="iso-edge" d="M165 54L204 76M165 100L204 122M165 54V100M204 76V122"/>
+            <ellipse class="iso-fixture" cx="172" cy="127" rx="17" ry="10"/>
+            <polygon class="iso-front iso-rose-front" points="112 123 144 105 144 120 112 139"/>
+            <polygon class="iso-side iso-rose-side" points="92 112 112 123 112 139 92 128"/>
+            <polygon class="iso-top iso-rose-top" points="92 112 124 94 144 105 112 123"/>
+          </symbol>
+          <symbol id="login-iso-office" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <polygon class="iso-rug" points="77 124 130 93 184 124 131 154"/>
+            <polygon class="iso-side iso-blue-side" points="78 83 132 114 132 128 78 97"/>
+            <polygon class="iso-front iso-blue-front" points="132 114 187 83 187 97 132 128"/>
+            <polygon class="iso-top iso-blue-top" points="78 83 133 52 187 83 132 114"/>
+            <polygon class="iso-front iso-screen" points="128 55 165 34 165 67 128 88"/>
+            <polygon class="iso-side iso-wood-side" points="117 118 132 126 132 144 117 136"/>
+            <polygon class="iso-front iso-wood-front" points="132 126 149 116 149 134 132 144"/>
+            <ellipse class="iso-chair" cx="133" cy="118" rx="22" ry="11"/>
+            <polygon class="iso-side iso-wood-side" points="181 72 199 82 199 128 181 118"/>
+            <polygon class="iso-top iso-wood-top" points="181 72 199 62 217 72 199 82"/>
+            <polygon class="iso-front iso-wood-front" points="199 82 217 72 217 118 199 128"/>
+          </symbol>
+          <symbol id="login-iso-dining" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <polygon class="iso-rug" points="72 115 130 81 190 115 131 150"/>
+            <ellipse class="iso-table-top" cx="130" cy="106" rx="45" ry="24"/>
+            <path class="iso-table-front" d="M86 106c10 26 78 26 88 0v12c-10 27-78 27-88 0Z"/>
+            <polygon class="iso-side iso-wood-side" points="100 74 116 83 116 98 100 89"/>
+            <polygon class="iso-front iso-wood-front" points="144 128 160 119 160 134 144 143"/>
+            <polygon class="iso-side iso-wood-side" points="64 106 80 115 80 130 64 121"/>
+            <polygon class="iso-front iso-wood-front" points="180 96 196 87 196 102 180 111"/>
+            <polygon class="iso-front iso-rose-front" points="176 58 202 43 202 91 176 106"/>
+          </symbol>
+          <symbol id="login-iso-nursery" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <polygon class="iso-rug" points="75 121 127 91 176 119 124 150"/>
+            <polygon class="iso-side iso-rose-side" points="75 79 123 106 123 126 75 99"/>
+            <polygon class="iso-front iso-rose-front" points="123 106 167 81 167 101 123 126"/>
+            <polygon class="iso-top iso-rose-top" points="75 79 119 54 167 81 123 106"/>
+            <path class="iso-edge" d="M86 86v21M98 93v21M110 100v21M137 99v21M149 92v21"/>
+            <polygon class="iso-side iso-wood-side" points="174 76 195 88 195 125 174 113"/>
+            <polygon class="iso-top iso-wood-top" points="174 76 195 64 216 76 195 88"/>
+            <polygon class="iso-front iso-wood-front" points="195 88 216 76 216 113 195 125"/>
+            <ellipse class="iso-toy" cx="113" cy="128" rx="16" ry="10"/>
+          </symbol>
+          <symbol id="login-iso-studio" viewBox="0 0 260 180">
+            <use href="#login-iso-shell"/>
+            <polygon class="iso-rug" points="70 120 131 84 194 120 132 156"/>
+            <polygon class="iso-front iso-blue-front" points="73 70 111 48 111 89 73 111"/>
+            <polygon class="iso-front iso-moss-front" points="122 43 164 67 164 104 122 80"/>
+            <polygon class="iso-side iso-wood-side" points="92 118 130 140 130 153 92 131"/>
+            <polygon class="iso-front iso-wood-front" points="130 140 169 118 169 131 130 153"/>
+            <polygon class="iso-top iso-wood-top" points="92 118 131 96 169 118 130 140"/>
+            <path class="iso-edge" d="M180 74l-19 59M180 74l32 56M168 112h29"/>
+            <polygon class="iso-front iso-rose-front" points="181 56 203 43 203 85 181 98"/>
+            <ellipse class="iso-chair" cx="105" cy="102" rx="18" ry="10"/>
+          </symbol>
+        </svg>
 
-      <div class="login-quote">
-        <strong>Design rooms that feel like home.</strong>
-        <span>AI-powered interior design, built around your taste.</span>
+        <div class="login-room-type-banner" aria-hidden="true">
+          <div class="login-room-type-track">
+            <span>Bedroom</span><span>Living Room</span><span>Kitchen</span><span>Bathroom</span><span>Home Office</span><span>Dining Room</span><span>Nursery</span><span>Creative Room</span>
+          </div>
+          <div class="login-room-type-track" aria-hidden="true">
+            <span>Bedroom</span><span>Living Room</span><span>Kitchen</span><span>Bathroom</span><span>Home Office</span><span>Dining Room</span><span>Nursery</span><span>Creative Room</span>
+          </div>
+        </div>
+
+        <div class="login-room-stage" aria-hidden="true">
+          <div class="login-room-track">
+            <article class="login-room-card" data-login-room="bedroom"><svg viewBox="0 0 260 180"><use href="#login-iso-bedroom"/></svg></article>
+            <article class="login-room-card" data-login-room="living"><svg viewBox="0 0 260 180"><use href="#login-iso-living"/></svg></article>
+            <article class="login-room-card" data-login-room="kitchen"><svg viewBox="0 0 260 180"><use href="#login-iso-kitchen"/></svg></article>
+            <article class="login-room-card" data-login-room="bath"><svg viewBox="0 0 260 180"><use href="#login-iso-bath"/></svg></article>
+            <article class="login-room-card" data-login-room="office"><svg viewBox="0 0 260 180"><use href="#login-iso-office"/></svg></article>
+            <article class="login-room-card" data-login-room="dining"><svg viewBox="0 0 260 180"><use href="#login-iso-dining"/></svg></article>
+            <article class="login-room-card" data-login-room="nursery"><svg viewBox="0 0 260 180"><use href="#login-iso-nursery"/></svg></article>
+            <article class="login-room-card" data-login-room="studio"><svg viewBox="0 0 260 180"><use href="#login-iso-studio"/></svg></article>
+          </div>
+          <div class="login-room-track" aria-hidden="true">
+            <article class="login-room-card" data-login-room="bedroom"><svg viewBox="0 0 260 180"><use href="#login-iso-bedroom"/></svg></article>
+            <article class="login-room-card" data-login-room="living"><svg viewBox="0 0 260 180"><use href="#login-iso-living"/></svg></article>
+            <article class="login-room-card" data-login-room="kitchen"><svg viewBox="0 0 260 180"><use href="#login-iso-kitchen"/></svg></article>
+            <article class="login-room-card" data-login-room="bath"><svg viewBox="0 0 260 180"><use href="#login-iso-bath"/></svg></article>
+            <article class="login-room-card" data-login-room="office"><svg viewBox="0 0 260 180"><use href="#login-iso-office"/></svg></article>
+            <article class="login-room-card" data-login-room="dining"><svg viewBox="0 0 260 180"><use href="#login-iso-dining"/></svg></article>
+            <article class="login-room-card" data-login-room="nursery"><svg viewBox="0 0 260 180"><use href="#login-iso-nursery"/></svg></article>
+            <article class="login-room-card" data-login-room="studio"><svg viewBox="0 0 260 180"><use href="#login-iso-studio"/></svg></article>
+          </div>
+        </div>
+
+        <div class="login-room-copy-banner">
+          <strong>Design rooms that feel like home.</strong>
+          <span>AI-powered interior design, built around your taste.</span>
+        </div>
       </div>
     </section>
 
@@ -117,7 +250,7 @@
           </button>
         </div>
 
-        <p class="mt-7 text-center text-sm">
+        <p class="login-signup-prompt mt-7 text-center text-sm">
           New to BluPrint?
           <a href="#" id="signup-link" onclick="handleSignup(event)" class="font-semibold ml-1">Create an account</a>
         </p>
@@ -126,6 +259,59 @@
   </main>
 
   <div id="toast"></div>
+  <script>
+    (function () {
+      function cloneResolvedSvgNode(node) {
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+          return node.cloneNode(true);
+        }
+
+        if (node.tagName.toLowerCase() === 'use') {
+          const href = node.getAttribute('href') || node.getAttribute('xlink:href') || '';
+          const target = href.startsWith('#') ? document.getElementById(href.slice(1)) : null;
+          const fragment = document.createDocumentFragment();
+
+          if (target) {
+            Array.from(target.childNodes).forEach(function (child) {
+              fragment.appendChild(cloneResolvedSvgNode(child));
+            });
+          }
+
+          return fragment;
+        }
+
+        const clone = node.cloneNode(false);
+        Array.from(node.childNodes).forEach(function (child) {
+          clone.appendChild(cloneResolvedSvgNode(child));
+        });
+        return clone;
+      }
+
+      function hydrateLoginRoomCards() {
+        document.querySelectorAll('.login-room-stage .login-room-card svg').forEach(function (svg) {
+          const roomUse = svg.querySelector('use');
+          const href = roomUse && (roomUse.getAttribute('href') || roomUse.getAttribute('xlink:href'));
+          const symbol = href && href.startsWith('#') ? document.getElementById(href.slice(1)) : null;
+          if (!symbol) return;
+
+          const fragment = document.createDocumentFragment();
+          Array.from(symbol.childNodes).forEach(function (child) {
+            fragment.appendChild(cloneResolvedSvgNode(child));
+          });
+          while (svg.firstChild) {
+            svg.removeChild(svg.firstChild);
+          }
+          svg.appendChild(fragment);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hydrateLoginRoomCards);
+      } else {
+        hydrateLoginRoomCards();
+      }
+    })();
+  </script>
 <script src="./theme-toggle.js" defer></script>
   <script type="module" src="/src/login.tsx"></script>
   <script type="module" src="/src/theme-switch.tsx"></script>
