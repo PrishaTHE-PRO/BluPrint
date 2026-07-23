@@ -11,8 +11,19 @@ export type ForbiddenRect = {
 };
 
 const EDITOR_SCALE = 20; // architecture editor: 20 SVG px = 1 ft
-const ZONE_PADDING = 0.15;
+const ZONE_PADDING = 0.25;
 const DOOR_SIZE_FT = 2.67;
+
+/** Floor dims in feet from editor polygon points (matches RoomSVG / iso cutouts). */
+export function roomDimsFromPoints(roomPoints?: RoomPoint[] | null): { widthFt: number; lengthFt: number } | null {
+  if (!roomPoints || roomPoints.length < 2) return null;
+  const xs = roomPoints.map((p) => p.x);
+  const ys = roomPoints.map((p) => p.y);
+  return {
+    widthFt: Math.max((Math.max(...xs) - Math.min(...xs)) / EDITOR_SCALE, 1),
+    lengthFt: Math.max((Math.max(...ys) - Math.min(...ys)) / EDITOR_SCALE, 1),
+  };
+}
 
 const DEFAULT_WIDTH_IN: Record<string, number> = {
   sofa: 84, accent_chair: 32, coffee_table: 48, rug: 96, floor_lamp: 12, side_table: 18,
@@ -137,12 +148,58 @@ export function overlapsForbiddenZone(
   scale = 1,
 ) {
   const bounds = furnitureBounds(position, item, rotation, scale);
-  const clearance = 0.1;
+  const clearance = 0.2;
   return zones.some((zone) =>
     bounds.maxX > zone.minX - clearance
     && bounds.minX < zone.maxX + clearance
     && bounds.maxY > zone.minY - clearance
     && bounds.minY < zone.maxY + clearance);
+}
+
+/** Push a colliding piece away from the center of each overlapping keep-out. */
+function nudgeAwayFromZones(
+  position: PosFt,
+  item: Pick<FurnitureItem, 'category' | 'widthIn' | 'depthIn'> | {
+    category: string;
+    widthIn?: number;
+    depthIn?: number;
+  },
+  rotation: number,
+  zones: ForbiddenRect[],
+  scale = 1,
+): PosFt {
+  let next = { ...position };
+  for (let iter = 0; iter < 12; iter += 1) {
+    if (!overlapsForbiddenZone(next, item, rotation, zones, scale)) return next;
+    const bounds = furnitureBounds(next, item, rotation, scale);
+    const cx = (bounds.minX + bounds.maxX) / 2;
+    const cy = (bounds.minY + bounds.maxY) / 2;
+    let pushed = false;
+    for (const zone of zones) {
+      const hits = bounds.maxX > zone.minX
+        && bounds.minX < zone.maxX
+        && bounds.maxY > zone.minY
+        && bounds.minY < zone.maxY;
+      if (!hits) continue;
+      const zx = (zone.minX + zone.maxX) / 2;
+      const zy = (zone.minY + zone.maxY) / 2;
+      let dx = cx - zx;
+      let dy = cy - zy;
+      const len = Math.hypot(dx, dy);
+      if (len < 0.05) {
+        // Dead center of a zone — prefer the larger free axis.
+        dx = (zone.maxX - zone.minX) <= (zone.maxY - zone.minY) ? 1 : 0;
+        dy = dx === 0 ? 1 : 0;
+      } else {
+        dx /= len;
+        dy /= len;
+      }
+      next = { x: next.x + dx * 0.4, y: next.y + dy * 0.4 };
+      pushed = true;
+    }
+    if (!pushed) break;
+  }
+  return next;
 }
 
 export function findValidFurniturePosition(
@@ -158,11 +215,12 @@ export function findValidFurniturePosition(
   zones: ForbiddenRect[],
   scale = 1,
 ): PosFt {
-  const base = clampFurniturePosition(desired, item, rotation, roomWidthFt, roomLengthFt, scale);
+  const nudged = nudgeAwayFromZones(desired, item, rotation, zones, scale);
+  const base = clampFurniturePosition(nudged, item, rotation, roomWidthFt, roomLengthFt, scale);
   if (!overlapsForbiddenZone(base, item, rotation, zones, scale)) return base;
 
-  const step = 0.25;
-  const maxRadius = Math.max(roomWidthFt, roomLengthFt);
+  const step = 0.2;
+  const maxRadius = Math.max(roomWidthFt, roomLengthFt) + 2;
   for (let radius = step; radius <= maxRadius; radius += step) {
     for (let offset = -radius; offset <= radius; offset += step) {
       const candidates = [
@@ -177,7 +235,63 @@ export function findValidFurniturePosition(
       }
     }
   }
+
+  // Full-room scan — catches spots the spiral misses for large rugs.
+  for (let y = 0; y <= roomLengthFt; y += step) {
+    for (let x = 0; x <= roomWidthFt; x += step) {
+      const clamped = clampFurniturePosition({ x, y }, item, rotation, roomWidthFt, roomLengthFt, scale);
+      if (!overlapsForbiddenZone(clamped, item, rotation, zones, scale)) return clamped;
+    }
+  }
+
   return base;
+}
+
+/**
+ * Find a cutout-safe placement, shrinking oversized pieces (rugs especially)
+ * when the room hole leaves too little floor for the full footprint.
+ */
+export function resolveFurniturePlacement(
+  desired: PosFt,
+  item: Pick<FurnitureItem, 'category' | 'widthIn' | 'depthIn'> | {
+    category: string;
+    widthIn?: number;
+    depthIn?: number;
+  },
+  rotation: number,
+  roomWidthFt: number,
+  roomLengthFt: number,
+  zones: ForbiddenRect[],
+  scale = 1,
+): { position: PosFt; scale: number } {
+  let tryScale = Math.max(0.5, Math.min(2, scale));
+  for (let attempt = 0; attempt < 14; attempt += 1) {
+    const position = findValidFurniturePosition(
+      desired,
+      item,
+      rotation,
+      roomWidthFt,
+      roomLengthFt,
+      zones,
+      tryScale,
+    );
+    if (!overlapsForbiddenZone(position, item, rotation, zones, tryScale)) {
+      return { position, scale: tryScale };
+    }
+    tryScale = Math.max(0.4, tryScale * 0.82);
+  }
+
+  // Last resort: smallest scale, nudged as far from keep-outs as the search allows.
+  const position = findValidFurniturePosition(
+    desired,
+    item,
+    rotation,
+    roomWidthFt,
+    roomLengthFt,
+    zones,
+    tryScale,
+  );
+  return { position, scale: tryScale };
 }
 
 /** Cutout + door AABBs in feet (same basis as RoomSVG / iso preview). */
@@ -266,13 +380,23 @@ export function constrainFurnitureEntries<T extends {
     const scale = entry.scale ?? 1;
     const desired = { x: entry.x, y: entry.y };
 
-    // Leave 2D-valid placements alone unless they actually hit a keep-out zone.
-    if (zones.length === 0 || !overlapsForbiddenZone(desired, item, rotation, zones, scale)) {
+    if (zones.length === 0) {
+      const clamped = clampFurniturePosition(desired, item, rotation, W, L, scale);
+      if (clamped.x === entry.x && clamped.y === entry.y) return entry;
+      return { ...entry, x: clamped.x, y: clamped.y };
+    }
+
+    // Always re-resolve when overlapping a cutout/door — shrink rugs if needed.
+    if (!overlapsForbiddenZone(desired, item, rotation, zones, scale)) {
       return entry;
     }
 
-    const next = findValidFurniturePosition(desired, item, rotation, W, L, zones, scale);
-    if (next.x === entry.x && next.y === entry.y) return entry;
-    return { ...entry, x: next.x, y: next.y };
+    const resolved = resolveFurniturePlacement(desired, item, rotation, W, L, zones, scale);
+    return {
+      ...entry,
+      x: resolved.position.x,
+      y: resolved.position.y,
+      scale: resolved.scale,
+    };
   });
 }

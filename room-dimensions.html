@@ -391,7 +391,8 @@ function isPointInRoom(x,y) {
     if (intersect) inside = !inside;
   }
   if (!inside) return false;
-  return !(state.finalizedCutouts || []).some(c => isPointInPolygon(x, y, c.points));
+  const punched = [...(state.finalizedCutouts || []), ...(state.cutouts || [])];
+  return !punched.some(c => isPointInPolygon(x, y, c.points));
 }
 
 /** True if the point is inside the room or sitting on a wall (ray-cast is flaky on edges). */
@@ -500,26 +501,40 @@ function showDoorFlipTooltip(el) {
 }
 
 function getCutoutDeletePosition(c) {
+  // Prefer the left green adjust handle (start side: midpoint of outer→inner left edge).
+  if (c.source !== "drawn" && Array.isArray(c.points) && c.points.length >= 4) {
+    const leftHandle = midpoint(c.points[0], c.points[3]);
+    const center = getPolygonCenter(c.points);
+    let dx = leftHandle.x - center.x;
+    let dy = leftHandle.y - center.y;
+    const len = Math.hypot(dx, dy);
+    if (len > 0.1) {
+      dx /= len;
+      dy /= len;
+    } else {
+      dx = c.points[0].x - c.points[1].x;
+      dy = c.points[0].y - c.points[1].y;
+      const wallLen = Math.hypot(dx, dy) || 1;
+      dx /= wallLen;
+      dy /= wallLen;
+    }
+    // Sit on the left handle, nudged slightly outward so the green dot stays clickable.
+    return {
+      x: leftHandle.x + dx * 12,
+      y: leftHandle.y + dy * 12,
+    };
+  }
+
   const clippedPoints = c.source === "drawn" ? [] : clipPolygonToRoom(c.points);
   const points = clippedPoints.length >= 3 ? clippedPoints : c.points;
   if (!points.length) return { x: 0, y: 0 };
 
-  const xs = points.map(p => p.x);
-  const ys = points.map(p => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const center = getPolygonCenter(points);
-  const inset = 12;
-  const candidates = [
-    { x: maxX - inset, y: minY + inset },
-    { x: maxX - inset, y: maxY - inset },
-    { x: minX + inset, y: minY + inset },
-    center,
-  ];
-
-  return candidates.find(p => isPointInPolygon(p.x, p.y, points)) || center;
+  // Drawn cutouts: pin the X to the leftmost vertex instead of the center.
+  let leftmost = points[0];
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].x < leftmost.x) leftmost = points[i];
+  }
+  return { x: leftmost.x, y: leftmost.y };
 }
 
 function appendCutoutDeleteButton(group, cutout) {
@@ -1072,7 +1087,11 @@ function renderRoom() {
 
   const mask = document.getElementById("room-mask");
   mask.innerHTML = '<rect width="100%" height="100%" fill="white" />';
-  (state.finalizedCutouts || []).forEach((cutout) => {
+  const punchedCutouts = [
+    ...(state.finalizedCutouts || []),
+    ...(state.cutouts || []),
+  ];
+  punchedCutouts.forEach((cutout) => {
     const maskPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     maskPath.setAttribute("d", pointsToPath(cutout.points));
     maskPath.setAttribute("fill", "black");
@@ -1778,12 +1797,13 @@ svg.addEventListener("drop", (e) => {
            lastDragSvgPoint = null;
            return;
         }
-        // Apply immediately so the wall notch punches a hole in the room.
-        state.finalizedCutouts.push(newCutout);
-        selectedCutoutId = null;
+        // Keep it active + selected so green adjust handles appear immediately.
+        // Floor hole still punches because active cutouts are included in the room mask.
+        state.cutouts.push(newCutout);
+        selectedCutoutId = newCutout.id;
         saveState();
         renderAll();
-        showToast("Wall cutout added");
+        showToast("Wall cutout added — drag the green handles to adjust");
       } else {
         showToast("Drop the cutout onto a wall");
         ghost.classList.add("hidden");

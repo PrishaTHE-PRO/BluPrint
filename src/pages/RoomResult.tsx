@@ -20,6 +20,7 @@ import {
 } from '../utils/furniturePlacement';
 import type { FurniturePlacement } from '../utils/furniturePlacement';
 import { resolveFurnitureColors, paletteFallback, colorFromName } from '../utils/furnitureColor';
+import { roomDimsFromPoints } from '../utils/furnitureConstraints';
 
 const EMPTY_PLACEMENT: Placement = { positions: {}, rotations: {}, scales: {} };
 const ISO_THROTTLE_MS = 70;
@@ -490,24 +491,26 @@ export default function RoomResult() {
     }
 
     const palette = style?.colorPalette ?? [];
+    const styleTag = style?.styleTag ?? '';
     const changed = layoutFurniturePreview.filter(
       (item) => colorSourceIdsRef.current[item.category] !== item.id,
     );
+
+    const seedColor = (item: FurnitureItem) =>
+      (item.color && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(item.color) ? item.color : null)
+      || colorFromName(item.name)
+      || paletteFallback(item.category, palette, item.styleTag || styleTag);
 
     // Keep existing colors (including for temporarily hidden pieces). Seed only changed ids.
     setColorByCategory((prev) => {
       const next: Record<string, string> = { ...prev };
       for (const item of changed) {
-        next[item.category] =
-          colorFromName(item.name) ||
-          paletteFallback(item.category, palette);
+        next[item.category] = seedColor(item);
       }
       // Ensure every visible piece has a color even if it was wiped earlier.
       for (const item of layoutFurniturePreview) {
         if (!next[item.category]) {
-          next[item.category] =
-            colorFromName(item.name) ||
-            paletteFallback(item.category, palette);
+          next[item.category] = seedColor(item);
         }
       }
       return next;
@@ -523,8 +526,11 @@ export default function RoomResult() {
         imageUrl: item.imageUrl,
         name: item.name,
         id: item.id,
+        color: item.color,
+        styleTag: item.styleTag || styleTag,
       })),
       palette,
+      styleTag,
     ).then((colors) => {
       if (cancelled) return;
       setColorByCategory((prev) => {
@@ -566,9 +572,11 @@ export default function RoomResult() {
     });
 
     // Keep the exact 2D placement — iso render only nudges true cutout overlaps.
+    // Use polygon bbox so cutout feet and furniture feet share one coordinate space.
+    const dims = roomDimsFromPoints(savedLayout?.roomPoints);
     return {
-      widthFt: layoutRoomPreview.widthFt,
-      lengthFt: layoutRoomPreview.lengthFt,
+      widthFt: dims?.widthFt ?? layoutRoomPreview.widthFt,
+      lengthFt: dims?.lengthFt ?? layoutRoomPreview.lengthFt,
       roomName: layoutRoomPreview.name,
       id: layoutRoomPreview.roomId || 'result-room',
       elements: (savedLayout?.elements ?? [])

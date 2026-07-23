@@ -941,7 +941,8 @@ a.workflow-step:focus-visible {
   pointer-events: none;
   transition: opacity .14s ease;
 }
-.page-dimensions .cutout-group:hover .cutout-delete-btn {
+.page-dimensions .cutout-group:hover .cutout-delete-btn,
+.page-dimensions .cutout-group.is-selected .cutout-delete-btn {
   opacity: 1;
   pointer-events: all;
 }
