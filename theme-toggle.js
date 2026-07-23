@@ -7,6 +7,7 @@
   function applyTheme(isDark) {
     document.documentElement.classList.toggle('dark-mode', isDark);
     document.body.classList.toggle('dark-mode', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
     try {
       localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
     } catch (_) { /* ignore */ }

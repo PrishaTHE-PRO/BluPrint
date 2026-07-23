@@ -150,10 +150,10 @@
               <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(247,244,213,0.08)" stroke-width="1.5"></path>
             </pattern>
             <symbol id="door-template">
-              <path d="M 0 0 L 40 0" stroke="#3B3B3B" stroke-width="4" stroke-linecap="round"></path>
-              <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#3B3B3B" stroke-width="2.6" stroke-dasharray="5 2.5" stroke-linecap="round" fill="none"></path>
-              <path d="M 0 0 L 0 40" stroke="#3B3B3B" stroke-width="5.5" stroke-linecap="round"></path>
-              <circle cx="0" cy="0" r="3.5" fill="#3B3B3B"></circle>
+              <path d="M 0 0 L 40 0" stroke="#D3968D" stroke-width="6" stroke-linecap="round"></path>
+              <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#D3968D" stroke-width="3.6" stroke-dasharray="5 2.5" stroke-linecap="round" fill="none"></path>
+              <path d="M 0 0 L 0 40" stroke="#D3968D" stroke-width="7.5" stroke-linecap="round"></path>
+              <circle cx="0" cy="0" r="4.5" fill="#D3968D"></circle>
             </symbol>
             <mask id="room-mask"></mask>
             <clipPath id="room-clip"><path id="room-clip-path"></path></clipPath>
@@ -629,7 +629,111 @@ function checkCollision(newEl, excludeId = null) {
 }
 
 function isCutoutValid(points) {
-  return points.length >= 3 && doesCutoutOverlapRoom(points);
+  if (!points || points.length < 3) return false;
+  if (points.length === 4) {
+    const cx = (points[0].x + points[1].x + points[2].x + points[3].x) / 4;
+    const cy = (points[0].y + points[1].y + points[2].y + points[3].y) / 4;
+    // Wall-aligned alcoves must sit with their centroid inside the room.
+    if (isPointInRoom(cx, cy)) return true;
+  }
+  return doesCutoutOverlapRoom(points);
+}
+
+function getEdgeFrame(edgeIndex) {
+  const p1 = state.roomPoints[edgeIndex];
+  const p2 = state.roomPoints[(edgeIndex + 1) % state.roomPoints.length];
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const tx = dx / len;
+  const ty = dy / len;
+  let nx = -ty;
+  let ny = tx;
+  const midX = (p1.x + p2.x) / 2;
+  const midY = (p1.y + p2.y) / 2;
+  // Flip so the normal points into the room interior.
+  if (!isPointInRoom(midX + nx * 8, midY + ny * 8)) {
+    nx = -nx;
+    ny = -ny;
+  }
+  return { p1, p2, tx, ty, nx, ny, len, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+}
+
+function buildCutoutRect(frame, leftAlong, rightAlong, depth) {
+  const left = Math.min(leftAlong, rightAlong);
+  const right = Math.max(leftAlong, rightAlong);
+  const d = Math.max(12, depth);
+  const p0 = { x: frame.p1.x + frame.tx * left, y: frame.p1.y + frame.ty * left };
+  const p1 = { x: frame.p1.x + frame.tx * right, y: frame.p1.y + frame.ty * right };
+  const p2 = { x: p1.x + frame.nx * d, y: p1.y + frame.ny * d };
+  const p3 = { x: p0.x + frame.nx * d, y: p0.y + frame.ny * d };
+  return [p0, p1, p2, p3];
+}
+
+function getCutoutMetrics(cutout) {
+  const edgeIndex = Number.isInteger(cutout.edgeIndex) ? cutout.edgeIndex : 0;
+  const frame = getEdgeFrame(edgeIndex);
+  const leftAlong =
+    (cutout.points[0].x - frame.p1.x) * frame.tx +
+    (cutout.points[0].y - frame.p1.y) * frame.ty;
+  const rightAlong =
+    (cutout.points[1].x - frame.p1.x) * frame.tx +
+    (cutout.points[1].y - frame.p1.y) * frame.ty;
+  const depth =
+    (cutout.points[3].x - cutout.points[0].x) * frame.nx +
+    (cutout.points[3].y - cutout.points[0].y) * frame.ny;
+  return {
+    frame,
+    edgeIndex,
+    leftAlong,
+    rightAlong,
+    depth: Math.max(12, Math.abs(depth)),
+    width: Math.max(16, Math.abs(rightAlong - leftAlong)),
+  };
+}
+
+/** Keep preset cutouts as wall-aligned rectangles; drag only along wall or inward. */
+function constrainCutoutVertex(cutout, pIdx, svgP) {
+  let edgeIndex = Number.isInteger(cutout.edgeIndex)
+    ? cutout.edgeIndex
+    : getClosestPointOnPerimeter(svgP.x, svgP.y).edgeIndex;
+  const frame = getEdgeFrame(edgeIndex);
+  const metrics = getCutoutMetrics({ ...cutout, edgeIndex });
+  let { leftAlong, rightAlong, depth } = metrics;
+  const along =
+    (svgP.x - frame.p1.x) * frame.tx +
+    (svgP.y - frame.p1.y) * frame.ty;
+  const into =
+    (svgP.x - frame.p1.x) * frame.nx +
+    (svgP.y - frame.p1.y) * frame.ny;
+
+  if (pIdx === 0 || pIdx === 1) {
+    if (pIdx === 0) leftAlong = Math.min(along, rightAlong - 16);
+    else rightAlong = Math.max(along, leftAlong + 16);
+  } else {
+    depth = Math.max(12, into);
+    if (pIdx === 3) leftAlong = Math.min(along, rightAlong - 16);
+    if (pIdx === 2) rightAlong = Math.max(along, leftAlong + 16);
+  }
+
+  leftAlong = Math.max(2, Math.min(frame.len - 18, leftAlong));
+  rightAlong = Math.max(leftAlong + 16, Math.min(frame.len - 2, rightAlong));
+  const pts = buildCutoutRect(frame, leftAlong, rightAlong, depth);
+  if (!isCutoutValid(pts)) return false;
+  cutout.edgeIndex = edgeIndex;
+  cutout.points = pts;
+  return true;
+}
+
+function placeCutoutOnEdge(edgeIndex, centerAlong, width, depth) {
+  const frame = getEdgeFrame(edgeIndex);
+  const half = Math.max(8, width / 2);
+  let center = centerAlong;
+  center = Math.max(half + 2, Math.min(frame.len - half - 2, center));
+  return {
+    points: buildCutoutRect(frame, center - half, center + half, depth),
+    edgeIndex,
+  };
 }
 
 function isValidVertexMovement(x, y, cutoutId, vIdx) {
@@ -894,7 +998,18 @@ function renderElements() {
     const mirrorScale = el.isMirrored ? -1 : 1;
     if (el.type === "door") {
       const offset = -20;
-      g.innerHTML = `<use href="#door-template" transform="translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(${offset}, 0)" />`;
+      const doorG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      doorG.setAttribute("class", "door-graphic");
+      doorG.setAttribute(
+        "transform",
+        `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(${offset}, 0)`
+      );
+      // Invisible-ish fill covers the swing so hover/tip works on outline AND inside the door arc.
+      doorG.innerHTML = `
+        <path class="door-hit-area" d="M 0 0 L 40 0 A 40 40 0 0 1 0 40 Z"></path>
+        <use href="#door-template"></use>
+      `;
+      g.appendChild(doorG);
     } else {
       const w = el.width || 50;
       const offset = -w/2;
@@ -992,8 +1107,14 @@ function renderElements() {
         if (edgeEl) edgeEl.classList.add("active");
         el.x = snap.point.x; el.y = snap.point.y; el.angle = snap.point.angle;
         if (el.type === 'door') {
-          const useEl = g.querySelector("use"); const moveMirror = el.isMirrored ? -1 : 1;
-          useEl.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${mirrorScale}, 1) translate(-20, 0)`);
+          const doorG = g.querySelector(".door-graphic");
+          const moveMirror = el.isMirrored ? -1 : 1;
+          if (doorG) {
+            doorG.setAttribute(
+              "transform",
+              `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${moveMirror}, 1) translate(-20, 0)`
+            );
+          }
         } else {
           const w = el.width || 50;
           const gInner = g.querySelector('g');
@@ -1087,22 +1208,35 @@ function renderCutouts() {
       outline.setAttribute("style", "cursor: grabbing");
       const startSvgP = getSVGPoint(e);
       const originalPoints = c.points.map((p) => ({ ...p }));
+      const originalEdge = Number.isInteger(c.edgeIndex) ? c.edgeIndex : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
+      const metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
       const onMouseMove = (mv) => {
         hasMoved = true;
         const currentSvgP = getSVGPoint(mv);
-        const snap = getClosestPointOnPerimeter(currentSvgP.x, currentSvgP.y);
-        const dx = c.source === "drawn" ? currentSvgP.x - startSvgP.x : snap.point.x - originalPoints[0].x;
-        const dy = c.source === "drawn" ? currentSvgP.y - startSvgP.y : snap.point.y - originalPoints[0].y;
-        const testPoints = originalPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
-        if (isCutoutValid(testPoints)) {
-          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          if (c.source !== "drawn") {
-            const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-            if (edgeEl) edgeEl.classList.add("active");
-          }
+        if (c.source === "drawn") {
+          const dx = currentSvgP.x - startSvgP.x;
+          const dy = currentSvgP.y - startSvgP.y;
+          const testPoints = originalPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
+          if (!isCutoutValid(testPoints)) return;
           c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
           renderAll();
+          return;
         }
+        const snap = getClosestPointOnPerimeter(currentSvgP.x, currentSvgP.y);
+        const frame = getEdgeFrame(snap.edgeIndex);
+        const centerAlong =
+          (snap.point.x - frame.p1.x) * frame.tx +
+          (snap.point.y - frame.p1.y) * frame.ty;
+        const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, metrics.width, metrics.depth);
+        if (!isCutoutValid(placed.points)) return;
+        const testCutout = { ...c, ...placed };
+        if (checkCollision(testCutout, c.id)) return;
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+        if (edgeEl) edgeEl.classList.add("active");
+        c.points = placed.points;
+        c.edgeIndex = placed.edgeIndex;
+        renderAll();
       };
       const onMouseUp = () => {
         window.removeEventListener("mousemove", onMouseMove);
@@ -1220,11 +1354,10 @@ function renderCutouts() {
       circle.onmousedown = (e) => {
         e.stopPropagation(); circle.classList.add("dragging"); coordTooltip.classList.remove("hidden");
         let hasResized = false;
-        const originalVertex = { x: p.x, y: p.y };
-        const originalPoints = c.points.map(item => ({ ...item }));
         const onMove = (mv) => {
           const svgP = getSVGPoint(mv);
           const previousPts = cloneObj(c.points);
+          const previousEdge = c.edgeIndex;
 
           if (c.source === "drawn") {
             c.points[pIdx].x = svgP.x;
@@ -1239,48 +1372,18 @@ function renderCutouts() {
             return;
           }
 
-          // Standard cutout: Keep it rectangular by constraining movement to its perpendicular axis
-          const snap = getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y);
-          const angleRad = (snap.point.angle * Math.PI) / 180;
-          const nx = Math.cos(angleRad + Math.PI / 2); // Perpendicular vector (into room)
-          const ny = Math.sin(angleRad + Math.PI / 2);
-          const ux = Math.cos(angleRad); // Parallel vector (along wall)
-          const uy = Math.sin(angleRad);
-          const nextPoints = originalPoints.map(item => ({ ...item }));
-
-          if (pIdx === 0 || pIdx === 1) {
-             // Wall vertices move only along the wall
-             const baseP = originalVertex;
-             const dist = (svgP.x - baseP.x) * ux + (svgP.y - baseP.y) * uy;
-             nextPoints[pIdx].x = baseP.x + ux * dist;
-             nextPoints[pIdx].y = baseP.y + uy * dist;
-             // Mirror to corresponding interior vertex to keep rectangle shape
-             const interiorIdx = pIdx === 0 ? 3 : 2;
-             nextPoints[interiorIdx].x = originalPoints[interiorIdx].x + (nextPoints[pIdx].x - originalPoints[pIdx].x);
-             nextPoints[interiorIdx].y = originalPoints[interiorIdx].y + (nextPoints[pIdx].y - originalPoints[pIdx].y);
-          } else {
-             // Interior vertices move only along the normal (depth adjustment)
-             const baseP = originalVertex;
-             const dist = (svgP.x - baseP.x) * nx + (svgP.y - baseP.y) * ny;
-             // Update both interior vertices to keep depth consistent across the face
-             const dX = nx * dist; const dY = ny * dist;
-             nextPoints[2].x = originalPoints[2].x + dX; nextPoints[2].y = originalPoints[2].y + dY;
-             nextPoints[3].x = originalPoints[3].x + dX; nextPoints[3].y = originalPoints[3].y + dY;
-          }
-
-          c.points = nextPoints;
-
-          // Validation: Vertex spacing and room inclusion
-          const collisionCheck = isValidVertexMovement(c.points[pIdx].x, c.points[pIdx].y, c.id, pIdx);
-          const roomCheck = isCutoutValid(c.points) && isRectCutoutSizeValid(c.points);
-
-          if (!collisionCheck || !roomCheck) {
+          if (!constrainCutoutVertex(c, pIdx, svgP)) {
             c.points = previousPts;
+            c.edgeIndex = previousEdge;
             return;
           }
-
-          const activePoint = c.points[pIdx];
+          if (checkCollision({ ...c, type: "cutout" }, c.id)) {
+            c.points = previousPts;
+            c.edgeIndex = previousEdge;
+            return;
+          }
           hasResized = true;
+          const activePoint = c.points[pIdx];
           showCutoutSizeTooltip(activePoint);
           renderAll();
         };
@@ -1290,13 +1393,12 @@ function renderCutouts() {
           window.removeEventListener("mousemove", onMove);
           window.removeEventListener("mouseup", onUp);
           if (hasResized) {
-            const snap = getClosestPointOnPerimeter(c.points[0].x, c.points[0].y);
-            c.edgeIndex = snap.edgeIndex;
             saveState();
             showToast("Cutout resized");
           }
         };
-        window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
       };
       g.appendChild(circle);
     });
@@ -1360,15 +1462,11 @@ function updateDimensionsDisplay() {
 
 function createSnappingCutout(targetX, targetY, size = 30) {
   const snap = getClosestPointOnPerimeter(targetX, targetY);
-  const angleRad = (snap.point.angle * Math.PI) / 180;
-  const nx = Math.cos(angleRad + Math.PI / 2);
-  const ny = Math.sin(angleRad + Math.PI / 2);
-  const halfSize = size / 2;
-  const p0 = { x: snap.point.x - Math.cos(angleRad) * halfSize, y: snap.point.y - Math.sin(angleRad) * halfSize };
-  const p1 = { x: snap.point.x + Math.cos(angleRad) * halfSize, y: snap.point.y + Math.sin(angleRad) * halfSize };
-  const p2 = { x: p1.x + nx * size, y: p1.y + ny * size };
-  const p3 = { x: p0.x + nx * size, y: p0.y + ny * size };
-  return [p0, p1, p2, p3];
+  const frame = getEdgeFrame(snap.edgeIndex);
+  const centerAlong =
+    (snap.point.x - frame.p1.x) * frame.tx +
+    (snap.point.y - frame.p1.y) * frame.ty;
+  return placeCutoutOnEdge(snap.edgeIndex, centerAlong, size, size).points;
 }
 
 function finalizeCutouts() {
@@ -1448,17 +1546,17 @@ svg.addEventListener("mousedown", (e) => {
     if (drawingPoints.length === 3) showToast("Click the first point to close the shape!");
     return;
   }
-  if (pendingCutoutId) {
-    finalizeCutouts();
-    return;
-  }
   if ((e.target === svg || e.target.id === 'svg-bg') && !e.target.closest('#drawing-layer')) {
     const svgP = getSVGPoint(e);
+    const outsideRoom = !isPointInRoom(svgP.x, svgP.y);
 
-    if (state.cutouts.length > 0) {
+    // Only bake cutouts when clicking outside the room (not on empty floor).
+    if (outsideRoom && state.cutouts.length > 0) {
       finalizeCutouts();
       return;
-    } else {
+    }
+
+    if (state.cutouts.length === 0) {
       let reactivated = false;
       if (state.finalizedCutouts) {
         for (let i = state.finalizedCutouts.length - 1; i >= 0; i--) {
@@ -1476,18 +1574,17 @@ svg.addEventListener("mousedown", (e) => {
       }
       if (!reactivated) {
         selectedCutoutId = null;
+        pendingCutoutId = null;
       }
+    } else if (outsideRoom) {
+      selectedCutoutId = null;
+      pendingCutoutId = null;
     }
 
     selectedResizeId = null;
     renderAll();
+    renderDrawing();
   }
-});
-
-document.addEventListener("mousedown", (e) => {
-  if (drawingMode || state.cutouts.length === 0) return;
-  if (svg.contains(e.target)) return;
-  finalizeCutouts();
 });
 
 svg.addEventListener("drop", (e) => {
@@ -1497,9 +1594,19 @@ svg.addEventListener("drop", (e) => {
   const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
   if (snap.dist < 200) {
     if (draggingFromToolbar === "cutout") {
-      const newPts = createSnappingCutout(svgP.x, svgP.y, 35);
-      if (isCutoutValid(newPts)) {
-        const newCutout = { id: Date.now(), type: "cutout", points: newPts, edgeIndex: snap.edgeIndex, source: "preset" };
+      const frame = getEdgeFrame(snap.edgeIndex);
+      const centerAlong =
+        (snap.point.x - frame.p1.x) * frame.tx +
+        (snap.point.y - frame.p1.y) * frame.ty;
+      const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 35, 35);
+      if (isCutoutValid(placed.points)) {
+        const newCutout = {
+          id: Date.now(),
+          type: "cutout",
+          points: placed.points,
+          edgeIndex: placed.edgeIndex,
+          source: "preset",
+        };
         if (checkCollision(newCutout)) {
            showToast("Cutout cannot intersect with existing items");
            ghost.classList.add("hidden");
@@ -1507,6 +1614,7 @@ svg.addEventListener("drop", (e) => {
         }
         state.cutouts.push(newCutout);
         selectedCutoutId = newCutout.id;
+        pendingCutoutId = null;
       }
       else { showToast("Cutout must overlap room interior"); ghost.classList.add("hidden"); return; }
     } else {
@@ -1814,6 +1922,152 @@ function renderDrawing() {
 }
 
 saveState(); renderAll();
+
+/* ── Save & Continue ─────────────────────────────────────────────────────── */
+const ROOM_LAYOUT_STORAGE_KEY = "blueprintRoomLayout";
+const ROOM_LAYOUT_VERSION = 1;
+const ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
+
+function getStateDimensionsFt() {
+  const xs = state.roomPoints.map((p) => p.x);
+  const ys = state.roomPoints.map((p) => p.y);
+  return {
+    widthFt:  (Math.max(...xs) - Math.min(...xs)) / ROOM_LAYOUT_SCALE,
+    lengthFt: (Math.max(...ys) - Math.min(...ys)) / ROOM_LAYOUT_SCALE,
+  };
+}
+
+function captureRoomLayoutSnapshot() {
+  const dims = getStateDimensionsFt();
+  const heightFt = parseFloat(heightInput.value) || 8;
+  const roomName = (roomNameInput && roomNameInput.value.trim()) || "My Room";
+  const cutouts = [
+    ...cloneObj(state.cutouts || []),
+    ...cloneObj(state.finalizedCutouts || []),
+  ];
+  return {
+    version:    ROOM_LAYOUT_VERSION,
+    roomId:     localStorage.getItem("blueprintCurrentRoomId") || undefined,
+    roomName,
+    widthFt:    Number(dims.widthFt.toFixed(1)),
+    lengthFt:   Number(dims.lengthFt.toFixed(1)),
+    heightFt:   Number(heightFt.toFixed(1)),
+    sqft:       Math.round(dims.widthFt * dims.lengthFt),
+    scale:      ROOM_LAYOUT_SCALE,
+    viewBox:    ROOM_LAYOUT_VIEWBOX,
+    roomPoints: cloneObj(state.roomPoints),
+    elements:   cloneObj(state.elements),
+    cutouts,
+    savedAt:    new Date().toISOString(),
+  };
+}
+
+function persistRoomLayout(layout) {
+  localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+}
+
+function restorePersistedLayout() {
+  let raw;
+  try { raw = localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY); } catch { return false; }
+  if (!raw) return false;
+  let layout;
+  try { layout = JSON.parse(raw); } catch { return false; }
+  if (!layout || layout.version !== ROOM_LAYOUT_VERSION) return false;
+  const currentRoomId = localStorage.getItem("blueprintCurrentRoomId");
+  if (layout.roomId && currentRoomId && layout.roomId !== currentRoomId) return false;
+  if (Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 3) {
+    state.roomPoints = cloneObj(layout.roomPoints);
+  }
+  if (Array.isArray(layout.elements)) state.elements = cloneObj(layout.elements);
+  if (Array.isArray(layout.cutouts)) {
+    state.cutouts = [];
+    state.finalizedCutouts = cloneObj(layout.cutouts);
+  }
+  if (roomNameInput && layout.roomName) roomNameInput.value = layout.roomName;
+  if (heightInput && Number.isFinite(layout.heightFt)) {
+    heightInput.value = String(layout.heightFt);
+  }
+  return true;
+}
+
+if (restorePersistedLayout()) {
+  history = [];
+  historyIndex = -1;
+  saveState();
+  renderAll();
+}
+
+(function wireSaveContinue() {
+  const btn = document.getElementById("cta-save-continue");
+  if (!btn || btn.dataset.saveWired === "1") return;
+  btn.dataset.saveWired = "1";
+
+  let saving = false;
+  btn.addEventListener("click", async () => {
+    if (saving) return;
+
+    const userId = localStorage.getItem("blueprintUserId");
+    if (!userId) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
+    const layoutSnapshot = {
+      ...captureRoomLayoutSnapshot(),
+      roomId: existingRoomId || undefined,
+    };
+    const { widthFt, lengthFt, heightFt, roomName } = layoutSnapshot;
+
+    if (!roomName || widthFt <= 0 || lengthFt <= 0 || heightFt <= 0) {
+      showToast("Enter valid room details");
+      return;
+    }
+
+    localStorage.setItem("blueprintCurrentRoomName", roomName);
+    localStorage.setItem("blueprintCurrentRoomWidth", String(widthFt));
+    localStorage.setItem("blueprintCurrentRoomLength", String(lengthFt));
+    localStorage.setItem("blueprintCurrentRoomHeight", String(heightFt));
+    persistRoomLayout(layoutSnapshot);
+
+    saving = true;
+    btn.disabled = true;
+    const previousLabel = btn.innerHTML;
+    btn.innerHTML = "Saving...";
+
+    try {
+      const res = await fetch(
+        existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
+        {
+          method: existingRoomId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            name: roomName,
+            widthFt,
+            lengthFt,
+            heightFt,
+            sqft: layoutSnapshot.sqft,
+            layout: layoutSnapshot,
+          }),
+        },
+      );
+      if (!res.ok) throw new Error("save failed (" + res.status + ")");
+      const room = await res.json();
+      localStorage.setItem("blueprintCurrentRoomId", room._id);
+      persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
+    } catch (err) {
+      console.warn("[save room]", err);
+      showToast("Saved locally — continuing");
+    }
+
+    window.location.href = "inspo-upload.html";
+    // If navigation is blocked, restore the button.
+    saving = false;
+    btn.disabled = false;
+    btn.innerHTML = previousLabel;
+  });
+})();
 </script>
 
 

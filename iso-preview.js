@@ -157,6 +157,7 @@ const ISO_COLORS = {
     wallTop:  '#f5eed9',
     wallSide: '#e9e0c8',
     patch:    '#fbf7ee',
+    cutout:   '#e4d5bf',
     grid:     'rgba(47,80,125,.14)',
     ink:      '#233b63',
 };
@@ -166,24 +167,27 @@ const ISO_COLORS = {
 const FURN_HEIGHTS = {
     rug: 0.04, bedroom_rug: 0.04, dining_rug: 0.04, kitchen_rug: 0.04, nursery_rug: 0.04, bath_mat: 0.04,
     sofa: 2.4, accent_chair: 2.7, rocking_chair: 2.7, office_chair: 3, dining_chair: 3, bar_stool: 2.5,
-    coffee_table: 1.4, side_table: 2, monitor_stand: 1.4,
+    coffee_table: 1.4, side_table: 2,
     floor_lamp: 4.8, bedside_lamp: 1.6, desk_lamp: 1.4,
     bed: 2, crib: 3, nightstand: 2, desk: 2.5, dining_table: 2.5, island_cart: 3,
     dresser: 2.8, nursery_dresser: 2.8, sideboard: 2.8, vanity: 2.8, kitchen_storage: 3, bar_cabinet: 3.5,
     wardrobe: 6, bookshelf: 5, storage_cabinet: 4, kitchen_shelf: 4, bath_storage: 3, nursery_shelf: 4,
+    bath_mirror: 2.2, bath_light: 0.8, nursery_lamp: 1.4, monitor_stand: 1.2,
     reading_nook: 2.8, workspace_desk: 2.5, vanity_station: 2.8, bookcase: 5, indoor_plants: 3, smart_lighting: 4.6,
 };
-// Furniture colours — shades of blue, with a light cream accent for lamps.
+// Furniture colours — warm wood / textile neutrals as last-resort defaults.
+// Live product colors are passed via entry.color when available.
 const FURN_COLORS = {
-    rug: '#88a8c8', bedroom_rug: '#88a8c8', dining_rug: '#88a8c8', kitchen_rug: '#88a8c8', nursery_rug: '#88a8c8', bath_mat: '#88a8c8',
-    sofa: '#8aa6c4', accent_chair: '#6f8fb2', rocking_chair: '#6f8fb2', office_chair: '#6f8fb2', dining_chair: '#7794b4', bar_stool: '#7794b4',
-    bed: '#9cc0e6', crib: '#9cc0e6',
-    coffee_table: '#b7c6d8', side_table: '#b7c6d8', nightstand: '#b7c6d8', desk: '#b7c6d8', dining_table: '#b7c6d8', monitor_stand: '#b7c6d8', island_cart: '#b7c6d8',
-    dresser: '#94adca', sideboard: '#94adca', vanity: '#94adca', kitchen_storage: '#94adca', bar_cabinet: '#94adca',
-    wardrobe: '#5c7ca4', bookshelf: '#5c7ca4', storage_cabinet: '#5c7ca4', kitchen_shelf: '#5c7ca4', bath_storage: '#5c7ca4', nursery_shelf: '#5c7ca4',
-    floor_lamp: '#f1e7c4', bedside_lamp: '#f1e7c4', desk_lamp: '#f1e7c4',
-    wall_art: '#5c7ca4', floating_shelves: '#a7bdd6',
-    reading_nook: '#8aa6c4', workspace_desk: '#b7c6d8', vanity_station: '#94adca', bookcase: '#5c7ca4', smart_lighting: '#f1e7c4', full_length_mirror: '#6f8fb2',
+    rug: '#C9B8A0', bedroom_rug: '#C9B8A0', dining_rug: '#C9B8A0', kitchen_rug: '#C9B8A0', nursery_rug: '#C9B8A0', bath_mat: '#C9B8A0',
+    sofa: '#8B7355', accent_chair: '#A67C52', rocking_chair: '#A67C52', office_chair: '#6B5B4F', dining_chair: '#A67C52', bar_stool: '#A67C52',
+    bed: '#D4C4A8', crib: '#D4C4A8',
+    coffee_table: '#C4A574', side_table: '#B8956C', nightstand: '#B8956C', desk: '#C4A574', dining_table: '#C4A574', monitor_stand: '#C4A574', island_cart: '#C4A574',
+    dresser: '#A08060', sideboard: '#A08060', vanity: '#A08060', kitchen_storage: '#A08060', bar_cabinet: '#8B7355',
+    wardrobe: '#8B7355', bookshelf: '#8B7355', storage_cabinet: '#8B7355', kitchen_shelf: '#8B7355', bath_storage: '#8B7355', nursery_shelf: '#8B7355',
+    floor_lamp: '#E8D9A8', bedside_lamp: '#E8D9A8', desk_lamp: '#E8D9A8',
+    wall_art: '#8B7355', floating_shelves: '#B8956C',
+    reading_nook: '#A67C52', workspace_desk: '#C4A574', vanity_station: '#A08060', bookcase: '#8B7355', smart_lighting: '#E8D9A8', full_length_mirror: '#A67C52',
+    indoor_plants: '#5d8a62',
 };
 // Default footprint (inches) when a saved item omits its own dimensions — keyed
 // per category so a bed falls back to a bed's size, not a generic small box.
@@ -211,9 +215,65 @@ const FURN_DEFAULT_D = {
     reading_nook: 34, workspace_desk: 30, vanity_station: 18, bookcase: 14, indoor_plants: 22, smart_lighting: 12, full_length_mirror: 4,
 };
 const furnHeight  = (cat) => FURN_HEIGHTS[cat] ?? 2.5;
-const furnColor   = (cat) => FURN_COLORS[cat] || '#9fb2c8';
+const furnColor   = (cat) => FURN_COLORS[cat] || '#A08060';
 const furnWidthIn = (cat) => FURN_DEFAULT_W[cat] || 36;
 const furnDepthIn = (cat) => FURN_DEFAULT_D[cat] || 30;
+
+const STACKABLE_CATEGORIES = new Set([
+    'bedside_lamp', 'desk_lamp', 'nursery_lamp', 'bath_mirror', 'bath_light', 'monitor_stand', 'indoor_plants',
+]);
+const SURFACE_CATEGORIES = new Set([
+    'nightstand', 'desk', 'workspace_desk', 'vanity', 'vanity_station', 'dresser', 'nursery_dresser',
+    'sideboard', 'side_table', 'coffee_table', 'dining_table', 'island_cart', 'bookshelf', 'bookcase',
+    'kitchen_shelf', 'nursery_shelf', 'kitchen_storage', 'bath_storage', 'storage_cabinet', 'bar_cabinet',
+    'monitor_stand',
+]);
+const isStackable = (cat) => STACKABLE_CATEGORIES.has(cat);
+const isSurface = (cat) => SURFACE_CATEGORIES.has(cat);
+const canStackTogether = (a, b) => (isStackable(a) && isSurface(b)) || (isSurface(a) && isStackable(b));
+
+function isoFootprint(x, y, w, d, rot = 0) {
+    const radians = (rot * Math.PI) / 180;
+    const occupiedWidth = Math.abs(w * Math.cos(radians)) + Math.abs(d * Math.sin(radians));
+    const occupiedDepth = Math.abs(w * Math.sin(radians)) + Math.abs(d * Math.cos(radians));
+    const cx = x + w / 2;
+    const cy = y + d / 2;
+    return {
+        minX: cx - occupiedWidth / 2,
+        maxX: cx + occupiedWidth / 2,
+        minY: cy - occupiedDepth / 2,
+        maxY: cy + occupiedDepth / 2,
+    };
+}
+
+function isoFootprintsOverlap(a, b, clearance = 0.05) {
+    return a.maxX > b.minX + clearance
+        && a.minX < b.maxX - clearance
+        && a.maxY > b.minY + clearance
+        && a.minY < b.maxY - clearance;
+}
+
+function stackElevationFt(entry, items) {
+    if (!entry || entry.hidden || !isStackable(entry.category)) return 0;
+    const scale = Math.max(0.5, Math.min(2, toNumber(entry.scale, 1) || 1));
+    const w = toNumber(entry.item && entry.item.widthIn, furnWidthIn(entry.category)) / 12 * scale;
+    const d = toNumber(entry.item && entry.item.depthIn, furnDepthIn(entry.category)) / 12 * scale;
+    if (w <= 0 || d <= 0) return 0;
+    const self = isoFootprint(toNumber(entry.x), toNumber(entry.y), w, d, toNumber(entry.rotation));
+    let elev = 0;
+    (Array.isArray(items) ? items : []).forEach((other) => {
+        if (!other || other.hidden || !isSurface(other.category)) return;
+        if (other === entry || other.category === entry.category) return;
+        if (!canStackTogether(entry.category, other.category)) return;
+        const oScale = Math.max(0.5, Math.min(2, toNumber(other.scale, 1) || 1));
+        const ow = toNumber(other.item && other.item.widthIn, furnWidthIn(other.category)) / 12 * oScale;
+        const od = toNumber(other.item && other.item.depthIn, furnDepthIn(other.category)) / 12 * oScale;
+        if (ow <= 0 || od <= 0) return;
+        const otherBounds = isoFootprint(toNumber(other.x), toNumber(other.y), ow, od, toNumber(other.rotation));
+        if (isoFootprintsOverlap(self, otherBounds)) elev = Math.max(elev, furnHeight(other.category));
+    });
+    return elev;
+}
 
 function isoProject(x, y, z) {
     return {
@@ -242,8 +302,55 @@ function isoShade(color, amt) {
 
 // Matches the approved "Ink pen (hand-drawn)" style: crisp solid fills with a
 // lightly wobbling hand-drawn line.
-function isoPenOptions(fill) {
-    return { fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.6, roughness: 1.7, bowing: 1.2, seed: 1 };
+function isoPenOptions(fill, fillStyle = 'solid') {
+    return { fill, fillStyle, stroke: ISO_COLORS.ink, strokeWidth: 1.6, roughness: 1.7, bowing: 1.2, seed: 1 };
+}
+
+function isoCutoutFeet(cutout, minX, minY, editorScale = 20) {
+    const points = Array.isArray(cutout?.points) ? cutout.points : [];
+    return points
+        .map((p) => ({
+            x: (toNumber(p?.x) - minX) / editorScale,
+            y: (toNumber(p?.y) - minY) / editorScale,
+        }))
+        .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+}
+
+function isoCutoutGroup(cutout, minX, minY, WH) {
+    const pts = isoCutoutFeet(cutout, minX, minY);
+    if (pts.length < 3) return null;
+
+    const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
+    const ops = [];
+    ops.push({ kind: 'poly', pts: pts.map((p) => P(p.x, p.y, 0.03)), fill: ISO_COLORS.cutout, fillStyle: 'hachure' });
+
+    const wallH = Math.min(WH * 0.55, 2.4);
+    for (let i = 1; i < pts.length; i++) {
+        const a = pts[i];
+        const b = pts[(i + 1) % pts.length];
+        ops.push({ kind: 'line', a: P(a.x, a.y, 0.05), b: P(b.x, b.y, 0.05) });
+        ops.push({
+            kind: 'poly',
+            pts: [P(a.x, a.y, 0), P(b.x, b.y, 0), P(b.x, b.y, wallH), P(a.x, a.y, wallH)],
+            fill: ISO_COLORS.wallSide,
+        });
+        ops.push({ kind: 'line', a: P(a.x, a.y, wallH), b: P(b.x, b.y, wallH) });
+    }
+
+    const o0 = pts[0], o1 = pts[1];
+    const steps = 6;
+    for (let s = 0; s < steps; s += 2) {
+        const t0 = s / steps, t1 = Math.min(1, (s + 1) / steps);
+        ops.push({
+            kind: 'line',
+            a: P(o0.x + (o1.x - o0.x) * t0, o0.y + (o1.y - o0.y) * t0, 0.06),
+            b: P(o0.x + (o1.x - o0.x) * t1, o0.y + (o1.y - o0.y) * t1, 0.06),
+        });
+    }
+
+    const cx = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
+    const cy = pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
+    return { order: -1e6 + 3 + cx + cy * 0.01, ops };
 }
 
 // Which silhouette a furniture category is modeled as.
@@ -444,14 +551,14 @@ function isoLeafPath(bx, by, ang, len, wid) {
 // Indoor plant — a real 3-D isometric pot (extruded, shaded like everything
 // else) with sketchy leaf paths emerging from around its rim in 3-D: back leaves
 // dark, front leaves lighter. Short dark-green leaves, drawn in front of the pot.
-function isoPlantOps(cx, cy, w, d) {
+function isoPlantOps(cx, cy, w, d, baseZ = 0) {
     const sc = Math.max(0.85, Math.min(w, d)) * ISO.unit;
-    const potWf = Math.max(0.5, Math.min(w, d) * 0.55), rimW = potWf * 1.14, potHf = 0.72, rim = potWf * 0.4, top = potHf;
+    const potWf = Math.max(0.5, Math.min(w, d) * 0.55), rimW = potWf * 1.14, potHf = 0.72, rim = potWf * 0.4, top = baseZ + potHf;
     const dark = '#3e6a45', mid = '#4c7a51', lite = '#5d8a62', pot = '#cbb896';
     const ops = [];
     // 3-D pot first, so the leaves sit in front of it
-    isoPartOps(0, 0, 0, 0, 0, cx - potWf / 2, cy - potWf / 2, potWf, potWf, 0, potHf - 0.12, pot, null).forEach((op) => ops.push(op));
-    isoPartOps(0, 0, 0, 0, 0, cx - rimW / 2, cy - rimW / 2, rimW, rimW, potHf - 0.12, 0.12, isoShade(pot, 0.05), null).forEach((op) => ops.push(op));
+    isoPartOps(0, 0, 0, 0, 0, cx - potWf / 2, cy - potWf / 2, potWf, potWf, baseZ, potHf - 0.12, pot, null).forEach((op) => ops.push(op));
+    isoPartOps(0, 0, 0, 0, 0, cx - rimW / 2, cy - rimW / 2, rimW, rimW, baseZ + potHf - 0.12, 0.12, isoShade(pot, 0.05), null).forEach((op) => ops.push(op));
     const L = (ox, oy, ang, len, wid, col, i) => { const o = isoProject(ox, oy, top); ops.push({ kind: 'path', d: isoLeafPath(o.px, o.py, ang, len * sc, wid * sc), fill: col, seed: i }); };
     // leaves emerge from around the rim, back (dark) → front (light)
     L(cx, cy - rim, -0.12, 1.3, 0.34, dark, 1);
@@ -523,7 +630,7 @@ function renderIsoRoom(room) {
     const LINE_OPTS = { stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.3, bowing: 0.7, seed: 1 };
     const KNOB_OPTS = { fill: '#e9eef5', fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 0.6, roughness: 0.8, seed: 1 };
     const paint = (op) => {
-        if (op.kind === 'poly') svg.appendChild(rc.polygon(op.pts, isoPenOptions(op.fill)));
+        if (op.kind === 'poly') svg.appendChild(rc.polygon(op.pts, isoPenOptions(op.fill, op.fillStyle || 'solid')));
         else if (op.kind === 'line') svg.appendChild(rc.line(op.a[0], op.a[1], op.b[0], op.b[1], LINE_OPTS));
         else if (op.kind === 'knob') svg.appendChild(rc.circle(op.c[0], op.c[1], 3.4, KNOB_OPTS));
         else if (op.kind === 'disc') svg.appendChild(rc.circle(op.c[0], op.c[1], op.d, { fill: op.fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.8, bowing: 1.2, seed: 1 }));
@@ -553,9 +660,16 @@ function renderIsoRoom(room) {
         if (w <= 0 || d <= 0) return;
         const x = toNumber(entry.x), y = toNumber(entry.y), rot = toNumber(entry.rotation);
         const H = furnHeight(cat), hex = entry.color || (entry.item && entry.item.color) || furnColor(cat);
+        const elev = stackElevationFt(entry, items);
 
         if (isoIsWallMounted(cat)) { pieces.push(isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH)); return; }
-        if (cat === 'indoor_plants') { pieces.push({ order: (x + w / 2) + (y + d / 2), ops: isoPlantOps(x + w / 2, y + d / 2, w, d) }); return; }
+        if (cat === 'indoor_plants') {
+            pieces.push({
+                order: (x + w / 2) + (y + d / 2) + elev * 0.01,
+                ops: isoPlantOps(x + w / 2, y + d / 2, w, d, elev),
+            });
+            return;
+        }
 
         if (H < 0.1) {
             // Rug — a flat pad just above the floor.
@@ -586,17 +700,22 @@ function renderIsoRoom(room) {
         }
         let ops = [];
         parts.forEach((p) => {
-            ops = ops.concat(isoPartOps(x, y, cxR, cyR, rot, p.lx, p.ly, p.lw, p.ld, p.z0, p.h, p.color, p.seam));
+            ops = ops.concat(isoPartOps(x, y, cxR, cyR, rot, p.lx, p.ly, p.lw, p.ld, p.z0 + elev, p.h, p.color, p.seam));
         });
-        pieces.push({ order: cxR + cyR, ops });
+        pieces.push({ order: cxR + cyR + elev * 0.01, ops });
     });
 
-    // Doors & windows from the room layout — only on the two visible walls.
+    // Doors, windows, and cutouts from the room layout.
     const elements = Array.isArray(layout.elements) ? layout.elements : [];
-    if (elements.length && Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 2) {
+    const cutouts = Array.isArray(layout.cutouts) ? layout.cutouts : [];
+    if ((elements.length || cutouts.length) && Array.isArray(layout.roomPoints) && layout.roomPoints.length >= 2) {
         const xs = layout.roomPoints.map((p) => p.x), ys = layout.roomPoints.map((p) => p.y);
         const eMinX = Math.min(...xs), eMinY = Math.min(...ys);
         const eSpanX = Math.max(...xs) - eMinX, eSpanY = Math.max(...ys) - eMinY;
+        cutouts.forEach((cutout) => {
+            const g = isoCutoutGroup(cutout, eMinX, eMinY, WH);
+            if (g) shell.push(g);
+        });
         elements.forEach((el) => {
             const g = isoArchElement(el, W, L, WH, eMinX, eMinY, eSpanX, eSpanY);
             if (g) pieces.push(g);

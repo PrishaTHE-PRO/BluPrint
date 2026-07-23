@@ -106,6 +106,75 @@ export default function RoomResult() {
     }, ISO_THROTTLE_MS);
   }, []);
 
+  const lastPersistedRef = useRef<string>('');
+
+  const persistPlacement = useCallback((opts?: { toServer?: boolean; updateState?: boolean }) => {
+    if (!style || Object.keys(furnitureSlots).length === 0) return null;
+    const placement = buildFurniturePlacement({
+      roomId: localStorage.getItem('blueprintCurrentRoomId'),
+      styleTag: style.styleTag,
+      budgetTotal: style.budgetTotal,
+      roomFeatures: style.roomFeatures,
+      slots: furnitureSlots,
+      hidden: hiddenCategories,
+      positions: placementRef.current.positions,
+      rotations: placementRef.current.rotations,
+      scales: placementRef.current.scales,
+      colors: colorByCategory,
+    });
+
+    // Skip no-op writes so dashboard previews stay in sync without spamming PATCH.
+    const signature = JSON.stringify({
+      items: placement.items.map((entry) => ({
+        category: entry.category,
+        color: entry.color || (entry.item as FurnitureItem & { color?: string }).color || null,
+        hidden: entry.hidden,
+        x: entry.x,
+        y: entry.y,
+        rotation: entry.rotation,
+        scale: entry.scale,
+        id: entry.item?.id,
+      })),
+      styleTag: placement.styleTag,
+      budgetTotal: placement.budgetTotal,
+    });
+    if (signature === lastPersistedRef.current && !opts?.updateState) {
+      return placement;
+    }
+    lastPersistedRef.current = signature;
+
+    saveFurniturePlacementLocally(placement);
+    if (opts?.updateState) setSavedPlacement(placement);
+
+    if (opts?.toServer !== false) {
+      const roomId = localStorage.getItem('blueprintCurrentRoomId');
+      if (roomId) {
+        fetch(`/api/rooms/${roomId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ furnitureLayout: placement }),
+        }).catch((err) => console.warn('[persist furniture colors]', err));
+      }
+    }
+    return placement;
+  }, [style, furnitureSlots, hiddenCategories, colorByCategory]);
+
+  // Keep product colors on the saved layout so dashboard / projects previews match the result page.
+  useEffect(() => {
+    if (!style || Object.keys(furnitureSlots).length === 0) return;
+    if (Object.keys(colorByCategory).length === 0) return;
+    const timer = setTimeout(() => {
+      persistPlacement({ toServer: true });
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [colorByCategory, furnitureSlots, hiddenCategories, livePlacement, style, persistPlacement]);
+
+  useEffect(() => {
+    const flush = () => { persistPlacement({ toServer: true }); };
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, [persistPlacement]);
+
   useEffect(() => () => {
     if (isoThrottleRef.current) clearTimeout(isoThrottleRef.current);
   }, []);
@@ -240,25 +309,11 @@ export default function RoomResult() {
   }, [nameDraft, savedLayout]);
 
   const handleSaveLayout = useCallback(async () => {
-    const roomId = localStorage.getItem('blueprintCurrentRoomId');
-    const placement = buildFurniturePlacement({
-      roomId,
-      styleTag:  style?.styleTag,
-      budgetTotal: style?.budgetTotal,
-      roomFeatures: style?.roomFeatures,
-      slots:     furnitureSlots,
-      hidden:    hiddenCategories,
-      positions: placementRef.current.positions,
-      rotations: placementRef.current.rotations,
-      scales:    placementRef.current.scales,
-      colors:    colorByCategory,
-    });
-
-    // Save locally first so the layout survives even if the request fails.
-    saveFurniturePlacementLocally(placement);
     setSaveStatus('saving');
+    const placement = persistPlacement({ toServer: false, updateState: true });
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
 
-    if (!roomId) {
+    if (!roomId || !placement) {
       setSaveStatus('saved');
       return;
     }
@@ -275,7 +330,7 @@ export default function RoomResult() {
       console.error('[save layout]', err);
       setSaveStatus('error');
     }
-  }, [furnitureSlots, hiddenCategories, style, colorByCategory]);
+  }, [persistPlacement]);
 
   useEffect(() => {
     if (saveStatus !== 'saved' && saveStatus !== 'error') return;
@@ -509,6 +564,12 @@ export default function RoomResult() {
           ...(el.type === 'window' && el.width != null ? { width: el.width } : {}),
         })),
       roomPoints: savedLayout?.roomPoints,
+      cutouts: (savedLayout?.cutouts ?? [])
+        .filter((c) => Array.isArray(c.points) && c.points.length >= 3)
+        .map((c) => ({
+          id: c.id,
+          points: c.points.map((p) => ({ x: p.x, y: p.y })),
+        })),
       items,
     };
   }, [layoutFurniturePreview, livePlacement, layoutRoomPreview, savedLayout, colorByCategory]);
@@ -646,13 +707,13 @@ export default function RoomResult() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Link000
+              <a
                 href="/dashboard.html"
-                className="px-6 py-3 bg-[#105666] hover:bg-[#156a7d] text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm"
+                className="px-6 py-3 bg-[#105666] hover:bg-[#156a7d] text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm no-underline"
               >
                 <iconify-icon icon="ph:house-duotone" />
                 Return to Homepage
-              </Link000>
+              </a>
               <button
                 onClick={handleSaveLayout}
                 disabled={saveStatus === 'saving'}

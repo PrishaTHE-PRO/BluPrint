@@ -1,6 +1,13 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import type { Room, Style, FurnitureItem, RoomLayout } from '../types';
-import { CATEGORY_LABELS, isFloorCovering } from '../utils/furnitureLayout';
+import {
+  CATEGORY_LABELS,
+  STACK_PARENT,
+  canStackTogether,
+  isFloorCovering,
+  isStackable,
+  isSurface,
+} from '../utils/furnitureLayout';
 import type { FurnitureColorTones } from '../utils/furnitureColor';
 import { tonesFrom } from '../utils/furnitureColor';
 import { furnitureForm } from '../utils/furnitureShape';
@@ -256,7 +263,7 @@ function preferredFurniturePosition(
       return nightstand
         ? {
             x: nightstand.position.x + (nightstand.size.wFt - wFt) / 2,
-            y: nightstand.position.y + nightstand.size.dFt + gap,
+            y: nightstand.position.y + Math.max(0, (nightstand.size.dFt - dFt) / 2),
           }
         : { x: inset, y: inset };
     }
@@ -284,7 +291,13 @@ function preferredFurniturePosition(
     case 'monitor_stand': {
       const desk = anchor('desk');
       return desk
-        ? { x: desk.position.x + (desk.size.wFt - wFt) / 2, y: desk.position.y + desk.size.dFt + gap }
+        ? {
+            x: desk.position.x + (desk.size.wFt - wFt) / 2,
+            // Monitor sits toward the back edge; lamp sits centered on the desk top.
+            y: item.category === 'monitor_stand'
+              ? desk.position.y + Math.max(0, desk.size.dFt * 0.12)
+              : desk.position.y + Math.max(0, (desk.size.dFt - dFt) / 2),
+          }
         : { x: inset, y: inset };
     }
     case 'dining_table':
@@ -321,19 +334,49 @@ function preferredFurniturePosition(
     case 'bar_cabinet':
       return { x: roomWidthFt - wFt - inset, y: inset };
     case 'kitchen_shelf':
-    case 'bath_mirror':
-    case 'bath_light':
     case 'vanity':
     case 'crib':
       return { x: inset, y: inset };
+    case 'bath_mirror':
+    case 'bath_light': {
+      const vanity = anchor('vanity') || anchor('vanity_station');
+      return vanity
+        ? {
+            x: vanity.position.x + (vanity.size.wFt - wFt) / 2,
+            // Sit on the vanity top, nudged toward the wall edge.
+            y: vanity.position.y + Math.max(0, vanity.size.dFt * 0.08),
+          }
+        : { x: inset, y: inset };
+    }
+    case 'nursery_lamp': {
+      const dresser = anchor('nursery_dresser');
+      return dresser
+        ? {
+            x: dresser.position.x + (dresser.size.wFt - wFt) / 2,
+            y: dresser.position.y + Math.max(0, (dresser.size.dFt - dFt) / 2),
+          }
+        : { x: inset, y: roomLengthFt - dFt - inset };
+    }
+    case 'indoor_plants': {
+      const parentCat = STACK_PARENT.indoor_plants;
+      const parent = (parentCat && anchor(parentCat))
+        || anchor('side_table')
+        || anchor('nightstand')
+        || anchor('desk')
+        || anchor('dresser');
+      return parent
+        ? {
+            x: parent.position.x + (parent.size.wFt - wFt) / 2,
+            y: parent.position.y + Math.max(0, (parent.size.dFt - dFt) / 2),
+          }
+        : { x: inset, y: roomLengthFt - dFt - inset };
+    }
     case 'storage_cabinet':
     case 'sideboard':
     case 'nursery_shelf':
       return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
     case 'rocking_chair':
-    case 'nursery_lamp':
     case 'reading_nook':
-    case 'indoor_plants':
       return { x: inset, y: roomLengthFt - dFt - inset };
     case 'shower_curtain':
       return { x: centered.x, y: inset };
@@ -418,6 +461,7 @@ function placedFurnitureZones(
     .filter(item =>
       item.category !== excludedCategory
       && !isFloorCovering(item.category)
+      && !canStackTogether(excludedCategory, item.category)
       && positions[item.category]
     )
     .map(item => furnitureBounds(
@@ -1236,12 +1280,15 @@ export default function RoomSVG({
   const gridV = Array.from({ length: Math.floor(cW) - 1 }, (_, i) => i + 1);
   const gridH = Array.from({ length: Math.floor(cL) - 1 }, (_, i) => i + 1);
 
-  // ── Sorted furniture (rug renders first / underneath) ─────────────────────
-
+  // Rugs under everything; surfaces under stackables so lamps/mirrors paint on top.
   const sorted = [...furniture].sort((a, b) => {
-    const aRug = isFloorCovering(a.category) ? -1 : 0;
-    const bRug = isFloorCovering(b.category) ? -1 : 0;
-    return aRug - bRug;
+    const rank = (category: string) => {
+      if (isFloorCovering(category)) return 0;
+      if (isSurface(category)) return 1;
+      if (isStackable(category)) return 3;
+      return 2;
+    };
+    return rank(a.category) - rank(b.category);
   });
 
   return (

@@ -127,10 +127,6 @@
 
     <main class="dashboard-container projects-main">
         <div id="project-filters" class="project-filters" aria-label="Filter projects">
-            <div class="project-filter-row">
-                <span class="project-filter-group-label">Room type</span>
-                <div id="room-type-filters" class="project-filter-chips" role="toolbar" aria-label="Filter by room type"></div>
-            </div>
             <div id="style-filter-row" class="project-filter-row hidden">
                 <span class="project-filter-group-label">Style</span>
                 <div id="style-filters" class="project-filter-chips" role="toolbar" aria-label="Filter by style"></div>
@@ -243,21 +239,10 @@
         });
     }
     let isLoggingOut = false;
-    const roomTypeFilters = document.getElementById('room-type-filters');
     const styleFilters = document.getElementById('style-filters');
     const styleFilterRow = document.getElementById('style-filter-row');
     const grid = document.getElementById('all-projects-grid');
     const projectCount = document.getElementById('project-count');
-
-    function normalizeRoomType(value) {
-        const raw = String(value || '').trim();
-        if (!raw) return 'Uncategorized';
-        return raw.replace(/\s+/g, ' ');
-    }
-
-    function roomCategory(room) {
-        return normalizeRoomType(room.style?.roomType || room.roomType);
-    }
 
     function renderRoomPreview(room) {
         try {
@@ -312,7 +297,6 @@
             projectCount.textContent = `${rooms.length} room${rooms.length === 1 ? '' : 's'} designed`;
 
             if (!rooms.length) {
-                roomTypeFilters.innerHTML = '';
                 styleFilters.innerHTML = '';
                 styleFilterRow.classList.add('hidden');
                 grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-3 py-12">No projects yet — create your first room.</p>';
@@ -323,13 +307,7 @@
             // The projects page contains every room, newest first.
             rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            const roomTypes = [...new Set(rooms.map(roomCategory))].sort((a, b) => {
-                if (a === 'Uncategorized') return 1;
-                if (b === 'Uncategorized') return -1;
-                return a.localeCompare(b);
-            });
             const styleNames = [...new Set(rooms.map(room => room.style?.styleTag).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-            let activeRoomType = 'All';
             let activeStyle = 'All';
 
             function makeFilterButton(label, isActive, onClick) {
@@ -343,15 +321,6 @@
             }
 
             function renderFilters() {
-                roomTypeFilters.innerHTML = '';
-                ['All', ...roomTypes].forEach((typeName) => {
-                    roomTypeFilters.appendChild(makeFilterButton(typeName, typeName === activeRoomType, () => {
-                        activeRoomType = typeName;
-                        renderFilters();
-                        renderProjects();
-                    }));
-                });
-
                 styleFilters.innerHTML = '';
                 if (styleNames.length === 0) {
                     styleFilterRow.classList.add('hidden');
@@ -368,11 +337,9 @@
             }
 
             function renderProjects() {
-                const visibleRooms = rooms.filter((room) => {
-                    const typeOk = activeRoomType === 'All' || roomCategory(room) === activeRoomType;
-                    const styleOk = activeStyle === 'All' || room.style?.styleTag === activeStyle;
-                    return typeOk && styleOk;
-                });
+                const visibleRooms = rooms.filter((room) => (
+                    activeStyle === 'All' || room.style?.styleTag === activeStyle
+                ));
 
                 grid.innerHTML = '';
                 const cards = document.createDocumentFragment();
@@ -381,7 +348,6 @@
                 const statusLabel = hasStyle ? 'Style Analyzed ✨' : 'Dimensions Set';
                 const statusColor = hasStyle ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
                 const tag = room.style?.styleTag || '';
-                const typeLabel = roomCategory(room);
                 const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const card = document.createElement('div');
                 card.className = 'garden-card ghibli-border p-6 group cursor-pointer project-card-enter';
@@ -398,7 +364,7 @@
                     </div>
                     <div class="px-2 space-y-2">
                         <h3 class="room-name-display text-3xl font-bold text-[#F7F4D5]">${room.name}</h3>
-                        <p class="text-lg text-[#F7F4D5]/60">${room.sqft} sq ft · ${typeLabel}${tag ? ' · ' + tag : ''}</p>
+                        <p class="text-lg text-[#F7F4D5]/60">${room.sqft} sq ft${tag ? ' · ' + tag : ''}</p>
                         <div class="pt-6 flex items-center justify-between border-t border-[#F7F4D5]/10 mt-6">
                             <span class="text-sm ${statusColor}">${statusLabel}</span>
                             <span class="text-xs text-[#F7F4D5]/30">${date}</span>
@@ -449,16 +415,8 @@
                                 if (roomIndex !== -1) rooms.splice(roomIndex, 1);
                                 projectCount.textContent = `${rooms.length} room${rooms.length === 1 ? '' : 's'} designed`;
                                 setTimeout(() => {
-                                    const nextTypes = [...new Set(rooms.map(roomCategory))];
-                                    if (activeRoomType !== 'All' && !nextTypes.includes(activeRoomType)) activeRoomType = 'All';
                                     const nextStyles = [...new Set(rooms.map((r) => r.style?.styleTag).filter(Boolean))];
                                     if (activeStyle !== 'All' && !nextStyles.includes(activeStyle)) activeStyle = 'All';
-                                    roomTypes.length = 0;
-                                    roomTypes.push(...nextTypes.sort((a, b) => {
-                                        if (a === 'Uncategorized') return 1;
-                                        if (b === 'Uncategorized') return -1;
-                                        return a.localeCompare(b);
-                                    }));
                                     styleNames.length = 0;
                                     styleNames.push(...nextStyles.sort((a, b) => a.localeCompare(b)));
                                     renderFilters();
@@ -494,10 +452,7 @@
                 grid.appendChild(cards);
                 grid.setAttribute('aria-busy', 'false');
                 if (!visibleRooms.length) {
-                    const label = [
-                        activeRoomType !== 'All' ? activeRoomType : null,
-                        activeStyle !== 'All' ? activeStyle : null,
-                    ].filter(Boolean).join(' · ') || 'matching';
+                    const label = activeStyle !== 'All' ? activeStyle : 'matching';
                     grid.innerHTML = `<p class="text-[#F7F4D5]/40 text-center col-span-3 py-12">No ${label} projects yet.</p>`;
                 }
             }
@@ -507,7 +462,6 @@
         } catch (err) {
             console.error(err);
             projectCount.textContent = 'Projects unavailable';
-            roomTypeFilters.innerHTML = '';
             styleFilters.innerHTML = '';
             styleFilterRow.classList.add('hidden');
             grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-3 py-12">Could not load projects — is the server running?</p>';

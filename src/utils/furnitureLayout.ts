@@ -118,3 +118,63 @@ export const CATEGORY_LABELS: Record<string, string> = {
 export function isFloorCovering(category: string) {
   return /rug|mat|curtain/i.test(category);
 }
+
+/** Small pieces that can sit on top of other furniture. */
+const STACKABLE_CATEGORIES = new Set([
+  'bedside_lamp',
+  'desk_lamp',
+  'nursery_lamp',
+  'bath_mirror',
+  'bath_light',
+  'monitor_stand',
+  'indoor_plants',
+]);
+
+/** Furniture tops that can hold stackable pieces. */
+const SURFACE_CATEGORIES = new Set([
+  'nightstand',
+  'desk',
+  'workspace_desk',
+  'vanity',
+  'vanity_station',
+  'dresser',
+  'nursery_dresser',
+  'sideboard',
+  'side_table',
+  'coffee_table',
+  'dining_table',
+  'island_cart',
+  'bookshelf',
+  'bookcase',
+  'kitchen_shelf',
+  'nursery_shelf',
+  'kitchen_storage',
+  'bath_storage',
+  'storage_cabinet',
+  'bar_cabinet',
+  'monitor_stand',
+]);
+
+/** Preferred parent surface for initial auto-layout. */
+export const STACK_PARENT: Record<string, string> = {
+  bedside_lamp: 'nightstand',
+  bath_mirror: 'vanity',
+  bath_light: 'vanity',
+  desk_lamp: 'desk',
+  monitor_stand: 'desk',
+  nursery_lamp: 'nursery_dresser',
+  indoor_plants: 'side_table',
+};
+
+export function isStackable(category: string) {
+  return STACKABLE_CATEGORIES.has(category);
+}
+
+export function isSurface(category: string) {
+  return SURFACE_CATEGORIES.has(category);
+}
+
+/** True when one piece may share a footprint with the other (lamp on desk, mirror on vanity, …). */
+export function canStackTogether(a: string, b: string) {
+  return (isStackable(a) && isSurface(b)) || (isSurface(a) && isStackable(b));
+}
