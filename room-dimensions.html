@@ -255,14 +255,14 @@
               <div class="space-y-3" data-sd-id="69">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
                 <div class="relative" data-sd-id="71">
-                  <input type="number" id="room-width" value="15" step="0.1" inputmode="decimal" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
+                  <input type="text" id="room-width" value="15" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="73">ft</span>
                 </div>
               </div>
               <div class="space-y-3" data-sd-id="74">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="75">LENGTH</label>
                 <div class="relative" data-sd-id="76">
-                  <input type="number" id="room-length" value="12" step="0.1" inputmode="decimal" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
+                  <input type="text" id="room-length" value="12" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="78">ft</span>
                 </div>
               </div>
@@ -344,8 +344,8 @@ function setDimensionError(message) {
 }
 
 function readTypedDimensionsFt() {
-  let wVal = parseFloat(widthInput.value);
-  let lVal = parseFloat(lengthInput.value);
+  let wVal = parseFloat(String(widthInput.value).replace(",", "."));
+  let lVal = parseFloat(String(lengthInput.value).replace(",", "."));
   if (isNaN(wVal) || isNaN(lVal)) return null;
   if (currentUnit === "m") {
     wVal /= FT_TO_M;
@@ -1612,8 +1612,14 @@ function updateDimensionsDisplay() {
   const lengthFt = (maxY - minY) / 20;
   const displayWidth = currentUnit === "ft" ? widthFt : widthFt * FT_TO_M;
   const displayLength = currentUnit === "ft" ? lengthFt : lengthFt * FT_TO_M;
-  widthInput.value = displayWidth.toFixed(currentUnit === "ft" ? 1 : 2);
-  lengthInput.value = displayLength.toFixed(currentUnit === "ft" ? 1 : 2);
+  const decimals = currentUnit === "ft" ? 1 : 2;
+  // Don't overwrite while typing — toFixed("17.") → "17.0" blocks decimals like 17.5.
+  if (document.activeElement !== widthInput) {
+    widthInput.value = displayWidth.toFixed(decimals);
+  }
+  if (document.activeElement !== lengthInput) {
+    lengthInput.value = displayLength.toFixed(decimals);
+  }
 
   let area = polygonArea(pts);
   (state.finalizedCutouts || []).forEach((cutout) => {
@@ -1859,7 +1865,12 @@ widthInput.oninput = lengthInput.oninput = () => {
     setDimensionError("");
     return;
   }
-  let wVal = parseFloat(rawW); let lVal = parseFloat(rawL);
+  // Keep "17." intact so the user can finish typing "17.5".
+  if (isIncompleteDimensionDraft(rawW) || isIncompleteDimensionDraft(rawL)) {
+    setDimensionError("");
+    return;
+  }
+  let wVal = parseFloat(String(rawW).replace(",", ".")); let lVal = parseFloat(String(rawL).replace(",", "."));
   if (isNaN(wVal) || isNaN(lVal) || wVal <= 0 || lVal <= 0) {
     setDimensionError("Enter positive width and length values.");
     return;
@@ -1911,6 +1922,30 @@ widthInput.oninput = lengthInput.oninput = () => {
   roomPath.classList.add("flip-anim");
   renderAll(); saveState();
 };
+
+function isIncompleteDimensionDraft(raw) {
+  const text = String(raw || "").trim().replace(",", ".");
+  if (!text) return true;
+  if (/[.]$/.test(text)) return true;
+  if (text === "-" || text === ".") return true;
+  return false;
+}
+
+function normalizeDimensionInput(input) {
+  const decimals = currentUnit === "ft" ? 1 : 2;
+  const value = parseFloat(String(input.value).replace(",", "."));
+  if (!Number.isFinite(value) || value <= 0) return;
+  input.value = value.toFixed(decimals);
+}
+
+widthInput.addEventListener("blur", () => {
+  normalizeDimensionInput(widthInput);
+  if (typeof lengthInput.oninput === "function") lengthInput.oninput();
+});
+lengthInput.addEventListener("blur", () => {
+  normalizeDimensionInput(lengthInput);
+  if (typeof widthInput.oninput === "function") widthInput.oninput();
+});
 
 const toggleFt = document.getElementById("toggle-ft");
 const toggleM = document.getElementById("toggle-m");
