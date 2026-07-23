@@ -161,15 +161,15 @@
 
         <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
           <h2 class="text-4xl font-bold">Step 1: Visual Inspiration <span style="color:#ef4444;">*</span></h2>
-          <p class="text-lg text-[#F7F4D5]/60">Upload a photo or paste a Pinterest image URL that captures your room vision.</p>
+          <p class="text-lg text-[#F7F4D5]/60">Upload up to 3 photos or paste Pinterest image URLs that capture your room vision.</p>
 
           <div class="grid gap-6">
             <!-- File drop -->
             <div id="file-drop-area" class="p-12 border-2 border-dashed border-[#F7F4D5]/20 rounded-3xl bg-white/5 text-center cursor-pointer hover:bg-white/10 transition-all flex flex-col items-center gap-3">
               <iconify-icon icon="ph:cloud-arrow-up-duotone" class="text-5xl text-[#D3968C]"></iconify-icon>
-              <p class="font-bold">Click to upload an image</p>
-              <p class="text-xs text-[#F7F4D5]/40">PNG, JPG, WEBP up to 5MB</p>
-              <input type="file" id="file-input" class="hidden" accept="image/*">
+              <p class="font-bold">Click to upload images</p>
+              <p id="file-drop-hint" class="text-xs text-[#F7F4D5]/40">PNG, JPG, WEBP up to 5MB · 3 more allowed</p>
+              <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
             </div>
 
             <div class="relative flex items-center gap-4">
@@ -178,20 +178,19 @@
               <div class="flex-1 h-px bg-[#F7F4D5]/10"></div>
             </div>
 
-            <input type="text" id="pinterest-url"
-              class="w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg"
-              placeholder="https://i.pinimg.com/originals/...  or a Pinterest board URL">
-          </div>
-
-          <!-- Image preview -->
-          <div id="pinterest-preview-wrap" class="hidden pt-2 flex justify-center">
-            <div class="relative inline-block">
-              <img id="pinterest-preview" class="max-w-xs rounded-3xl shadow-2xl border-4 border-[#F7F4D5]/10" alt="Inspiration preview">
-              <div class="absolute -top-3 -right-3 p-2 bg-[#D3968C] rounded-full shadow-lg animate-bounce">
-                <iconify-icon icon="ph:magic-wand-duotone" class="text-2xl text-white"></iconify-icon>
-              </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input type="text" id="pinterest-url"
+                class="flex-1 px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                placeholder="https://i.pinimg.com/originals/...  or a Pinterest board URL">
+              <button type="button" id="add-url-btn"
+                class="shrink-0 px-6 py-4 bg-[#839958] text-[#F7F4D5] rounded-2xl font-bold hover:bg-[#748a4d] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <iconify-icon icon="ph:plus-bold"></iconify-icon> Add link
+              </button>
             </div>
           </div>
+
+          <!-- Image previews (up to 3) -->
+          <div id="image-gallery" class="hidden pt-2 grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
 
           <!-- Status -->
           <!-- Status -->
@@ -354,8 +353,7 @@
       selectedMood:     null,
       selectedColors:   [],
       selectedFeatures: [],
-      visionUrl:        '',
-      uploadedFile:     null,
+      images:           [],   // up to 3: { file: File|null, url, isRemote }
       aiResult:         null,
       budgetTotal:      null,
     };
@@ -367,8 +365,10 @@
     function persistPicks() {
       try {
         // Blob URLs (uploaded files) don't survive navigation — only keep
-        // a real remote URL so the preview can be restored.
-        const visionUrl = /^https?:/i.test(state.visionUrl) ? state.visionUrl : '';
+        // real remote URLs so the previews can be restored.
+        const imageUrls = state.images
+          .filter(img => img.isRemote && /^https?:/i.test(img.url))
+          .map(img => img.url);
         localStorage.setItem(PICKS_KEY, JSON.stringify({
           roomId:           ROOM_ID || null,
           selectedRoomType: state.selectedRoomType,
@@ -377,7 +377,7 @@
           selectedMood:     state.selectedMood,
           selectedColors:   state.selectedColors,
           selectedFeatures: state.selectedFeatures,
-          visionUrl,
+          imageUrls,
         }));
       } catch {}
     }
@@ -397,7 +397,11 @@
         state.selectedColors = saved.selectedColors.filter(c => c && typeof c.hex === 'string').slice(0, 3);
       if (Array.isArray(saved.selectedFeatures))
         state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string').slice(0, 3);
-      if (typeof saved.visionUrl === 'string') state.visionUrl = saved.visionUrl;
+      if (Array.isArray(saved.imageUrls))
+        state.images = saved.imageUrls
+          .filter(u => typeof u === 'string' && /^https?:/i.test(u))
+          .slice(0, 3)
+          .map(url => ({ file: null, url, isRemote: true }));
     }
     // Restore the step-1 image and "Other" room-type fields into the DOM
     // (grids reflect state on build; these inputs need explicit hydration).
@@ -407,10 +411,8 @@
         other.classList.remove('hidden');
         if (state.selectedRoomType) other.value = state.selectedRoomType;
       }
-      if (/^https?:/i.test(state.visionUrl)) {
-        const urlInput = document.getElementById('pinterest-url');
-        if (urlInput) urlInput.value = state.visionUrl;
-        showPreview(state.visionUrl);
+      if (state.images.length) {
+        renderImages();
         checkStep1Valid();
       }
       checkStep2Valid();
@@ -486,9 +488,12 @@
     const savedBudgetTotal = localStorage.getItem('blueprintBudgetTotal');
     if (savedBudgetTotal) setBudget(savedBudgetTotal);
 
-    // ── File upload ───────────────────────────────────────────────────
+    // ── Inspiration images (up to 3, add & remove) ────────────────────
+    const MAX_IMAGES = 3;
     const fileDrop  = document.getElementById('file-drop-area');
     const fileInput = document.getElementById('file-input');
+    const urlInput  = document.getElementById('pinterest-url');
+    const addUrlBtn = document.getElementById('add-url-btn');
 
     fileDrop.addEventListener('click', () => fileInput.click());
     fileDrop.addEventListener('dragover',  e => { e.preventDefault(); fileDrop.classList.add('bg-white/10'); });
@@ -496,38 +501,109 @@
     fileDrop.addEventListener('drop', e => {
       e.preventDefault();
       fileDrop.classList.remove('bg-white/10');
-      if (e.dataTransfer.files.length) handleFileChosen(e.dataTransfer.files[0]);
+      addFiles(e.dataTransfer.files);
     });
     fileInput.addEventListener('change', e => {
-      if (e.target.files.length) handleFileChosen(e.target.files[0]);
+      addFiles(e.target.files);
+      // Reset so re-picking the same file after a remove still fires "change".
+      fileInput.value = '';
     });
 
-    function handleFileChosen(file) {
-      state.uploadedFile = file;
-      state.visionUrl    = URL.createObjectURL(file);
-      showPreview(state.visionUrl);
-      setVisionStatus('Image ready. Click "Next: Your Picks" to continue.', 'success');
+    addUrlBtn.addEventListener('click', () => addImageUrl(urlInput.value));
+    urlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); addImageUrl(urlInput.value); }
+    });
+
+    function addFiles(fileList) {
+      Array.from(fileList || []).forEach(addImageFile);
+    }
+
+    function addImageFile(file) {
+      if (!file) return;
+      if (state.images.length >= MAX_IMAGES) {
+        setVisionStatus('You can add up to 3 images. Remove one to add another.', 'error');
+        return;
+      }
+      if (file.type && !file.type.startsWith('image/')) {
+        setVisionStatus('That file isn’t an image — please choose a PNG, JPG, or WEBP.', 'error');
+        return;
+      }
+      state.images.push({ file, url: URL.createObjectURL(file), isRemote: false });
+      renderImages();
+      setVisionStatus('Image added. Click "Next: Your Picks" when you’re ready.', 'success');
       checkStep1Valid();
     }
 
-    // ── Pinterest / image URL ─────────────────────────────────────────
-    document.getElementById('pinterest-url').addEventListener('input', function () {
-      const url = this.value.trim();
-      state.visionUrl = url;
-      checkStep1Valid();
-      if (url.match(/\.(jpg|jpeg|png|webp)/i) || url.includes('pinimg.com')) {
-        showPreview(url);
-      } else {
-        document.getElementById('pinterest-preview-wrap').classList.add('hidden');
+    function addImageUrl(rawUrl) {
+      const url = String(rawUrl || '').trim();
+      if (!url) return;
+      if (state.images.length >= MAX_IMAGES) {
+        setVisionStatus('You can add up to 3 images. Remove one to add another.', 'error');
+        return;
       }
-    });
+      if (!/^https?:\/\//i.test(url)) {
+        setVisionStatus('Please paste a full image link that starts with http…', 'error');
+        return;
+      }
+      if (state.images.some(img => img.url === url)) {
+        setVisionStatus('That image link has already been added.', 'error');
+        return;
+      }
+      state.images.push({ file: null, url, isRemote: true });
+      renderImages();
+      urlInput.value = '';
+      setVisionStatus('Image added. Click "Next: Your Picks" when you’re ready.', 'success');
+      checkStep1Valid();
+    }
 
-    function showPreview(src) {
-      const img  = document.getElementById('pinterest-preview');
-      const wrap = document.getElementById('pinterest-preview-wrap');
-      img.src     = src;
-      img.onerror = () => wrap.classList.add('hidden');
-      wrap.classList.remove('hidden');
+    function removeImage(idx) {
+      const img = state.images[idx];
+      if (img && !img.isRemote && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      state.images.splice(idx, 1);
+      renderImages();
+      if (!state.images.length) document.getElementById('vision-status').classList.add('hidden');
+      checkStep1Valid();
+    }
+
+    function renderImages() {
+      const gallery = document.getElementById('image-gallery');
+      gallery.innerHTML = '';
+      state.images.forEach((img, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'relative group';
+
+        const imgEl = document.createElement('img');
+        imgEl.src = img.url;
+        imgEl.alt = `Inspiration ${idx + 1}`;
+        imgEl.className = 'w-full h-32 object-cover rounded-2xl border-2 border-[#F7F4D5]/10 shadow-lg';
+        imgEl.onerror = () => cell.classList.add('opacity-40');
+        cell.appendChild(imgEl);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.setAttribute('aria-label', `Remove image ${idx + 1}`);
+        remove.className = 'absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#D3968C] text-white flex items-center justify-center shadow-lg hover:bg-[#c1867b] transition-all';
+        remove.innerHTML = '<iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>';
+        remove.addEventListener('click', () => removeImage(idx));
+        cell.appendChild(remove);
+
+        gallery.appendChild(cell);
+      });
+      gallery.classList.toggle('hidden', state.images.length === 0);
+      updateImageControls();
+    }
+
+    function updateImageControls() {
+      const atMax = state.images.length >= MAX_IMAGES;
+      const remaining = MAX_IMAGES - state.images.length;
+      const hint = document.getElementById('file-drop-hint');
+      fileDrop.classList.toggle('opacity-40', atMax);
+      fileDrop.classList.toggle('pointer-events-none', atMax);
+      if (hint) hint.textContent = atMax
+        ? 'Maximum of 3 images added — remove one to add another'
+        : `PNG, JPG, WEBP up to 5MB · ${remaining} more allowed`;
+      urlInput.disabled = atMax;
+      addUrlBtn.disabled = atMax;
     }
 
     document.getElementById('step1-next').addEventListener('click', () => {
@@ -538,8 +614,8 @@
         errorBubble.classList.remove('hidden');
         return;
       }
-      if (!state.visionUrl) {
-        errorBubble.textContent = 'Please upload an image or paste a link';
+      if (!state.images.length) {
+        errorBubble.textContent = 'Please add at least one image or paste a link';
         errorBubble.classList.remove('hidden');
         return;
       }
@@ -724,7 +800,9 @@
         const res = await fetch(`/api/rooms/${ROOM_ID}/analyze-style`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ imageUrl: (state.visionUrl && !state.visionUrl.startsWith('blob:')) ? state.visionUrl : undefined }),
+          // Images (uploads + pasted links) are persisted via saveToBackend
+          // above, so analyze-style reads them straight from the room.
+          body:    JSON.stringify({}),
         });
         if (!res.ok) {
           let msg = `Server error (${res.status})`;
@@ -799,12 +877,31 @@
     async function saveToBackend(roomId) {
       const base = '/api/rooms/' + roomId;
       try {
-        if (state.uploadedFile) {
+        // 1. Upload any picked files (multipart field "images", backend takes up to 5).
+        const files = state.images.filter(img => img.file).map(img => img.file);
+        if (files.length) {
           const form = new FormData();
-          form.append('images', state.uploadedFile);
+          files.forEach(f => form.append('images', f));
           const r = await fetch(base + '/images', { method: 'POST', body: form });
           if (!r.ok) {
             let msg = 'Image upload failed';
+            try { const e = await r.json(); msg = e.error || msg; } catch {}
+            throw new Error(msg);
+          }
+        }
+
+        // 2. Save any pasted remote image links (upserted by URL, so no dupes).
+        const remoteUrls = state.images
+          .filter(img => img.isRemote && /^https?:/i.test(img.url))
+          .map(img => img.url);
+        for (const url of remoteUrls) {
+          const r = await fetch(base + '/images/url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+          });
+          if (!r.ok) {
+            let msg = 'Could not save image link';
             try { const e = await r.json(); msg = e.error || msg; } catch {}
             throw new Error(msg);
           }
@@ -840,7 +937,6 @@
       state.selectedMood     = MOODS[Math.floor(Math.random() * MOODS.length)];
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
       state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
-      state.visionUrl        = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop';
       localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
       localStorage.setItem('blueprintStyleResult', JSON.stringify({
         roomType:     state.selectedRoomType,
