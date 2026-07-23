@@ -1,7 +1,7 @@
 /**
- * Shared dark/light theme toggle for BluPrint nav bars.
- * Expects a button#theme-toggle-btn (or [data-theme-toggle]) with an <iconify-icon> child.
- * Works with late-mounted React navs via MutationObserver.
+ * Shared dark/light theme helpers for BluPrint.
+ * Animated React switches mount via /src/theme-switch.tsx into [data-theme-switch].
+ * This script still applies the saved theme on load and exposes window.blueprintTheme.
  */
 (function initBlueprintThemeToggle() {
   function applyTheme(isDark) {
@@ -12,6 +12,7 @@
       localStorage.setItem('blueprintTheme', isDark ? 'dark' : 'light');
     } catch (_) { /* ignore */ }
 
+    // Legacy icon buttons (if any remain)
     document.querySelectorAll('#theme-toggle-btn iconify-icon, [data-theme-toggle] iconify-icon').forEach((icon) => {
       icon.setAttribute('icon', isDark ? 'ph:sun-duotone' : 'ph:moon-duotone');
     });
@@ -27,6 +28,8 @@
 
   function wireButton(btn) {
     if (!btn || btn.dataset.themeWired === '1') return;
+    // React SwitchMode owns clicks on [data-theme-switch].
+    if (btn.hasAttribute('data-theme-switch') || btn.closest('[data-theme-switch]')) return;
     btn.dataset.themeWired = '1';
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -44,7 +47,6 @@
     if (typeof MutationObserver === 'undefined') return;
     const observer = new MutationObserver(() => {
       document.querySelectorAll('#theme-toggle-btn, [data-theme-toggle]').forEach(wireButton);
-      // Keep icons in sync if React remounts the button with a default moon icon.
       const dark = currentIsDark();
       document.querySelectorAll('#theme-toggle-btn iconify-icon, [data-theme-toggle] iconify-icon').forEach((icon) => {
         const want = dark ? 'ph:sun-duotone' : 'ph:moon-duotone';

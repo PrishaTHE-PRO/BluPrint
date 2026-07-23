@@ -24,7 +24,7 @@ const LAYOUTS: Record<RoomTypeKey, readonly string[]> = {
   living_room:  ['sofa', 'coffee_table', 'rug', 'floor_lamp', 'accent_chair', 'side_table'],
   bedroom:      ['bed', 'nightstand', 'dresser', 'bedroom_rug', 'wardrobe', 'bedside_lamp'],
   kitchen:      ['island_cart', 'bar_stool', 'kitchen_rug', 'kitchen_storage', 'kitchen_shelf', 'pendant_light'],
-  bathroom:     ['vanity', 'bath_mirror', 'bath_storage', 'bath_mat', 'bath_light', 'shower_curtain'],
+  bathroom:     ['vanity', 'bath_mirror', 'bath_storage', 'bath_mat', 'bath_light', 'bathtub', 'standing_shower', 'shower_curtain'],
   home_office:  ['desk', 'office_chair', 'bookshelf', 'desk_lamp', 'storage_cabinet', 'monitor_stand'],
   dining_room:  ['dining_table', 'dining_chair', 'dining_rug', 'sideboard', 'dining_light', 'bar_cabinet'],
   nursery:      ['crib', 'nursery_dresser', 'rocking_chair', 'nursery_rug', 'nursery_shelf', 'nursery_lamp'],
@@ -86,6 +86,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   bath_mat: 'Bath Mat',
   bath_light: 'Bath Light',
   shower_curtain: 'Shower Curtain',
+  bathtub: 'Bathtub',
+  standing_shower: 'Standing Shower',
   desk: 'Desk',
   office_chair: 'Office Chair',
   bookshelf: 'Bookshelf',
@@ -116,7 +118,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export function isFloorCovering(category: string) {
-  return /rug|mat|curtain/i.test(category);
+  return /rug|mat/i.test(category);
 }
 
 /** Small pieces that can sit on top of other furniture. */

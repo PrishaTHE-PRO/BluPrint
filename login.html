@@ -13,7 +13,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BluPrint | Sign In</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,9 +50,6 @@
     @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .floating-particle { position: absolute; background: var(--garden-beige); border-radius: 50%; pointer-events: none; filter: blur(2px); animation: float-slow 15s infinite ease-in-out; }
     .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; opacity: 0; }
-    .input-field { background: rgba(247,244,213,0.05); border: 1px solid rgba(247,244,213,0.1); color: var(--garden-beige); transition: all 0.3s ease; }
-    .input-field:focus { background: rgba(247,244,213,0.1); border-color: var(--garden-rosy); outline: none; box-shadow: 0 0 0 4px rgba(211,150,140,0.1); }
-    .input-field.error { border-color: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,0.1); }
     .btn-bounce { transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
     .btn-bounce:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 20px 40px -10px rgba(211,150,140,0.4); }
     .btn-bounce:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
@@ -65,9 +61,7 @@
 </head>
 <body class="page-login">
   <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
-  <button id="theme-toggle-btn" type="button" class="login-theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
-    <iconify-icon icon="ph:moon-duotone"></iconify-icon>
-  </button>
+  <div id="theme-toggle-root" data-theme-switch class="login-theme-btn" data-width="72" data-height="36" aria-label="Toggle dark mode"></div>
   <main class="login-shell">
     <section class="login-brand" aria-label="BluPrint introduction">
       <a class="bp-wordmark" href="index.html" aria-label="BluPrint home">
@@ -110,20 +104,9 @@
 
         <div class="login-divider">or</div>
 
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="block text-xs font-medium mb-2" for="email">Email address</label>
-            <input type="email" id="email" placeholder="you@example.com" class="input-field w-full px-4 py-3">
-          </div>
+        <div id="login-fields-root" class="flex flex-col gap-4"></div>
 
-          <div>
-            <div class="flex justify-between mb-2">
-              <label class="block text-xs font-medium" for="password">Password</label>
-              <a href="#" id="forgot-link" class="text-xs font-medium">Forgot password?</a>
-            </div>
-            <input type="password" id="password" placeholder="••••••••" class="input-field w-full px-4 py-3">
-          </div>
-
+        <div class="flex flex-col gap-4 mt-4">
           <div class="flex items-center gap-2">
             <input type="checkbox" id="remember" class="h-4 w-4 accent-[#3D5A80] cursor-pointer">
             <label for="remember" class="text-xs cursor-pointer">Keep me signed in</label>
@@ -144,6 +127,7 @@
 
   <div id="toast"></div>
 <script src="./theme-toggle.js" defer></script>
-  <script type="module" src="./main.js"></script>
+  <script type="module" src="/src/login.tsx"></script>
+  <script type="module" src="/src/theme-switch.tsx"></script>
 </body>
 </html>

@@ -49,6 +49,7 @@ function toNumber(value: unknown, fallback = 0) {
 
 function normalizeItem(value: unknown, category: string): FurnitureItem {
   const item = (value ?? {}) as Partial<FurnitureItem> & { color?: string };
+  const color = normalizeColor(item.color);
   return {
     id:       typeof item.id === 'string' ? item.id : '',
     name:     typeof item.name === 'string' ? item.name : '',
@@ -59,16 +60,26 @@ function normalizeItem(value: unknown, category: string): FurnitureItem {
     buyUrl:   typeof item.buyUrl === 'string' ? item.buyUrl : '',
     ...(item.widthIn !== undefined ? { widthIn: toNumber(item.widthIn) } : {}),
     ...(item.depthIn !== undefined ? { depthIn: toNumber(item.depthIn) } : {}),
-    ...(typeof item.color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim())
-      ? { color: item.color.trim() }
-      : {}),
+    ...(color ? { color } : {}),
   };
 }
 
 function normalizeColor(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
-  const hex = value.trim();
-  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex) ? hex : undefined;
+  const raw = value.trim();
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) {
+    if (raw.length === 4) {
+      return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toLowerCase();
+    }
+    return raw.toLowerCase();
+  }
+  const rgb = raw.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (rgb) {
+    return `#${[rgb[1], rgb[2], rgb[3]]
+      .map((n) => Math.max(0, Math.min(255, Number(n))).toString(16).padStart(2, '0'))
+      .join('')}`;
+  }
+  return undefined;
 }
 
 /** Parse a placement from the API or localStorage; returns null if unusable. */

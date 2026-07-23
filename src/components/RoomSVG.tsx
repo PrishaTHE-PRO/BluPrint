@@ -33,7 +33,8 @@ const DEFAULT_WIDTH_IN: Record<string, number> = {
   kitchen_storage: 30, island_cart:  48, kitchen_shelf: 36,
   // Bathroom
   vanity:          36, bath_mirror:  24, bath_storage: 20,
-  bath_mat:        20, bath_light:   24, shower_curtain: 72,
+  bath_mat:        20, bath_light:   24, shower_curtain: 60,
+  bathtub:         60, standing_shower: 36,
   // Home office
   desk:            60, office_chair: 24, bookshelf:    36,
   desk_lamp:       10, storage_cabinet: 24, monitor_stand: 24,
@@ -62,7 +63,8 @@ const DEFAULT_DEPTH_IN: Record<string, number> = {
   kitchen_storage: 14, island_cart:  24, kitchen_shelf: 12,
   // Bathroom
   vanity:          21, bath_mirror:   4, bath_storage: 12,
-  bath_mat:        30, bath_light:    8, shower_curtain: 72,
+  bath_mat:        30, bath_light:    8, shower_curtain: 3,
+  bathtub:         30, standing_shower: 36,
   // Home office
   desk:            30, office_chair: 24, bookshelf:    14,
   desk_lamp:       10, storage_cabinet: 18, monitor_stand: 12,
@@ -107,7 +109,9 @@ const DEFAULT_POS_FRAC: Record<string, { xf: number; yf: number }> = {
   bath_storage:    { xf: 0.65, yf: 0.08 },
   bath_mat:        { xf: 0.22, yf: 0.55 },
   bath_light:      { xf: 0.40, yf: 0.04 },
-  shower_curtain:  { xf: 0.40, yf: 0.08 },
+  shower_curtain:  { xf: 0.55, yf: 0.06 },
+  bathtub:         { xf: 0.55, yf: 0.08 },
+  standing_shower: { xf: 0.62, yf: 0.08 },
   // Home office
   desk:            { xf: 0.08, yf: 0.08 },
   office_chair:    { xf: 0.18, yf: 0.28 },
@@ -378,8 +382,21 @@ function preferredFurniturePosition(
     case 'rocking_chair':
     case 'reading_nook':
       return { x: inset, y: roomLengthFt - dFt - inset };
-    case 'shower_curtain':
+    case 'shower_curtain': {
+      const tub = anchor('bathtub') || anchor('standing_shower');
+      if (tub) {
+        // Straight curtain rod along the near long edge of the fixture.
+        return {
+          x: tub.position.x + Math.max(0, (tub.size.wFt - wFt) / 2),
+          y: tub.position.y + tub.size.dFt + 0.15,
+        };
+      }
       return { x: centered.x, y: inset };
+    }
+    case 'bathtub':
+      return { x: roomWidthFt - wFt - inset, y: inset };
+    case 'standing_shower':
+      return { x: roomWidthFt - wFt - inset, y: inset };
     case 'dining_light': {
       const table = anchor('dining_table');
       return table
@@ -667,9 +684,62 @@ function RugIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) 
             stroke={t.dark}
             strokeWidth={1.5}
             strokeDasharray="5 3"
-            opacity={0.85} />
+            opacity={0.9}
+      />
       <rect x={mg} y={mg} width={w - mg * 2} height={d - mg * 2} rx={4}
-            fill="none" stroke={t.mid} strokeWidth={1} opacity={0.55} />
+            fill="none" stroke={t.mid} strokeWidth={1} opacity={0.6} />
+    </g>
+  );
+}
+
+/** Thin straight curtain — vertical pleats, not a floor mat box. */
+function ShowerCurtainIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
+  const folds = Math.max(5, Math.round(w / 10));
+  const lines = Array.from({ length: folds }, (_, i) => {
+    const x = ((i + 0.5) / folds) * w;
+    return (
+      <line
+        key={i}
+        x1={x} y1={1}
+        x2={x} y2={Math.max(2, d - 1)}
+        stroke={i % 2 === 0 ? t.dark : t.mid}
+        strokeWidth={1.1}
+        opacity={0.85}
+      />
+    );
+  });
+  return (
+    <g>
+      <rect width={w} height={d} rx={1.5} fill={t.light} stroke="#0A3323" strokeWidth={1.2} />
+      <line x1={1} y1={1.5} x2={w - 1} y2={1.5} stroke="#0A3323" strokeWidth={1.4} />
+      {lines}
+    </g>
+  );
+}
+
+function BathtubIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
+  const rx = Math.max(8, w * 0.48);
+  const ry = Math.max(6, d * 0.42);
+  const cx = w / 2;
+  const cy = d / 2;
+  return (
+    <g>
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
+      <ellipse cx={cx} cy={cy} rx={rx * 0.72} ry={ry * 0.62} fill={t.base} stroke="#0A3323" strokeWidth={1} opacity={0.85} />
+      <circle cx={cx + rx * 0.35} cy={cy - ry * 0.15} r={Math.max(2, Math.min(w, d) * 0.05)} fill={t.dark} opacity={0.55} />
+    </g>
+  );
+}
+
+function StandingShowerIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
+  const mg = Math.max(2, Math.min(w, d) * 0.08);
+  return (
+    <g>
+      <rect width={w} height={d} rx={2} fill={t.light} stroke="#0A3323" strokeWidth={1.5} opacity={0.55} />
+      <rect x={mg} y={mg} width={w - mg * 2} height={d - mg * 2} rx={1.5}
+            fill="none" stroke="#0A3323" strokeWidth={1.2} strokeDasharray="4 2" />
+      <circle cx={w * 0.72} cy={d * 0.28} r={Math.max(2.5, Math.min(w, d) * 0.07)} fill={t.dark} opacity={0.7} />
+      <line x1={w * 0.72} y1={d * 0.28} x2={w * 0.55} y2={d * 0.55} stroke={t.mid} strokeWidth={1.2} />
     </g>
   );
 }
@@ -881,7 +951,9 @@ function FurnitureIcon({ item, wPx, dPx, color }: { item: FurnitureItem; wPx: nu
     case 'bath_storage':    return <ShelfIcon {...p} />;
     case 'bath_mat':        return <RugIcon {...p} />;
     case 'bath_light':      return <LampIcon {...p} />;
-    case 'shower_curtain':  return <RugIcon {...p} />;
+    case 'shower_curtain':  return <ShowerCurtainIcon {...p} />;
+    case 'bathtub':         return <BathtubIcon {...p} />;
+    case 'standing_shower': return <StandingShowerIcon {...p} />;
     case 'reading_nook':
       if (form === 'beanbag') return <BeanBagIcon {...p} />;
       return <LoungeChairIcon {...p} />;

@@ -13,3 +13,15 @@ declare module 'react' {
     }
   }
 }
+
+interface BlueprintThemeApi {
+  applyTheme: (isDark: boolean) => void;
+  currentIsDark: () => boolean;
+  wireAll: () => void;
+}
+
+interface Window {
+  blueprintTheme?: BlueprintThemeApi;
+}
+
+export {};

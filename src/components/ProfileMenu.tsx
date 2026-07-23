@@ -183,7 +183,7 @@ export default function ProfileMenu() {
             <ul>
               <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
               <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-              <li><strong>Prisha Agarwalla</strong> — <a href="mailto:pagarwalla@wisc.edu">pagarwalla@wisc.edu</a></li>
+              <li><strong>Prisha Agarwalla</strong> — <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
               <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
             </ul>
           </div>

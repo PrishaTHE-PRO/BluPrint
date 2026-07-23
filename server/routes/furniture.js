@@ -41,6 +41,9 @@ const BATHROOM = [
   { key: "shower_curtain", query: (s) => `${s} shower curtain` },
 ];
 
+const BATHTUB = { key: "bathtub", query: (s) => `${s} freestanding bathtub` };
+const STANDING_SHOWER = { key: "standing_shower", query: (s) => `${s} walk in shower enclosure` };
+
 const HOME_OFFICE = [
   { key: "desk",            query: (s) => `${s} desk` },
   { key: "office_chair",    query: (s) => `${s} office chair` },
@@ -79,6 +82,11 @@ const FEATURE_CATEGORIES = {
   "workspace desk":          { key: "workspace_desk",     query: (s) => `${s} workspace desk` },
   "vanity station":          { key: "vanity_station",     query: (s) => `${s} vanity table` },
   "bookcase / bookshelves":  { key: "bookcase",           query: (s) => `${s} bookcase` },
+  "bathtub":                 BATHTUB,
+  "bath tub":                BATHTUB,
+  "standing shower":         STANDING_SHOWER,
+  "walk-in shower":          STANDING_SHOWER,
+  "walk in shower":          STANDING_SHOWER,
 };
 
 function categoriesForRoomType(roomType) {
@@ -92,10 +100,36 @@ function categoriesForRoomType(roomType) {
   return LIVING_ROOM;
 }
 
+function pickBathFixture(features = []) {
+  const normalized = features.map((f) => String(f || "").trim().toLowerCase());
+  const wantsShower = normalized.some((f) => f.includes("standing shower") || f.includes("walk-in shower") || f.includes("walk in shower"));
+  const wantsTub = normalized.some((f) => f.includes("bathtub") || f.includes("bath tub"));
+  if (wantsShower && !wantsTub) return STANDING_SHOWER;
+  return BATHTUB;
+}
+
+/** Bathroom always gets a tub or standing shower + a straight shower curtain. */
+function withBathroomFixture(baseCategories, roomType, features = []) {
+  if (!String(roomType || "").toLowerCase().includes("bath")) return baseCategories;
+  const fixture = pickBathFixture(features);
+  const withoutFixtures = baseCategories.filter(
+    (c) => c.key !== "bathtub" && c.key !== "standing_shower" && c.key !== "shower_curtain"
+  );
+  return [
+    ...withoutFixtures,
+    fixture,
+    { key: "shower_curtain", query: (s) => `${s} shower curtain` },
+  ];
+}
+
 function categoriesForFeatures(features, baseCategories) {
   const existing = new Set(baseCategories.map((category) => category.key));
+  // Bath fixtures are handled by withBathroomFixture — don't double-add.
+  const skip = new Set(["bathtub", "bath tub", "standing shower", "walk-in shower", "walk in shower"]);
   return features
-    .map((feature) => FEATURE_CATEGORIES[String(feature || "").trim().toLowerCase()])
+    .map((feature) => String(feature || "").trim().toLowerCase())
+    .filter((feature) => !skip.has(feature))
+    .map((feature) => FEATURE_CATEGORIES[feature])
     .filter((category) => category && !existing.has(category.key));
 }
 
@@ -272,7 +306,11 @@ router.get("/:roomId/furniture", async (req, res) => {
     if (!roomType) roomType = "living room";
   }
 
-  const baseCategories = categoriesForRoomType(roomType);
+  const baseCategories = withBathroomFixture(
+    categoriesForRoomType(roomType),
+    roomType,
+    roomFeatures,
+  );
   const categories = [
     ...baseCategories,
     ...categoriesForFeatures(roomFeatures, baseCategories),

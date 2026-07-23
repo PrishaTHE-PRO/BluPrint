@@ -7,6 +7,7 @@ import FurniturePanel from '../components/FurniturePanel';
 import IsoRoomPreview from '../components/IsoRoomPreview';
 import type { IsoFurnitureEntry, IsoRoomInput } from '../utils/isoRoomRender';
 import { Link000 } from '@/components/ui/skiper-ui/skiper40';
+import SwitchMode from '../components/SwitchMode';
 import ProfileMenu from '../components/ProfileMenu';
 import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
 import { orderedFurniture } from '../utils/furnitureLayout';
@@ -107,8 +108,13 @@ export default function RoomResult() {
   }, []);
 
   const lastPersistedRef = useRef<string>('');
+  const persistInFlightRef = useRef(false);
 
-  const persistPlacement = useCallback((opts?: { toServer?: boolean; updateState?: boolean }) => {
+  const persistPlacement = useCallback(async (opts?: {
+    toServer?: boolean;
+    updateState?: boolean;
+    showStatus?: boolean;
+  }) => {
     if (!style || Object.keys(furnitureSlots).length === 0) return null;
     const placement = buildFurniturePlacement({
       roomId: localStorage.getItem('blueprintCurrentRoomId'),
@@ -146,33 +152,55 @@ export default function RoomResult() {
     saveFurniturePlacementLocally(placement);
     if (opts?.updateState) setSavedPlacement(placement);
 
-    if (opts?.toServer !== false) {
-      const roomId = localStorage.getItem('blueprintCurrentRoomId');
-      if (roomId) {
-        fetch(`/api/rooms/${roomId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ furnitureLayout: placement }),
-        }).catch((err) => console.warn('[persist furniture colors]', err));
-      }
+    if (opts?.toServer === false) return placement;
+
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    if (!roomId) return placement;
+
+    if (opts?.showStatus !== false) setSaveStatus('saving');
+    persistInFlightRef.current = true;
+    try {
+      const res = await fetch(`/api/rooms/${roomId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ furnitureLayout: placement }),
+      });
+      if (!res.ok) throw new Error(`save failed (${res.status})`);
+      if (opts?.showStatus !== false) setSaveStatus('saved');
+    } catch (err) {
+      console.warn('[autosave furniture]', err);
+      if (opts?.showStatus !== false) setSaveStatus('error');
+    } finally {
+      persistInFlightRef.current = false;
     }
     return placement;
   }, [style, furnitureSlots, hiddenCategories, colorByCategory]);
 
-  // Keep product colors on the saved layout so dashboard / projects previews match the result page.
+  // Autosave furniture layout + product colors whenever anything changes.
   useEffect(() => {
     if (!style || Object.keys(furnitureSlots).length === 0) return;
-    if (Object.keys(colorByCategory).length === 0) return;
     const timer = setTimeout(() => {
-      persistPlacement({ toServer: true });
-    }, 900);
+      void persistPlacement({ toServer: true, showStatus: true });
+    }, 450);
     return () => clearTimeout(timer);
   }, [colorByCategory, furnitureSlots, hiddenCategories, livePlacement, style, persistPlacement]);
 
   useEffect(() => {
-    const flush = () => { persistPlacement({ toServer: true }); };
+    const flush = () => {
+      if (persistInFlightRef.current) return;
+      void persistPlacement({ toServer: true, showStatus: false });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
     window.addEventListener('pagehide', flush);
-    return () => window.removeEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [persistPlacement]);
 
   useEffect(() => () => {
@@ -310,25 +338,13 @@ export default function RoomResult() {
 
   const handleSaveLayout = useCallback(async () => {
     setSaveStatus('saving');
-    const placement = persistPlacement({ toServer: false, updateState: true });
-    const roomId = localStorage.getItem('blueprintCurrentRoomId');
-
-    if (!roomId || !placement) {
+    const placement = await persistPlacement({
+      toServer: true,
+      updateState: true,
+      showStatus: true,
+    });
+    if (!placement) {
       setSaveStatus('saved');
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/rooms/${roomId}`, {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ furnitureLayout: placement }),
-      });
-      if (!res.ok) throw new Error(`save failed (${res.status})`);
-      setSaveStatus('saved');
-    } catch (err) {
-      console.error('[save layout]', err);
-      setSaveStatus('error');
     }
   }, [persistPlacement]);
 
@@ -633,14 +649,7 @@ export default function RoomResult() {
           </Link000>
         </div>
         <div className="app-nav-actions">
-          <button
-            id="theme-toggle-btn"
-            type="button"
-            title="Toggle dark mode"
-            aria-label="Toggle dark mode"
-          >
-            <iconify-icon icon="ph:moon-duotone" />
-          </button>
+          <SwitchMode width={56} height={28} />
           <ProfileMenu />
         </div>
       </nav>
@@ -729,7 +738,7 @@ export default function RoomResult() {
                   : 'ph:floppy-disk-duotone'
                 } />
                 {saveStatus === 'saving' ? 'Saving...'
-                  : saveStatus === 'saved' ? 'Saved'
+                  : saveStatus === 'saved' ? 'Auto-saved'
                   : saveStatus === 'error' ? 'Retry Save'
                   : 'Save Layout'}
               </button>

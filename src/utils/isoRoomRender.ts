@@ -31,11 +31,15 @@ export type IsoCutout = {
   points: Array<{ x: number; y: number }>;
 };
 
+export type IsoViewFacing = 'from-left' | 'from-right';
+
 export type IsoRoomInput = {
   widthFt: number;
   lengthFt: number;
   roomName?: string;
   id?: string;
+  /** Camera side: look in past the left wall, or past the right wall. */
+  viewFacing?: IsoViewFacing;
   elements?: IsoArchElement[];
   roomPoints?: Array<{ x: number; y: number }>;
   cutouts?: IsoCutout[];
@@ -48,6 +52,8 @@ const toNumber = (v, fallback = 0) => {
 };
 
 const ISO = { angle: Math.PI / 6, unit: 26, wallHeightFt: 4.2, pad: 30 };
+/** Active view transform for the current renderIsoIntoSvg call. */
+const ISO_VIEW = { mirrorX: false, widthFt: 1 };
 const ISO_COLORS = {
     floor:    '#faf3e1',
     wallTop:  '#f5eed9',
@@ -69,6 +75,7 @@ const FURN_HEIGHTS = {
     dresser: 2.8, nursery_dresser: 2.8, sideboard: 2.8, vanity: 2.8, kitchen_storage: 3, bar_cabinet: 3.5,
     wardrobe: 6, bookshelf: 5, storage_cabinet: 4, kitchen_shelf: 4, bath_storage: 3, nursery_shelf: 4,
     bath_mirror: 2.2, bath_light: 0.8, nursery_lamp: 1.4, monitor_stand: 1.2,
+    bathtub: 1.7, standing_shower: 6.2, shower_curtain: 5.8,
     reading_nook: 2.8, workspace_desk: 2.5, vanity_station: 2.8, bookcase: 5, indoor_plants: 3, smart_lighting: 4.6,
 };
 // Furniture colours — warm wood / textile neutrals as last-resort defaults.
@@ -91,7 +98,8 @@ const FURN_DEFAULT_W = {
     sofa: 84, accent_chair: 32, coffee_table: 48, rug: 96, floor_lamp: 12, side_table: 18,
     bed: 60, nightstand: 20, dresser: 48, bedroom_rug: 96, wardrobe: 36, bedside_lamp: 10,
     bar_stool: 16, pendant_light: 12, kitchen_rug: 24, kitchen_storage: 30, island_cart: 48, kitchen_shelf: 36,
-    vanity: 36, bath_mirror: 24, bath_storage: 20, bath_mat: 20, bath_light: 24, shower_curtain: 72,
+    vanity: 36, bath_mirror: 24, bath_storage: 20, bath_mat: 20, bath_light: 24, shower_curtain: 60,
+    bathtub: 60, standing_shower: 36,
     desk: 60, office_chair: 24, bookshelf: 36, desk_lamp: 10, storage_cabinet: 24, monitor_stand: 24,
     dining_table: 60, dining_chair: 18, dining_rug: 96, sideboard: 54, dining_light: 18, bar_cabinet: 36,
     crib: 52, nursery_dresser: 36, rocking_chair: 28, nursery_rug: 72, nursery_shelf: 30, nursery_lamp: 10,
@@ -102,7 +110,8 @@ const FURN_DEFAULT_D = {
     sofa: 36, accent_chair: 32, coffee_table: 24, rug: 72, floor_lamp: 12, side_table: 18,
     bed: 80, nightstand: 16, dresser: 18, bedroom_rug: 72, wardrobe: 24, bedside_lamp: 10,
     bar_stool: 16, pendant_light: 12, kitchen_rug: 60, kitchen_storage: 14, island_cart: 24, kitchen_shelf: 12,
-    vanity: 21, bath_mirror: 4, bath_storage: 12, bath_mat: 30, bath_light: 8, shower_curtain: 72,
+    vanity: 21, bath_mirror: 4, bath_storage: 12, bath_mat: 30, bath_light: 8, shower_curtain: 3,
+    bathtub: 30, standing_shower: 36,
     desk: 30, office_chair: 24, bookshelf: 14, desk_lamp: 10, storage_cabinet: 18, monitor_stand: 12,
     dining_table: 36, dining_chair: 18, dining_rug: 72, sideboard: 18, dining_light: 18, bar_cabinet: 18,
     crib: 28, nursery_dresser: 18, rocking_chair: 30, nursery_rug: 60, nursery_shelf: 12, nursery_lamp: 10,
@@ -162,10 +171,16 @@ function stackElevationFt(entry, items) {
 }
 
 function isoProject(x, y, z) {
+    const vx = ISO_VIEW.mirrorX ? ISO_VIEW.widthFt - x : x;
     return {
-        px: (x - y) * Math.cos(ISO.angle) * ISO.unit,
-        py: (x + y) * Math.sin(ISO.angle) * ISO.unit - z * ISO.unit,
+        px: (vx - y) * Math.cos(ISO.angle) * ISO.unit,
+        py: (vx + y) * Math.sin(ISO.angle) * ISO.unit - z * ISO.unit,
     };
+}
+
+/** View-space X — used for depth sorting and side-wall proximity. */
+function isoViewX(x) {
+    return ISO_VIEW.mirrorX ? ISO_VIEW.widthFt - x : x;
 }
 
 // Darken/lighten a colour by amt (-1..1) — used for the shaded box faces.
@@ -204,8 +219,8 @@ function isoCutoutFeet(cutout, minX, minY, editorScale = 20) {
 }
 
 /**
- * Floor void + low interior walls for a cutout. Outside edge (p0→p1) stays open
- * so the alcove reads the same way as the 2D plan.
+ * Low interior walls for a cutout. Outside edge (p0→p1) stays open.
+ * No floor fill — the main floor is punched with a hole instead.
  */
 function isoCutoutGroup(cutout, minX, minY, WH) {
     const pts = isoCutoutFeet(cutout, minX, minY);
@@ -213,16 +228,12 @@ function isoCutoutGroup(cutout, minX, minY, WH) {
 
     const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
     const ops = [];
-    const floorPts = pts.map((p) => P(p.x, p.y, 0.03));
-    ops.push({ kind: 'poly', pts: floorPts, fill: ISO_COLORS.cutout, fillStyle: 'hachure' });
 
-    // Interior edges (skip outside opening at index 0)
+    // Interior edges (skip outside opening at index 0) — walls only, no floor slab.
     const wallH = Math.min(WH * 0.55, 2.4);
     for (let i = 1; i < pts.length; i++) {
         const a = pts[i];
         const b = pts[(i + 1) % pts.length];
-        ops.push({ kind: 'line', a: P(a.x, a.y, 0.05), b: P(b.x, b.y, 0.05) });
-        // Low wall face so the cutout has depth in 3D
         ops.push({
             kind: 'poly',
             pts: [P(a.x, a.y, 0), P(b.x, b.y, 0), P(b.x, b.y, wallH), P(a.x, a.y, wallH)],
@@ -238,14 +249,44 @@ function isoCutoutGroup(cutout, minX, minY, WH) {
         const t0 = s / steps, t1 = Math.min(1, (s + 1) / steps);
         ops.push({
             kind: 'line',
-            a: P(o0.x + (o1.x - o0.x) * t0, o0.y + (o1.y - o0.y) * t0, 0.06),
-            b: P(o0.x + (o1.x - o0.x) * t1, o0.y + (o1.y - o0.y) * t1, 0.06),
+            a: P(o0.x + (o1.x - o0.x) * t0, o0.y + (o1.y - o0.y) * t0, 0.02),
+            b: P(o0.x + (o1.x - o0.x) * t1, o0.y + (o1.y - o0.y) * t1, 0.02),
         });
     }
 
     const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
     const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
     return { order: -1e6 + 3 + cx + cy * 0.01, ops };
+}
+
+/** Room floor path with evenodd holes so cutouts have no floor slab. */
+function isoFloorWithHoles(W, L, cutoutPolysFt) {
+    const ring = (pts) => {
+        if (!pts.length) return '';
+        const first = isoProject(pts[0].x, pts[0].y, 0);
+        let d = `M ${first.px.toFixed(2)} ${first.py.toFixed(2)}`;
+        for (let i = 1; i < pts.length; i++) {
+            const p = isoProject(pts[i].x, pts[i].y, 0);
+            d += ` L ${p.px.toFixed(2)} ${p.py.toFixed(2)}`;
+        }
+        return `${d} Z`;
+    };
+    const outer = ring([
+        { x: 0, y: 0 },
+        { x: W, y: 0 },
+        { x: W, y: L },
+        { x: 0, y: L },
+    ]);
+    // Reverse hole rings so evenodd punches voids in the floor.
+    const holes = (cutoutPolysFt || [])
+        .filter((pts) => pts && pts.length >= 3)
+        .map((pts) => ring([...pts].reverse()))
+        .join(' ');
+    return {
+        kind: 'floorPath',
+        d: `${outer} ${holes}`.trim(),
+        fill: ISO_COLORS.floor,
+    };
 }
 
 // Which silhouette a furniture category is modeled as.
@@ -256,6 +297,9 @@ function isoArchetype(cat) {
     if (['coffee_table', 'dining_table', 'side_table', 'desk', 'monitor_stand', 'island_cart', 'workspace_desk'].includes(cat)) return 'table';
     if (['floor_lamp', 'desk_lamp', 'bedside_lamp', 'smart_lighting'].includes(cat)) return 'lamp';
     if (['bookcase', 'bookshelf', 'kitchen_shelf', 'nursery_shelf'].includes(cat)) return 'openshelf';
+    if (cat === 'bathtub') return 'bathtub';
+    if (cat === 'standing_shower') return 'standing_shower';
+    if (cat === 'shower_curtain') return 'shower_curtain';
     return 'box';
 }
 
@@ -347,6 +391,44 @@ function isoModelParts(cat, w, d, hex, H, form = 'default') {
             for (let i = 0; i <= comps; i++) { const z = (H - bd) * (i / comps); parts.push({ lx: 0, ly: 0, lw: w, ld: d, z0: z, h: bd, color: hex }); }
             parts.push({ lx: 0,      ly: 0, lw: st, ld: d, z0: 0, h: H, color: isoShade(hex, -0.04) });
             parts.push({ lx: w - st, ly: 0, lw: st, ld: d, z0: 0, h: H, color: isoShade(hex, -0.04) });
+            return parts;
+        }
+        case 'bathtub': {
+            const rim = Math.max(0.12, Math.min(w, d) * 0.08);
+            return [
+                { lx: 0, ly: 0, lw: w, ld: d, z0: 0, h: H * 0.55, color: isoShade(hex, -0.06) },
+                { lx: rim, ly: rim, lw: w - rim * 2, ld: d - rim * 2, z0: H * 0.35, h: H * 0.2, color: isoShade(hex, 0.12) },
+            ];
+        }
+        case 'standing_shower': {
+            const glass = isoShade('#cfe0ee', 0.05);
+            const frame = isoShade(hex, -0.15);
+            const t = Math.max(0.08, Math.min(w, d) * 0.05);
+            return [
+                { lx: 0, ly: 0, lw: w, ld: d, z0: 0, h: 0.12, color: frame }, // tray
+                { lx: 0, ly: 0, lw: t, ld: d, z0: 0.12, h: H - 0.12, color: glass },
+                { lx: w - t, ly: 0, lw: t, ld: d, z0: 0.12, h: H - 0.12, color: glass },
+                { lx: 0, ly: 0, lw: w, ld: t, z0: 0.12, h: H - 0.12, color: glass },
+            ];
+        }
+        case 'shower_curtain': {
+            // Tall thin vertical panels — a straight curtain, not a box slab.
+            const panels = Math.max(4, Math.round(w / 0.55));
+            const pw = w / panels;
+            const parts = [];
+            for (let i = 0; i < panels; i++) {
+                const inset = (i % 2 === 0 ? 0 : 0.04);
+                parts.push({
+                    lx: i * pw + 0.02,
+                    ly: inset,
+                    lw: Math.max(0.08, pw - 0.06),
+                    ld: Math.max(0.08, d - inset),
+                    z0: 0.15,
+                    h: H - 0.15,
+                    color: i % 2 === 0 ? hex : isoShade(hex, -0.08),
+                });
+            }
+            parts.push({ lx: 0, ly: 0, lw: w, ld: Math.max(0.06, d * 0.4), z0: H - 0.08, h: 0.08, color: isoShade(hex, -0.2) }); // rod
             return parts;
         }
         default: // plain box (cabinets/shelves) with optional drawer/shelf/door detail
@@ -477,41 +559,38 @@ function isoPartOps(ox, oy, cxR, cyR, rot, lx, ly, lw, ld, z0, h, color, seam) {
 // Wall-mounted pieces render flat on / attached to a wall, not as floor boxes.
 function isoIsWallMounted(cat) { return cat === 'wall_art' || cat === 'floating_shelves' || cat === 'full_length_mirror'; }
 
-// Returns { order, ops } for a wall-mounted item on whichever visible back wall
-// (y=0 or x=0) it sits nearest. Walls are drawn short (WH ft) so pieces stay
-// within that band. Ordered behind the furniture (negative order).
+// Returns { order, ops } for a wall-mounted item on the back wall.
+// Attachments on the near side wall (the wall we look past) are omitted.
 function isoWallMounted(cat, cx, cy, w, d, hex, WH) {
-    const onBack = cy <= cx;                 // nearer the back (y=0) wall, else the left (x=0) wall
-    const along = onBack ? cx : cy;
+    const vx = isoViewX(cx);
+    const onBack = cy <= vx;
+    if (!onBack) return null;
+    const along = vx;
     const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
     const ops = [];
 
     if (cat === 'wall_art') {
         const aw = Math.max(1.2, w), ah = Math.min(1.9, WH - 0.6), zc = WH * 0.55, off = 0.05, ins = 0.16;
         const z1 = zc - ah / 2, z2 = zc + ah / 2;
-        const rect = (o, i) => onBack
-            ? [P(cx - aw / 2 + i, o, z1 + i), P(cx + aw / 2 - i, o, z1 + i), P(cx + aw / 2 - i, o, z2 - i), P(cx - aw / 2 + i, o, z2 - i)]
-            : [P(o, cy - aw / 2 + i, z1 + i), P(o, cy + aw / 2 - i, z1 + i), P(o, cy + aw / 2 - i, z2 - i), P(o, cy - aw / 2 + i, z2 - i)];
-        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade(hex, -0.05) });   // frame
-        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#efe6cc' });     // canvas
+        const rect = (o, i) =>
+            [P(cx - aw / 2 + i, o, z1 + i), P(cx + aw / 2 - i, o, z1 + i), P(cx + aw / 2 - i, o, z2 - i), P(cx - aw / 2 + i, o, z2 - i)];
+        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade(hex, -0.05) });
+        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#efe6cc' });
         return { order: -500 + along, ops };
     }
 
     if (cat === 'full_length_mirror') {
         const mw = Math.max(1.0, w), z1 = 0.1, z2 = WH - 0.1, off = 0.06, ins = 0.1;
-        const rect = (o, i) => onBack
-            ? [P(cx - mw / 2 + i, o, z1 + i), P(cx + mw / 2 - i, o, z1 + i), P(cx + mw / 2 - i, o, z2 - i), P(cx - mw / 2 + i, o, z2 - i)]
-            : [P(o, cy - mw / 2 + i, z1 + i), P(o, cy + mw / 2 - i, z1 + i), P(o, cy + mw / 2 - i, z2 - i), P(o, cy - mw / 2 + i, z2 - i)];
-        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade('#6f8fb2', -0.05) }); // frame
-        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#cfe0ee' });         // mirror surface
+        const rect = (o, i) =>
+            [P(cx - mw / 2 + i, o, z1 + i), P(cx + mw / 2 - i, o, z1 + i), P(cx + mw / 2 - i, o, z2 - i), P(cx - mw / 2 + i, o, z2 - i)];
+        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade('#6f8fb2', -0.05) });
+        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#cfe0ee' });
         return { order: -495 + along, ops };
     }
 
-    // floating_shelves — two thin slabs cantilevered off the wall
     const sw = Math.max(1.6, w), sd = Math.max(0.55, Math.min(1.0, d || 0.8));
     [WH * 0.5, WH * 0.8].forEach((z0) => {
-        let ox, oy, lw, ld;
-        if (onBack) { ox = cx - sw / 2; oy = 0; lw = sw; ld = sd; } else { ox = 0; oy = cy - sw / 2; lw = sd; ld = sw; }
+        const ox = cx - sw / 2, oy = 0, lw = sw, ld = sd;
         isoPartOps(0, 0, 0, 0, 0, ox, oy, lw, ld, z0, 0.14, hex, null).forEach((op) => ops.push(op));
     });
     return { order: -490 + along, ops };
@@ -550,8 +629,7 @@ function isoPlantOps(cx, cy, w, d, baseZ = 0) {
 }
 
 // Door/window from the room layout (positions in editor px, 20px/ft). Prefer the
-// two fully visible walls (back y=0, left x=0). Near-wall openings still peek a
-// tiny bit so every door/window shows up in the iso view.
+// back wall; openings on the near side wall (looked-past) are omitted.
 function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
     const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
     const fx = spanX > 0 ? (el.x - minX) / spanX : 0.5;
@@ -571,7 +649,10 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
 
     const onBack = wall === 'back' || wall === 'front';
     const along = onBack ? fx * W : fy * L;
-    const visible = wall === 'back' || wall === 'left';
+    // Hide openings on the near side wall we're looking past.
+    const nearSide = ISO_VIEW.mirrorX ? 'right' : 'left';
+    if (wall === nearSide) return null;
+    const visible = wall === 'back';
     // Near walls: pull the mark slightly into the room so it peeks past the edge.
     const peek = visible ? 0.1 : 0.18;
 
@@ -690,6 +771,11 @@ export function renderIsoIntoSvg(svg, room) {
     const W = Math.max(toNumber(room.widthFt), 1);
     const L = Math.max(toNumber(room.lengthFt), 1);
     const WH = ISO.wallHeightFt;
+    const facing = room.viewFacing === 'from-right' ? 'from-right' : 'from-left';
+    ISO_VIEW.mirrorX = facing === 'from-right';
+    ISO_VIEW.widthFt = W;
+    // Near side wall in world space (the wall we look past).
+    const sideX = facing === 'from-right' ? W : 0;
 
     const svgNs = 'http://www.w3.org/2000/svg';
     while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -711,6 +797,17 @@ export function renderIsoIntoSvg(svg, room) {
         else if (op.kind === 'knob') svg.appendChild(rc.circle(op.c[0], op.c[1], 3.4, KNOB_OPTS));
         else if (op.kind === 'disc') svg.appendChild(rc.circle(op.c[0], op.c[1], op.d, { fill: op.fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.8, bowing: 1.2, seed: 1 }));
         else if (op.kind === 'path') svg.appendChild(rc.path(op.d, { fill: op.fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.3, bowing: 1.1, seed: op.seed || 1 }));
+        else if (op.kind === 'floorPath') {
+            // Native SVG path — rough.js solid fills ignore compound holes.
+            const path = document.createElementNS(svgNs, 'path');
+            path.setAttribute('d', op.d);
+            path.setAttribute('fill', op.fill);
+            path.setAttribute('fill-rule', 'evenodd');
+            path.setAttribute('stroke', ISO_COLORS.ink);
+            path.setAttribute('stroke-width', '1.6');
+            path.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(path);
+        }
     };
 
     // Painted back-to-front: shell first, then rugs, then furniture pieces by
@@ -718,7 +815,7 @@ export function renderIsoIntoSvg(svg, room) {
     // back→front, bottom→top) — this stacks stacked parts (pillows on a bed,
     // seat on chair legs) correctly, which a single depth sort cannot.
     const shell = [
-        { order: -1e6,     ops: [{ kind: 'poly', pts: [isoProject(0, 0, 0), isoProject(0, L, 0), isoProject(0, L, WH), isoProject(0, 0, WH)].map(pt), fill: ISO_COLORS.wallSide }] },
+        { order: -1e6,     ops: [{ kind: 'poly', pts: [isoProject(sideX, 0, 0), isoProject(sideX, L, 0), isoProject(sideX, L, WH), isoProject(sideX, 0, WH)].map(pt), fill: ISO_COLORS.wallSide }] },
         { order: -1e6 + 1, ops: [{ kind: 'poly', pts: [isoProject(0, 0, 0), isoProject(W, 0, 0), isoProject(W, 0, WH), isoProject(0, 0, WH)].map(pt), fill: ISO_COLORS.wallTop }] },
         { order: -1e6 + 2, ops: [{ kind: 'poly', pts: [isoProject(0, 0, 0), isoProject(W, 0, 0), isoProject(W, L, 0), isoProject(0, L, 0)].map(pt), fill: ISO_COLORS.floor }] },
     ];
@@ -737,10 +834,14 @@ export function renderIsoIntoSvg(svg, room) {
         const H = furnHeight(cat), hex = entry.color || (entry.item && entry.item.color) || furnColor(cat);
         const elev = stackElevationFt(entry, items);
 
-        if (isoIsWallMounted(cat)) { pieces.push(isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH)); return; }
+        if (isoIsWallMounted(cat)) {
+            const mounted = isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH);
+            if (mounted) pieces.push(mounted);
+            return;
+        }
         if (cat === 'indoor_plants') {
             pieces.push({
-                order: (x + w / 2) + (y + d / 2) + elev * 0.01,
+                order: isoViewX(x + w / 2) + (y + d / 2) + elev * 0.01,
                 ops: isoPlantOps(x + w / 2, y + d / 2, w, d, elev),
             });
             return;
@@ -749,14 +850,14 @@ export function renderIsoIntoSvg(svg, room) {
         const form = furnitureForm(cat, entry.item && entry.item.name);
         if (form === 'round_table' || form === 'oval_table') {
             pieces.push({
-                order: (x + w / 2) + (y + d / 2),
+                order: isoViewX(x + w / 2) + (y + d / 2),
                 ops: isoRoundTableOps(x + w / 2, y + d / 2, w, d, Math.min(H, 1.45), hex, form),
             });
             return;
         }
         if (form === 'beanbag') {
             pieces.push({
-                order: (x + w / 2) + (y + d / 2),
+                order: isoViewX(x + w / 2) + (y + d / 2),
                 ops: isoBeanbagOps(x + w / 2, y + d / 2, w, d, hex),
             });
             return;
@@ -767,7 +868,7 @@ export function renderIsoIntoSvg(svg, room) {
             const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad), cx = x + w / 2, cy = y + d / 2;
             const corners = [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]]
                 .map(([lx, ly]) => isoProject(cx + lx * c - ly * s, cy + lx * s + ly * c, 0.02));
-            rugs.push({ order: x + y - 900, ops: [{ kind: 'poly', pts: corners.map(pt), fill: hex }] });
+            rugs.push({ order: isoViewX(x) + y - 900, ops: [{ kind: 'poly', pts: corners.map(pt), fill: hex }] });
             return;
         }
         const cxR = x + w / 2, cyR = y + d / 2;
@@ -779,7 +880,9 @@ export function renderIsoIntoSvg(svg, room) {
             const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
             parts = parts.map((p) => {
                 const dx = (x + p.lx + p.lw / 2) - cxR, dy = (y + p.ly + p.ld / 2) - cyR;
-                return { p, k: (cxR + dx * c - dy * s) + (cyR + dx * s + dy * c) };
+                const wx = cxR + dx * c - dy * s;
+                const wy = cyR + dx * s + dy * c;
+                return { p, k: isoViewX(wx) + wy };
             }).sort((a, b) => a.k - b.k).map((o) => o.p);
         } else if (arch === 'bed') {
             // Keep the mattress→pillows stack, but move the headboard (parts[0])
@@ -787,13 +890,15 @@ export function renderIsoIntoSvg(svg, room) {
             // faces the camera (otherwise the mattress paints over it).
             const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
             const hb = parts[0], dx = (x + hb.lx + hb.lw / 2) - cxR, dy = (y + hb.ly + hb.ld / 2) - cyR;
-            if ((cxR + dx * c - dy * s) + (cyR + dx * s + dy * c) > cxR + cyR) parts = [...parts.slice(1), hb];
+            const wx = cxR + dx * c - dy * s;
+            const wy = cyR + dx * s + dy * c;
+            if (isoViewX(wx) + wy > isoViewX(cxR) + cyR) parts = [...parts.slice(1), hb];
         }
         let ops = [];
         parts.forEach((p) => {
             ops = ops.concat(isoPartOps(x, y, cxR, cyR, rot, p.lx, p.ly, p.lw, p.ld, p.z0 + elev, p.h, p.color, p.seam));
         });
-        pieces.push({ order: cxR + cyR + elev * 0.01, ops });
+        pieces.push({ order: isoViewX(cxR) + cyR + elev * 0.01, ops });
     });
 
     // Doors, windows, and cutouts from the room layout.
@@ -803,10 +908,16 @@ export function renderIsoIntoSvg(svg, room) {
         const xs = room.roomPoints.map((p) => p.x), ys = room.roomPoints.map((p) => p.y);
         const eMinX = Math.min(...xs), eMinY = Math.min(...ys);
         const eSpanX = Math.max(...xs) - eMinX, eSpanY = Math.max(...ys) - eMinY;
+        const cutoutFeetList = [];
         cutouts.forEach((cutout) => {
+            const feet = isoCutoutFeet(cutout, eMinX, eMinY);
+            if (feet.length >= 3) cutoutFeetList.push(feet);
             const g = isoCutoutGroup(cutout, eMinX, eMinY, WH);
             if (g) shell.push(g);
         });
+        if (cutoutFeetList.length) {
+            shell[2] = { order: -1e6 + 2, ops: [isoFloorWithHoles(W, L, cutoutFeetList)] };
+        }
         elements.forEach((el) => {
             const g = isoArchElement(el, W, L, WH, eMinX, eMinY, eSpanX, eSpanY);
             if (g) pieces.push(g);

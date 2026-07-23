@@ -62,10 +62,26 @@ function sanitizeLayout(layout, roomFields) {
     };
 }
 
+function normalizeHexColor(value) {
+    if (typeof value !== 'string') return undefined;
+    const raw = value.trim();
+    if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) {
+        if (raw.length === 4) {
+            return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toLowerCase();
+        }
+        return raw.toLowerCase();
+    }
+    const rgb = raw.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (rgb) {
+        return `#${[rgb[1], rgb[2], rgb[3]]
+            .map((n) => Math.max(0, Math.min(255, Number(n))).toString(16).padStart(2, '0'))
+            .join('')}`;
+    }
+    return undefined;
+}
+
 function sanitizeFurnitureItem(item) {
-    const color = item && typeof item.color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim())
-        ? item.color.trim()
-        : undefined;
+    const color = normalizeHexColor(item && item.color);
     return {
         id:       item && item.id !== undefined ? String(item.id) : '',
         name:     item && typeof item.name === 'string' ? item.name : '',
@@ -101,9 +117,7 @@ function sanitizeFurnitureLayout(layout) {
             .filter((entry) => entry && typeof entry.category === 'string' && entry.category)
             .map((entry) => {
                 const item = sanitizeFurnitureItem(entry.item);
-                const color = entry && typeof entry.color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(entry.color.trim())
-                    ? entry.color.trim()
-                    : item.color;
+                const color = normalizeHexColor(entry && entry.color) || item.color;
                 return {
                     category: entry.category,
                     hidden:   Boolean(entry.hidden),
@@ -112,7 +126,7 @@ function sanitizeFurnitureLayout(layout) {
                     rotation: toNumber(entry.rotation),
                     scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
                     ...(color ? { color } : {}),
-                    item:     color && !item.color ? { ...item, color } : item,
+                    item:     color ? { ...item, color } : item,
                 };
             }),
         savedAt: typeof layout.savedAt === 'string' ? layout.savedAt : new Date().toISOString(),
@@ -157,9 +171,18 @@ router.get('/', async (req, res) => {
             .lean();
         const roomIds = rooms.map((room) => room._id);
         const styles = roomIds.length
-            ? await Style.find({ roomId: { $in: roomIds }, source: 'user' }).lean()
+            ? await Style.find({ roomId: { $in: roomIds } }).lean()
             : [];
-        const stylesByRoom = new Map(styles.map((style) => [String(style.roomId), style]));
+        // Prefer the user's picks; fall back to AI analysis so completed
+        // projects still reopen on the results page.
+        const stylesByRoom = new Map();
+        for (const style of styles) {
+            const key = String(style.roomId);
+            const existing = stylesByRoom.get(key);
+            if (!existing || style.source === 'user') {
+                stylesByRoom.set(key, style);
+            }
+        }
 
         res.status(200).json(rooms.map((room) => ({
             ...room,

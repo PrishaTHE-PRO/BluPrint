@@ -83,9 +83,7 @@
             <button type="button" title="Notifications" aria-label="Notifications">
                 <iconify-icon icon="ph:bell-duotone"></iconify-icon>
             </button>
-            <button id="theme-toggle-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
-                <iconify-icon icon="ph:moon-duotone"></iconify-icon>
-            </button>
+            <div data-theme-switch class="nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
             <div class="profile-menu-wrap">
                 <button id="profile-btn" type="button" class="profile-btn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
                     <iconify-icon icon="ph:user"></iconify-icon>
@@ -186,7 +184,7 @@
             <ul>
                 <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
                 <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-                <li><strong>Prisha Agarwalla</strong> — <a href="mailto:pagarwalla@wisc.edu">pagarwalla@wisc.edu</a></li>
+                <li><strong>Prisha Agarwalla</strong> — <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
                 <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
             </ul>
         </div>
@@ -194,6 +192,7 @@
 </div>
 <div id="toast"></div>
 <script src="./theme-toggle.js" defer></script>
+<script type="module" src="/src/theme-switch.tsx"></script>
 <script type="module" src="./dashboard.js"></script>
 </body>
 </html>

@@ -76,6 +76,52 @@ var ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
 var ROOM_LAYOUT_VERSION = 1;
 var ROOM_LAYOUT_VIEWBOX = { width: 800, height: 500 };
 var ROOM_LAYOUT_SCALE = 20;
+var FURNITURE_PLACEMENT_STORAGE_KEY = 'blueprintFurniturePlacement';
+
+/** Seed localStorage and route into the right step for a saved project. */
+async function openSavedProject(room) {
+    localStorage.setItem('blueprintCurrentRoomId', room._id);
+    localStorage.setItem('blueprintCurrentRoomName', room.name);
+    localStorage.setItem('blueprintCurrentRoomWidth', String(room.widthFt));
+    localStorage.setItem('blueprintCurrentRoomLength', String(room.lengthFt));
+    localStorage.setItem('blueprintCurrentRoomHeight', String(room.heightFt || 8));
+    if (room.budgetTotal > 0) {
+        localStorage.setItem('blueprintBudgetTotal', String(room.budgetTotal));
+    } else {
+        localStorage.removeItem('blueprintBudgetTotal');
+    }
+    localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(getRoomPreviewLayout(room)));
+
+    if (room.furnitureLayout) {
+        try {
+            localStorage.setItem(FURNITURE_PLACEMENT_STORAGE_KEY, JSON.stringify(room.furnitureLayout));
+        } catch (_) { /* ignore quota */ }
+    }
+
+    let style = room.style;
+    if (!style && (room.furnitureLayout || room.layout)) {
+        try {
+            const docs = await fetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
+            style = (Array.isArray(docs) && (docs.find((s) => s.source === 'user') || docs[0])) || null;
+        } catch (_) { /* ignore */ }
+    }
+
+    if (style) {
+        localStorage.setItem('blueprintCurrentRoomType', style.roomType ?? '');
+        localStorage.setItem('blueprintStyleResult', JSON.stringify({
+            roomType:     style.roomType     ?? '',
+            styleTag:     style.styleTag     ?? '',
+            moodTags:     style.moodTags     ?? [],
+            colorPalette: style.colorPalette ?? [],
+            roomFeatures: style.roomFeatures ?? [],
+            confidence:   style.confidence   ?? 0,
+            budgetTotal:  Number(room.budgetTotal) || 0,
+        }));
+    }
+
+    const hasDesign = !!(style || room.furnitureLayout);
+    window.location.href = hasDesign ? 'room-result.html' : 'inspo-upload.html';
+}
 
 var cachedUserName = localStorage.getItem('blueprintUserName');
 if (userNameEl && cachedUserName) {
@@ -135,9 +181,9 @@ async function loadProjects(userId) {
         grid.innerHTML = '';
         const cards = document.createDocumentFragment();
         recent.forEach((room, index) => {
-            const hasStyle = !!room.style;
-            const statusLabel = hasStyle ? 'Style Analyzed ✨' : 'Dimensions Set';
-            const statusColor = hasStyle ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
+            const hasDesign = !!(room.style || room.furnitureLayout);
+            const statusLabel = hasDesign ? 'Style Analyzed ✨' : 'Dimensions Set';
+            const statusColor = hasDesign ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
             const tag = room.style?.styleTag || '';
             const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const roomPreview = renderRoomPreview(room);
@@ -155,7 +201,7 @@ async function loadProjects(userId) {
                         <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
                     </button>
                     <div class="absolute top-5 right-5">
-                        <span class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[#0A3323] text-sm font-bold shadow-lg">${hasStyle ? 'Complete' : 'In Progress'}</span>
+                        <span class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[#0A3323] text-sm font-bold shadow-lg">${hasDesign ? 'Complete' : 'In Progress'}</span>
                     </div>
                 </div>
                 <div class="px-2 space-y-2">
@@ -184,31 +230,7 @@ async function loadProjects(userId) {
             card.addEventListener('click', (e) => {
                 // don't navigate while deleting or renaming
                 if (e.target.closest('.delete-btn') || e.target.closest('.rename-btn') || e.target.tagName === 'INPUT') return;
-                localStorage.setItem('blueprintCurrentRoomId',     room._id);
-                localStorage.setItem('blueprintCurrentRoomName',   room.name);
-                localStorage.setItem('blueprintCurrentRoomWidth',  String(room.widthFt));
-                localStorage.setItem('blueprintCurrentRoomLength', String(room.lengthFt));
-                localStorage.setItem('blueprintCurrentRoomHeight', String(room.heightFt || 8));
-                if (room.budgetTotal > 0) {
-                    localStorage.setItem('blueprintBudgetTotal', String(room.budgetTotal));
-                } else {
-                    localStorage.removeItem('blueprintBudgetTotal');
-                }
-                localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, JSON.stringify(getRoomPreviewLayout(room)));
-                if (room.style) {
-                    localStorage.setItem('blueprintStyleResult', JSON.stringify({
-                        roomType:     room.style.roomType     ?? '',
-                        styleTag:     room.style.styleTag     ?? '',
-                        moodTags:     room.style.moodTags     ?? [],
-                        colorPalette: room.style.colorPalette ?? [],
-                        roomFeatures: room.style.roomFeatures ?? [],
-                        confidence:   room.style.confidence   ?? 0,
-                        budgetTotal:  Number(room.budgetTotal) || 0,
-                    }));
-                    window.location.href = 'room-result.html';
-                } else {
-                    window.location.href = 'inspo-upload.html';
-                }
+                openSavedProject(room);
             });
 
             const deleteBtn = card.querySelector('.delete-btn');

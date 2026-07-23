@@ -68,9 +68,7 @@
         <a href="past-inspiration.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon>Projects<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
       </div>
       <div class="app-nav-actions">
-        <button id="theme-toggle-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
-          <iconify-icon icon="ph:moon-duotone"></iconify-icon>
-        </button>
+        <div data-theme-switch class="nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
         <div class="profile-menu-wrap">
           <button id="profile-btn" type="button" class="profile-btn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
             <iconify-icon icon="ph:user"></iconify-icon>
@@ -261,6 +259,13 @@
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" id="color-grid"></div>
         </div>
 
+        <!-- Bath Fixture (Bathroom only) -->
+        <div id="bath-fixture-card" class="garden-card ghibli-border p-8 md:p-10 space-y-4 hidden">
+          <h3 class="text-2xl font-bold">Bath Fixture <span style="color:#ef4444;">*</span></h3>
+          <p class="text-[#F7F4D5]/60">Pick a bathtub or a standing shower for this bathroom.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="bath-fixture-grid"></div>
+        </div>
+
         <!-- Room Features -->
         <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
           <h3 class="text-2xl font-bold">Room Features <span style="color:#ef4444;">*</span></h3>
@@ -365,7 +370,7 @@
           <ul>
             <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
             <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-            <li><strong>Prisha Agarwalla</strong> — <a href="mailto:pagarwalla@wisc.edu">pagarwalla@wisc.edu</a></li>
+            <li><strong>Prisha Agarwalla</strong> — <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
             <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
           </ul>
         </div>
@@ -373,6 +378,7 @@
     </div>
   </div>
 <script src="./theme-toggle.js" defer></script>
+<script type="module" src="/src/theme-switch.tsx"></script>
 <script type="module">
     // ── Backend ───────────────────────────────────────────────────────
     import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -485,6 +491,10 @@
       'Full-Length Mirror', 'Wall Art / Gallery Wall', 'Accent Chair',
       'Workspace Desk', 'Vanity Station', 'Bookcase / Bookshelves',
     ];
+    const BATH_FIXTURES = [
+      { id: 'Bathtub', label: 'Bathtub', hint: 'Freestanding tub with a straight curtain' },
+      { id: 'Standing Shower', label: 'Standing Shower', hint: 'Walk-in shower with a straight curtain' },
+    ];
 
     // ── State ─────────────────────────────────────────────────────────
     const state = {
@@ -494,6 +504,7 @@
       selectedMood:     null,
       selectedColors:   [],
       selectedFeatures: [],
+      selectedBathFixture: null,
       uploadedFiles:    [],
       previewUrls:      [],
       aiResult:         null,
@@ -514,6 +525,7 @@
           selectedMood:     state.selectedMood,
           selectedColors:   state.selectedColors,
           selectedFeatures: state.selectedFeatures,
+          selectedBathFixture: state.selectedBathFixture,
         }));
       } catch {}
     }
@@ -533,6 +545,7 @@
         state.selectedColors = saved.selectedColors.filter(c => c && typeof c.hex === 'string').slice(0, 3);
       if (Array.isArray(saved.selectedFeatures))
         state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string').slice(0, 3);
+      if (typeof saved.selectedBathFixture === 'string') state.selectedBathFixture = saved.selectedBathFixture;
     }
     // Restore the "Other" room-type field into the DOM. Local image files
     // cannot be restored after navigation and must be selected again.
@@ -542,6 +555,7 @@
         other.classList.remove('hidden');
         if (state.selectedRoomType) other.value = state.selectedRoomType;
       }
+      syncBathFixtureCard();
       checkStep2Valid();
     }
     window.addEventListener('beforeunload', persistPicks);
@@ -749,6 +763,7 @@
             other.value = '';
           }
           checkStep1Valid();
+          syncBathFixtureCard();
           checkStep2Valid();
         });
         grid.appendChild(btn);
@@ -759,6 +774,7 @@
       if (!state.roomTypeIsOther) return;
       state.selectedRoomType = this.value.trim() || null;
       checkStep1Valid();
+      syncBathFixtureCard();
       checkStep2Valid();
     });
 
@@ -830,6 +846,47 @@
         b.classList.toggle('disabled', state.selectedColors.length >= 3));
     }
 
+    function isBathroomRoomType(roomType = state.selectedRoomType) {
+      return String(roomType || '').toLowerCase().includes('bath');
+    }
+
+    function featuresWithBathFixture() {
+      const features = [...state.selectedFeatures];
+      if (isBathroomRoomType() && state.selectedBathFixture) {
+        features.push(state.selectedBathFixture);
+      }
+      return [...new Set(features.map((f) => String(f || '').trim()).filter(Boolean))];
+    }
+
+    function syncBathFixtureCard() {
+      const card = document.getElementById('bath-fixture-card');
+      if (!card) return;
+      const show = isBathroomRoomType();
+      card.classList.toggle('hidden', !show);
+      if (!show) state.selectedBathFixture = null;
+      else if (!state.selectedBathFixture) state.selectedBathFixture = 'Bathtub';
+      buildBathFixtureGrid();
+    }
+
+    function buildBathFixtureGrid() {
+      const grid = document.getElementById('bath-fixture-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      BATH_FIXTURES.forEach((fixture) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option-btn text-left' + (state.selectedBathFixture === fixture.id ? ' selected' : '');
+        btn.innerHTML = `<p class="font-bold text-base">${fixture.label}</p><p class="text-xs opacity-70 mt-1">${fixture.hint}</p>`;
+        btn.addEventListener('click', () => {
+          state.selectedBathFixture = fixture.id;
+          buildBathFixtureGrid();
+          persistPicks();
+          checkStep2Valid();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
     function buildFeatureGrid() {
       const grid = document.getElementById('feature-grid');
       grid.innerHTML = '';
@@ -864,9 +921,10 @@
     }
 
     function checkStep2Valid() {
+      const bathOk = !isBathroomRoomType() || !!state.selectedBathFixture;
       document.getElementById('step2-analyze').disabled =
         !state.selectedRoomType || !state.selectedStyle || !state.selectedMood ||
-        state.selectedColors.length === 0 || state.selectedFeatures.length === 0;
+        state.selectedColors.length === 0 || state.selectedFeatures.length === 0 || !bathOk;
     }
 
     document.getElementById('step2-back').addEventListener('click', () => showStep(1));
@@ -907,9 +965,7 @@
           throw new Error(msg);
         }
         const ai = await res.json();
-        const selectedRoomFeatures = state.selectedFeatures
-          .map(feature => String(feature || '').trim())
-          .filter(Boolean);
+        const selectedRoomFeatures = featuresWithBathFixture();
         const analysisResult = {
           ...ai,
           roomType:     state.selectedRoomType,
@@ -993,8 +1049,14 @@
             styleTag:     state.selectedStyle,
             colorPalette: state.selectedColors,
             moodTags:     [state.selectedMood],
-            roomFeatures: state.selectedFeatures,
+            roomFeatures: featuresWithBathFixture(),
           }),
+        }).then(async (r) => {
+          if (!r.ok) {
+            let msg = 'Could not save style';
+            try { const e = await r.json(); msg = e.error || msg; } catch {}
+            throw new Error(msg);
+          }
         });
 
         const budgetResponse = await fetch(base + '/budget', {
@@ -1009,22 +1071,29 @@
     }
 
     // ── Wild Card ─────────────────────────────────────────────────────
-    document.getElementById('wild-card-btn').addEventListener('click', () => {
+    document.getElementById('wild-card-btn').addEventListener('click', async () => {
       if (!state.selectedRoomType) return;
+      const ROOM_ID = localStorage.getItem('blueprintCurrentRoomId');
       state.selectedStyle    = STYLES[Math.floor(Math.random() * STYLES.length)].label;
       state.selectedMood     = MOODS[Math.floor(Math.random() * MOODS.length)];
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
       state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
+      if (isBathroomRoomType()) {
+        state.selectedBathFixture = BATH_FIXTURES[Math.floor(Math.random() * BATH_FIXTURES.length)].id;
+      }
       localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
       localStorage.setItem('blueprintStyleResult', JSON.stringify({
         roomType:     state.selectedRoomType,
         styleTag:     state.selectedStyle,
         moodTags:     [state.selectedMood],
         colorPalette: state.selectedColors.map(c => c.hex || c),
-        roomFeatures: state.selectedFeatures,
+        roomFeatures: featuresWithBathFixture(),
         confidence:   1,
         budgetTotal:  state.budgetTotal || 0,
       }));
+      if (ROOM_ID) {
+        try { await saveToBackend(ROOM_ID); } catch (e) { console.warn('[wild-card save]', e); }
+      }
       window.location.href = 'room-result.html';
     });
 
@@ -1035,6 +1104,7 @@
     buildMoodGrid();
     buildColorGrid();
     buildFeatureGrid();
+    buildBathFixtureGrid();
     hydrateRestoredUi();
     showStep(1);
   </script>

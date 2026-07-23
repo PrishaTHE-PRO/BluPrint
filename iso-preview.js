@@ -173,6 +173,7 @@ const FURN_HEIGHTS = {
     dresser: 2.8, nursery_dresser: 2.8, sideboard: 2.8, vanity: 2.8, kitchen_storage: 3, bar_cabinet: 3.5,
     wardrobe: 6, bookshelf: 5, storage_cabinet: 4, kitchen_shelf: 4, bath_storage: 3, nursery_shelf: 4,
     bath_mirror: 2.2, bath_light: 0.8, nursery_lamp: 1.4, monitor_stand: 1.2,
+    bathtub: 1.7, standing_shower: 6.2, shower_curtain: 5.8,
     reading_nook: 2.8, workspace_desk: 2.5, vanity_station: 2.8, bookcase: 5, indoor_plants: 3, smart_lighting: 4.6,
 };
 // Furniture colours — warm wood / textile neutrals as last-resort defaults.
@@ -196,7 +197,8 @@ const FURN_DEFAULT_W = {
     sofa: 84, accent_chair: 32, coffee_table: 48, rug: 96, floor_lamp: 12, side_table: 18,
     bed: 60, nightstand: 20, dresser: 48, bedroom_rug: 96, wardrobe: 36, bedside_lamp: 10,
     bar_stool: 16, pendant_light: 12, kitchen_rug: 24, kitchen_storage: 30, island_cart: 48, kitchen_shelf: 36,
-    vanity: 36, bath_mirror: 24, bath_storage: 20, bath_mat: 20, bath_light: 24, shower_curtain: 72,
+    vanity: 36, bath_mirror: 24, bath_storage: 20, bath_mat: 20, bath_light: 24, shower_curtain: 60,
+    bathtub: 60, standing_shower: 36,
     desk: 60, office_chair: 24, bookshelf: 36, desk_lamp: 10, storage_cabinet: 24, monitor_stand: 24,
     dining_table: 60, dining_chair: 18, dining_rug: 96, sideboard: 54, dining_light: 18, bar_cabinet: 36,
     crib: 52, nursery_dresser: 36, rocking_chair: 28, nursery_rug: 72, nursery_shelf: 30, nursery_lamp: 10,
@@ -207,7 +209,8 @@ const FURN_DEFAULT_D = {
     sofa: 36, accent_chair: 32, coffee_table: 24, rug: 72, floor_lamp: 12, side_table: 18,
     bed: 80, nightstand: 16, dresser: 18, bedroom_rug: 72, wardrobe: 24, bedside_lamp: 10,
     bar_stool: 16, pendant_light: 12, kitchen_rug: 60, kitchen_storage: 14, island_cart: 24, kitchen_shelf: 12,
-    vanity: 21, bath_mirror: 4, bath_storage: 12, bath_mat: 30, bath_light: 8, shower_curtain: 72,
+    vanity: 21, bath_mirror: 4, bath_storage: 12, bath_mat: 30, bath_light: 8, shower_curtain: 3,
+    bathtub: 30, standing_shower: 36,
     desk: 30, office_chair: 24, bookshelf: 14, desk_lamp: 10, storage_cabinet: 18, monitor_stand: 12,
     dining_table: 36, dining_chair: 18, dining_rug: 72, sideboard: 18, dining_light: 18, bar_cabinet: 18,
     crib: 28, nursery_dresser: 18, rocking_chair: 30, nursery_rug: 60, nursery_shelf: 12, nursery_lamp: 10,
@@ -322,13 +325,11 @@ function isoCutoutGroup(cutout, minX, minY, WH) {
 
     const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
     const ops = [];
-    ops.push({ kind: 'poly', pts: pts.map((p) => P(p.x, p.y, 0.03)), fill: ISO_COLORS.cutout, fillStyle: 'hachure' });
 
     const wallH = Math.min(WH * 0.55, 2.4);
     for (let i = 1; i < pts.length; i++) {
         const a = pts[i];
         const b = pts[(i + 1) % pts.length];
-        ops.push({ kind: 'line', a: P(a.x, a.y, 0.05), b: P(b.x, b.y, 0.05) });
         ops.push({
             kind: 'poly',
             pts: [P(a.x, a.y, 0), P(b.x, b.y, 0), P(b.x, b.y, wallH), P(a.x, a.y, wallH)],
@@ -343,14 +344,42 @@ function isoCutoutGroup(cutout, minX, minY, WH) {
         const t0 = s / steps, t1 = Math.min(1, (s + 1) / steps);
         ops.push({
             kind: 'line',
-            a: P(o0.x + (o1.x - o0.x) * t0, o0.y + (o1.y - o0.y) * t0, 0.06),
-            b: P(o0.x + (o1.x - o0.x) * t1, o0.y + (o1.y - o0.y) * t1, 0.06),
+            a: P(o0.x + (o1.x - o0.x) * t0, o0.y + (o1.y - o0.y) * t0, 0.02),
+            b: P(o0.x + (o1.x - o0.x) * t1, o0.y + (o1.y - o0.y) * t1, 0.02),
         });
     }
 
     const cx = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
     const cy = pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
     return { order: -1e6 + 3 + cx + cy * 0.01, ops };
+}
+
+function isoFloorWithHoles(W, L, cutoutPolysFt) {
+    const ring = (pts) => {
+        if (!pts.length) return '';
+        const first = isoProject(pts[0].x, pts[0].y, 0);
+        let d = `M ${first.px.toFixed(2)} ${first.py.toFixed(2)}`;
+        for (let i = 1; i < pts.length; i++) {
+            const p = isoProject(pts[i].x, pts[i].y, 0);
+            d += ` L ${p.px.toFixed(2)} ${p.py.toFixed(2)}`;
+        }
+        return `${d} Z`;
+    };
+    const outer = ring([
+        { x: 0, y: 0 },
+        { x: W, y: 0 },
+        { x: W, y: L },
+        { x: 0, y: L },
+    ]);
+    const holes = (cutoutPolysFt || [])
+        .filter((pts) => pts && pts.length >= 3)
+        .map((pts) => ring([...pts].reverse()))
+        .join(' ');
+    return {
+        kind: 'floorPath',
+        d: `${outer} ${holes}`.trim(),
+        fill: ISO_COLORS.floor,
+    };
 }
 
 // Which silhouette a furniture category is modeled as.
@@ -361,6 +390,9 @@ function isoArchetype(cat) {
     if (['coffee_table', 'dining_table', 'side_table', 'desk', 'monitor_stand', 'island_cart', 'workspace_desk'].includes(cat)) return 'table';
     if (['floor_lamp', 'desk_lamp', 'bedside_lamp', 'smart_lighting'].includes(cat)) return 'lamp';
     if (['bookcase', 'bookshelf', 'kitchen_shelf', 'nursery_shelf'].includes(cat)) return 'openshelf';
+    if (cat === 'bathtub') return 'bathtub';
+    if (cat === 'standing_shower') return 'standing_shower';
+    if (cat === 'shower_curtain') return 'shower_curtain';
     return 'box';
 }
 
@@ -441,6 +473,43 @@ function isoModelParts(cat, w, d, hex, H) {
             parts.push({ lx: w - st, ly: 0, lw: st, ld: d, z0: 0, h: H, color: isoShade(hex, -0.04) });
             return parts;
         }
+        case 'bathtub': {
+            const rim = Math.max(0.12, Math.min(w, d) * 0.08);
+            return [
+                { lx: 0, ly: 0, lw: w, ld: d, z0: 0, h: H * 0.55, color: isoShade(hex, -0.06) },
+                { lx: rim, ly: rim, lw: w - rim * 2, ld: d - rim * 2, z0: H * 0.35, h: H * 0.2, color: isoShade(hex, 0.12) },
+            ];
+        }
+        case 'standing_shower': {
+            const glass = isoShade('#cfe0ee', 0.05);
+            const frame = isoShade(hex, -0.15);
+            const t = Math.max(0.08, Math.min(w, d) * 0.05);
+            return [
+                { lx: 0, ly: 0, lw: w, ld: d, z0: 0, h: 0.12, color: frame },
+                { lx: 0, ly: 0, lw: t, ld: d, z0: 0.12, h: H - 0.12, color: glass },
+                { lx: w - t, ly: 0, lw: t, ld: d, z0: 0.12, h: H - 0.12, color: glass },
+                { lx: 0, ly: 0, lw: w, ld: t, z0: 0.12, h: H - 0.12, color: glass },
+            ];
+        }
+        case 'shower_curtain': {
+            const panels = Math.max(4, Math.round(w / 0.55));
+            const pw = w / panels;
+            const parts = [];
+            for (let i = 0; i < panels; i++) {
+                const inset = (i % 2 === 0 ? 0 : 0.04);
+                parts.push({
+                    lx: i * pw + 0.02,
+                    ly: inset,
+                    lw: Math.max(0.08, pw - 0.06),
+                    ld: Math.max(0.08, d - inset),
+                    z0: 0.15,
+                    h: H - 0.15,
+                    color: i % 2 === 0 ? hex : isoShade(hex, -0.08),
+                });
+            }
+            parts.push({ lx: 0, ly: 0, lw: w, ld: Math.max(0.06, d * 0.4), z0: H - 0.08, h: 0.08, color: isoShade(hex, -0.2) });
+            return parts;
+        }
         default: // plain box (cabinets/shelves) with optional drawer/shelf/door detail
             return [{ lx: 0, ly: 0, lw: w, ld: d, z0: 0, h: H, color: hex, seam: isoSeamFor(cat) }];
     }
@@ -501,41 +570,37 @@ function isoPartOps(ox, oy, cxR, cyR, rot, lx, ly, lw, ld, z0, h, color, seam) {
 // Wall-mounted pieces render flat on / attached to a wall, not as floor boxes.
 function isoIsWallMounted(cat) { return cat === 'wall_art' || cat === 'floating_shelves' || cat === 'full_length_mirror'; }
 
-// Returns { order, ops } for a wall-mounted item on whichever visible back wall
-// (y=0 or x=0) it sits nearest. Walls are drawn short (WH ft) so pieces stay
-// within that band. Ordered behind the furniture (negative order).
+// Returns { order, ops } for a wall-mounted item on the back wall only.
+// Left-wall attachments are omitted in 3D (still shown on 2D).
 function isoWallMounted(cat, cx, cy, w, d, hex, WH) {
-    const onBack = cy <= cx;                 // nearer the back (y=0) wall, else the left (x=0) wall
-    const along = onBack ? cx : cy;
+    const onBack = cy <= cx;
+    if (!onBack) return null;
+    const along = cx;
     const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
     const ops = [];
 
     if (cat === 'wall_art') {
         const aw = Math.max(1.2, w), ah = Math.min(1.9, WH - 0.6), zc = WH * 0.55, off = 0.05, ins = 0.16;
         const z1 = zc - ah / 2, z2 = zc + ah / 2;
-        const rect = (o, i) => onBack
-            ? [P(cx - aw / 2 + i, o, z1 + i), P(cx + aw / 2 - i, o, z1 + i), P(cx + aw / 2 - i, o, z2 - i), P(cx - aw / 2 + i, o, z2 - i)]
-            : [P(o, cy - aw / 2 + i, z1 + i), P(o, cy + aw / 2 - i, z1 + i), P(o, cy + aw / 2 - i, z2 - i), P(o, cy - aw / 2 + i, z2 - i)];
-        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade(hex, -0.05) });   // frame
-        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#efe6cc' });     // canvas
+        const rect = (o, i) =>
+            [P(cx - aw / 2 + i, o, z1 + i), P(cx + aw / 2 - i, o, z1 + i), P(cx + aw / 2 - i, o, z2 - i), P(cx - aw / 2 + i, o, z2 - i)];
+        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade(hex, -0.05) });
+        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#efe6cc' });
         return { order: -500 + along, ops };
     }
 
     if (cat === 'full_length_mirror') {
         const mw = Math.max(1.0, w), z1 = 0.1, z2 = WH - 0.1, off = 0.06, ins = 0.1;
-        const rect = (o, i) => onBack
-            ? [P(cx - mw / 2 + i, o, z1 + i), P(cx + mw / 2 - i, o, z1 + i), P(cx + mw / 2 - i, o, z2 - i), P(cx - mw / 2 + i, o, z2 - i)]
-            : [P(o, cy - mw / 2 + i, z1 + i), P(o, cy + mw / 2 - i, z1 + i), P(o, cy + mw / 2 - i, z2 - i), P(o, cy - mw / 2 + i, z2 - i)];
-        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade('#6f8fb2', -0.05) }); // frame
-        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#cfe0ee' });         // mirror surface
+        const rect = (o, i) =>
+            [P(cx - mw / 2 + i, o, z1 + i), P(cx + mw / 2 - i, o, z1 + i), P(cx + mw / 2 - i, o, z2 - i), P(cx - mw / 2 + i, o, z2 - i)];
+        ops.push({ kind: 'poly', pts: rect(off, 0), fill: isoShade('#6f8fb2', -0.05) });
+        ops.push({ kind: 'poly', pts: rect(off + 0.01, ins), fill: '#cfe0ee' });
         return { order: -495 + along, ops };
     }
 
-    // floating_shelves — two thin slabs cantilevered off the wall
     const sw = Math.max(1.6, w), sd = Math.max(0.55, Math.min(1.0, d || 0.8));
     [WH * 0.5, WH * 0.8].forEach((z0) => {
-        let ox, oy, lw, ld;
-        if (onBack) { ox = cx - sw / 2; oy = 0; lw = sw; ld = sd; } else { ox = 0; oy = cy - sw / 2; lw = sd; ld = sw; }
+        const ox = cx - sw / 2, oy = 0, lw = sw, ld = sd;
         isoPartOps(0, 0, 0, 0, 0, ox, oy, lw, ld, z0, 0.14, hex, null).forEach((op) => ops.push(op));
     });
     return { order: -490 + along, ops };
@@ -583,7 +648,7 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
     const m = Math.min(fy, 1 - fy, fx, 1 - fx);
     let onBack, along;
     if (m === fy) { onBack = true; along = fx * W; }          // back wall (y=0)
-    else if (m === fx) { onBack = false; along = fy * L; }    // left wall (x=0)
+    else if (m === fx) { return null; }                      // left wall — keep clear in 3D
     else return null;                                        // front wall → skip
     const rectAt = (hw, z1, z2, off, ins) => onBack
         ? [P(along - hw + ins, off, z1 + ins), P(along + hw - ins, off, z1 + ins), P(along + hw - ins, off, z2 - ins), P(along - hw + ins, off, z2 - ins)]
@@ -635,6 +700,17 @@ function renderIsoRoom(room) {
         else if (op.kind === 'knob') svg.appendChild(rc.circle(op.c[0], op.c[1], 3.4, KNOB_OPTS));
         else if (op.kind === 'disc') svg.appendChild(rc.circle(op.c[0], op.c[1], op.d, { fill: op.fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.8, bowing: 1.2, seed: 1 }));
         else if (op.kind === 'path') svg.appendChild(rc.path(op.d, { fill: op.fill, fillStyle: 'solid', stroke: ISO_COLORS.ink, strokeWidth: 1.1, roughness: 1.3, bowing: 1.1, seed: op.seed || 1 }));
+        else if (op.kind === 'floorPath') {
+            // Native SVG path — rough.js solid fills ignore compound holes.
+            const path = document.createElementNS(svgNs, 'path');
+            path.setAttribute('d', op.d);
+            path.setAttribute('fill', op.fill);
+            path.setAttribute('fill-rule', 'evenodd');
+            path.setAttribute('stroke', ISO_COLORS.ink);
+            path.setAttribute('stroke-width', '1.6');
+            path.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(path);
+        }
     };
 
     // Painted back-to-front: shell first, then rugs, then furniture pieces by
@@ -655,14 +731,20 @@ function renderIsoRoom(room) {
     items.forEach((entry) => {
         if (!entry || entry.hidden || !entry.category) return;
         const cat = entry.category;
-        const w = toNumber(entry.item && entry.item.widthIn, furnWidthIn(cat)) / 12;
-        const d = toNumber(entry.item && entry.item.depthIn, furnDepthIn(cat)) / 12;
+        const scale = Math.max(0.5, Math.min(2, toNumber(entry.scale, 1) || 1));
+        const w = toNumber(entry.item && entry.item.widthIn, furnWidthIn(cat)) / 12 * scale;
+        const d = toNumber(entry.item && entry.item.depthIn, furnDepthIn(cat)) / 12 * scale;
         if (w <= 0 || d <= 0) return;
         const x = toNumber(entry.x), y = toNumber(entry.y), rot = toNumber(entry.rotation);
-        const H = furnHeight(cat), hex = entry.color || (entry.item && entry.item.color) || furnColor(cat);
+        const H = furnHeight(cat);
+        const hex = entry.color || (entry.item && entry.item.color) || furnColor(cat);
         const elev = stackElevationFt(entry, items);
 
-        if (isoIsWallMounted(cat)) { pieces.push(isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH)); return; }
+        if (isoIsWallMounted(cat)) {
+            const mounted = isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH);
+            if (mounted) pieces.push(mounted);
+            return;
+        }
         if (cat === 'indoor_plants') {
             pieces.push({
                 order: (x + w / 2) + (y + d / 2) + elev * 0.01,
@@ -712,10 +794,16 @@ function renderIsoRoom(room) {
         const xs = layout.roomPoints.map((p) => p.x), ys = layout.roomPoints.map((p) => p.y);
         const eMinX = Math.min(...xs), eMinY = Math.min(...ys);
         const eSpanX = Math.max(...xs) - eMinX, eSpanY = Math.max(...ys) - eMinY;
+        const cutoutFeetList = [];
         cutouts.forEach((cutout) => {
+            const feet = isoCutoutFeet(cutout, eMinX, eMinY);
+            if (feet.length >= 3) cutoutFeetList.push(feet);
             const g = isoCutoutGroup(cutout, eMinX, eMinY, WH);
             if (g) shell.push(g);
         });
+        if (cutoutFeetList.length) {
+            shell[2] = { order: -1e6 + 2, ops: [isoFloorWithHoles(W, L, cutoutFeetList)] };
+        }
         elements.forEach((el) => {
             const g = isoArchElement(el, W, L, WH, eMinX, eMinY, eSpanX, eSpanY);
             if (g) pieces.push(g);

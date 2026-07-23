@@ -217,8 +217,8 @@ body:not(.page-login) nav > div:last-child > a:hover {
   color: var(--bp-primary) !important;
 }
 
-body:not(.page-login) nav button:not(.profile-btn):not(.profile-popup-item):not(.settings-modal-close):not(.settings-save-btn),
-body:not(.page-login) nav > div:last-child > div:not(.profile-menu-wrap) {
+body:not(.page-login) nav button:not(.profile-btn):not(.profile-popup-item):not(.settings-modal-close):not(.settings-save-btn):not(.theme-switch-btn),
+body:not(.page-login) nav > div:last-child > div:not(.profile-menu-wrap):not(.nav-theme-switch):not([data-theme-switch]) {
   width: 34px !important;
   height: 34px !important;
   margin-left: 8px;
@@ -318,12 +318,12 @@ body:not(.page-login) .app-brand > span {
 .app-nav-links > a span { display: none; }
 
 .app-brand,
-.app-nav-actions > button,
+.app-nav-actions > button:not(.theme-switch-btn),
 .app-nav-actions > .profile-menu-wrap > .profile-btn {
   transition: transform .22s cubic-bezier(.2, .8, .2, 1);
 }
 .app-brand:hover,
-.app-nav-actions > button:hover,
+.app-nav-actions > button:not(.theme-switch-btn):hover,
 .app-nav-actions > .profile-menu-wrap > .profile-btn:hover {
   transform: translateY(-2px) scale(1.05);
 }
@@ -331,7 +331,7 @@ body:not(.page-login) .app-brand > span {
 .app-nav-actions {
   display: flex;
   align-items: center;
-  gap: 2px !important;
+  gap: 10px !important;
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -344,7 +344,7 @@ body:not(.page-login) .app-brand > span {
   opacity: 1 !important;
 }
 
-.app-nav-actions > button {
+.app-nav-actions > button:not(.theme-switch-btn) {
   display: grid;
   place-items: center;
   width: 34px !important;
@@ -356,21 +356,21 @@ body:not(.page-login) .app-brand > span {
   color: var(--bp-muted) !important;
 }
 
-body:not(.page-login) .app-nav-actions > button:not(.profile-btn) {
+body:not(.page-login) .app-nav-actions > button:not(.profile-btn):not(.theme-switch-btn) {
   background: transparent !important;
 }
 
-body:not(.page-login) .app-nav-actions > button:not(.profile-btn) iconify-icon {
+body:not(.page-login) .app-nav-actions > button:not(.profile-btn):not(.theme-switch-btn) iconify-icon {
   color: var(--bp-ink) !important;
   font-size: 20px !important;
   line-height: 1;
 }
 
-.app-nav-actions > button:not(.profile-btn):hover {
+.app-nav-actions > button:not(.profile-btn):not(.theme-switch-btn):hover {
   background: var(--bp-soft) !important;
 }
 
-.app-nav-actions > button:not(.profile-btn) iconify-icon {
+.app-nav-actions > button:not(.profile-btn):not(.theme-switch-btn) iconify-icon {
   color: var(--bp-muted) !important;
   font-size: 16px !important;
 }
@@ -392,6 +392,48 @@ body:not(.page-login) .app-nav-actions > button:not(.profile-btn) iconify-icon {
   transform: none;
 }
 
+.nav-theme-switch,
+[data-theme-switch] {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+  margin: 0 6px !important;
+  position: relative;
+  z-index: 1;
+  width: auto !important;
+  height: auto !important;
+  min-width: 56px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.nav-theme-switch button.theme-switch-btn,
+[data-theme-switch] button.theme-switch-btn,
+button.theme-switch-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: var(--theme-switch-w, 56px) !important;
+  height: var(--theme-switch-h, 28px) !important;
+  min-width: var(--theme-switch-w, 56px) !important;
+  min-height: var(--theme-switch-h, 28px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  border-width: 2px !important;
+  border-style: solid !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
 /* Login */
 .page-login { overflow: auto !important; }
 .login-theme-btn {
@@ -399,18 +441,22 @@ body:not(.page-login) .app-nav-actions > button:not(.profile-btn) iconify-icon {
   z-index: 60;
   top: 18px;
   right: 18px;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--bp-border);
-  border-radius: 999px;
-  background: var(--bp-surface);
-  color: var(--bp-ink);
-  box-shadow: var(--bp-shadow);
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  height: auto !important;
+  min-width: 72px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   cursor: pointer;
 }
-.login-theme-btn iconify-icon { font-size: 20px; }
+.login-theme-btn button.theme-switch-btn {
+  box-shadow: var(--bp-shadow);
+}
 .login-shell {
   display: grid;
   min-height: 100vh;
@@ -533,6 +579,30 @@ body:not(.page-login) .app-nav-actions > button:not(.profile-btn) iconify-icon {
 .login-card label { color: var(--bp-muted) !important; }
 .login-card #forgot-link,
 .login-card #signup-link { color: var(--bp-primary) !important; }
+
+.page-login .login-float-field {
+  border-radius: 12px !important;
+  background: var(--bp-soft) !important;
+  color: var(--bp-ink) !important;
+  border: 1.5px solid transparent !important;
+}
+.page-login .login-float-field:focus {
+  border-color: var(--bp-primary) !important;
+  background: var(--bp-surface) !important;
+}
+.page-login .login-float-field.error {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.1) !important;
+}
+.page-login #login-fields-root label {
+  color: var(--bp-muted) !important;
+  background: transparent;
+}
+.page-login #login-fields-root .peer:focus ~ label,
+.page-login #login-fields-root label[data-floating="true"] {
+  color: var(--bp-primary) !important;
+  background: var(--bp-bg) !important;
+}
 
 .login-card #login-btn {
   margin-top: 4px;
@@ -782,9 +852,15 @@ a.workflow-step:focus-visible {
   gap: 20px !important;
 }
 .page-dimensions main > section:first-child { width: calc(100% - 460px) !important; }
-.page-dimensions main > section:last-child { width: 460px !important; }
+.page-dimensions main > section:last-child {
+  width: 460px !important;
+  margin-top: 118px !important;
+  align-self: flex-start;
+  height: calc(100% - 118px) !important;
+}
 .page-dimensions h1 { color: var(--bp-ink) !important; font-size: 32px !important; }
 .page-dimensions header p { color: var(--bp-muted) !important; font-size: 14px !important; }
+.page-dimensions main > section:last-child > div { padding: 20px !important; gap: 16px !important; }
 .page-dimensions .garden-card:hover {
   transform: none !important;
   background: var(--bp-surface) !important;
@@ -870,7 +946,6 @@ a.workflow-step:focus-visible {
   pointer-events: all;
 }
 .page-dimensions #area-badge { background: var(--bp-soft) !important; border-color: var(--bp-border) !important; color: var(--bp-muted) !important; }
-.page-dimensions main > section:last-child > div { padding: 20px !important; gap: 16px !important; }
 .page-dimensions main > section:last-child h2 { color: var(--bp-ink) !important; font-size: 19px !important; }
 .page-dimensions main > section:last-child h4 { color: var(--bp-ink) !important; font-family: "DM Sans", sans-serif !important; font-size: 13px !important; font-weight: 600 !important; }
 .page-dimensions main > section:last-child label,
@@ -899,6 +974,21 @@ a.workflow-step:focus-visible {
   padding: 13px 38px 13px 15px !important;
   border-radius: 12px !important;
   font-size: 14px;
+}
+.page-dimensions .dimension-error {
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(192, 64, 64, 0.28);
+  background: rgba(192, 64, 64, 0.08);
+  color: #a33a3a !important;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.page-dimensions .dimension-input.is-invalid {
+  border-color: rgba(192, 64, 64, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(192, 64, 64, 0.12);
 }
 .page-dimensions .unit-toggle {
   border-color: var(--bp-border) !important;
@@ -1014,15 +1104,13 @@ a.workflow-step:focus-visible {
 .page-dimensions #draggable-window iconify-icon[icon="ph:square-duotone"] {
   color: var(--dimension-window) !important;
 }
-.page-dimensions #draggable-cutout,
-.page-dimensions #btn-draw-cutout {
+.page-dimensions #draggable-cutout {
   background: rgba(108, 143, 98, .08) !important;
   border-color: rgba(108, 143, 98, .45) !important;
 }
 .page-dimensions #draggable-door,
 .page-dimensions #draggable-window,
-.page-dimensions #draggable-cutout,
-.page-dimensions #btn-draw-cutout {
+.page-dimensions #draggable-cutout {
   min-height: 66px;
   gap: 12px !important;
   padding: 12px 14px !important;
@@ -1030,56 +1118,36 @@ a.workflow-step:focus-visible {
 }
 .page-dimensions #draggable-door > div:first-child,
 .page-dimensions #draggable-window > div:first-child,
-.page-dimensions #draggable-cutout > div:first-child,
-.page-dimensions #btn-draw-cutout > div:first-child {
+.page-dimensions #draggable-cutout > div:first-child {
   width: 52px !important;
   height: 52px !important;
   border-radius: 12px !important;
 }
 .page-dimensions #draggable-door h4,
 .page-dimensions #draggable-window h4,
-.page-dimensions #draggable-cutout h4,
-.page-dimensions #btn-draw-cutout h4 {
+.page-dimensions #draggable-cutout h4 {
   font-size: 13px !important;
   line-height: 1.15;
 }
 .page-dimensions #draggable-door p,
 .page-dimensions #draggable-window p,
-.page-dimensions #draggable-cutout p,
-.page-dimensions #btn-draw-cutout p {
+.page-dimensions #draggable-cutout p {
   color: var(--bp-muted) !important;
   opacity: 1 !important;
   font-size: 10px !important;
   line-height: 1.25 !important;
   letter-spacing: .04em !important;
 }
-.page-dimensions #btn-draw-cutout p {
-  font-size: 10.5px !important;
-  letter-spacing: 0 !important;
-}
 .page-dimensions #draggable-door > div:first-child iconify-icon,
 .page-dimensions #draggable-window > div:first-child iconify-icon,
-.page-dimensions #draggable-cutout > div:first-child iconify-icon,
-.page-dimensions #btn-draw-cutout > div:first-child iconify-icon {
+.page-dimensions #draggable-cutout > div:first-child iconify-icon {
   font-size: 28px !important;
 }
 .page-dimensions #draggable-door iconify-icon[icon="ph:dots-six-vertical-bold"],
 .page-dimensions #draggable-window iconify-icon[icon="ph:dots-six-vertical-bold"],
-.page-dimensions #draggable-cutout iconify-icon[icon="ph:dots-six-vertical-bold"],
-.page-dimensions #btn-draw-cutout iconify-icon[icon="ph:cursor-click-duotone"] {
+.page-dimensions #draggable-cutout iconify-icon[icon="ph:dots-six-vertical-bold"] {
   color: var(--bp-muted) !important;
   font-size: 20px !important;
-}
-.page-dimensions #btn-draw-cutout {
-  background: rgba(143, 197, 231, .16) !important;
-  border-color: rgba(41, 79, 125, .2) !important;
-  cursor: pointer;
-}
-.page-dimensions #btn-draw-cutout > div:first-child {
-  background: var(--bp-blue-soft) !important;
-}
-.page-dimensions #btn-draw-cutout > div:first-child iconify-icon {
-  color: var(--dimension-primary) !important;
 }
 .page-dimensions #drawing-layer path {
   fill: rgba(41, 79, 125, .18) !important;
@@ -1694,6 +1762,56 @@ a.workflow-step:focus-visible {
   aspect-ratio: 4 / 3;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+.page-result .iso-room-preview__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.page-result .iso-room-preview__label {
+  padding: 0;
+}
+.page-result .iso-room-preview__view-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.page-result .iso-room-preview__view-hint {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--bp-muted);
+  white-space: nowrap;
+  min-width: 9.5rem;
+  text-align: center;
+}
+.page-result .iso-room-preview__view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--bp-border);
+  background: rgba(254, 252, 250, 0.92);
+  color: var(--bp-primary);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.page-result .iso-room-preview__view-btn:hover {
+  border-color: var(--bp-primary);
+  background: #fff;
+}
+.page-result .iso-room-preview__view-btn[aria-pressed="true"] {
+  background: var(--bp-primary);
+  border-color: var(--bp-primary);
+  color: #f7f4d5;
 }
 .page-result .iso-room-preview svg {
   flex: 1;
@@ -2266,6 +2384,23 @@ html.dark-mode .page-result .furniture-h-strip__label {
   color: var(--bp-primary) !important;
   letter-spacing: 0.14em;
 }
+html.dark-mode .page-result .iso-room-preview__view-hint {
+  color: var(--bp-muted) !important;
+}
+html.dark-mode .page-result .iso-room-preview__view-btn {
+  background: rgba(42, 58, 78, 0.85);
+  border-color: rgba(126, 168, 201, 0.28);
+  color: #e8eef5;
+}
+html.dark-mode .page-result .iso-room-preview__view-btn:hover {
+  border-color: rgba(126, 168, 201, 0.55);
+  background: rgba(52, 72, 96, 0.95);
+}
+html.dark-mode .page-result .iso-room-preview__view-btn[aria-pressed="true"] {
+  background: rgba(126, 168, 201, 0.45);
+  border-color: rgba(126, 168, 201, 0.7);
+  color: #f7f4d5;
+}
 html.dark-mode .page-result .furniture-scroll-panel {
   animation: none !important;
   background: linear-gradient(160deg, rgba(42, 58, 78, 0.97), rgba(30, 42, 56, 0.95)) !important;
@@ -2430,6 +2565,15 @@ html.dark-mode body.page-dimensions .dimension-input:focus {
   background: rgba(42, 58, 78, 0.98) !important;
   border-color: var(--bp-primary) !important;
 }
+html.dark-mode body.page-dimensions .dimension-error {
+  border-color: rgba(224, 112, 112, 0.35);
+  background: rgba(224, 112, 112, 0.12);
+  color: #f0a8a8 !important;
+}
+html.dark-mode body.page-dimensions .dimension-input.is-invalid {
+  border-color: rgba(224, 112, 112, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(224, 112, 112, 0.16);
+}
 html.dark-mode body.page-dimensions .unit-toggle {
   background: rgba(36, 49, 64, 0.9) !important;
   border-color: rgba(126, 168, 201, 0.16) !important;
@@ -2470,20 +2614,14 @@ html.dark-mode body.page-dimensions #area-badge {
 }
 html.dark-mode body.page-dimensions #draggable-door,
 html.dark-mode body.page-dimensions #draggable-window,
-html.dark-mode body.page-dimensions #draggable-cutout,
-html.dark-mode body.page-dimensions #btn-draw-cutout {
+html.dark-mode body.page-dimensions #draggable-cutout {
   background: rgba(36, 49, 64, 0.88) !important;
   border-color: rgba(126, 168, 201, 0.16) !important;
 }
 html.dark-mode body.page-dimensions #draggable-door > div:first-child,
 html.dark-mode body.page-dimensions #draggable-window > div:first-child,
-html.dark-mode body.page-dimensions #draggable-cutout > div:first-child,
-html.dark-mode body.page-dimensions #btn-draw-cutout > div:first-child {
+html.dark-mode body.page-dimensions #draggable-cutout > div:first-child {
   background: rgba(126, 168, 201, 0.18) !important;
-}
-html.dark-mode body.page-dimensions #btn-draw-cutout {
-  background: rgba(126, 168, 201, 0.14) !important;
-  border-color: rgba(126, 168, 201, 0.28) !important;
 }
 html.dark-mode body.page-dimensions main > section:last-child > div > div:last-child {
   background: rgba(36, 49, 64, 0.9) !important;

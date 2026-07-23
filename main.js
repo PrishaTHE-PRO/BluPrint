@@ -31,30 +31,30 @@ function isValidEmail(email) {
 }
 
 function setLoading(isLoading) {
-    loginButton.disabled = isLoading;
-    googleButton.disabled = isLoading;
-    loginButton.textContent = isLoading ? 'Signing in...' : 'Sign in →';
+    if (loginButton) loginButton.disabled = isLoading;
+    if (googleButton) googleButton.disabled = isLoading;
+    if (loginButton) loginButton.textContent = isLoading ? 'Signing in...' : 'Sign in →';
 }
 
 function resetErrors() {
-    document.getElementById('email').classList.remove('error');
-    document.getElementById('password').classList.remove('error');
+    document.getElementById('email')?.classList.remove('error');
+    document.getElementById('password')?.classList.remove('error');
 }
 
 function getCredentials() {
-    var email = document.getElementById('email').value;
-    var password = document.getElementById('password').value;
+    var email = document.getElementById('email')?.value || '';
+    var password = document.getElementById('password')?.value || '';
 
     resetErrors();
 
     if (!isValidEmail(email)) {
-        document.getElementById('email').classList.add('error');
+        document.getElementById('email')?.classList.add('error');
         showToast('Please enter a valid email.');
         return null;
     }
 
     if (password.length < 6) {
-        document.getElementById('password').classList.add('error');
+        document.getElementById('password')?.classList.add('error');
         showToast('Password must be at least 6 characters.');
         return null;
     }
@@ -145,11 +145,11 @@ async function handleForgotPassword(event) {
     event.preventDefault();
     if (!ensureConfigured()) return;
 
-    var email = document.getElementById('email').value;
+    var email = document.getElementById('email')?.value || '';
     resetErrors();
 
     if (!isValidEmail(email)) {
-        document.getElementById('email').classList.add('error');
+        document.getElementById('email')?.classList.add('error');
         showToast('Enter your email address first.');
         return;
     }
@@ -179,7 +179,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-document.getElementById('forgot-link').addEventListener('click', handleForgotPassword);
+document.getElementById('forgot-link')?.addEventListener('click', handleForgotPassword);
 
 window.handleLogin = handleLogin;
 window.handleGoogle = handleGoogle;

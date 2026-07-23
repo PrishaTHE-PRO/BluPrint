@@ -130,18 +130,21 @@
     }
     .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
     .nav-actions { display: flex; align-items: center; gap: 9px; }
-    .nav-theme-btn {
-      display: grid;
-      place-items: center;
-      width: 40px;
-      height: 40px;
-      border: 1px solid rgba(28, 23, 20, .1);
-      border-radius: 999px;
-      background: rgba(255,255,255,.55);
+    .nav-theme-btn,
+    .nav-theme-switch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      height: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
       color: var(--ink);
       cursor: pointer;
+      line-height: 0;
     }
-    .nav-theme-btn iconify-icon { font-size: 20px; }
     .nav-signin { padding: 11px 15px; color: var(--blue-dark); font-size: 14px; font-weight: 700; }
 
     html.dark-mode {
@@ -171,10 +174,10 @@
       border-color: rgba(232, 238, 244, .1);
       background: rgba(16, 22, 29, .86);
     }
-    html.dark-mode .nav-theme-btn {
-      border-color: rgba(232, 238, 244, .12);
-      background: rgba(36, 49, 64, .85);
-      color: var(--ink);
+    html.dark-mode .nav-theme-btn,
+    html.dark-mode .nav-theme-switch {
+      background: transparent;
+      border: 0;
     }
 
     .button {
@@ -481,7 +484,69 @@
     .final-cta h2 { max-width: 760px; margin: 0 auto 22px; font-size: clamp(46px, 6vw, 76px); line-height: 1; }
     .final-cta p { max-width: 570px; margin: 0 auto 32px; color: var(--muted); font-size: 18px; line-height: 1.6; }
     .final-cta .button { min-height: 56px; padding-inline: 28px; }
-    footer { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    footer {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      padding: 48px 0 40px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .footer-contact {
+      max-width: 640px;
+    }
+    .footer-contact h2 {
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-family: "Fraunces", serif;
+      font-size: clamp(28px, 3.2vw, 36px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+    .footer-contact .contact-label {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .footer-contact ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .footer-contact li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      align-items: baseline;
+      font-size: 15px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    .footer-contact li strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .footer-contact a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .footer-contact a:hover {
+      text-decoration: underline;
+    }
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 20px;
+    }
     .footer-links { display: flex; gap: 24px; }
 
     .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1); }
@@ -534,7 +599,8 @@
       .capability-grid { grid-template-columns: 1fr; }
       .process-wrap { padding: 30px 20px; }
       .final-cta { padding: 96px 0; }
-      footer { align-items: flex-start; flex-direction: column; gap: 20px; }
+      footer { gap: 28px; }
+      .footer-bar { align-items: flex-start; flex-direction: column; gap: 16px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -557,9 +623,7 @@
       <a href="#start">Why BluPrint</a>
     </div>
     <div class="nav-actions">
-      <button id="theme-toggle-btn" type="button" class="nav-theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
-        <iconify-icon icon="ph:moon-duotone"></iconify-icon>
-      </button>
+      <div data-theme-switch class="nav-theme-btn nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
       <a class="nav-signin" href="login.html">Sign in</a>
       <a class="button button-primary" href="login.html">Design my room <span aria-hidden="true">↗</span></a>
     </div>
@@ -725,11 +789,24 @@
   </main>
 
   <footer class="shell">
-    <a class="brand" href="index.html"><span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>BluPrint</a>
-    <span>Rooms that work beautifully.</span>
-    <div class="footer-links"><a href="#features">Features</a><a href="login.html">Sign in</a></div>
+    <div class="footer-contact">
+      <h2>Have more questions?</h2>
+      <p class="contact-label">Contact</p>
+      <ul>
+        <li><strong>Prisha Agarwalla</strong> — <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
+        <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
+        <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
+        <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
+      </ul>
+    </div>
+    <div class="footer-bar">
+      <a class="brand" href="index.html"><span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>BluPrint</a>
+      <span>Rooms that work beautifully.</span>
+      <div class="footer-links"><a href="#features">Features</a><a href="login.html">Sign in</a></div>
+    </div>
   </footer>
 <script src="./theme-toggle.js" defer></script>
+<script type="module" src="/src/theme-switch.tsx"></script>
   <script>
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
