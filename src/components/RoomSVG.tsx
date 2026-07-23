@@ -11,6 +11,15 @@ import {
 import type { FurnitureColorTones } from '../utils/furnitureColor';
 import { tonesFrom } from '../utils/furnitureColor';
 import { furnitureForm } from '../utils/furnitureShape';
+import {
+  architectureForbiddenZonesFromLayout,
+  editorPtToFt as editorPtToFtShared,
+  findValidFurniturePosition,
+  furnitureBounds,
+  pieceSizeFt,
+  type ForbiddenRect,
+  type PosFt,
+} from '../utils/furnitureConstraints';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -19,66 +28,6 @@ const SCALE = 40;
 
 /** Margin around the room polygon for dimension labels */
 const MARGIN = 32;
-
-/** Default furniture widths (inches) when the API doesn't supply them */
-const DEFAULT_WIDTH_IN: Record<string, number> = {
-  // Living room
-  sofa:            84, accent_chair: 32, coffee_table: 48,
-  rug:             96, floor_lamp:   12, side_table:   18,
-  // Bedroom
-  bed:             60, nightstand:   20, dresser:      48,
-  bedroom_rug:     96, wardrobe:     36, bedside_lamp: 10,
-  // Kitchen
-  bar_stool:       16, pendant_light: 12, kitchen_rug:  24,
-  kitchen_storage: 30, island_cart:  48, kitchen_shelf: 36,
-  // Bathroom
-  vanity:          36, bath_mirror:  24, bath_storage: 20,
-  bath_mat:        20, bath_light:   24, shower_curtain: 60,
-  bathtub:         60, standing_shower: 36,
-  // Home office
-  desk:            60, office_chair: 24, bookshelf:    36,
-  desk_lamp:       10, storage_cabinet: 24, monitor_stand: 24,
-  // Dining room
-  dining_table:    60, dining_chair: 18, dining_rug:   96,
-  sideboard:       54, dining_light: 18, bar_cabinet:  36,
-  // Nursery
-  crib:            52, nursery_dresser: 36, rocking_chair: 28,
-  nursery_rug:     72, nursery_shelf: 30, nursery_lamp: 10,
-  // User-selected room features
-  reading_nook: 34, smart_lighting: 12, floating_shelves: 36,
-  indoor_plants: 18, full_length_mirror: 24, wall_art: 36,
-  workspace_desk: 48, vanity_station: 42, bookcase: 36,
-};
-
-/** Default furniture depths (inches) when the API doesn't supply them */
-const DEFAULT_DEPTH_IN: Record<string, number> = {
-  // Living room
-  sofa:            36, accent_chair: 32, coffee_table: 24,
-  rug:             72, floor_lamp:   12, side_table:   18,
-  // Bedroom
-  bed:             80, nightstand:   16, dresser:      18,
-  bedroom_rug:     72, wardrobe:     24, bedside_lamp: 10,
-  // Kitchen
-  bar_stool:       16, pendant_light: 12, kitchen_rug:  60,
-  kitchen_storage: 14, island_cart:  24, kitchen_shelf: 12,
-  // Bathroom
-  vanity:          21, bath_mirror:   4, bath_storage: 12,
-  bath_mat:        30, bath_light:    8, shower_curtain: 3,
-  bathtub:         30, standing_shower: 36,
-  // Home office
-  desk:            30, office_chair: 24, bookshelf:    14,
-  desk_lamp:       10, storage_cabinet: 18, monitor_stand: 12,
-  // Dining room
-  dining_table:    36, dining_chair: 18, dining_rug:   72,
-  sideboard:       18, dining_light: 18, bar_cabinet:  18,
-  // Nursery
-  crib:            28, nursery_dresser: 18, rocking_chair: 30,
-  nursery_rug:     60, nursery_shelf: 12, nursery_lamp: 10,
-  // User-selected room features
-  reading_nook: 34, smart_lighting: 12, floating_shelves: 10,
-  indoor_plants: 18, full_length_mirror: 6, wall_art: 4,
-  workspace_desk: 24, vanity_station: 20, bookcase: 14,
-};
 
 /** Starting positions as fractions of room width/length */
 const DEFAULT_POS_FRAC: Record<string, { xf: number; yf: number }> = {
@@ -90,12 +39,13 @@ const DEFAULT_POS_FRAC: Record<string, { xf: number; yf: number }> = {
   accent_chair:    { xf: 0.62, yf: 0.57 },
   side_table:      { xf: 0.04, yf: 0.46 },
   // Bedroom
-  bed:             { xf: 0.22, yf: 0.22 },
-  nightstand:      { xf: 0.06, yf: 0.22 },
-  dresser:         { xf: 0.62, yf: 0.08 },
-  bedroom_rug:     { xf: 0.18, yf: 0.52 },
-  wardrobe:        { xf: 0.62, yf: 0.60 },
+  bed:             { xf: 0.22, yf: 0.08 },
+  nightstand:      { xf: 0.04, yf: 0.10 },
+  dresser:         { xf: 0.72, yf: 0.42 },
+  bedroom_rug:     { xf: 0.18, yf: 0.48 },
+  wardrobe:        { xf: 0.04, yf: 0.68 },
   bedside_lamp:    { xf: 0.06, yf: 0.12 },
+  reading_nook:    { xf: 0.68, yf: 0.68 },
   // Kitchen
   bar_stool:       { xf: 0.35, yf: 0.55 },
   pendant_light:   { xf: 0.45, yf: 0.20 },
@@ -170,9 +120,7 @@ export interface Placement {
   scales: Record<string, number>;
 }
 
-/** Position in feet from the room's top-left origin */
-export interface PosFt { x: number; y: number }
-interface ForbiddenRect { minX: number; minY: number; maxX: number; maxY: number }
+export type { PosFt };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -181,14 +129,6 @@ function defaultPos(category: string, room: Room): PosFt {
   return {
     x: frac.xf * room.widthFt,
     y: frac.yf * room.lengthFt,
-  };
-}
-
-function pieceSizeFt(item: FurnitureItem, scale = 1) {
-  const safeScale = Math.max(0.5, Math.min(2, scale));
-  return {
-    wFt: ((item.widthIn ?? DEFAULT_WIDTH_IN[item.category] ?? 36) / 12) * safeScale,
-    dFt: ((item.depthIn ?? DEFAULT_DEPTH_IN[item.category] ?? 30) / 12) * safeScale,
   };
 }
 
@@ -234,12 +174,6 @@ function preferredFurniturePosition(
     }
     case 'rug':
       return centered;
-    case 'accent_chair': {
-      const table = anchor('coffee_table');
-      return table
-        ? { x: table.position.x + table.size.wFt + 1, y: table.position.y + (table.size.dFt - dFt) / 2 }
-        : { x: roomWidthFt - wFt - inset, y: centered.y };
-    }
     case 'side_table': {
       const sofa = anchor('sofa');
       return sofa
@@ -253,13 +187,20 @@ function preferredFurniturePosition(
         : { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
     }
 
-    // Bedroom: headboard on a clear wall and storage around the perimeter.
+    // Bedroom: headboard on the back wall, clear foot traffic, storage on
+    // opposite walls — no chair cluster along one edge.
     case 'bed':
-      return { x: centered.x, y: inset };
+      return {
+        x: Math.max(inset, (roomWidthFt - wFt) / 2),
+        y: inset + Math.min(0.6, roomLengthFt * 0.04),
+      };
     case 'nightstand': {
       const bed = anchor('bed');
       return bed
-        ? { x: bed.position.x - wFt - gap, y: bed.position.y }
+        ? {
+            x: Math.max(inset, bed.position.x - wFt - gap),
+            y: bed.position.y + Math.max(0, bed.size.dFt * 0.08),
+          }
         : { x: inset, y: inset };
     }
     case 'bedside_lamp': {
@@ -273,13 +214,89 @@ function preferredFurniturePosition(
     }
     case 'bedroom_rug': {
       const bed = anchor('bed');
-      return bed
-        ? { x: bed.position.x + (bed.size.wFt - wFt) / 2, y: bed.position.y + bed.size.dFt * 0.45 }
-        : centered;
+      if (!bed) return centered;
+      // Soft landing at the foot of the bed, still centered on the mattress.
+      return {
+        x: bed.position.x + (bed.size.wFt - wFt) / 2,
+        y: Math.min(
+          roomLengthFt - dFt - inset,
+          bed.position.y + bed.size.dFt * 0.55,
+        ),
+      };
     }
-    case 'dresser':
-      return { x: roomWidthFt - wFt - inset, y: inset };
+    case 'dresser': {
+      const bed = anchor('bed');
+      // Opposite side wall from the nightstand, mid-room so the foot stays open.
+      return {
+        x: roomWidthFt - wFt - inset,
+        y: bed
+          ? Math.min(
+              roomLengthFt - dFt - inset,
+              Math.max(inset, bed.position.y + bed.size.dFt * 0.35),
+            )
+          : Math.max(inset, roomLengthFt * 0.38),
+      };
+    }
     case 'wardrobe':
+      // Far corner on the nightstand wall — not stacked with the dresser.
+      return { x: inset, y: roomLengthFt - dFt - inset };
+    case 'reading_nook':
+    case 'rocking_chair': {
+      const bed = anchor('bed');
+      // Quiet corner past the foot of the bed, with walking space.
+      if (bed) {
+        return {
+          x: Math.min(
+            roomWidthFt - wFt - inset,
+            Math.max(inset, bed.position.x + bed.size.wFt + 1.25),
+          ),
+          y: Math.min(
+            roomLengthFt - dFt - inset,
+            Math.max(inset, bed.position.y + bed.size.dFt + 1.6),
+          ),
+        };
+      }
+      return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
+    }
+    case 'accent_chair': {
+      // Living rooms: face the coffee table. Bedrooms: one lounge corner only.
+      const table = anchor('coffee_table');
+      if (table) {
+        return {
+          x: table.position.x + table.size.wFt + 1,
+          y: table.position.y + (table.size.dFt - dFt) / 2,
+        };
+      }
+      const bed = anchor('bed');
+      if (bed) {
+        return {
+          x: Math.min(
+            roomWidthFt - wFt - inset,
+            Math.max(inset, bed.position.x + bed.size.wFt + 1.25),
+          ),
+          y: Math.min(
+            roomLengthFt - dFt - inset,
+            Math.max(inset, bed.position.y + bed.size.dFt + 1.6),
+          ),
+        };
+      }
+      return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
+    }
+    case 'workspace_desk':
+    case 'vanity_station':
+      // Side wall below the dresser line so the bed wall stays clear.
+      return {
+        x: roomWidthFt - wFt - inset,
+        y: Math.max(inset, roomLengthFt * 0.55),
+      };
+    case 'bookcase':
+      return { x: inset, y: Math.max(inset, roomLengthFt * 0.42) };
+    case 'full_length_mirror':
+      return { x: roomWidthFt - wFt - inset, y: inset };
+    case 'floating_shelves':
+    case 'wall_art':
+      return { x: roomWidthFt - wFt - inset, y: inset + 0.8 };
+    case 'smart_lighting':
       return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
 
     // Work and dining zones are centered around their main functional object.
@@ -379,9 +396,6 @@ function preferredFurniturePosition(
     case 'sideboard':
     case 'nursery_shelf':
       return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
-    case 'rocking_chair':
-    case 'reading_nook':
-      return { x: inset, y: roomLengthFt - dFt - inset };
     case 'shower_curtain': {
       const tub = anchor('bathtub') || anchor('standing_shower');
       if (tub) {
@@ -403,15 +417,6 @@ function preferredFurniturePosition(
         ? { x: table.position.x + (table.size.wFt - wFt) / 2, y: table.position.y - dFt - gap }
         : centered;
     }
-    case 'smart_lighting':
-      return { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
-    case 'floating_shelves':
-    case 'full_length_mirror':
-    case 'wall_art':
-    case 'workspace_desk':
-    case 'vanity_station':
-    case 'bookcase':
-      return { x: roomWidthFt - wFt - inset, y: inset };
     default:
       return defaultPos(item.category, {
         roomId: '',
@@ -422,48 +427,6 @@ function preferredFurniturePosition(
         sqft: roomWidthFt * roomLengthFt,
       });
   }
-}
-
-function clampFurniturePosition(
-  position: PosFt,
-  item: FurnitureItem,
-  rotation: number,
-  roomWidthFt: number,
-  roomLengthFt: number,
-  scale = 1,
-): PosFt {
-  const { wFt, dFt } = pieceSizeFt(item, scale);
-  const radians = (rotation * Math.PI) / 180;
-  const occupiedWidth = Math.abs(wFt * Math.cos(radians)) + Math.abs(dFt * Math.sin(radians));
-  const occupiedDepth = Math.abs(wFt * Math.sin(radians)) + Math.abs(dFt * Math.cos(radians));
-  const desiredCenterX = position.x + wFt / 2;
-  const desiredCenterY = position.y + dFt / 2;
-  const centerX = occupiedWidth >= roomWidthFt
-    ? roomWidthFt / 2
-    : Math.max(occupiedWidth / 2, Math.min(roomWidthFt - occupiedWidth / 2, desiredCenterX));
-  const centerY = occupiedDepth >= roomLengthFt
-    ? roomLengthFt / 2
-    : Math.max(occupiedDepth / 2, Math.min(roomLengthFt - occupiedDepth / 2, desiredCenterY));
-
-  return {
-    x: centerX - wFt / 2,
-    y: centerY - dFt / 2,
-  };
-}
-
-function furnitureBounds(position: PosFt, item: FurnitureItem, rotation: number, scale = 1): ForbiddenRect {
-  const { wFt, dFt } = pieceSizeFt(item, scale);
-  const radians = (rotation * Math.PI) / 180;
-  const occupiedWidth = Math.abs(wFt * Math.cos(radians)) + Math.abs(dFt * Math.sin(radians));
-  const occupiedDepth = Math.abs(wFt * Math.sin(radians)) + Math.abs(dFt * Math.cos(radians));
-  const centerX = position.x + wFt / 2;
-  const centerY = position.y + dFt / 2;
-  return {
-    minX: centerX - occupiedWidth / 2,
-    maxX: centerX + occupiedWidth / 2,
-    minY: centerY - occupiedDepth / 2,
-    maxY: centerY + occupiedDepth / 2,
-  };
 }
 
 function placedFurnitureZones(
@@ -489,70 +452,8 @@ function placedFurnitureZones(
     ));
 }
 
-function overlapsForbiddenZone(
-  position: PosFt,
-  item: FurnitureItem,
-  rotation: number,
-  zones: ForbiddenRect[],
-  scale = 1,
-) {
-  const bounds = furnitureBounds(position, item, rotation, scale);
-  const clearance = 0.1;
-  return zones.some(zone =>
-    bounds.maxX > zone.minX - clearance
-    && bounds.minX < zone.maxX + clearance
-    && bounds.maxY > zone.minY - clearance
-    && bounds.minY < zone.maxY + clearance
-  );
-}
-
-function findValidFurniturePosition(
-  desired: PosFt,
-  item: FurnitureItem,
-  rotation: number,
-  roomWidthFt: number,
-  roomLengthFt: number,
-  zones: ForbiddenRect[],
-  scale = 1,
-): PosFt {
-  const base = clampFurniturePosition(desired, item, rotation, roomWidthFt, roomLengthFt, scale);
-  if (!overlapsForbiddenZone(base, item, rotation, zones, scale)) return base;
-
-  const step = 0.25;
-  const maxRadius = Math.max(roomWidthFt, roomLengthFt);
-  for (let radius = step; radius <= maxRadius; radius += step) {
-    for (let offset = -radius; offset <= radius; offset += step) {
-      const candidates = [
-        { x: base.x + offset, y: base.y - radius },
-        { x: base.x + offset, y: base.y + radius },
-        { x: base.x - radius, y: base.y + offset },
-        { x: base.x + radius, y: base.y + offset },
-      ];
-      for (const candidate of candidates) {
-        const clamped = clampFurniturePosition(candidate, item, rotation, roomWidthFt, roomLengthFt, scale);
-        if (!overlapsForbiddenZone(clamped, item, rotation, zones, scale)) return clamped;
-      }
-    }
-  }
-  return base;
-}
-
-/**
- * Convert a point in the architecture editor's SVG space to feet,
- * measured from the room polygon's own top-left corner.
- *
- * The editor uses 20 SVG px per foot. We derive the room origin from
- * the bounding box of the actual polygon — this works correctly for
- * rectangular rooms, custom polygons, and any drag-resized layout.
- */
 function editorPtToFt(px: number, py: number, layout: RoomLayout) {
-  const ES   = 20; // editor: 20 SVG px = 1 ft (constant regardless of shape)
-  const minX = Math.min(...layout.roomPoints.map(p => p.x));
-  const minY = Math.min(...layout.roomPoints.map(p => p.y));
-  return {
-    x: (px - minX) / ES,
-    y: (py - minY) / ES,
-  };
+  return editorPtToFtShared(px, py, layout.roomPoints);
 }
 
 /**
@@ -1029,14 +930,38 @@ export default function RoomSVG({
   const [resizing,   setResizing]   = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Seed from a saved layout exactly once — it may arrive after the first render.
+  // Seed from a saved layout exactly once — re-validate against room/cutouts
+  // so restored placements cannot sit in holes or outside the room.
   useEffect(() => {
     if (seededRef.current || !initialPlacement) return;
     seededRef.current = true;
-    setPositions(initialPlacement.positions);
-    setRotations(initialPlacement.rotations);
-    setScales(initialPlacement.scales);
-  }, [initialPlacement]);
+    const { widthFt, lengthFt } = canvasDimsFt(room, roomLayout);
+    const zones = architectureForbiddenZonesFromLayout(roomLayout);
+    const nextPositions: Record<string, PosFt> = { ...initialPlacement.positions };
+    const nextRotations = { ...initialPlacement.rotations };
+    const nextScales = { ...initialPlacement.scales };
+
+    furniture.forEach((item) => {
+      const rotation = nextRotations[item.category] ?? defaultRotation(item.category);
+      const scale = nextScales[item.category] ?? 1;
+      const occupied = placedFurnitureZones(nextPositions, furniture, nextRotations, nextScales, item.category);
+      const desired = nextPositions[item.category]
+        ?? preferredFurniturePosition(item, nextPositions, furniture, widthFt, lengthFt);
+      nextPositions[item.category] = findValidFurniturePosition(
+        desired,
+        item,
+        rotation,
+        widthFt,
+        lengthFt,
+        [...zones, ...occupied],
+        scale,
+      );
+    });
+
+    setPositions(nextPositions);
+    setRotations(nextRotations);
+    setScales(nextScales);
+  }, [initialPlacement, furniture, room, roomLayout]);
 
   // Report placement upward so Save Layout can capture it.
   useEffect(() => {
@@ -1046,46 +971,10 @@ export default function RoomSVG({
   // Canvas dimensions — driven by the actual polygon bounding box when available
   // so the viewport, grid, labels, and drag clamping all agree.
   const { widthFt: cW, lengthFt: cL } = canvasDimsFt(room, roomLayout);
-  const forbiddenZones = useMemo<ForbiddenRect[]>(() => {
-    if (!roomLayout) return [];
-    const padding = 0.15;
-    const cutoutZones = roomLayout.cutouts
-      .filter(cutout => cutout.points.length >= 3)
-      .map(cutout => {
-        const points = cutout.points.map(point => editorPtToFt(point.x, point.y, roomLayout));
-        return {
-          minX: Math.min(...points.map(point => point.x)) - padding,
-          maxX: Math.max(...points.map(point => point.x)) + padding,
-          minY: Math.min(...points.map(point => point.y)) - padding,
-          maxY: Math.max(...points.map(point => point.y)) + padding,
-        };
-      });
-    const doorSizeFt = 2.67;
-    const doorZones = roomLayout.elements
-      .filter(element => element.type === 'door')
-      .map(element => {
-        const anchor = editorPtToFt(element.x, element.y, roomLayout);
-        const radians = (element.angle * Math.PI) / 180;
-        const cos = Math.cos(radians);
-        const sin = Math.sin(radians);
-        const corners = [
-          { x: -doorSizeFt / 2, y: 0 },
-          { x: doorSizeFt / 2, y: 0 },
-          { x: -doorSizeFt / 2, y: doorSizeFt },
-          { x: doorSizeFt / 2, y: doorSizeFt },
-        ].map(point => ({
-          x: anchor.x + point.x * cos - point.y * sin,
-          y: anchor.y + point.x * sin + point.y * cos,
-        }));
-        return {
-          minX: Math.min(...corners.map(point => point.x)) - padding,
-          maxX: Math.max(...corners.map(point => point.x)) + padding,
-          minY: Math.min(...corners.map(point => point.y)) - padding,
-          maxY: Math.max(...corners.map(point => point.y)) + padding,
-        };
-      });
-    return [...cutoutZones, ...doorZones];
-  }, [roomLayout]);
+  const forbiddenZones = useMemo<ForbiddenRect[]>(
+    () => architectureForbiddenZonesFromLayout(roomLayout),
+    [roomLayout],
+  );
 
   // Initialise default positions when furniture changes
   useEffect(() => {
@@ -1204,10 +1093,11 @@ export default function RoomSVG({
       if (!item) return;
       const rotation = rotations[resizingPiece.category] ?? defaultRotation(resizingPiece.category);
       const { wFt, dFt } = pieceSizeFt(item, nextScale);
+      const occupiedZones = placedFurnitureZones(positions, furniture, rotations, scales, resizingPiece.category);
       setScales(prev => ({ ...prev, [resizingPiece.category]: nextScale }));
       setPositions(prev => ({
         ...prev,
-        [resizingPiece.category]: clampFurniturePosition(
+        [resizingPiece.category]: findValidFurniturePosition(
           {
             x: resizingPiece.center.x - wFt / 2,
             y: resizingPiece.center.y - dFt / 2,
@@ -1216,6 +1106,7 @@ export default function RoomSVG({
           rotation,
           cW,
           cL,
+          [...forbiddenZones, ...occupiedZones],
           nextScale,
         ),
       }));
@@ -1232,6 +1123,28 @@ export default function RoomSVG({
       const nextRotation = rotatingPiece.rotationStart
         + pointerAngle
         - rotatingPiece.pointerStartAngle;
+      const item = furniture.find(candidate => candidate.category === rotatingPiece.category);
+      if (item) {
+        const scale = scales[rotatingPiece.category] ?? 1;
+        const { wFt, dFt } = pieceSizeFt(item, scale);
+        const occupiedZones = placedFurnitureZones(positions, furniture, rotations, scales, rotatingPiece.category);
+        const desired = {
+          x: rotatingPiece.center.x - wFt / 2,
+          y: rotatingPiece.center.y - dFt / 2,
+        };
+        setPositions(prev => ({
+          ...prev,
+          [rotatingPiece.category]: findValidFurniturePosition(
+            desired,
+            item,
+            nextRotation,
+            cW,
+            cL,
+            [...forbiddenZones, ...occupiedZones],
+            scale,
+          ),
+        }));
+      }
       setRotations(prev => ({ ...prev, [rotatingPiece.category]: nextRotation }));
       return;
     }

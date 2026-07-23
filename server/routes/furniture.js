@@ -6,88 +6,216 @@ const Room    = require("../models/Room");
 const router = express.Router();
 
 const LIVING_ROOM = [
-  { key: "sofa",         query: (s) => `${s} sofa` },
-  { key: "coffee_table", query: (s) => `${s} coffee table` },
-  { key: "rug",          query: (s) => `${s} area rug` },
-  { key: "floor_lamp",   query: (s) => `${s} floor lamp` },
-  { key: "accent_chair", query: (s) => `${s} accent chair` },
-  { key: "side_table",   query: (s) => `${s} side table` },
+  { key: "sofa",         product: "sofa" },
+  { key: "coffee_table", product: "coffee table" },
+  { key: "rug",          product: "area rug" },
+  { key: "floor_lamp",   product: "floor lamp" },
+  { key: "accent_chair", product: "accent chair" },
+  { key: "side_table",   product: "side table" },
 ];
 
 const BEDROOM = [
-  { key: "bed",          query: (s) => `${s} bed frame` },
-  { key: "nightstand",   query: (s) => `${s} nightstand` },
-  { key: "dresser",      query: (s) => `${s} dresser` },
-  { key: "bedroom_rug",  query: (s) => `${s} area rug` },
-  { key: "wardrobe",     query: (s) => `${s} wardrobe` },
-  { key: "bedside_lamp", query: (s) => `${s} bedside lamp` },
+  { key: "bed",          product: "bed frame" },
+  { key: "nightstand",   product: "nightstand" },
+  { key: "bedroom_rug",  product: "area rug" },
+  { key: "bedside_lamp", product: "bedside lamp" },
+  { key: "dresser",      product: "dresser" },
 ];
 
 const KITCHEN = [
-  { key: "island_cart",     query: (s) => `${s} kitchen island cart` },
-  { key: "bar_stool",       query: (s) => `${s} bar stool` },
-  { key: "kitchen_rug",     query: (s) => `${s} kitchen runner rug` },
-  { key: "kitchen_storage", query: (s) => `${s} kitchen storage cabinet` },
-  { key: "kitchen_shelf",   query: (s) => `${s} kitchen shelf` },
-  { key: "pendant_light",   query: (s) => `${s} pendant light` },
+  { key: "island_cart",     product: "kitchen island cart" },
+  { key: "bar_stool",       product: "bar stool" },
+  { key: "kitchen_rug",     product: "kitchen runner rug" },
+  { key: "kitchen_storage", product: "kitchen storage cabinet" },
+  { key: "kitchen_shelf",   product: "kitchen shelf" },
+  { key: "pendant_light",   product: "pendant light" },
 ];
 
 const BATHROOM = [
-  { key: "vanity",         query: (s) => `${s} bathroom vanity` },
-  { key: "bath_mirror",    query: (s) => `${s} bathroom mirror` },
-  { key: "bath_storage",   query: (s) => `${s} bathroom storage` },
-  { key: "bath_mat",       query: (s) => `${s} bath mat` },
-  { key: "bath_light",     query: (s) => `${s} bathroom vanity light` },
-  { key: "shower_curtain", query: (s) => `${s} shower curtain` },
+  { key: "vanity",         product: "bathroom vanity" },
+  { key: "bath_mirror",    product: "bathroom mirror" },
+  { key: "bath_storage",   product: "bathroom storage" },
+  { key: "bath_mat",       product: "bath mat" },
+  { key: "bath_light",     product: "bathroom vanity light" },
+  { key: "shower_curtain", product: "shower curtain" },
 ];
 
-const BATHTUB = { key: "bathtub", query: (s) => `${s} freestanding bathtub` };
-const STANDING_SHOWER = { key: "standing_shower", query: (s) => `${s} walk in shower enclosure` };
+const BATHTUB = { key: "bathtub", product: "freestanding bathtub" };
+const STANDING_SHOWER = { key: "standing_shower", product: "walk in shower enclosure" };
 
 const HOME_OFFICE = [
-  { key: "desk",            query: (s) => `${s} desk` },
-  { key: "office_chair",    query: (s) => `${s} office chair` },
-  { key: "bookshelf",       query: (s) => `${s} bookshelf` },
-  { key: "desk_lamp",       query: (s) => `${s} desk lamp` },
-  { key: "storage_cabinet", query: (s) => `${s} storage cabinet` },
-  { key: "monitor_stand",   query: (s) => `${s} monitor stand` },
+  { key: "desk",            product: "desk" },
+  { key: "office_chair",    product: "office chair" },
+  { key: "bookshelf",       product: "bookshelf" },
+  { key: "desk_lamp",       product: "desk lamp" },
+  { key: "storage_cabinet", product: "storage cabinet" },
+  { key: "monitor_stand",   product: "monitor stand" },
 ];
 
 const DINING_ROOM = [
-  { key: "dining_table", query: (s) => `${s} dining table` },
-  { key: "dining_chair", query: (s) => `${s} dining chair` },
-  { key: "dining_rug",   query: (s) => `${s} dining room rug` },
-  { key: "sideboard",    query: (s) => `${s} sideboard` },
-  { key: "dining_light", query: (s) => `${s} dining pendant light` },
-  { key: "bar_cabinet",  query: (s) => `${s} bar cabinet` },
+  { key: "dining_table", product: "dining table" },
+  { key: "dining_chair", product: "dining chair" },
+  { key: "dining_rug",   product: "dining room rug" },
+  { key: "sideboard",    product: "sideboard" },
+  { key: "dining_light", product: "dining pendant light" },
+  { key: "bar_cabinet",  product: "bar cabinet" },
 ];
 
 const NURSERY = [
-  { key: "crib",            query: (s) => `${s} crib` },
-  { key: "nursery_dresser", query: (s) => `${s} nursery dresser` },
-  { key: "rocking_chair",   query: (s) => `${s} rocking chair` },
-  { key: "nursery_rug",     query: (s) => `${s} nursery rug` },
-  { key: "nursery_shelf",   query: (s) => `${s} nursery shelf` },
-  { key: "nursery_lamp",    query: (s) => `${s} nursery lamp` },
+  { key: "crib",            product: "crib" },
+  { key: "nursery_dresser", product: "nursery dresser" },
+  { key: "rocking_chair",   product: "rocking chair" },
+  { key: "nursery_rug",     product: "nursery rug" },
+  { key: "nursery_shelf",   product: "nursery shelf" },
+  { key: "nursery_lamp",    product: "nursery lamp" },
 ];
 
 const FEATURE_CATEGORIES = {
-  "reading nook":            { key: "reading_nook",       query: (s) => `${s} reading nook chair` },
-  "smart lighting":          { key: "smart_lighting",     query: (s) => `${s} smart home lighting` },
-  "floating shelves":        { key: "floating_shelves",   query: (s) => `${s} floating wall shelves` },
-  "indoor plants":           { key: "indoor_plants",      query: (s) => `${s} indoor plant with decorative planter` },
-  "full-length mirror":      { key: "full_length_mirror", query: (s) => `${s} full length mirror` },
-  "wall art / gallery wall": { key: "wall_art",           query: (s) => `${s} wall art set` },
-  "accent chair":            { key: "accent_chair",       query: (s) => `${s} accent chair` },
-  "workspace desk":          { key: "workspace_desk",     query: (s) => `${s} workspace desk` },
-  "vanity station":          { key: "vanity_station",     query: (s) => `${s} vanity table` },
-  "bookcase / bookshelves":  { key: "bookcase",           query: (s) => `${s} bookcase` },
+  "reading nook":            { key: "reading_nook",       product: "reading nook chair" },
+  "smart lighting":          { key: "smart_lighting",     product: "smart home lighting" },
+  "floating shelves":        { key: "floating_shelves",   product: "floating wall shelves" },
+  "indoor plants":           { key: "indoor_plants",      product: "indoor plant with decorative planter" },
+  "full-length mirror":      { key: "full_length_mirror", product: "full length mirror" },
+  "wall art / gallery wall": { key: "wall_art",           product: "wall art set" },
+  "accent chair":            { key: "accent_chair",       product: "accent chair" },
+  "workspace desk":          { key: "workspace_desk",     product: "workspace desk" },
+  "vanity station":          { key: "vanity_station",     product: "vanity table" },
+  "bookcase / bookshelves":  { key: "bookcase",           product: "bookcase" },
   "bathtub":                 BATHTUB,
   "bath tub":                BATHTUB,
   "standing shower":         STANDING_SHOWER,
   "walk-in shower":          STANDING_SHOWER,
   "walk in shower":          STANDING_SHOWER,
 };
+
+/** Map UI labels + AI tags onto a canonical style id used for shopping queries. */
+function normalizeStyleTag(raw) {
+  const t = String(raw || "").trim().toLowerCase().replace(/[_/]+/g, " ").replace(/\s+/g, " ");
+  if (!t) return "modern";
+  if (t.includes("boho") || t.includes("bohem")) return "bohemian";
+  if (t.includes("scand")) return "scandinavian";
+  if (t.includes("mid") && t.includes("cent")) return "mid-century modern";
+  if (t.includes("farm") || t.includes("rustic")) return "farmhouse";
+  if (t.includes("indust")) return "industrial";
+  if (t.includes("coast") || t.includes("beach")) return "coastal";
+  if (t.includes("tradit") || t.includes("classic") || t.includes("transitional")) return "traditional";
+  if (t.includes("maxim")) return "maximalist";
+  if (t.includes("art") && t.includes("deco")) return "art deco";
+  if (t.includes("minimal")) return "minimalist";
+  if (t.includes("modern") || t.includes("contemporary")) return "modern";
+  return t;
+}
+
+/** Extra shopping keywords so Serper returns on-style products, not generic ones. */
+const STYLE_SEARCH = {
+  bohemian: {
+    phrase: "bohemian boho",
+    accents: "rattan macrame eclectic patterned",
+    match: ["boho", "bohemian", "rattan", "macrame", "eclectic", "moroccan", "woven", "global"],
+  },
+  scandinavian: {
+    phrase: "scandinavian nordic",
+    accents: "light wood hygge minimal",
+    match: ["scandinavian", "nordic", "hygge", "light wood", "blond"],
+  },
+  modern: {
+    phrase: "modern contemporary",
+    accents: "sleek clean line",
+    match: ["modern", "contemporary", "sleek"],
+  },
+  minimalist: {
+    phrase: "minimalist modern",
+    accents: "simple clean uncluttered",
+    match: ["minimalist", "minimal", "simple"],
+  },
+  industrial: {
+    phrase: "industrial loft",
+    accents: "metal pipe reclaimed wood",
+    match: ["industrial", "loft", "metal", "pipe", "reclaimed"],
+  },
+  coastal: {
+    phrase: "coastal beach house",
+    accents: "light airy linen",
+    match: ["coastal", "beach", "nautical", "linen"],
+  },
+  farmhouse: {
+    phrase: "farmhouse rustic",
+    accents: "shiplap distressed wood",
+    match: ["farmhouse", "rustic", "shiplap", "barn"],
+  },
+  traditional: {
+    phrase: "traditional classic",
+    accents: "elegant timeless",
+    match: ["traditional", "classic", "elegant"],
+  },
+  "mid-century modern": {
+    phrase: "mid century modern",
+    accents: "walnut tapered legs retro",
+    match: ["mid-century", "mid century", "mcm", "walnut", "retro"],
+  },
+  maximalist: {
+    phrase: "maximalist bold",
+    accents: "colorful patterned statement",
+    match: ["maximalist", "bold", "colorful", "pattern"],
+  },
+  "art deco": {
+    phrase: "art deco",
+    accents: "geometric glam brass",
+    match: ["art deco", "deco", "geometric", "brass"],
+  },
+};
+
+function styleProfile(styleTag) {
+  const key = normalizeStyleTag(styleTag);
+  return STYLE_SEARCH[key] || {
+    phrase: key,
+    accents: "",
+    match: key.split(/\s+/).filter(Boolean),
+  };
+}
+
+function roomTypeSearchPhrase(roomType) {
+  const t = String(roomType || "").toLowerCase();
+  if (t.includes("bed")) return "bedroom";
+  if (t.includes("kitchen")) return "kitchen";
+  if (t.includes("bath")) return "bathroom";
+  if (t.includes("office") || t.includes("study")) return "home office";
+  if (t.includes("dining")) return "dining room";
+  if (t.includes("nursery") || t.includes("baby")) return "nursery";
+  if (t.includes("living")) return "living room";
+  return "interior";
+}
+
+/** Build a Serper shopping query that keeps style + room type in the product search. */
+function buildFurnitureQuery(styleTag, roomType, product) {
+  const style = styleProfile(styleTag);
+  const room = roomTypeSearchPhrase(roomType);
+  const parts = [
+    style.phrase,
+    room,
+    product,
+    style.accents,
+    "furniture",
+  ].map((part) => String(part || "").trim()).filter(Boolean);
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
+function styleMatchScore(title, styleTag) {
+  const text = String(title || "").toLowerCase();
+  const { match } = styleProfile(styleTag);
+  if (!match.length) return 0;
+  return match.reduce((score, keyword) => (
+    text.includes(String(keyword).toLowerCase()) ? score + 1 : score
+  ), 0);
+}
+
+function rankItemsForStyle(items, styleTag) {
+  return [...items].sort((a, b) => {
+    const scoreDiff = styleMatchScore(b.name, styleTag) - styleMatchScore(a.name, styleTag);
+    if (scoreDiff !== 0) return scoreDiff;
+    return 0;
+  });
+}
 
 function categoriesForRoomType(roomType) {
   const t = String(roomType || "").toLowerCase();
@@ -118,19 +246,47 @@ function withBathroomFixture(baseCategories, roomType, features = []) {
   return [
     ...withoutFixtures,
     fixture,
-    { key: "shower_curtain", query: (s) => `${s} shower curtain` },
+    { key: "shower_curtain", product: "shower curtain" },
   ];
 }
 
-function categoriesForFeatures(features, baseCategories) {
+function categoriesForFeatures(features, baseCategories, roomType = "") {
   const existing = new Set(baseCategories.map((category) => category.key));
   // Bath fixtures are handled by withBathroomFixture — don't double-add.
   const skip = new Set(["bathtub", "bath tub", "standing shower", "walk-in shower", "walk in shower"]);
-  return features
+  const extras = features
     .map((feature) => String(feature || "").trim().toLowerCase())
     .filter((feature) => !skip.has(feature))
     .map((feature) => FEATURE_CATEGORIES[feature])
     .filter((category) => category && !existing.has(category.key));
+
+  // Bedrooms get overcrowded fast — keep at most two accents, prefer small
+  // pieces, and never ship a cluster of chairs.
+  if (String(roomType || "").toLowerCase().includes("bed")) {
+    const seating = new Set(["reading_nook", "accent_chair", "rocking_chair"]);
+    const large = new Set(["wardrobe", "workspace_desk", "vanity_station", "bookcase"]);
+    const smallOrder = [
+      "indoor_plants",
+      "wall_art",
+      "full_length_mirror",
+      "floating_shelves",
+      "smart_lighting",
+    ];
+    const picked = [];
+    const seat = extras.find((c) => seating.has(c.key));
+    if (seat) picked.push(seat);
+    const big = extras.find((c) => large.has(c.key));
+    // Prefer a chair corner over another bulky cabinet when we already have a dresser.
+    if (big && picked.length < 2 && !seat) picked.push(big);
+    for (const key of smallOrder) {
+      if (picked.length >= 2) break;
+      const match = extras.find((c) => c.key === key);
+      if (match) picked.push(match);
+    }
+    return picked;
+  }
+
+  return extras;
 }
 
 function parsePrice(raw) {
@@ -232,10 +388,11 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal) {
   });
 }
 
-async function searchCategory(styleTag, cat) {
+async function searchCategory(styleTag, roomType, cat) {
+  const q = buildFurnitureQuery(styleTag, roomType, cat.product || cat.key);
   const response = await axios.post(
     "https://google.serper.dev/shopping",
-    { q: cat.query(styleTag), num: 10, gl: "us" },
+    { q, num: 12, gl: "us" },
     {
       headers: {
         "X-API-KEY": process.env.SERPER_API_KEY,
@@ -246,14 +403,14 @@ async function searchCategory(styleTag, cat) {
   );
 
   const items = response.data.shopping || [];
-  return items
+  const mapped = items
     .map((item) => ({
       ...item,
       resolvedImageUrl: item.imageUrl || item.thumbnail || item.image || "",
       resolvedLink: item.link || item.productLink || "",
     }))
     .filter((item) => item.resolvedImageUrl && item.resolvedLink)
-    .slice(0, 6)
+    .slice(0, 8)
     .map((item, i) => {
       const dimensions = parseProductDimensions(item.title);
       return {
@@ -264,9 +421,12 @@ async function searchCategory(styleTag, cat) {
         price:    parsePrice(item.price),
         imageUrl: item.resolvedImageUrl,
         buyUrl:   item.resolvedLink,
+        styleTag: normalizeStyleTag(styleTag),
         ...dimensions,
       };
     });
+
+  return rankItemsForStyle(mapped, styleTag).slice(0, 6);
 }
 
 // GET /api/rooms/:roomId/furniture?styleTag=minimalist&roomType=bedroom
@@ -275,10 +435,10 @@ router.get("/:roomId/furniture", async (req, res) => {
     return res.status(500).json({ error: "SERPER_API_KEY not configured" });
   }
 
-  const styleTag = String(req.query.styleTag || "modern").trim().toLowerCase();
   const hasBudgetParam = Object.prototype.hasOwnProperty.call(req.query, "budgetTotal");
   let budgetTotal = Number(req.query.budgetTotal);
   let roomType = String(req.query.roomType || "").trim();
+  let styleTag = String(req.query.styleTag || "").trim();
   let roomFeatures = (Array.isArray(req.query.roomFeature)
     ? req.query.roomFeature
     : [req.query.roomFeature])
@@ -286,13 +446,19 @@ router.get("/:roomId/furniture", async (req, res) => {
     .filter(Boolean);
 
   try {
-    const [userStyle, room] = await Promise.all([
+    const [userStyle, aiStyle, room] = await Promise.all([
       Style.findOne({ roomId: req.params.roomId, source: "user" }),
+      Style.findOne({ roomId: req.params.roomId, source: "ai" }),
       Room.findById(req.params.roomId).select("budgetTotal"),
     ]);
     if (!roomType) {
-      roomType = userStyle?.roomType || "living room";
+      roomType = userStyle?.roomType || aiStyle?.roomType || "living room";
     }
+    // User-picked style wins so Bohemian stays Bohemian even if AI guessed otherwise.
+    // Fall back to the request, then the AI image analysis.
+    styleTag = normalizeStyleTag(
+      userStyle?.styleTag || styleTag || aiStyle?.styleTag || "modern"
+    );
     // The saved user selections are authoritative. Union them with the query
     // so an AI response or stale browser state can never drop requested items.
     roomFeatures = [...new Set([
@@ -304,7 +470,10 @@ router.get("/:roomId/furniture", async (req, res) => {
     }
   } catch {
     if (!roomType) roomType = "living room";
+    styleTag = normalizeStyleTag(styleTag || "modern");
   }
+
+  styleTag = normalizeStyleTag(styleTag || "modern");
 
   const baseCategories = withBathroomFixture(
     categoriesForRoomType(roomType),
@@ -313,11 +482,15 @@ router.get("/:roomId/furniture", async (req, res) => {
   );
   const categories = [
     ...baseCategories,
-    ...categoriesForFeatures(roomFeatures, baseCategories),
+    ...categoriesForFeatures(roomFeatures, baseCategories, roomType),
   ];
   console.log(
     "[furniture] roomType=",
     roomType,
+    "styleTag=",
+    styleTag,
+    "queryExample=",
+    buildFurnitureQuery(styleTag, roomType, categories[0]?.product || "furniture"),
     "features=",
     roomFeatures.join(","),
     "categories=",
@@ -325,7 +498,7 @@ router.get("/:roomId/furniture", async (req, res) => {
   );
 
   const results = await Promise.allSettled(
-    categories.map((cat) => searchCategory(styleTag, cat))
+    categories.map((cat) => searchCategory(styleTag, roomType, cat))
   );
   results.forEach((result, index) => {
     if (result.status === "rejected") {

@@ -15,8 +15,11 @@ Return only valid JSON with this exact shape:
 }
 
 styleTag must be one of:
-minimalist, modern, boho, industrial, scandinavian,
-maximalist, coastal, rustic, transitional, art-deco
+minimalist, modern, bohemian, boho, industrial, scandinavian,
+maximalist, coastal, rustic, farmhouse, traditional, transitional,
+mid-century modern, art-deco
+
+Prefer the closest match to the images. Use "bohemian" (not only "boho") when the look is boho/eclectic.
 
 moodTags: 3-5 short tags
 colorPalette: 5 dominant hex colors
@@ -69,8 +72,13 @@ function normalizeConfidence(value) {
 }
 
 function normalizeAnalysis(analysis) {
+  let styleTag = String(analysis.styleTag || "").trim().toLowerCase();
+  if (styleTag.includes("boho") || styleTag === "bohemian") styleTag = "bohemian";
+  if (styleTag.includes("farm") || styleTag === "rustic") styleTag = "farmhouse";
+  if (styleTag.includes("mid") && styleTag.includes("cent")) styleTag = "mid-century modern";
+  if (styleTag === "art-deco" || styleTag === "art deco") styleTag = "art deco";
   return {
-    styleTag: String(analysis.styleTag || "").trim().toLowerCase(),
+    styleTag,
     moodTags: asStringArray(analysis.moodTags),
     colorPalette: Array.isArray(analysis.colorPalette)
       ? analysis.colorPalette.map(normalizeHex).filter(Boolean)

@@ -170,11 +170,15 @@ export default function FurnitureCard({
               {item.price > 0 ? `$${item.price.toLocaleString()}` : '—'}
             </span>
             <div className="flex gap-2 flex-shrink-0">
-              {canSwap && (
-                <button onClick={onSwap} className="px-3 py-1.5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/5 transition-all">
-                  Swap
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onSwap}
+                disabled={!canSwap}
+                title={canSwap ? 'Try another product' : 'No other options yet'}
+                className="px-3 py-1.5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              >
+                Swap
+              </button>
               <BuyButton href={item.buyUrl} className="px-3 py-1.5 rounded-lg text-xs min-w-[3.25rem]" />
             </div>
           </div>
@@ -211,14 +215,15 @@ export default function FurnitureCard({
             {item.price > 0 ? `$${item.price.toLocaleString()}` : '—'}
           </span>
           <div className="flex gap-1 flex-shrink-0">
-            {canSwap && (
-              <button
-                onClick={onSwap}
-                className="px-2 py-0.5 border border-white/10 rounded text-[10px] font-bold hover:bg-white/5 transition-all"
-              >
-                Swap
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={onSwap}
+              disabled={!canSwap}
+              title={canSwap ? 'Try another product' : 'No other options yet'}
+              className="px-2 py-0.5 border border-white/10 rounded text-[10px] font-bold hover:bg-white/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            >
+              Swap
+            </button>
             <BuyButton href={item.buyUrl} className="px-2.5 py-0.5 rounded text-[10px] min-w-[2.75rem]" />
           </div>
         </div>

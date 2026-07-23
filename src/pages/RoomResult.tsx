@@ -545,7 +545,7 @@ export default function RoomResult() {
   }, [layoutFurniturePreview, style?.colorPalette]);
 
   const isoRoom = useMemo<IsoRoomInput>(() => {
-    const items: IsoFurnitureEntry[] = layoutFurniturePreview.map((item) => {
+    const rawItems: IsoFurnitureEntry[] = layoutFurniturePreview.map((item) => {
       const pos = livePlacement.positions[item.category];
       const color = colorByCategory[item.category];
       return {
@@ -565,6 +565,7 @@ export default function RoomResult() {
       };
     });
 
+    // Keep the exact 2D placement — iso render only nudges true cutout overlaps.
     return {
       widthFt: layoutRoomPreview.widthFt,
       lengthFt: layoutRoomPreview.lengthFt,
@@ -586,7 +587,7 @@ export default function RoomResult() {
           id: c.id,
           points: c.points.map((p) => ({ x: p.x, y: p.y })),
         })),
-      items,
+      items: rawItems,
     };
   }, [layoutFurniturePreview, livePlacement, layoutRoomPreview, savedLayout, colorByCategory]);
 

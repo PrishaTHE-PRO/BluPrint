@@ -6,6 +6,12 @@
 import rough from 'roughjs';
 import { furnitureForm } from './furnitureShape';
 import { canStackTogether, isStackable, isSurface } from './furnitureLayout';
+import {
+  architectureForbiddenZones,
+  constrainFurnitureEntries,
+  overlapsForbiddenZone,
+  findValidFurniturePosition,
+} from './furnitureConstraints';
 
 export type IsoArchElement = {
   type: 'door' | 'window';
@@ -54,6 +60,8 @@ const toNumber = (v, fallback = 0) => {
 const ISO = { angle: Math.PI / 6, unit: 26, wallHeightFt: 4.2, pad: 30 };
 /** Active view transform for the current renderIsoIntoSvg call. */
 const ISO_VIEW = { mirrorX: false, widthFt: 1 };
+/** Extra keep-out around cutouts/doors in the 3D preview (feet). */
+const ISO_CUTOUT_PADDING = 0.45;
 const ISO_COLORS = {
     floor:    '#faf3e1',
     wallTop:  '#f5eed9',
@@ -104,7 +112,7 @@ const FURN_DEFAULT_W = {
     dining_table: 60, dining_chair: 18, dining_rug: 96, sideboard: 54, dining_light: 18, bar_cabinet: 36,
     crib: 52, nursery_dresser: 36, rocking_chair: 28, nursery_rug: 72, nursery_shelf: 30, nursery_lamp: 10,
     wall_art: 42, floating_shelves: 44,
-    reading_nook: 34, workspace_desk: 60, vanity_station: 40, bookcase: 36, indoor_plants: 22, smart_lighting: 12, full_length_mirror: 26,
+    reading_nook: 34, workspace_desk: 48, vanity_station: 42, bookcase: 36, indoor_plants: 18, smart_lighting: 12, full_length_mirror: 24,
 };
 const FURN_DEFAULT_D = {
     sofa: 36, accent_chair: 32, coffee_table: 24, rug: 72, floor_lamp: 12, side_table: 18,
@@ -116,7 +124,7 @@ const FURN_DEFAULT_D = {
     dining_table: 36, dining_chair: 18, dining_rug: 72, sideboard: 18, dining_light: 18, bar_cabinet: 18,
     crib: 28, nursery_dresser: 18, rocking_chair: 30, nursery_rug: 60, nursery_shelf: 12, nursery_lamp: 10,
     wall_art: 3, floating_shelves: 10,
-    reading_nook: 34, workspace_desk: 30, vanity_station: 18, bookcase: 14, indoor_plants: 22, smart_lighting: 12, full_length_mirror: 4,
+    reading_nook: 34, workspace_desk: 24, vanity_station: 20, bookcase: 14, indoor_plants: 18, smart_lighting: 12, full_length_mirror: 4,
 };
 const furnHeight  = (cat) => FURN_HEIGHTS[cat] ?? 2.5;
 const furnColor   = (cat) => FURN_COLORS[cat] || '#9fb2c8';
@@ -820,9 +828,17 @@ export function renderIsoIntoSvg(svg, room) {
         { order: -1e6 + 2, ops: [{ kind: 'poly', pts: [isoProject(0, 0, 0), isoProject(W, 0, 0), isoProject(W, L, 0), isoProject(0, L, 0)].map(pt), fill: ISO_COLORS.floor }] },
     ];
 
-    // Furniture from the saved placement (feet from the room's top-left origin).
+    // Furniture from the 2D plan (same feet sizes/positions). Only nudge a piece
+    // when it still overlaps a cutout/door — never shrink the footprint.
     const rugs = [], pieces = [];
-    const items = Array.isArray(room.items) ? room.items : [];
+    const rawItems = Array.isArray(room.items) ? room.items : [];
+    const keepOutZones = architectureForbiddenZones({
+        roomPoints: room.roomPoints,
+        cutouts: room.cutouts,
+        doors: (Array.isArray(room.elements) ? room.elements : []).filter((el) => el && el.type === 'door'),
+        padding: ISO_CUTOUT_PADDING,
+    });
+    const items = constrainFurnitureEntries(rawItems, W, L, keepOutZones);
     items.forEach((entry) => {
         if (!entry || entry.hidden || !entry.category) return;
         const cat = entry.category;

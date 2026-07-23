@@ -22,13 +22,78 @@ export function normalizeRoomType(roomType?: string): RoomTypeKey {
 
 const LAYOUTS: Record<RoomTypeKey, readonly string[]> = {
   living_room:  ['sofa', 'coffee_table', 'rug', 'floor_lamp', 'accent_chair', 'side_table'],
-  bedroom:      ['bed', 'nightstand', 'dresser', 'bedroom_rug', 'wardrobe', 'bedside_lamp'],
+  // Keep bedrooms airy: one bed zone + light storage — no wardrobe by default.
+  bedroom:      ['bed', 'nightstand', 'bedroom_rug', 'bedside_lamp', 'dresser'],
   kitchen:      ['island_cart', 'bar_stool', 'kitchen_rug', 'kitchen_storage', 'kitchen_shelf', 'pendant_light'],
   bathroom:     ['vanity', 'bath_mirror', 'bath_storage', 'bath_mat', 'bath_light', 'bathtub', 'standing_shower', 'shower_curtain'],
   home_office:  ['desk', 'office_chair', 'bookshelf', 'desk_lamp', 'storage_cabinet', 'monitor_stand'],
   dining_room:  ['dining_table', 'dining_chair', 'dining_rug', 'sideboard', 'dining_light', 'bar_cabinet'],
   nursery:      ['crib', 'nursery_dresser', 'rocking_chair', 'nursery_rug', 'nursery_shelf', 'nursery_lamp'],
 };
+
+/** Seating extras that fight each other in a bedroom if all placed. */
+const BEDROOM_SEATING = new Set(['reading_nook', 'accent_chair', 'rocking_chair']);
+/** Large extras — at most one in a bedroom. */
+const BEDROOM_LARGE = new Set(['wardrobe', 'workspace_desk', 'vanity_station', 'bookcase']);
+/** Small accents that read well without crowding. */
+const BEDROOM_SMALL = ['indoor_plants', 'wall_art', 'full_length_mirror', 'floating_shelves', 'smart_lighting'];
+
+/**
+ * Drop redundant / oversized pieces so bedrooms stay walkable and balanced.
+ * Core layout pieces always win; extras are capped.
+ */
+export function curateFurnitureSlots(
+  slots: Record<string, FurnitureItem>,
+  roomType?: string,
+): Record<string, FurnitureItem> {
+  if (normalizeRoomType(roomType) !== 'bedroom') return slots;
+
+  const core = new Set(LAYOUTS.bedroom);
+  const next: Record<string, FurnitureItem> = {};
+
+  for (const category of LAYOUTS.bedroom) {
+    if (slots[category]) next[category] = slots[category];
+  }
+
+  // At most one accent seat, tucked as a secondary — never a chair cluster.
+  for (const category of BEDROOM_SEATING) {
+    if (slots[category]) {
+      next[category] = slots[category];
+      break;
+    }
+  }
+
+  // At most one large storage/furniture add-on — skip wardrobe when a dresser
+  // already covers storage so the room doesn't fill with cabinets.
+  const largeOrder = slots.dresser
+    ? ['bookcase', 'vanity_station', 'workspace_desk']
+    : ['wardrobe', 'bookcase', 'vanity_station', 'workspace_desk'];
+  for (const category of largeOrder) {
+    if (slots[category] && !core.has(category)) {
+      next[category] = slots[category];
+      break;
+    }
+  }
+
+  // Up to two small accents.
+  let smallKept = 0;
+  for (const category of BEDROOM_SMALL) {
+    if (smallKept >= 2) break;
+    if (slots[category]) {
+      next[category] = slots[category];
+      smallKept += 1;
+    }
+  }
+
+  // Preserve any already-core / selected keys; ignore leftover bulk categories.
+  for (const [category, item] of Object.entries(slots)) {
+    if (!item) continue;
+    if (next[category]) continue;
+    if (core.has(category)) next[category] = item;
+  }
+
+  return next;
+}
 
 /** @deprecated living-room default order */
 export const CATEGORY_ORDER = LAYOUTS.living_room;
@@ -41,14 +106,27 @@ export function orderedFurniture(
   slots: Record<string, FurnitureItem>,
   roomType?: string,
 ): FurnitureItem[] {
+  const curated = curateFurnitureSlots(slots, roomType);
   const order = getCategoryOrder(roomType);
   const ordered = order
-    .map((category) => slots[category])
+    .map((category) => curated[category])
     .filter((item): item is FurnitureItem => Boolean(item));
 
-  // Include any unexpected categories at the end
+  // Include curated extras (features) after the core order.
   const seen = new Set(ordered.map((i) => i.category));
-  const extras = Object.values(slots).filter((i) => i && !seen.has(i.category));
+  const extras = Object.values(curated).filter((i) => i && !seen.has(i.category));
+
+  // Stable aesthetic order for bedroom extras: seating, then large, then small.
+  extras.sort((a, b) => {
+    const rank = (category: string) => {
+      if (BEDROOM_SEATING.has(category)) return 0;
+      if (BEDROOM_LARGE.has(category)) return 1;
+      if (BEDROOM_SMALL.includes(category)) return 2;
+      return 3;
+    };
+    return rank(a.category) - rank(b.category);
+  });
+
   return [...ordered, ...extras];
 }
 

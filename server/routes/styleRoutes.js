@@ -42,6 +42,14 @@ router.post("/:roomId/analyze-style", async (req, res) => {
 
     const analysis = await analyzeImages(imageUrls);
     const userPicks = normalizeUserPicks(req.body.userPicks);
+    // Keep the user's explicit style pick on the analysis payload so clients
+    // that read StyleAnalysis still see Bohemian when they chose Bohemian.
+    if (userPicks.styleTag) {
+      analysis.styleTag = String(userPicks.styleTag).trim().toLowerCase().includes("boho")
+        || String(userPicks.styleTag).trim().toLowerCase().includes("bohem")
+        ? "bohemian"
+        : String(userPicks.styleTag).trim();
+    }
 
     const saved = await StyleAnalysis.findOneAndUpdate(
       { roomId },
@@ -60,6 +68,8 @@ router.post("/:roomId/analyze-style", async (req, res) => {
       {
         roomId,
         source: "ai",
+        // Persist image-detected style for reference, but furniture search
+        // prefers the separate source:"user" document.
         styleTag: analysis.styleTag,
         colorPalette: analysis.colorPalette,
         moodTags: analysis.moodTags,
@@ -69,7 +79,12 @@ router.post("/:roomId/analyze-style", async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    res.json(saved);
+    // Echo the authoritative style for the client (user pick wins).
+    const responsePayload = saved.toObject ? saved.toObject() : saved;
+    if (userPicks.styleTag) {
+      responsePayload.styleTag = userPicks.styleTag;
+    }
+    res.json(responsePayload);
   } catch (error) {
     console.error("Style analysis error:", error.message);
     res.status(error.status || 500).json({

@@ -957,7 +957,14 @@
         const res = await fetch(`/api/rooms/${ROOM_ID}/analyze-style`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({}),
+          body:    JSON.stringify({
+            userPicks: {
+              styleTag: state.selectedStyle,
+              moodTag: state.selectedMood,
+              colorPalette: state.selectedColors.map(c => c.hex || c),
+              roomFeatures: featuresWithBathFixture(),
+            },
+          }),
         });
         if (!res.ok) {
           let msg = `Server error (${res.status})`;
@@ -966,10 +973,12 @@
         }
         const ai = await res.json();
         const selectedRoomFeatures = featuresWithBathFixture();
+        // User-picked style is authoritative for furniture shopping. AI still
+        // fills mood/palette when the user left those thinner.
         const analysisResult = {
           ...ai,
           roomType:     state.selectedRoomType,
-          styleTag:     ai.styleTag     ?? state.selectedStyle,
+          styleTag:     state.selectedStyle || ai.styleTag || 'Modern',
           moodTags:     ai.moodTags?.length ? ai.moodTags : [state.selectedMood],
           colorPalette: ai.colorPalette?.length ? ai.colorPalette : state.selectedColors.map(c => c.hex || c),
           // User picks are requirements, not suggestions. Preserve every
