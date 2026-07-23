@@ -396,10 +396,12 @@ function isPointInRoom(x,y) {
 }
 
 /** True if the point is inside the room or sitting on a wall (ray-cast is flaky on edges). */
-function isPointInOrOnRoom(x, y, edgeTol = 4) {
+function isPointInOrOnRoom(x, y, edgeTol = 4, ignoreCutouts = false) {
   // Check the wall first — cutout outer corners sit exactly on the perimeter.
   const snap = getClosestPointOnPerimeter(x, y);
   if (snap.dist <= edgeTol) return true;
+  // When placing/validating new cutouts, ignore existing holes so a second notch can be added.
+  if (ignoreCutouts) return isPointInRoomPolygon(x, y);
   return isPointInRoom(x, y);
 }
 
@@ -674,8 +676,24 @@ function checkCollision(newEl, excludeId = null) {
   const allItems = [...state.elements, ...state.cutouts.map(c => ({...c, type: 'cutout'})), ...finalized];
   return allItems.some(item => {
     if (item.id === excludeId) return false;
+    // Cutouts on adjacent walls often have overlapping AABBs near corners —
+    // only block when the actual polygons intersect.
+    if (newEl.type === "cutout" && item.type === "cutout") {
+      return polygonsOverlap(newEl.points, item.points);
+    }
     const itemBounds = getElementBounds(item);
-    return !(newBounds.maxX < itemBounds.minX || newBounds.minX > itemBounds.maxX || newBounds.maxY < itemBounds.minY || newBounds.minY > itemBounds.maxY);
+    const aabbHits = !(newBounds.maxX < itemBounds.minX || newBounds.minX > itemBounds.maxX || newBounds.maxY < itemBounds.minY || newBounds.minY > itemBounds.maxY);
+    if (!aabbHits) return false;
+    if (newEl.type === "cutout" && item.type !== "cutout") {
+      // Door/window anchor inside the cutout polygon.
+      return isPointInPolygon(item.x, item.y, newEl.points)
+        || pointToPathDistance(item.x, item.y, newEl.points) < 18;
+    }
+    if (item.type === "cutout" && newEl.type !== "cutout") {
+      return isPointInPolygon(newEl.x, newEl.y, item.points)
+        || pointToPathDistance(newEl.x, newEl.y, item.points) < 18;
+    }
+    return true;
   });
 }
 
@@ -703,11 +721,11 @@ function isCutoutValid(points) {
   }
   const cx = sx / points.length;
   const cy = sy / points.length;
-  // Centroid must sit in the room polygon (ignore existing holes — wall notches nest fine).
-  if (!isPointInRoomPolygon(cx, cy) && !isPointInOrOnRoom(cx, cy, 8)) return false;
+  // Centroid must sit in the outer room shell (ignore existing holes — more notches are fine).
+  if (!isPointInRoomPolygon(cx, cy) && !isPointInOrOnRoom(cx, cy, 8, true)) return false;
   // Outer corners may sit on the wall; tolerate a few px of float error.
   return points.every((p) => {
-    if (isPointInOrOnRoom(p.x, p.y, 8)) return true;
+    if (isPointInOrOnRoom(p.x, p.y, 8, true)) return true;
     return isPointInRoomPolygon(p.x, p.y);
   });
 }
@@ -1666,22 +1684,7 @@ function createSnappingCutout(targetX, targetY, size = 30) {
 
 function finalizeCutouts() {
   if (state.cutouts.length === 0) return;
-
-  const remainingCutouts = [];
-  let appliedCount = 0;
-
-  state.cutouts.forEach(c => {
-    if (!isCutoutValid(c.points)) {
-      remainingCutouts.push(c);
-      return;
-    }
-
-    state.finalizedCutouts.push(cloneObj(c));
-    appliedCount++;
-  });
-
-  state.cutouts = remainingCutouts;
-  selectedCutoutId = remainingCutouts.length ? remainingCutouts[0].id : null;
+  const appliedCount = bakeActiveCutouts();
   if (appliedCount > 0) saveState();
   renderAll();
   if (appliedCount > 0) showToast("Wall cutout applied");
@@ -1710,6 +1713,7 @@ document.querySelectorAll('[draggable="true"]').forEach((btn) => {
 
 svg.addEventListener("dragover", (e) => {
   e.preventDefault();
+  e.stopPropagation();
   e.dataTransfer.dropEffect = "copy";
   if (!draggingFromToolbar) return;
   const svgP = getSVGPoint(e);
@@ -1735,6 +1739,12 @@ svg.addEventListener("dragover", (e) => {
     ghost.classList.add("hidden");
     document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
   }
+});
+
+// Allow dropping onto nested SVG shapes (active cutout handles, room fill, etc.).
+svg.addEventListener("dragenter", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 });
 
 svg.addEventListener("mousedown", (e) => {
@@ -1774,8 +1784,26 @@ svg.addEventListener("mousedown", (e) => {
   }
 });
 
+function bakeActiveCutouts() {
+  if (!state.cutouts.length) return 0;
+  const remaining = [];
+  let baked = 0;
+  state.cutouts.forEach((c) => {
+    if (!isCutoutValid(c.points)) {
+      remaining.push(c);
+      return;
+    }
+    state.finalizedCutouts.push(cloneObj(c));
+    baked += 1;
+  });
+  state.cutouts = remaining;
+  selectedCutoutId = remaining.length ? remaining[0].id : null;
+  return baked;
+}
+
 svg.addEventListener("drop", (e) => {
   e.preventDefault();
+  e.stopPropagation();
   const dragType = draggingFromToolbar || e.dataTransfer.getData("text/plain");
   if (!dragType) return;
   // Prefer last dragover point — drop events often report bad clientX/Y.
@@ -1783,6 +1811,9 @@ svg.addEventListener("drop", (e) => {
   const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
   if (snap.dist < 220) {
     if (dragType === "cutout") {
+      // Commit any currently editable cutout so a second (third, …) notch can be placed.
+      bakeActiveCutouts();
+
       const frame = getEdgeFrame(snap.edgeIndex);
       const centerAlong =
         (snap.point.x - frame.p1.x) * frame.tx +
@@ -1790,7 +1821,7 @@ svg.addEventListener("drop", (e) => {
       const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 40, 40);
       if (isCutoutValid(placed.points)) {
         const newCutout = {
-          id: Date.now(),
+          id: Date.now() + Math.floor(Math.random() * 1000),
           type: "cutout",
           points: placed.points,
           edgeIndex: placed.edgeIndex,
