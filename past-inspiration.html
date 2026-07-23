@@ -170,7 +170,7 @@
 <script type="module" src="/src/theme-switch.tsx"></script>
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { auth, isFirebaseConfigured } from "./firebase.js";
+    import { auth, isFirebaseConfigured } from "./firebase.mjs";
     import { renderProjectRoomPreview, getRoomPreviewLayout } from "./iso-preview.js";
 
     const ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
