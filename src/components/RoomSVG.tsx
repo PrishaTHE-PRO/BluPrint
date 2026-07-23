@@ -1100,6 +1100,10 @@ export default function RoomSVG({
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const resizingPiece = resizeRef.current;
+    if (resizingPiece || rotateRef.current || dragRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (resizingPiece) {
       const pointer = clientToFt(e);
       const distance = Math.hypot(
@@ -1197,7 +1201,14 @@ export default function RoomSVG({
     });
   }, [furniture, rotations, scales, clientToFt, cW, cL, forbiddenZones]);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e?: React.PointerEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (svgRef.current?.hasPointerCapture(e.pointerId)) {
+        svgRef.current.releasePointerCapture(e.pointerId);
+      }
+    }
     dragRef.current = null;
     rotateRef.current = null;
     resizeRef.current = null;
@@ -1322,9 +1333,10 @@ export default function RoomSVG({
         ref={svgRef}
         viewBox={`0 0 ${vbW} ${vbH}`}
         className="w-full rounded-xl"
-        style={{ maxHeight: '78vh', display: 'block' }}
+        style={{ maxHeight: '78vh', display: 'block', touchAction: 'none', userSelect: 'none' }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onPointerLeave={() => {
           handlePointerUp();
           setSelectedCategory(null);
@@ -1471,6 +1483,16 @@ export default function RoomSVG({
                 onLinkCategory?.(item.category);
               }}
             >
+              <rect
+                x={-10}
+                y={-10}
+                width={wPx + 20}
+                height={dPx + 20}
+                rx={10}
+                fill="rgba(255,255,255,0)"
+                pointerEvents="all"
+              />
+
               {/* Keep rotate/resize reachable — opaque hit bridge through the gap above the piece */}
               {showControls && (
                 <rect

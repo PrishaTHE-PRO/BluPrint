@@ -284,14 +284,35 @@ export default function RoomResult() {
 
   const handleSwap = useCallback((category: string) => {
     const inCategory = furniture.filter((i) => i.category === category);
-    if (inCategory.length < 2) return;
+    if (inCategory.length < 2) {
+      const roomId = localStorage.getItem('blueprintCurrentRoomId');
+      if (!roomId || !style) return;
+      fetchFurniture(
+        roomId,
+        style.styleTag,
+        style.roomType,
+        style.roomFeatures,
+        style.budgetTotal,
+      ).then((freshItems) => {
+        const freshInCategory = freshItems.filter((i) => i.category === category);
+        if (freshInCategory.length < 2) return;
+        setFurnitureSlots((prev) => {
+          const current = prev[category];
+          const next = freshInCategory.find((i) => i.id !== current?.id) || freshInCategory[1];
+          return { ...prev, [category]: next };
+        });
+      });
+      return;
+    }
     setFurnitureSlots((prev) => {
       const current = prev[category];
       const idx     = inCategory.findIndex((i) => i.id === current?.id);
-      const next    = inCategory[(idx + 1) % inCategory.length];
+      const next    = idx >= 0
+        ? inCategory[(idx + 1) % inCategory.length]
+        : inCategory.find((i) => i.id !== current?.id) || inCategory[0];
       return { ...prev, [category]: next };
     });
-  }, [furniture]);
+  }, [furniture, style]);
 
   /** Take a piece off the floor plan. Its sidebar card stays so it can be added back. */
   const handleRemoveFromRoom = useCallback((category: string) => {
@@ -447,7 +468,7 @@ export default function RoomResult() {
     roomType = '',
     roomFeatures: string[] = [],
     budgetTotal = 0,
-  ) {
+  ): Promise<FurnitureItem[]> {
     const params = new URLSearchParams({
       styleTag,
       roomType,
@@ -456,10 +477,17 @@ export default function RoomResult() {
     roomFeatures.forEach((feature) => params.append('roomFeature', feature));
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
-    fetch(url)
+    return fetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
-      .then((items: FurnitureItem[]) => { setFurniture(items); })
-      .catch((err) => { console.error('[furniture]', err); setFurniture([]); })
+      .then((items: FurnitureItem[]) => {
+        setFurniture(items);
+        return items;
+      })
+      .catch((err) => {
+        console.error('[furniture]', err);
+        setFurniture([]);
+        return [];
+      })
       .finally(() => setFurnitureLoading(false));
   }
 
