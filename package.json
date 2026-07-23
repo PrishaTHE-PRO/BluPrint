@@ -2,7 +2,7 @@
   "name": "bluprint",
   "version": "1.0.0",
   "description": "",
-  "main": "firebase.js",
+  "main": "server/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"vite --open /index.html\" \"node server/index.js\"",
