@@ -2366,6 +2366,147 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-inspo .ai-analysis-panel { margin-top: 24px; }
   .page-inspo .how-it-works-panel,
   .page-inspo .ai-analysis-panel { position: static; }
+  .page-result > #root {
+    overflow-x: hidden;
+  }
+  .page-result main {
+    width: min(100% - 32px, 760px) !important;
+    padding: 22px 0 72px !important;
+    overflow: visible;
+  }
+  .page-result main > header {
+    margin-bottom: 22px !important;
+  }
+  .page-result main > header h1 {
+    max-width: 100%;
+    font-size: clamp(30px, 9vw, 40px) !important;
+    line-height: 1.05 !important;
+    overflow-wrap: anywhere;
+  }
+  .page-result main > header input.room-name-input,
+  .page-result main > header input {
+    max-width: 100% !important;
+    font-size: clamp(30px, 9vw, 40px) !important;
+    line-height: 1.05 !important;
+  }
+  .page-result main > header > div:last-child {
+    gap: 18px !important;
+  }
+  .page-result main > header > div:last-child > div:last-child {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr auto;
+    width: 100%;
+    gap: 10px !important;
+  }
+  .page-result main > header a,
+  .page-result main > header button {
+    min-width: 0;
+    justify-content: center;
+    padding: 11px 12px !important;
+    font-size: 12px !important;
+    line-height: 1.15;
+    white-space: normal;
+  }
+  .page-result .result-furniture-section {
+    gap: 0;
+    margin-bottom: 28px !important;
+    min-width: 0;
+  }
+  .page-result .result-furniture-section > div:first-child {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .page-result .result-furniture-section > div:first-child h2 {
+    font-size: 18px !important;
+  }
+  .page-result .result-dual-pane {
+    gap: 16px;
+    min-width: 0;
+  }
+  .page-result .room-layout-canvas,
+  .page-result .iso-room-preview {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: clamp(300px, 62vw, 430px);
+    padding: 16px !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+  }
+  .page-result .room-layout-canvas:hover,
+  .page-result .iso-room-preview:hover {
+    transform: none;
+  }
+  .page-result .room-layout-canvas svg,
+  .page-result .iso-room-preview svg {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .page-result .iso-room-preview {
+    aspect-ratio: auto;
+  }
+  .page-result .iso-room-preview__toolbar {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .page-result .iso-room-preview__view-controls {
+    gap: 5px;
+  }
+  .page-result .iso-room-preview__view-hint {
+    min-width: 6.75rem;
+    font-size: 9px;
+  }
+  .page-result .iso-room-preview__view-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .page-result .furniture-h-strip {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px 14px 16px !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+  }
+  .page-result .furniture-h-strip__track {
+    gap: 12px;
+    min-height: 0;
+    padding-bottom: 10px;
+    scroll-padding-left: 0;
+  }
+  .page-result .furniture-strip-card {
+    width: min(310px, calc(100vw - 56px));
+    min-width: min(310px, calc(100vw - 56px));
+  }
+  .page-result .furniture-strip-card .garden-card {
+    min-width: 0;
+    padding: 14px !important;
+    gap: 12px !important;
+    overflow: hidden;
+  }
+  .page-result .furniture-strip-card .garden-card > div:first-child {
+    width: 88px !important;
+    height: 88px !important;
+    border-radius: 14px !important;
+  }
+  .page-result .furniture-strip-card h3 {
+    font-size: 13px !important;
+    line-height: 1.25 !important;
+    overflow-wrap: anywhere;
+  }
+  .page-result .furniture-strip-card .garden-card > div:last-child > div:last-child {
+    align-items: flex-start !important;
+    flex-direction: column;
+    gap: 8px !important;
+  }
+  .page-result .furniture-strip-card .garden-card > div:last-child > div:last-child > div {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .page-result .furniture-strip-card button,
+  .page-result .furniture-strip-card a {
+    min-height: 32px;
+  }
   .page-dimensions > .min-h-screen {
     min-height: 100dvh !important;
     overflow-y: auto !important;
@@ -2461,6 +2602,87 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-inspo main {
     width: calc(100% - 40px);
     padding: 24px 20px 60px !important;
+  }
+  .page-result .app-nav {
+    position: static !important;
+  }
+  .page-result .app-nav-links {
+    display: none !important;
+  }
+  .page-result .workflow-steps {
+    justify-content: flex-start;
+    gap: 8px !important;
+    padding: 12px 16px !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .page-result .workflow-steps::-webkit-scrollbar {
+    display: none;
+  }
+  .page-result .workflow-step {
+    flex: 0 0 auto;
+    gap: 7px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+  .page-result .workflow-step span {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 11px !important;
+  }
+  .page-result .workflow-connector {
+    width: 18px !important;
+    flex: 0 0 18px;
+  }
+  .page-result main {
+    width: calc(100% - 24px) !important;
+    padding-top: 16px !important;
+  }
+  .page-result main > header > div:last-child > div:last-child {
+    grid-template-columns: 1fr;
+  }
+  .page-result main > header a,
+  .page-result main > header button {
+    width: 100%;
+  }
+  .page-result main > header button:last-child {
+    width: 44px;
+    justify-self: end;
+  }
+  .page-result .result-furniture-section > div:first-child {
+    flex-direction: column;
+  }
+  .page-result .result-furniture-section > div:first-child > div {
+    align-self: stretch;
+    text-align: center;
+  }
+  .page-result .room-layout-canvas,
+  .page-result .iso-room-preview {
+    min-height: 300px;
+    padding: 12px !important;
+  }
+  .page-result .iso-room-preview__toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .page-result .iso-room-preview__view-controls {
+    width: 100%;
+  }
+  .page-result .iso-room-preview__view-hint {
+    flex: 1;
+    min-width: 0;
+  }
+  .page-result .furniture-strip-card {
+    width: min(292px, calc(100vw - 48px));
+    min-width: min(292px, calc(100vw - 48px));
+  }
+  .page-result footer {
+    padding: 42px 18px !important;
+    text-align: center;
+  }
+  .page-result footer p {
+    line-height: 1.5;
+    letter-spacing: .16em !important;
   }
   .page-dimensions .app-nav {
     position: static !important;
