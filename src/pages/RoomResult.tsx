@@ -20,6 +20,7 @@ import {
 } from '../utils/furniturePlacement';
 import type { FurniturePlacement } from '../utils/furniturePlacement';
 import { resolveFurnitureColors, paletteFallback, colorFromName } from '../utils/furnitureColor';
+import { roomDimsFromPoints } from '../utils/furnitureConstraints';
 
 const EMPTY_PLACEMENT: Placement = { positions: {}, rotations: {}, scales: {} };
 const ISO_THROTTLE_MS = 70;
@@ -283,14 +284,35 @@ export default function RoomResult() {
 
   const handleSwap = useCallback((category: string) => {
     const inCategory = furniture.filter((i) => i.category === category);
-    if (inCategory.length < 2) return;
+    if (inCategory.length < 2) {
+      const roomId = localStorage.getItem('blueprintCurrentRoomId');
+      if (!roomId || !style) return;
+      fetchFurniture(
+        roomId,
+        style.styleTag,
+        style.roomType,
+        style.roomFeatures,
+        style.budgetTotal,
+      ).then((freshItems) => {
+        const freshInCategory = freshItems.filter((i) => i.category === category);
+        if (freshInCategory.length < 2) return;
+        setFurnitureSlots((prev) => {
+          const current = prev[category];
+          const next = freshInCategory.find((i) => i.id !== current?.id) || freshInCategory[1];
+          return { ...prev, [category]: next };
+        });
+      });
+      return;
+    }
     setFurnitureSlots((prev) => {
       const current = prev[category];
       const idx     = inCategory.findIndex((i) => i.id === current?.id);
-      const next    = inCategory[(idx + 1) % inCategory.length];
+      const next    = idx >= 0
+        ? inCategory[(idx + 1) % inCategory.length]
+        : inCategory.find((i) => i.id !== current?.id) || inCategory[0];
       return { ...prev, [category]: next };
     });
-  }, [furniture]);
+  }, [furniture, style]);
 
   /** Take a piece off the floor plan. Its sidebar card stays so it can be added back. */
   const handleRemoveFromRoom = useCallback((category: string) => {
@@ -446,7 +468,7 @@ export default function RoomResult() {
     roomType = '',
     roomFeatures: string[] = [],
     budgetTotal = 0,
-  ) {
+  ): Promise<FurnitureItem[]> {
     const params = new URLSearchParams({
       styleTag,
       roomType,
@@ -455,10 +477,17 @@ export default function RoomResult() {
     roomFeatures.forEach((feature) => params.append('roomFeature', feature));
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
-    fetch(url)
+    return fetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
-      .then((items: FurnitureItem[]) => { setFurniture(items); })
-      .catch((err) => { console.error('[furniture]', err); setFurniture([]); })
+      .then((items: FurnitureItem[]) => {
+        setFurniture(items);
+        return items;
+      })
+      .catch((err) => {
+        console.error('[furniture]', err);
+        setFurniture([]);
+        return [];
+      })
       .finally(() => setFurnitureLoading(false));
   }
 
@@ -490,24 +519,26 @@ export default function RoomResult() {
     }
 
     const palette = style?.colorPalette ?? [];
+    const styleTag = style?.styleTag ?? '';
     const changed = layoutFurniturePreview.filter(
       (item) => colorSourceIdsRef.current[item.category] !== item.id,
     );
+
+    const seedColor = (item: FurnitureItem) =>
+      (item.color && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(item.color) ? item.color : null)
+      || colorFromName(item.name)
+      || paletteFallback(item.category, palette, item.styleTag || styleTag);
 
     // Keep existing colors (including for temporarily hidden pieces). Seed only changed ids.
     setColorByCategory((prev) => {
       const next: Record<string, string> = { ...prev };
       for (const item of changed) {
-        next[item.category] =
-          colorFromName(item.name) ||
-          paletteFallback(item.category, palette);
+        next[item.category] = seedColor(item);
       }
       // Ensure every visible piece has a color even if it was wiped earlier.
       for (const item of layoutFurniturePreview) {
         if (!next[item.category]) {
-          next[item.category] =
-            colorFromName(item.name) ||
-            paletteFallback(item.category, palette);
+          next[item.category] = seedColor(item);
         }
       }
       return next;
@@ -523,8 +554,11 @@ export default function RoomResult() {
         imageUrl: item.imageUrl,
         name: item.name,
         id: item.id,
+        color: item.color,
+        styleTag: item.styleTag || styleTag,
       })),
       palette,
+      styleTag,
     ).then((colors) => {
       if (cancelled) return;
       setColorByCategory((prev) => {
@@ -566,9 +600,11 @@ export default function RoomResult() {
     });
 
     // Keep the exact 2D placement — iso render only nudges true cutout overlaps.
+    // Use polygon bbox so cutout feet and furniture feet share one coordinate space.
+    const dims = roomDimsFromPoints(savedLayout?.roomPoints);
     return {
-      widthFt: layoutRoomPreview.widthFt,
-      lengthFt: layoutRoomPreview.lengthFt,
+      widthFt: dims?.widthFt ?? layoutRoomPreview.widthFt,
+      lengthFt: dims?.lengthFt ?? layoutRoomPreview.lengthFt,
       roomName: layoutRoomPreview.name,
       id: layoutRoomPreview.roomId || 'result-room',
       elements: (savedLayout?.elements ?? [])

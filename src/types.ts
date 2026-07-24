@@ -22,6 +22,7 @@ export interface FurnitureItem {
   name:     string;
   category: string;
   style?:   string[];
+  styleTag?: string;
   price:    number;
   widthIn?: number;
   depthIn?: number;

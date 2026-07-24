@@ -5,7 +5,7 @@ import {
     signInWithEmailAndPassword,
     signInWithPopup
 } from "firebase/auth";
-import { auth, googleProvider, isFirebaseConfigured } from "./firebase.js";
+import { auth, googleProvider, isFirebaseConfigured } from "./firebase.mjs";
 
 var loginButton = document.getElementById('login-btn');
 var googleButton = document.getElementById('google-button');

@@ -73,7 +73,8 @@
         .dashboard-blueprint .bp-dimtext { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 7.5px; letter-spacing: .06em; fill: currentColor; opacity: .6; }
         /* Dark mode inverts the ink to a light blueprint blue, matching the ghost floorplan on the other pages (see blueprint-bg.js). */
         html.dark-mode .dashboard-blueprint { color: #a6c8e6; }
-        @media (max-width: 900px) { .dashboard-blueprint { display: none; } }
+        /* On narrow screens, show the blueprint as a soft full-width hero backdrop (fading out at the bottom) instead of hiding it. */
+        @media (max-width: 900px) { .dashboard-blueprint { width: 100%; opacity: .14; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 100%); } }
     </style>
     <link rel="stylesheet" href="./design-system.css">
 </head>

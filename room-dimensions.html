@@ -255,14 +255,14 @@
               <div class="space-y-3" data-sd-id="69">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
                 <div class="relative" data-sd-id="71">
-                  <input type="number" id="room-width" value="15" step="0.1" inputmode="decimal" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
+                  <input type="text" id="room-width" value="15" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="73">ft</span>
                 </div>
               </div>
               <div class="space-y-3" data-sd-id="74">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="75">LENGTH</label>
                 <div class="relative" data-sd-id="76">
-                  <input type="number" id="room-length" value="12" step="0.1" inputmode="decimal" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
+                  <input type="text" id="room-length" value="12" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="78">ft</span>
                 </div>
               </div>
@@ -344,8 +344,8 @@ function setDimensionError(message) {
 }
 
 function readTypedDimensionsFt() {
-  let wVal = parseFloat(widthInput.value);
-  let lVal = parseFloat(lengthInput.value);
+  let wVal = parseFloat(String(widthInput.value).replace(",", "."));
+  let lVal = parseFloat(String(lengthInput.value).replace(",", "."));
   if (isNaN(wVal) || isNaN(lVal)) return null;
   if (currentUnit === "m") {
     wVal /= FT_TO_M;
@@ -391,14 +391,17 @@ function isPointInRoom(x,y) {
     if (intersect) inside = !inside;
   }
   if (!inside) return false;
-  return !(state.finalizedCutouts || []).some(c => isPointInPolygon(x, y, c.points));
+  const punched = [...(state.finalizedCutouts || []), ...(state.cutouts || [])];
+  return !punched.some(c => isPointInPolygon(x, y, c.points));
 }
 
 /** True if the point is inside the room or sitting on a wall (ray-cast is flaky on edges). */
-function isPointInOrOnRoom(x, y, edgeTol = 4) {
+function isPointInOrOnRoom(x, y, edgeTol = 4, ignoreCutouts = false) {
   // Check the wall first — cutout outer corners sit exactly on the perimeter.
   const snap = getClosestPointOnPerimeter(x, y);
   if (snap.dist <= edgeTol) return true;
+  // When placing/validating new cutouts, ignore existing holes so a second notch can be added.
+  if (ignoreCutouts) return isPointInRoomPolygon(x, y);
   return isPointInRoom(x, y);
 }
 
@@ -500,26 +503,40 @@ function showDoorFlipTooltip(el) {
 }
 
 function getCutoutDeletePosition(c) {
+  // Prefer the left green adjust handle (start side: midpoint of outer→inner left edge).
+  if (c.source !== "drawn" && Array.isArray(c.points) && c.points.length >= 4) {
+    const leftHandle = midpoint(c.points[0], c.points[3]);
+    const center = getPolygonCenter(c.points);
+    let dx = leftHandle.x - center.x;
+    let dy = leftHandle.y - center.y;
+    const len = Math.hypot(dx, dy);
+    if (len > 0.1) {
+      dx /= len;
+      dy /= len;
+    } else {
+      dx = c.points[0].x - c.points[1].x;
+      dy = c.points[0].y - c.points[1].y;
+      const wallLen = Math.hypot(dx, dy) || 1;
+      dx /= wallLen;
+      dy /= wallLen;
+    }
+    // Sit on the left handle, nudged slightly outward so the green dot stays clickable.
+    return {
+      x: leftHandle.x + dx * 12,
+      y: leftHandle.y + dy * 12,
+    };
+  }
+
   const clippedPoints = c.source === "drawn" ? [] : clipPolygonToRoom(c.points);
   const points = clippedPoints.length >= 3 ? clippedPoints : c.points;
   if (!points.length) return { x: 0, y: 0 };
 
-  const xs = points.map(p => p.x);
-  const ys = points.map(p => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const center = getPolygonCenter(points);
-  const inset = 12;
-  const candidates = [
-    { x: maxX - inset, y: minY + inset },
-    { x: maxX - inset, y: maxY - inset },
-    { x: minX + inset, y: minY + inset },
-    center,
-  ];
-
-  return candidates.find(p => isPointInPolygon(p.x, p.y, points)) || center;
+  // Drawn cutouts: pin the X to the leftmost vertex instead of the center.
+  let leftmost = points[0];
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].x < leftmost.x) leftmost = points[i];
+  }
+  return { x: leftmost.x, y: leftmost.y };
 }
 
 function appendCutoutDeleteButton(group, cutout) {
@@ -659,8 +676,24 @@ function checkCollision(newEl, excludeId = null) {
   const allItems = [...state.elements, ...state.cutouts.map(c => ({...c, type: 'cutout'})), ...finalized];
   return allItems.some(item => {
     if (item.id === excludeId) return false;
+    // Cutouts on adjacent walls often have overlapping AABBs near corners —
+    // only block when the actual polygons intersect.
+    if (newEl.type === "cutout" && item.type === "cutout") {
+      return polygonsOverlap(newEl.points, item.points);
+    }
     const itemBounds = getElementBounds(item);
-    return !(newBounds.maxX < itemBounds.minX || newBounds.minX > itemBounds.maxX || newBounds.maxY < itemBounds.minY || newBounds.minY > itemBounds.maxY);
+    const aabbHits = !(newBounds.maxX < itemBounds.minX || newBounds.minX > itemBounds.maxX || newBounds.maxY < itemBounds.minY || newBounds.minY > itemBounds.maxY);
+    if (!aabbHits) return false;
+    if (newEl.type === "cutout" && item.type !== "cutout") {
+      // Door/window anchor inside the cutout polygon.
+      return isPointInPolygon(item.x, item.y, newEl.points)
+        || pointToPathDistance(item.x, item.y, newEl.points) < 18;
+    }
+    if (item.type === "cutout" && newEl.type !== "cutout") {
+      return isPointInPolygon(newEl.x, newEl.y, item.points)
+        || pointToPathDistance(newEl.x, newEl.y, item.points) < 18;
+    }
+    return true;
   });
 }
 
@@ -688,11 +721,11 @@ function isCutoutValid(points) {
   }
   const cx = sx / points.length;
   const cy = sy / points.length;
-  // Centroid must sit in the room polygon (ignore existing holes — wall notches nest fine).
-  if (!isPointInRoomPolygon(cx, cy) && !isPointInOrOnRoom(cx, cy, 8)) return false;
+  // Centroid must sit in the outer room shell (ignore existing holes — more notches are fine).
+  if (!isPointInRoomPolygon(cx, cy) && !isPointInOrOnRoom(cx, cy, 8, true)) return false;
   // Outer corners may sit on the wall; tolerate a few px of float error.
   return points.every((p) => {
-    if (isPointInOrOnRoom(p.x, p.y, 8)) return true;
+    if (isPointInOrOnRoom(p.x, p.y, 8, true)) return true;
     return isPointInRoomPolygon(p.x, p.y);
   });
 }
@@ -1072,7 +1105,11 @@ function renderRoom() {
 
   const mask = document.getElementById("room-mask");
   mask.innerHTML = '<rect width="100%" height="100%" fill="white" />';
-  (state.finalizedCutouts || []).forEach((cutout) => {
+  const punchedCutouts = [
+    ...(state.finalizedCutouts || []),
+    ...(state.cutouts || []),
+  ];
+  punchedCutouts.forEach((cutout) => {
     const maskPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     maskPath.setAttribute("d", pointsToPath(cutout.points));
     maskPath.setAttribute("fill", "black");
@@ -1593,8 +1630,14 @@ function updateDimensionsDisplay() {
   const lengthFt = (maxY - minY) / 20;
   const displayWidth = currentUnit === "ft" ? widthFt : widthFt * FT_TO_M;
   const displayLength = currentUnit === "ft" ? lengthFt : lengthFt * FT_TO_M;
-  widthInput.value = displayWidth.toFixed(currentUnit === "ft" ? 1 : 2);
-  lengthInput.value = displayLength.toFixed(currentUnit === "ft" ? 1 : 2);
+  const decimals = currentUnit === "ft" ? 1 : 2;
+  // Don't overwrite while typing — toFixed("17.") → "17.0" blocks decimals like 17.5.
+  if (document.activeElement !== widthInput) {
+    widthInput.value = displayWidth.toFixed(decimals);
+  }
+  if (document.activeElement !== lengthInput) {
+    lengthInput.value = displayLength.toFixed(decimals);
+  }
 
   let area = polygonArea(pts);
   (state.finalizedCutouts || []).forEach((cutout) => {
@@ -1641,22 +1684,7 @@ function createSnappingCutout(targetX, targetY, size = 30) {
 
 function finalizeCutouts() {
   if (state.cutouts.length === 0) return;
-
-  const remainingCutouts = [];
-  let appliedCount = 0;
-
-  state.cutouts.forEach(c => {
-    if (!isCutoutValid(c.points)) {
-      remainingCutouts.push(c);
-      return;
-    }
-
-    state.finalizedCutouts.push(cloneObj(c));
-    appliedCount++;
-  });
-
-  state.cutouts = remainingCutouts;
-  selectedCutoutId = remainingCutouts.length ? remainingCutouts[0].id : null;
+  const appliedCount = bakeActiveCutouts();
   if (appliedCount > 0) saveState();
   renderAll();
   if (appliedCount > 0) showToast("Wall cutout applied");
@@ -1683,8 +1711,106 @@ document.querySelectorAll('[draggable="true"]').forEach((btn) => {
   });
 });
 
+function isPhoneLikeViewport() {
+  return window.matchMedia("(max-width: 700px), (pointer: coarse)").matches;
+}
+
+function getLongestRoomEdgeIndex() {
+  let longestIndex = 0;
+  let longestLength = -1;
+  for (let i = 0; i < state.roomPoints.length; i++) {
+    const a = state.roomPoints[i];
+    const b = state.roomPoints[(i + 1) % state.roomPoints.length];
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    if (length > longestLength) {
+      longestLength = length;
+      longestIndex = i;
+    }
+  }
+  return longestIndex;
+}
+
+function getToolbarPlacementCandidates(type) {
+  const preferred = getLongestRoomEdgeIndex();
+  const indices = [
+    preferred,
+    ...state.roomPoints.map((_, index) => index).filter((index) => index !== preferred),
+  ];
+
+  const alongRatios = type === "cutout" ? [0.5, 0.35, 0.65] : [0.5, 0.3, 0.7];
+  const candidates = [];
+  indices.forEach((edgeIndex) => {
+    const frame = getEdgeFrame(edgeIndex);
+    const edgeLength = Math.hypot(frame.p2.x - frame.p1.x, frame.p2.y - frame.p1.y);
+    alongRatios.forEach((ratio) => {
+      const along = clampValue(edgeLength * ratio, 24, Math.max(24, edgeLength - 24));
+      candidates.push({ edgeIndex, frame, along });
+    });
+  });
+  return candidates;
+}
+
+function addToolbarElementToRoom(type) {
+  for (const candidate of getToolbarPlacementCandidates(type)) {
+    const { edgeIndex, frame, along } = candidate;
+    if (type === "cutout") {
+      bakeActiveCutouts();
+      const placed = placeCutoutOnEdge(edgeIndex, along, 40, 40);
+      const newCutout = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        type: "cutout",
+        points: placed.points,
+        edgeIndex: placed.edgeIndex,
+        source: "preset",
+      };
+      if (!isCutoutValid(newCutout.points) || checkCollision(newCutout)) continue;
+      state.cutouts.push(newCutout);
+      selectedCutoutId = newCutout.id;
+      saveState();
+      renderAll();
+      showToast("Wall cutout added");
+      return true;
+    }
+
+    const point = {
+      x: frame.p1.x + frame.tx * along,
+      y: frame.p1.y + frame.ty * along,
+      angle: Math.atan2(frame.ty, frame.tx) * 180 / Math.PI,
+    };
+    const newEl = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      type,
+      x: point.x,
+      y: point.y,
+      angle: point.angle,
+      isMirrored: false,
+      width: type === "window" ? 50 : undefined,
+    };
+    if (checkCollision(newEl)) continue;
+    state.elements.push(newEl);
+    saveState();
+    renderAll();
+    showToast(`${type} added`);
+    return true;
+  }
+
+  showToast("No clear wall space found");
+  return false;
+}
+
+document.querySelectorAll('[draggable="true"]').forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    if (!isPhoneLikeViewport()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const type = btn.getAttribute("data-type");
+    if (type) addToolbarElementToRoom(type);
+  });
+});
+
 svg.addEventListener("dragover", (e) => {
   e.preventDefault();
+  e.stopPropagation();
   e.dataTransfer.dropEffect = "copy";
   if (!draggingFromToolbar) return;
   const svgP = getSVGPoint(e);
@@ -1710,6 +1836,12 @@ svg.addEventListener("dragover", (e) => {
     ghost.classList.add("hidden");
     document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
   }
+});
+
+// Allow dropping onto nested SVG shapes (active cutout handles, room fill, etc.).
+svg.addEventListener("dragenter", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 });
 
 svg.addEventListener("mousedown", (e) => {
@@ -1749,8 +1881,26 @@ svg.addEventListener("mousedown", (e) => {
   }
 });
 
+function bakeActiveCutouts() {
+  if (!state.cutouts.length) return 0;
+  const remaining = [];
+  let baked = 0;
+  state.cutouts.forEach((c) => {
+    if (!isCutoutValid(c.points)) {
+      remaining.push(c);
+      return;
+    }
+    state.finalizedCutouts.push(cloneObj(c));
+    baked += 1;
+  });
+  state.cutouts = remaining;
+  selectedCutoutId = remaining.length ? remaining[0].id : null;
+  return baked;
+}
+
 svg.addEventListener("drop", (e) => {
   e.preventDefault();
+  e.stopPropagation();
   const dragType = draggingFromToolbar || e.dataTransfer.getData("text/plain");
   if (!dragType) return;
   // Prefer last dragover point — drop events often report bad clientX/Y.
@@ -1758,6 +1908,9 @@ svg.addEventListener("drop", (e) => {
   const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
   if (snap.dist < 220) {
     if (dragType === "cutout") {
+      // Commit any currently editable cutout so a second (third, …) notch can be placed.
+      bakeActiveCutouts();
+
       const frame = getEdgeFrame(snap.edgeIndex);
       const centerAlong =
         (snap.point.x - frame.p1.x) * frame.tx +
@@ -1765,7 +1918,7 @@ svg.addEventListener("drop", (e) => {
       const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 40, 40);
       if (isCutoutValid(placed.points)) {
         const newCutout = {
-          id: Date.now(),
+          id: Date.now() + Math.floor(Math.random() * 1000),
           type: "cutout",
           points: placed.points,
           edgeIndex: placed.edgeIndex,
@@ -1778,12 +1931,13 @@ svg.addEventListener("drop", (e) => {
            lastDragSvgPoint = null;
            return;
         }
-        // Apply immediately so the wall notch punches a hole in the room.
-        state.finalizedCutouts.push(newCutout);
-        selectedCutoutId = null;
+        // Keep it active + selected so green adjust handles appear immediately.
+        // Floor hole still punches because active cutouts are included in the room mask.
+        state.cutouts.push(newCutout);
+        selectedCutoutId = newCutout.id;
         saveState();
         renderAll();
-        showToast("Wall cutout added");
+        showToast("Wall cutout added — drag the green handles to adjust");
       } else {
         showToast("Drop the cutout onto a wall");
         ghost.classList.add("hidden");
@@ -1839,7 +1993,12 @@ widthInput.oninput = lengthInput.oninput = () => {
     setDimensionError("");
     return;
   }
-  let wVal = parseFloat(rawW); let lVal = parseFloat(rawL);
+  // Keep "17." intact so the user can finish typing "17.5".
+  if (isIncompleteDimensionDraft(rawW) || isIncompleteDimensionDraft(rawL)) {
+    setDimensionError("");
+    return;
+  }
+  let wVal = parseFloat(String(rawW).replace(",", ".")); let lVal = parseFloat(String(rawL).replace(",", "."));
   if (isNaN(wVal) || isNaN(lVal) || wVal <= 0 || lVal <= 0) {
     setDimensionError("Enter positive width and length values.");
     return;
@@ -1891,6 +2050,30 @@ widthInput.oninput = lengthInput.oninput = () => {
   roomPath.classList.add("flip-anim");
   renderAll(); saveState();
 };
+
+function isIncompleteDimensionDraft(raw) {
+  const text = String(raw || "").trim().replace(",", ".");
+  if (!text) return true;
+  if (/[.]$/.test(text)) return true;
+  if (text === "-" || text === ".") return true;
+  return false;
+}
+
+function normalizeDimensionInput(input) {
+  const decimals = currentUnit === "ft" ? 1 : 2;
+  const value = parseFloat(String(input.value).replace(",", "."));
+  if (!Number.isFinite(value) || value <= 0) return;
+  input.value = value.toFixed(decimals);
+}
+
+widthInput.addEventListener("blur", () => {
+  normalizeDimensionInput(widthInput);
+  if (typeof lengthInput.oninput === "function") lengthInput.oninput();
+});
+lengthInput.addEventListener("blur", () => {
+  normalizeDimensionInput(lengthInput);
+  if (typeof widthInput.oninput === "function") widthInput.oninput();
+});
 
 const toggleFt = document.getElementById("toggle-ft");
 const toggleM = document.getElementById("toggle-m");
@@ -2230,7 +2413,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
 <script type="module" src="/src/theme-switch.tsx"></script>
 <script type="module">
   import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { auth, isFirebaseConfigured } from "./firebase.js";
+  import { auth, isFirebaseConfigured } from "./firebase.mjs";
   const profileBtn = document.getElementById('profile-btn');
   const profilePopup = document.getElementById('profile-popup');
   const settingsBtn = document.getElementById('settings-btn');

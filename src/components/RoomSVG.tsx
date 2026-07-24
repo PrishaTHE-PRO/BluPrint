@@ -17,6 +17,7 @@ import {
   findValidFurniturePosition,
   furnitureBounds,
   pieceSizeFt,
+  resolveFurniturePlacement,
   type ForbiddenRect,
   type PosFt,
 } from '../utils/furnitureConstraints';
@@ -947,7 +948,7 @@ export default function RoomSVG({
       const occupied = placedFurnitureZones(nextPositions, furniture, nextRotations, nextScales, item.category);
       const desired = nextPositions[item.category]
         ?? preferredFurniturePosition(item, nextPositions, furniture, widthFt, lengthFt);
-      nextPositions[item.category] = findValidFurniturePosition(
+      const resolved = resolveFurniturePlacement(
         desired,
         item,
         rotation,
@@ -956,6 +957,8 @@ export default function RoomSVG({
         [...zones, ...occupied],
         scale,
       );
+      nextPositions[item.category] = resolved.position;
+      nextScales[item.category] = resolved.scale;
     });
 
     setPositions(nextPositions);
@@ -976,15 +979,24 @@ export default function RoomSVG({
     [roomLayout],
   );
 
-  // Initialise default positions when furniture changes
+  // Initialise default positions when furniture changes — keep clear of cutouts.
   useEffect(() => {
-    setPositions(prev => {
+    setPositions((prev) => {
       const next = { ...prev };
-      furniture.forEach(item => {
-        const occupiedZones = placedFurnitureZones(next, furniture, rotations, scales, item.category);
+      const workingScales = { ...scales };
+      const scaleUpdates: Record<string, number> = {};
+
+      furniture.forEach((item) => {
+        const occupiedZones = placedFurnitureZones(
+          next,
+          furniture,
+          rotations,
+          workingScales,
+          item.category,
+        );
         const rotation = rotations[item.category] ?? defaultRotation(item.category);
-        const scale = scales[item.category] ?? 1;
-        next[item.category] = findValidFurniturePosition(
+        const scale = workingScales[item.category] ?? 1;
+        const resolved = resolveFurniturePlacement(
           next[item.category] ?? preferredFurniturePosition(item, next, furniture, cW, cL),
           item,
           rotation,
@@ -993,7 +1005,16 @@ export default function RoomSVG({
           [...forbiddenZones, ...occupiedZones],
           scale,
         );
+        next[item.category] = resolved.position;
+        workingScales[item.category] = resolved.scale;
+        if (Math.abs(resolved.scale - scale) > 0.001) {
+          scaleUpdates[item.category] = resolved.scale;
+        }
       });
+
+      if (Object.keys(scaleUpdates).length > 0) {
+        setScales((prevScales) => ({ ...prevScales, ...scaleUpdates }));
+      }
       return next;
     });
   }, [furniture, forbiddenZones, room, rotations, scales, cW, cL]);
@@ -1079,6 +1100,10 @@ export default function RoomSVG({
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const resizingPiece = resizeRef.current;
+    if (resizingPiece || rotateRef.current || dragRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (resizingPiece) {
       const pointer = clientToFt(e);
       const distance = Math.hypot(
@@ -1176,7 +1201,14 @@ export default function RoomSVG({
     });
   }, [furniture, rotations, scales, clientToFt, cW, cL, forbiddenZones]);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e?: React.PointerEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (svgRef.current?.hasPointerCapture(e.pointerId)) {
+        svgRef.current.releasePointerCapture(e.pointerId);
+      }
+    }
     dragRef.current = null;
     rotateRef.current = null;
     resizeRef.current = null;
@@ -1301,9 +1333,10 @@ export default function RoomSVG({
         ref={svgRef}
         viewBox={`0 0 ${vbW} ${vbH}`}
         className="w-full rounded-xl"
-        style={{ maxHeight: '78vh', display: 'block' }}
+        style={{ maxHeight: '78vh', display: 'block', touchAction: 'none', userSelect: 'none' }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onPointerLeave={() => {
           handlePointerUp();
           setSelectedCategory(null);
@@ -1450,6 +1483,16 @@ export default function RoomSVG({
                 onLinkCategory?.(item.category);
               }}
             >
+              <rect
+                x={-10}
+                y={-10}
+                width={wPx + 20}
+                height={dPx + 20}
+                rx={10}
+                fill="rgba(255,255,255,0)"
+                pointerEvents="all"
+              />
+
               {/* Keep rotate/resize reachable — opaque hit bridge through the gap above the piece */}
               {showControls && (
                 <rect

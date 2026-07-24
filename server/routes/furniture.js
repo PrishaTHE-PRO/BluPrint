@@ -187,17 +187,13 @@ function roomTypeSearchPhrase(roomType) {
 }
 
 /** Build a Serper shopping query that keeps style + room type in the product search. */
-function buildFurnitureQuery(styleTag, roomType, product) {
+function buildFurnitureQuery(styleTag, roomType, product, { short = false } = {}) {
   const style = styleProfile(styleTag);
   const room = roomTypeSearchPhrase(roomType);
-  const parts = [
-    style.phrase,
-    room,
-    product,
-    style.accents,
-    "furniture",
-  ].map((part) => String(part || "").trim()).filter(Boolean);
-  return parts.join(" ").replace(/\s+/g, " ").trim();
+  const parts = short
+    ? [style.phrase, product]
+    : [style.phrase, room, product, style.accents];
+  return parts.map((part) => String(part || "").trim()).filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
 function styleMatchScore(title, styleTag) {
@@ -215,6 +211,13 @@ function rankItemsForStyle(items, styleTag) {
     if (scoreDiff !== 0) return scoreDiff;
     return 0;
   });
+}
+
+/** Prefer products whose titles actually mention the style; keep a soft fallback if none do. */
+function preferStyleMatched(items, styleTag) {
+  const ranked = rankItemsForStyle(items, styleTag);
+  const matched = ranked.filter((item) => styleMatchScore(item.name, styleTag) > 0);
+  return matched.length >= 2 ? matched : ranked;
 }
 
 function categoriesForRoomType(roomType) {
@@ -389,50 +392,295 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal) {
 }
 
 async function searchCategory(styleTag, roomType, cat) {
-  const q = buildFurnitureQuery(styleTag, roomType, cat.product || cat.key);
-  const response = await axios.post(
-    "https://google.serper.dev/shopping",
-    { q, num: 12, gl: "us" },
-    {
-      headers: {
-        "X-API-KEY": process.env.SERPER_API_KEY,
-        "Content-Type": "application/json",
-      },
-      timeout: 10000,
+  const style = normalizeStyleTag(styleTag);
+  const product = cat.product || cat.key;
+  // Never search without the style — generic results are why rooms look off-style.
+  const queries = [
+    buildFurnitureQuery(style, roomType, product),
+    buildFurnitureQuery(style, roomType, product, { short: true }),
+    `${styleProfile(style).phrase} ${product}`,
+  ].filter((q, i, arr) => q && arr.indexOf(q) === i);
+
+  let lastError = null;
+  for (const q of queries) {
+    try {
+      const response = await axios.post(
+        "https://google.serper.dev/shopping",
+        { q, num: 12, gl: "us" },
+        {
+          headers: {
+            "X-API-KEY": process.env.SERPER_API_KEY,
+            "Content-Type": "application/json",
+          },
+          timeout: 10000,
+        }
+      );
+
+      const items = response.data.shopping || [];
+      const mapped = items
+        .map((item) => ({
+          ...item,
+          resolvedImageUrl: item.imageUrl || item.thumbnail || item.image || "",
+          resolvedLink: item.link || item.productLink || "",
+        }))
+        .filter((item) => item.resolvedImageUrl && item.resolvedLink)
+        .slice(0, 10)
+        .map((item, i) => {
+          const dimensions = parseProductDimensions(item.title);
+          return {
+            id:       `${cat.key}-${i}`,
+            name:     item.title,
+            category: cat.key,
+            brand:    item.source || "",
+            price:    parsePrice(item.price),
+            imageUrl: item.resolvedImageUrl,
+            buyUrl:   item.resolvedLink,
+            styleTag: style,
+            ...dimensions,
+          };
+        });
+
+      if (mapped.length > 0) {
+        return preferStyleMatched(mapped, style).slice(0, 6);
+      }
+    } catch (error) {
+      lastError = error;
+      const status = error.response?.status;
+      const detail = error.response?.data?.message || error.message;
+      console.error(`[furniture] Serper ${cat.key} q="${q}" failed:`, status || "", detail || "");
     }
-  );
+  }
 
-  const items = response.data.shopping || [];
-  const mapped = items
-    .map((item) => ({
-      ...item,
-      resolvedImageUrl: item.imageUrl || item.thumbnail || item.image || "",
-      resolvedLink: item.link || item.productLink || "",
-    }))
-    .filter((item) => item.resolvedImageUrl && item.resolvedLink)
-    .slice(0, 8)
-    .map((item, i) => {
-      const dimensions = parseProductDimensions(item.title);
-      return {
-        id:       `${cat.key}-${i}`,
-        name:     item.title,
-        category: cat.key,
-        brand:    item.source || "",
-        price:    parsePrice(item.price),
-        imageUrl: item.resolvedImageUrl,
-        buyUrl:   item.resolvedLink,
-        styleTag: normalizeStyleTag(styleTag),
-        ...dimensions,
-      };
-    });
+  console.warn(`[furniture] using style fallback catalog for ${cat.key} (${style})`, lastError?.response?.data?.message || lastError?.message || "");
+  return fallbackItemsForCategory(cat, style);
+}
 
-  return rankItemsForStyle(mapped, styleTag).slice(0, 6);
+/**
+ * Curated style catalogs used when Serper is unavailable.
+ * Names, materials, tones, and images are chosen to read as that style — not generic blanks.
+ */
+const STYLE_TONES = {
+  bohemian: ["#C4785A", "#C9A66B", "#6B7F5A", "#8B5E3C"],
+  scandinavian: ["#D8CBB8", "#C4A574", "#F0E6D8", "#A8B5A0"],
+  modern: ["#6B5B4F", "#2C2C2C", "#C4A574", "#8A8A8A"],
+  minimalist: ["#F0E6D8", "#D8CBB8", "#C4A574", "#8A8A8A"],
+  industrial: ["#4A3728", "#2C2C2C", "#8A8A8A", "#5C4033"],
+  coastal: ["#F0E6D8", "#5B7C99", "#D8CBB8", "#C4A574"],
+  farmhouse: ["#B8956C", "#D2B48C", "#F0E6D8", "#6B5B4F"],
+  traditional: ["#6B3A2A", "#C4A035", "#8B7355", "#D4C4A8"],
+  "mid-century modern": ["#5C4033", "#C4785A", "#C4A574", "#6B4C6B"],
+  maximalist: ["#C4785A", "#6B4C6B", "#C4A035", "#2C3E6B"],
+  "art deco": ["#2C2C2C", "#C4A035", "#6B3A2A", "#D8CBB8"],
+};
+
+const STYLE_FALLBACK = {
+  bohemian: {
+    label: "Bohemian",
+    brand: "Boho Collective",
+    finishes: ["rattan", "carved mango wood", "kilim terracotta", "macramé cream"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1594026112284-02bb6f3352cd?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800",
+      bedroom_rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+      bedside_lamp: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=800",
+      wardrobe: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+      sofa: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800",
+      accent_chair: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+      coffee_table: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=800",
+      rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+      floor_lamp: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=800",
+      side_table: "https://images.unsplash.com/photo-1594026112284-02bb6f3352cd?auto=format&fit=crop&q=80&w=800",
+      reading_nook: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+      indoor_plants: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&q=80&w=800",
+      wall_art: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  scandinavian: {
+    label: "Scandinavian",
+    brand: "Nordic Home",
+    finishes: ["light oak", "blond ash", "linen", "matte white"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+      bedroom_rug: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+      bedside_lamp: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800",
+      sofa: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800",
+      accent_chair: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  modern: {
+    label: "Modern",
+    brand: "Line Forma",
+    finishes: ["sleek walnut", "matte black", "polished chrome", "low-profile"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+      bedroom_rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+      bedside_lamp: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800",
+      sofa: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  minimalist: {
+    label: "Minimalist",
+    brand: "Quiet Form",
+    finishes: ["simple oak", "off-white", "uncluttered", "soft gray"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+      bedroom_rug: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+      bedside_lamp: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  industrial: {
+    label: "Industrial",
+    brand: "Loft Works",
+    finishes: ["reclaimed wood", "black pipe", "raw steel", "factory"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&q=80&w=800",
+      bedside_lamp: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  coastal: {
+    label: "Coastal",
+    brand: "Shore House",
+    finishes: ["whitewashed", "sea-glass", "linen", "weathered oak"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+      bedroom_rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  farmhouse: {
+    label: "Farmhouse",
+    brand: "Barn & Beam",
+    finishes: ["distressed pine", "shiplap", "iron hardware", "warm oak"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+      bedroom_rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  traditional: {
+    label: "Traditional",
+    brand: "Heritage Atelier",
+    finishes: ["cherry wood", "tufted", "brass accent", "classic"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  "mid-century modern": {
+    label: "Mid-Century Modern",
+    brand: "Era Studio",
+    finishes: ["walnut", "tapered-leg oak", "retro teak", "sculptural"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+      accent_chair: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  maximalist: {
+    label: "Maximalist",
+    brand: "Bold Room",
+    finishes: ["velvet jewel", "patterned bold", "brass statement", "colorful"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800",
+      sofa: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800",
+      accent_chair: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+  "art deco": {
+    label: "Art Deco",
+    brand: "Gilded Line",
+    finishes: ["brass geometric", "black lacquer", "velvet glam", "mirrored"],
+    images: {
+      bed: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800",
+      nightstand: "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+    },
+  },
+};
+
+const GENERIC_FALLBACK_IMAGES = {
+  bed: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800",
+  nightstand: "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&q=80&w=800",
+  dresser: "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+  bedroom_rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+  bedside_lamp: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800",
+  wardrobe: "https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&q=80&w=800",
+  sofa: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800",
+  coffee_table: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=800",
+  rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+  floor_lamp: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800",
+  accent_chair: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800",
+  side_table: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?auto=format&fit=crop&q=80&w=800",
+  reading_nook: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800",
+  desk: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=800",
+  office_chair: "https://images.unsplash.com/photo-1505843490701-5be5d0b19d58?auto=format&fit=crop&q=80&w=800",
+  dining_table: "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&q=80&w=800",
+  dining_chair: "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&q=80&w=800",
+  vanity: "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&q=80&w=800",
+  indoor_plants: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&q=80&w=800",
+  wall_art: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80&w=800",
+};
+
+const FALLBACK_PRICES = {
+  bed: 890, nightstand: 160, dresser: 520, bedroom_rug: 240, bedside_lamp: 75, wardrobe: 680,
+  sofa: 980, coffee_table: 220, rug: 260, floor_lamp: 120, accent_chair: 340, side_table: 140,
+  reading_nook: 360, desk: 420, office_chair: 210, dining_table: 640, dining_chair: 150,
+  vanity: 480, indoor_plants: 45, wall_art: 90, bathtub: 1100, standing_shower: 900,
+  shower_curtain: 35, bath_mat: 30, bath_mirror: 80, bath_storage: 120, bath_light: 70,
+};
+
+function fallbackItemsForCategory(cat, styleTag) {
+  const style = normalizeStyleTag(styleTag);
+  const catalog = STYLE_FALLBACK[style] || {
+    label: style.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+    brand: "BluPrint Picks",
+    finishes: [style, "curated", "signature"],
+    images: {},
+  };
+  const tones = STYLE_TONES[style] || STYLE_TONES.modern;
+  const productLabel = String(cat.product || cat.key)
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+  const basePrice = FALLBACK_PRICES[cat.key] || 180;
+  const imageUrl = catalog.images[cat.key]
+    || GENERIC_FALLBACK_IMAGES[cat.key]
+    || GENERIC_FALLBACK_IMAGES.accent_chair;
+
+  return [0, 1, 2].map((i) => {
+    const finish = catalog.finishes[i % catalog.finishes.length];
+    return {
+      id: `${cat.key}-${style}-fallback-${i}`,
+      // Lead with the style label so cards + ranking clearly read on-style.
+      name: `${catalog.label} ${finish} ${productLabel}`,
+      category: cat.key,
+      brand: catalog.brand,
+      price: Math.round(basePrice * (1 + i * 0.12)),
+      imageUrl,
+      buyUrl: `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(`${catalog.label} ${finish} ${cat.product || cat.key}`)}`,
+      styleTag: style,
+      color: tones[i % tones.length],
+    };
+  });
 }
 
 // GET /api/rooms/:roomId/furniture?styleTag=minimalist&roomType=bedroom
 router.get("/:roomId/furniture", async (req, res) => {
   if (!process.env.SERPER_API_KEY) {
-    return res.status(500).json({ error: "SERPER_API_KEY not configured" });
+    console.warn("[furniture] SERPER_API_KEY missing — using fallback catalog only");
   }
 
   const hasBudgetParam = Object.prototype.hasOwnProperty.call(req.query, "budgetTotal");
@@ -509,8 +757,12 @@ router.get("/:roomId/furniture", async (req, res) => {
   });
 
   const categoryGroups = results
-    .filter((result) => result.status === "fulfilled" && result.value.length > 0)
-    .map((result) => result.value);
+    .map((result, index) => {
+      if (result.status === "fulfilled" && result.value.length > 0) return result.value;
+      // Guaranteed local stand-ins so the planner never renders an empty room.
+      return fallbackItemsForCategory(categories[index], styleTag);
+    })
+    .filter((group) => group.length > 0);
   const furniture = orderFurnitureForBudget(categoryGroups, budgetTotal);
 
   if (furniture.length === 0) {

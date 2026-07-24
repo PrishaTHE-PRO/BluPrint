@@ -38,25 +38,57 @@ const CATEGORY_FALLBACK: Record<string, string> = {
 const NAME_COLORS: Array<{ re: RegExp; hex: string }> = [
   { re: /\b(walnut|dark walnut)\b/i, hex: '#5C4033' },
   { re: /\b(espresso|mocha|dark brown)\b/i, hex: '#4A3728' },
-  { re: /\b(mahogany|cherry)\b/i, hex: '#6B3A2A' },
-  { re: /\b(oak|white oak|light oak)\b/i, hex: '#C4A574' },
+  { re: /\b(mahogany|cherry|mango)\b/i, hex: '#6B3A2A' },
+  { re: /\b(oak|white oak|light oak|blond)\b/i, hex: '#C4A574' },
   { re: /\b(maple|birch|pine|ash)\b/i, hex: '#D2B48C' },
   { re: /\b(teak|honey|caramel)\b/i, hex: '#B8860B' },
-  { re: /\b(natural wood|wood finish|wooden)\b/i, hex: '#B8956C' },
-  { re: /\b(black|charcoal|ebony)\b/i, hex: '#2C2C2C' },
-  { re: /\b(white|ivory|cream|off[\s-]?white)\b/i, hex: '#F0E6D8' },
+  { re: /\b(natural wood|wood finish|wooden|reclaimed)\b/i, hex: '#B8956C' },
+  { re: /\b(black|charcoal|ebony|lacquer|pipe|steel)\b/i, hex: '#2C2C2C' },
+  { re: /\b(white|ivory|cream|off[\s-]?white|whitewashed|shiplap)\b/i, hex: '#F0E6D8' },
   { re: /\b(beige|taupe|sand|khaki)\b/i, hex: '#C8B89A' },
-  { re: /\b(grey|gray|slate)\b/i, hex: '#8A8A8A' },
+  { re: /\b(grey|gray|slate|chrome)\b/i, hex: '#8A8A8A' },
   { re: /\b(navy|midnight blue)\b/i, hex: '#2C3E6B' },
-  { re: /\b(blue|teal|aqua)\b/i, hex: '#5B7C99' },
+  { re: /\b(blue|teal|aqua|sea[\s-]?glass)\b/i, hex: '#5B7C99' },
   { re: /\b(green|sage|olive|forest)\b/i, hex: '#6B7F5A' },
   { re: /\b(blush|pink|rose)\b/i, hex: '#D4A5A5' },
-  { re: /\b(terracotta|rust|copper|burnt orange)\b/i, hex: '#C4785A' },
-  { re: /\b(mustard|gold|brass)\b/i, hex: '#C4A035' },
-  { re: /\b(linen|boucle|beige linen)\b/i, hex: '#D8CBB8' },
-  { re: /\b(velvet)\b/i, hex: '#6B4C6B' },
+  { re: /\b(terracotta|rust|copper|burnt orange|kilim)\b/i, hex: '#C4785A' },
+  { re: /\b(mustard|gold|brass|gilded)\b/i, hex: '#C4A035' },
+  { re: /\b(linen|boucle|beige linen|macram[eé])\b/i, hex: '#D8CBB8' },
+  { re: /\b(velvet|jewel)\b/i, hex: '#6B4C6B' },
   { re: /\b(rattan|cane|wicker|bamboo)\b/i, hex: '#C9A66B' },
 ];
+
+/** When the inspo palette is empty, lean furniture tones toward the chosen style. */
+const STYLE_PALETTES: Record<string, string[]> = {
+  bohemian: ['#C4785A', '#C9A66B', '#6B7F5A', '#8B5E3C'],
+  scandinavian: ['#D8CBB8', '#C4A574', '#F0E6D8', '#A8B5A0'],
+  modern: ['#6B5B4F', '#2C2C2C', '#C4A574', '#8A8A8A'],
+  minimalist: ['#F0E6D8', '#D8CBB8', '#C4A574', '#8A8A8A'],
+  industrial: ['#4A3728', '#2C2C2C', '#8A8A8A', '#5C4033'],
+  coastal: ['#F0E6D8', '#5B7C99', '#D8CBB8', '#C4A574'],
+  farmhouse: ['#B8956C', '#D2B48C', '#F0E6D8', '#6B5B4F'],
+  traditional: ['#6B3A2A', '#C4A035', '#8B7355', '#D4C4A8'],
+  'mid-century modern': ['#5C4033', '#C4785A', '#C4A574', '#6B4C6B'],
+  maximalist: ['#C4785A', '#6B4C6B', '#C4A035', '#2C3E6B'],
+  'art deco': ['#2C2C2C', '#C4A035', '#6B3A2A', '#D8CBB8'],
+};
+
+function normalizeStyleKey(raw = ''): string {
+  const t = String(raw).trim().toLowerCase().replace(/[_/]+/g, ' ').replace(/\s+/g, ' ');
+  if (!t) return '';
+  if (t.includes('boho') || t.includes('bohem')) return 'bohemian';
+  if (t.includes('scand')) return 'scandinavian';
+  if (t.includes('mid') && t.includes('cent')) return 'mid-century modern';
+  if (t.includes('farm') || t.includes('rustic')) return 'farmhouse';
+  if (t.includes('indust')) return 'industrial';
+  if (t.includes('coast') || t.includes('beach')) return 'coastal';
+  if (t.includes('tradit') || t.includes('classic')) return 'traditional';
+  if (t.includes('maxim')) return 'maximalist';
+  if (t.includes('art') && t.includes('deco')) return 'art deco';
+  if (t.includes('minimal')) return 'minimalist';
+  if (t.includes('modern') || t.includes('contemporary')) return 'modern';
+  return t;
+}
 
 const sampleCache = new Map<string, string | null>();
 
@@ -88,12 +120,16 @@ export function colorFromName(name = ''): string | null {
   return null;
 }
 
-export function paletteFallback(category: string, palette: string[] = []): string {
+export function paletteFallback(category: string, palette: string[] = [], styleTag = ''): string {
   const cleaned = palette.map((c) => c.trim()).filter((c) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c));
+  let h = 0;
+  for (let i = 0; i < category.length; i++) h = (h * 33 + category.charCodeAt(i)) >>> 0;
   if (cleaned.length > 0) {
-    let h = 0;
-    for (let i = 0; i < category.length; i++) h = (h * 33 + category.charCodeAt(i)) >>> 0;
     return cleaned[h % cleaned.length];
+  }
+  const stylePalette = STYLE_PALETTES[normalizeStyleKey(styleTag)] || [];
+  if (stylePalette.length > 0) {
+    return stylePalette[h % stylePalette.length];
   }
   return CATEGORY_FALLBACK[category] || '#C4A574';
 }
@@ -175,14 +211,19 @@ export function tonesFrom(color?: string | null, category = ''): FurnitureColorT
 }
 
 export async function resolveFurnitureColors(
-  items: Array<{ category: string; imageUrl?: string; name?: string; id?: string }>,
+  items: Array<{ category: string; imageUrl?: string; name?: string; id?: string; color?: string; styleTag?: string }>,
   palette: string[] = [],
+  styleTag = '',
 ): Promise<Record<string, string>> {
   const entries = await Promise.all(
     items.map(async (item) => {
+      const hinted = item.color && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(item.color) ? item.color : null;
       const sampled = item.imageUrl ? await sampleImageColor(item.imageUrl) : null;
       const fromName = colorFromName(item.name);
-      const color = sampled || fromName || paletteFallback(item.category, palette);
+      const color = hinted
+        || fromName
+        || sampled
+        || paletteFallback(item.category, palette, item.styleTag || styleTag);
       return [item.category, color] as const;
     }),
   );

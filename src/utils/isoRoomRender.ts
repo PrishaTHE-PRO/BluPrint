@@ -9,8 +9,7 @@ import { canStackTogether, isStackable, isSurface } from './furnitureLayout';
 import {
   architectureForbiddenZones,
   constrainFurnitureEntries,
-  overlapsForbiddenZone,
-  findValidFurniturePosition,
+  roomDimsFromPoints,
 } from './furnitureConstraints';
 
 export type IsoArchElement = {
@@ -61,7 +60,7 @@ const ISO = { angle: Math.PI / 6, unit: 26, wallHeightFt: 4.2, pad: 30 };
 /** Active view transform for the current renderIsoIntoSvg call. */
 const ISO_VIEW = { mirrorX: false, widthFt: 1 };
 /** Extra keep-out around cutouts/doors in the 3D preview (feet). */
-const ISO_CUTOUT_PADDING = 0.45;
+const ISO_CUTOUT_PADDING = 0.55;
 const ISO_COLORS = {
     floor:    '#faf3e1',
     wallTop:  '#f5eed9',
@@ -776,8 +775,9 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
 }
 
 export function renderIsoIntoSvg(svg, room) {
-    const W = Math.max(toNumber(room.widthFt), 1);
-    const L = Math.max(toNumber(room.lengthFt), 1);
+    const fromPoints = roomDimsFromPoints(room.roomPoints);
+    const W = Math.max(fromPoints?.widthFt ?? toNumber(room.widthFt), 1);
+    const L = Math.max(fromPoints?.lengthFt ?? toNumber(room.lengthFt), 1);
     const WH = ISO.wallHeightFt;
     const facing = room.viewFacing === 'from-right' ? 'from-right' : 'from-left';
     ISO_VIEW.mirrorX = facing === 'from-right';

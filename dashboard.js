@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
-import { auth, isFirebaseConfigured } from "./firebase.js";
+import { auth, isFirebaseConfigured } from "./firebase.mjs";
 import { renderRoomPreview, getRoomPreviewLayout, escapeHtml } from "./iso-preview.js";
 
 var logoutBtn = document.getElementById('logout-btn');

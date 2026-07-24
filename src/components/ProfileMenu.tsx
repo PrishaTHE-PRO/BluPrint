@@ -29,7 +29,7 @@ export default function ProfileMenu() {
     let unsub: (() => void) | undefined;
     (async () => {
       try {
-        const { auth, isFirebaseConfigured } = await import('../../firebase.js');
+        const { auth, isFirebaseConfigured } = await import('../../firebase.mjs');
         const { onAuthStateChanged } = await import('firebase/auth');
         if (!isFirebaseConfigured?.() || !auth) return;
         unsub = onAuthStateChanged(auth, (user) => {
@@ -65,7 +65,7 @@ export default function ProfileMenu() {
         localStorage.setItem('blueprintUserName', next);
         setName(next);
         try {
-          const { auth } = await import('../../firebase.js');
+          const { auth } = await import('../../firebase.mjs');
           const { updateProfile } = await import('firebase/auth');
           if (auth?.currentUser) await updateProfile(auth.currentUser, { displayName: next });
         } catch { /* ignore */ }
@@ -80,7 +80,7 @@ export default function ProfileMenu() {
 
   const signOutUser = async () => {
     try {
-      const { auth } = await import('../../firebase.js');
+      const { auth } = await import('../../firebase.mjs');
       const { signOut } = await import('firebase/auth');
       if (auth) await signOut(auth);
     } catch { /* ignore */ }

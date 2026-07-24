@@ -34,8 +34,7 @@
     '.blueprint-bg .bp-dimtext { font-family: ui-monospace, "SF Mono", "Courier New", monospace; font-size: 7.5px; letter-spacing: .06em; fill: currentColor; opacity: .6; }',
     // Dark mode inverts the ink to a light blueprint blue; opacity stays at the
     // light-mode value (.10 base) so only the line color changes, not the fade.
-    'html.dark-mode #blueprint-bg-layer { color: #a6c8e6 !important; }',
-    '@media (max-width: 700px) { .blueprint-bg { opacity: .06; } }'
+    'html.dark-mode #blueprint-bg-layer { color: #a6c8e6 !important; }'
   ].join('\n');
 
   var style = document.createElement('style');

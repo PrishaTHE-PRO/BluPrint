@@ -72,7 +72,7 @@ src/
 index.html                login page
 dashboard.html            dashboard
 room-result.html          room planner entry point
-firebase.js               Firebase config + auth exports
+firebase.mjs               Firebase config + auth exports
 ```
 
 ## Team

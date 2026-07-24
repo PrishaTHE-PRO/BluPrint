@@ -41,7 +41,7 @@ export default function FurniturePanel({
     <div key={item.category} className="furniture-strip-card shrink-0">
       <FurnitureCard
         item={item}
-        canSwap={items.filter((x) => x.category === item.category).length > 1}
+        canSwap
         onSwap={() => onSwap(item.category)}
         animDelay={`${0.45 + i * 0.07}s`}
         variant="compact"

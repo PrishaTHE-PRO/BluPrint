@@ -2,14 +2,15 @@
   "name": "bluprint",
   "version": "1.0.0",
   "description": "",
-  "main": "firebase.js",
+  "main": "server/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"vite --open /index.html\" \"node server/index.js\"",
     "dev:client": "vite --open /index.html",
     "dev:server": "node server/index.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server/index.js"
   },
   "repository": {
     "type": "git",
@@ -27,7 +28,6 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "concurrently": "^10.0.3",
-    "firebase": "^12.13.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14"
   },
@@ -44,6 +44,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "firebase": "^12.13.0",
     "lucide-react": "^1.25.0",
     "mongoose": "^9.6.3",
     "motion": "^12.42.2",
