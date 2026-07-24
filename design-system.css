@@ -2708,7 +2708,8 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .app-brand {
     min-width: 0;
     flex: 1 1 auto;
-    margin-left: -6px;
+    margin-left: 6px;
+    padding-left: 2px;
   }
   .app-brand > span {
     display: inline !important;
