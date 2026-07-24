@@ -29,8 +29,11 @@ router.get("/image-proxy", async (req, res) => {
       timeout: 12000,
       maxRedirects: 5,
       headers: {
-        Accept: "image/*,*/*;q=0.8",
-        "User-Agent": "BluPrintColorSampler/1.0",
+        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        // Browser-like UA — many retailer CDNs reject the color-sampler agent on mobile-shared URLs.
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        Referer: parsed.origin + "/",
       },
       validateStatus: (status) => status >= 200 && status < 400,
     });

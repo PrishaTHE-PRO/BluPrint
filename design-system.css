@@ -254,6 +254,9 @@ body:not(.page-login) .app-nav {
   transition: transform .28s cubic-bezier(.2, .8, .2, 1), box-shadow .28s ease, background .28s ease;
   view-transition-name: app-navigation;
   top: 14px !important;
+  /* Keep account menu above workflow copy / page text (esp. mobile). */
+  z-index: 200 !important;
+  overflow: visible !important;
 }
 
 body:not(.page-login) .app-nav:hover {
@@ -315,7 +318,24 @@ body:not(.page-login) .app-brand > span {
 }
 .app-nav-links > a:hover { transform: translateY(-2px) scale(1.04); }
 
-.app-nav-links > a span { display: none; }
+/* Decorative underline spans only — keep .app-nav-label visible on desktop */
+.app-nav-links > a > span:not(.app-nav-label) { display: none; }
+.app-nav-links > a > .app-nav-label {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .app-nav-links > a > .app-nav-label {
+    display: none !important;
+  }
+  .app-nav-links > a {
+    padding: 8px 10px;
+    gap: 0;
+  }
+  .app-nav-links > a > iconify-icon {
+    font-size: 18px;
+  }
+}
 
 .app-brand,
 .app-nav-actions > button:not(.theme-switch-btn),
@@ -1318,6 +1338,37 @@ a.workflow-step:focus-visible {
   outline: 2px solid var(--dimension-primary, var(--bp-primary));
   outline-offset: 3px;
 }
+
+/* Mobile: numbered circles only (1 → 2 → 3), no step titles */
+@media (max-width: 768px) {
+  .workflow-steps {
+    width: min(100% - 32px, 1440px);
+    min-height: 48px;
+    padding: 10px 0 2px;
+    gap: 0;
+  }
+  .workflow-step {
+    gap: 0;
+  }
+  .workflow-step strong,
+  a.workflow-step > .workflow-arrow {
+    display: none !important;
+  }
+  .workflow-connector {
+    width: clamp(28px, 12vw, 56px);
+    margin: 0 10px;
+  }
+  /* Keep 1 / 2 / 3 visible even on completed steps (hide checkmarks) */
+  .workflow-step.completed span > iconify-icon {
+    display: none !important;
+  }
+  .workflow-step.completed span::before {
+    content: attr(data-step);
+  }
+  .workflow-step.completed span:not([data-step])::before {
+    content: none;
+  }
+}
 .page-dimensions main {
   max-width: 1600px !important;
   padding: 18px 24px 24px !important;
@@ -2167,6 +2218,13 @@ a.workflow-step:focus-visible {
   overflow: visible;
   border-radius: 0 !important;
   filter: drop-shadow(0 12px 22px rgba(28, 23, 20, .05));
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.page-result .room-layout-canvas__svg,
+.page-result .room-layout-canvas [data-furniture-piece] {
+  touch-action: none;
 }
 .page-result .furniture-scroll-panel {
   position: relative;
@@ -2378,6 +2436,33 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-inspo .ai-analysis-panel { margin-top: 24px; }
   .page-inspo .how-it-works-panel,
   .page-inspo .ai-analysis-panel { position: static; }
+  .page-inspo footer {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding-inline: 20px !important;
+  }
+  .page-inspo footer p {
+    text-align: center !important;
+    margin-inline: auto !important;
+    max-width: 18rem;
+    line-height: 1.6;
+  }
+  .page-inspo #step-1 > .space-y-3,
+  .page-inspo #step-1 > .space-y-3 > p {
+    text-align: center !important;
+  }
+  .page-inspo .budget-zone > div:last-of-type {
+    flex-direction: column;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  .page-inspo #budget-status {
+    text-align: center !important;
+    width: 100%;
+  }
   .page-result > #root {
     overflow-x: hidden;
   }
@@ -2886,7 +2971,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
 }
 
 
-.profile-menu-wrap { position: relative; z-index: 80; }
+.profile-menu-wrap { position: relative; z-index: 210; }
 
 /* Perfect circle avatar — one ring, one icon */
 .profile-btn {
@@ -2938,7 +3023,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  z-index: 120;
+  z-index: 300;
   display: flex;
   flex-direction: column;
   width: min(300px, calc(100vw - 24px));
@@ -2956,6 +3041,15 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     0 22px 48px rgba(28, 23, 20, 0.16);
   color: var(--bp-ink) !important;
   text-align: left;
+}
+/* Escape nav stacking contexts so the panel sits above page text on mobile. */
+.profile-popup.profile-popup-fixed {
+  position: fixed;
+  top: var(--profile-popup-top, 64px);
+  right: var(--profile-popup-right, 12px);
+  left: auto;
+  max-height: min(70vh, 420px) !important;
+  overflow: auto;
 }
 .profile-popup.hidden { display: none !important; }
 

@@ -64,8 +64,8 @@
         <span class="text-3xl font-bold tracking-tighter text-[#0A3323]" style="font-family:'Crimson Pro',serif">BluPrint</span>
       </a>
       <div class="app-nav-links">
-        <a href="dashboard.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all"><iconify-icon icon="ph:house-duotone"></iconify-icon>Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
-        <a href="past-inspiration.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon>Projects<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="dashboard.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all" aria-label="Home"><iconify-icon icon="ph:house-duotone"></iconify-icon><span class="app-nav-label">Home</span><span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
+        <a href="past-inspiration.html" class="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all" aria-label="Projects"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon><span class="app-nav-label">Projects</span><span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full"></span></a>
       </div>
       <div class="app-nav-actions">
         <div data-theme-switch class="nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
@@ -110,7 +110,7 @@
     <nav class="workflow-steps" aria-label="Room design progress">
       <a class="workflow-step completed" href="room-dimensions.html" aria-label="Back to Define Room">
         <iconify-icon class="workflow-arrow" icon="ph:arrow-left-bold"></iconify-icon>
-        <span><iconify-icon icon="ph:check-bold"></iconify-icon></span>
+        <span data-step="1"><iconify-icon icon="ph:check-bold"></iconify-icon></span>
         <strong>Define Room</strong>
       </a>
       <div class="workflow-connector completed"></div>
@@ -188,12 +188,12 @@
           </div>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-3 text-center">
           <button id="wild-card-btn" disabled class="w-full px-10 py-5 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-[1.01] shadow-xl flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
             <iconify-icon icon="ph:dice-five-duotone" class="text-3xl"></iconify-icon>
-            Wild Card Mode — Surprise Me
+            Wild Card Mode
           </button>
-          <p class="text-center text-sm text-[#F7F4D5]/50">Choose a room first, then let BluPrint randomly select the style, mood, colors, and features.</p>
+          <p class="text-center text-sm text-[#F7F4D5]/50 mx-auto max-w-md px-2">Choose a room first, then let BluPrint randomly select the style, mood, colors, and features.</p>
         </div>
 
         <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
@@ -219,12 +219,12 @@
           <!-- Status -->
           <div id="vision-status" class="hidden p-6 rounded-2xl text-lg font-medium"></div>
 
-          <div class="flex justify-end items-center gap-3 pt-4">
-            <div id="step1-error" class="hidden text-sm font-bold px-4 py-3 rounded-2xl pointer-events-none"
+          <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-4">
+            <div id="step1-error" class="hidden text-sm font-bold px-4 py-3 rounded-2xl pointer-events-none text-center sm:text-left w-full sm:w-auto order-1 sm:order-none"
                  style="background: rgba(211,150,140,0.15); border: 1px solid rgba(211,150,140,0.5); color: #D3968C;">
             </div>
             <button id="step1-next"
-                    class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl">
+                    class="order-2 sm:order-none w-full sm:w-auto px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl">
               Next: Your Picks <iconify-icon icon="ph:arrow-right-bold" class="ml-2"></iconify-icon>
             </button>
           </div>
@@ -343,9 +343,9 @@
       <div id="analyze-status" class="hidden text-sm font-medium text-center py-2"></div>
     </main>
 
-    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center gap-4 opacity-40">
+    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center justify-center gap-4 opacity-40 text-center">
       <iconify-icon icon="ph:house-duotone" class="text-4xl text-[#839958]"></iconify-icon>
-      <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5]">Designed with Serenity • BluPrint Interior Studio</p>
+      <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5] text-center px-4">Designed with Serenity • BluPrint Interior Studio</p>
     </footer>
     <div id="settings-overlay" class="settings-overlay hidden">
       <div class="settings-modal">
@@ -984,7 +984,7 @@
           // User picks are requirements, not suggestions. Preserve every
           // selected feature even when AI returns a different feature list.
           roomFeatures: selectedRoomFeatures,
-          budgetTotal:  state.budgetTotal || 0,
+          budgetTotal:  resolveBudgetTotal() ?? 0,
         };
         state.aiResult = analysisResult;
         localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
@@ -1068,15 +1068,32 @@
           }
         });
 
-        const budgetResponse = await fetch(base + '/budget', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ budgetTotal: state.budgetTotal || 0 }),
-        });
-        if (!budgetResponse.ok) throw new Error('Could not save your budget');
+        // Only write budget when the user actually set one — never wipe an
+        // existing room budget by posting 0 from Wild Card / analyze.
+        const budgetToSave = resolveBudgetTotal();
+        if (budgetToSave != null) {
+          const budgetResponse = await fetch(base + '/budget', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ budgetTotal: budgetToSave }),
+          });
+          if (!budgetResponse.ok) throw new Error('Could not save your budget');
+        }
       } catch (e) {
         throw e;
       }
+    }
+
+    /** User-set budget only — null means “leave whatever is already saved alone”. */
+    function resolveBudgetTotal() {
+      if (Number.isFinite(state.budgetTotal) && state.budgetTotal > 0) {
+        return state.budgetTotal;
+      }
+      const fromStorage = Number(localStorage.getItem('blueprintBudgetTotal'));
+      if (Number.isFinite(fromStorage) && fromStorage > 0) {
+        return fromStorage;
+      }
+      return null;
     }
 
     // ── Wild Card ─────────────────────────────────────────────────────
@@ -1090,6 +1107,7 @@
       if (isBathroomRoomType()) {
         state.selectedBathFixture = BATH_FIXTURES[Math.floor(Math.random() * BATH_FIXTURES.length)].id;
       }
+      const preservedBudget = resolveBudgetTotal();
       localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
       localStorage.setItem('blueprintStyleResult', JSON.stringify({
         roomType:     state.selectedRoomType,
@@ -1098,7 +1116,8 @@
         colorPalette: state.selectedColors.map(c => c.hex || c),
         roomFeatures: featuresWithBathFixture(),
         confidence:   1,
-        budgetTotal:  state.budgetTotal || 0,
+        // Keep the user's budget; Wild Card only randomizes style/mood/colors/features.
+        budgetTotal:  preservedBudget ?? 0,
       }));
       if (ROOM_ID) {
         try { await saveToBackend(ROOM_ID); } catch (e) { console.warn('[wild-card save]', e); }

@@ -14,7 +14,9 @@ export default function ProfileMenu() {
     () => localStorage.getItem('blueprintUserBirthday') || '',
   );
   const [saveStatus, setSaveStatus] = useState('');
+  const [popupPos, setPopupPos] = useState({ top: 64, right: 12 });
   const wrapRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -23,6 +25,28 @@ export default function ProfileMenu() {
     document.addEventListener('click', onDocClick);
     return () => document.removeEventListener('click', onDocClick);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const placePopup = () => {
+      const anchor = btnRef.current ?? wrapRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      setPopupPos({
+        top: Math.round(rect.bottom + 12),
+        right: Math.max(12, Math.round(window.innerWidth - rect.right)),
+      });
+    };
+
+    placePopup();
+    window.addEventListener('resize', placePopup);
+    window.addEventListener('scroll', placePopup, true);
+    return () => {
+      window.removeEventListener('resize', placePopup);
+      window.removeEventListener('scroll', placePopup, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +115,7 @@ export default function ProfileMenu() {
     <>
       <div className="profile-menu-wrap" ref={wrapRef}>
         <button
+          ref={btnRef}
           type="button"
           className="profile-btn"
           aria-label="Account menu"
@@ -103,7 +128,14 @@ export default function ProfileMenu() {
         >
           <iconify-icon icon="ph:user" />
         </button>
-        <div className={`profile-popup${open ? '' : ' hidden'}`} role="menu">
+        <div
+          className={`profile-popup profile-popup-fixed${open ? '' : ' hidden'}`}
+          role="menu"
+          style={{
+            ['--profile-popup-top' as string]: `${popupPos.top}px`,
+            ['--profile-popup-right' as string]: `${popupPos.right}px`,
+          }}
+        >
           <div className="profile-popup-header">
             <div className="profile-popup-avatar" aria-hidden="true">
               <iconify-icon icon="ph:user" />

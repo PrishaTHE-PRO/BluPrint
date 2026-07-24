@@ -135,7 +135,7 @@ export function paletteFallback(category: string, palette: string[] = [], styleT
 }
 
 /** Same-origin proxy so canvas can read pixels from retailer CDNs. */
-function proxiedImageUrl(url: string): string {
+export function proxiedImageUrl(url: string): string {
   if (!url) return url;
   if (url.startsWith('/api/') || url.startsWith('data:') || url.startsWith('blob:')) return url;
   try {

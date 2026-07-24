@@ -401,6 +401,11 @@ export default function RoomResult() {
       const rawRoomType = ai.roomType;
       const fallbackRoomType = localStorage.getItem('blueprintCurrentRoomType');
       roomType = String(rawRoomType ?? fallbackRoomType ?? '').trim();
+      const fromStyle = Number(ai.budgetTotal);
+      const fromStorage = Number(localStorage.getItem('blueprintBudgetTotal'));
+      const budgetTotal = (Number.isFinite(fromStyle) && fromStyle > 0)
+        ? fromStyle
+        : (Number.isFinite(fromStorage) && fromStorage > 0 ? fromStorage : 0);
       parsedStyle = {
         styleTag:     ai.styleTag     ?? '',
         roomType,
@@ -408,7 +413,7 @@ export default function RoomResult() {
         colorPalette: ai.colorPalette ?? [],
         roomFeatures: ai.roomFeatures ?? [],
         confidence:   ai.confidence   ?? 0,
-        budgetTotal:  Number(ai.budgetTotal ?? localStorage.getItem('blueprintBudgetTotal')) || 0,
+        budgetTotal,
       };
       setStyle(parsedStyle);
     } catch {
@@ -677,7 +682,7 @@ export default function RoomResult() {
         ))}
       </div>
 
-      <nav className="app-nav sticky top-0 z-50">
+      <nav className="app-nav sticky top-0 z-[200]">
         <a href="/dashboard.html" className="app-brand">
           <div className="w-12 h-12 bg-[#0A3323] rounded-[1.2rem] flex items-center justify-center">
             <iconify-icon icon="ph:sparkle-duotone" class="text-3xl text-[#F7F4D5]" />
@@ -685,11 +690,13 @@ export default function RoomResult() {
           <span className="text-3xl font-bold tracking-tighter text-[#0A3323]" style={{ fontFamily: 'Crimson Pro, serif' }}>BluPrint</span>
         </a>
         <div className="app-nav-links">
-          <Link000 href="/dashboard.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
-            <iconify-icon icon="ph:house-duotone" /> Home
+          <Link000 href="/dashboard.html" className="relative font-bold text-lg hover:opacity-70 transition-all" aria-label="Home">
+            <iconify-icon icon="ph:house-duotone" />
+            <span className="app-nav-label">Home</span>
           </Link000>
-          <Link000 href="/past-inspiration.html" className="relative font-bold text-lg hover:opacity-70 transition-all">
-            <iconify-icon icon="ph:squares-four-duotone" /> Projects
+          <Link000 href="/past-inspiration.html" className="relative font-bold text-lg hover:opacity-70 transition-all" aria-label="Projects">
+            <iconify-icon icon="ph:squares-four-duotone" />
+            <span className="app-nav-label">Projects</span>
           </Link000>
         </div>
         <div className="app-nav-actions">
@@ -703,13 +710,13 @@ export default function RoomResult() {
       <nav className="workflow-steps" aria-label="Room design progress">
         <Link000 className="workflow-step completed" href="/room-dimensions.html" aria-label="Back to Define Room">
           <iconify-icon class="workflow-arrow" icon="ph:arrow-left-bold" />
-          <span><iconify-icon icon="ph:check-bold" /></span>
+          <span data-step="1"><iconify-icon icon="ph:check-bold" /></span>
           <strong>Define Room</strong>
         </Link000>
         <div className="workflow-connector completed" />
         <Link000 className="workflow-step completed" href="/inspo-upload.html" aria-label="Back to Add Inspiration">
           <iconify-icon class="workflow-arrow" icon="ph:arrow-left-bold" />
-          <span><iconify-icon icon="ph:check-bold" /></span>
+          <span data-step="2"><iconify-icon icon="ph:check-bold" /></span>
           <strong>Add Inspiration</strong>
         </Link000>
         <div className="workflow-connector completed" />

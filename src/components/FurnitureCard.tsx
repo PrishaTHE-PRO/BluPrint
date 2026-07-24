@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FurnitureItem } from '../types';
 import { CATEGORY_LABELS } from '../utils/furnitureLayout';
+import { proxiedImageUrl } from '../utils/furnitureColor';
 
 interface Props {
   item:             FurnitureItem;
@@ -104,11 +105,21 @@ export default function FurnitureCard({
   inRoom,
   onToggleInRoom,
 }: Props) {
-  const [imgSrc, setImgSrc] = useState(item.imageUrl || CATEGORY_FALLBACK[item.category] || '');
+  const categoryFallback = CATEGORY_FALLBACK[item.category] || '';
+  const productUrl = item.imageUrl || categoryFallback;
+  const [imgFailed, setImgFailed] = useState(false);
+  const [imgEpoch, setImgEpoch] = useState(0);
 
   useEffect(() => {
-    setImgSrc(item.imageUrl || CATEGORY_FALLBACK[item.category] || '');
+    setImgFailed(false);
+    setImgEpoch((n) => n + 1);
   }, [item.id, item.imageUrl, item.category]);
+
+  // Proxy retailer CDNs — mobile Safari often blocks hotlinked product photos,
+  // which previously fell back to a generic Unsplash shot that didn't match the item.
+  const imgSrc = imgFailed
+    ? categoryFallback
+    : proxiedImageUrl(productUrl);
 
   const isLinked = linkedCategory === item.category;
   const isDimmed = Boolean(linkedCategory && linkedCategory !== item.category);
@@ -117,6 +128,7 @@ export default function FurnitureCard({
   const linkProps = {
     onMouseEnter: () => onLinkCategory?.(item.category),
     onMouseLeave: () => onLinkCategory?.(null),
+    onClick: () => onLinkCategory?.(item.category),
   };
 
   const shellClass = [
@@ -125,6 +137,23 @@ export default function FurnitureCard({
     isLinked ? 'ring-2 ring-[#D3968C] ring-offset-2 ring-offset-[#0A3323] scale-[1.02]' : '',
     isDimmed ? 'opacity-40' : inRoom ? 'opacity-100' : 'opacity-70',
   ].join(' ');
+
+  const productImage = (
+    <img
+      key={`${item.id}-${imgEpoch}-${imgFailed ? 'fb' : 'src'}`}
+      src={imgSrc}
+      alt={item.name}
+      loading="eager"
+      decoding="async"
+      referrerPolicy="no-referrer"
+      className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-500"
+      onError={() => {
+        if (!imgFailed && categoryFallback && imgSrc !== categoryFallback && imgSrc !== proxiedImageUrl(categoryFallback)) {
+          setImgFailed(true);
+        }
+      }}
+    />
+  );
 
   const inRoomToggle = (
     <button
@@ -145,16 +174,13 @@ export default function FurnitureCard({
 
   if (variant === 'compact') {
     return (
-      <div className={`${shellClass} p-4 flex gap-4 items-stretch`} style={{ animationDelay: animDelay }} {...linkProps}>
+      <div
+        className={`${shellClass} p-4 flex gap-4 items-stretch`}
+        style={{ animationDelay: animDelay }}
+        {...linkProps}
+      >
         <div className="w-28 h-28 bg-[#F7F4D5]/10 rounded-2xl overflow-hidden shadow-inner flex-shrink-0 relative">
-          <img
-            key={`${item.id}-${item.imageUrl || ''}`}
-            src={imgSrc}
-            alt={item.name}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={() => setImgSrc(CATEGORY_FALLBACK[item.category] ?? '')}
-          />
+          {productImage}
         </div>
         <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
           <div className="min-w-0">
@@ -173,7 +199,10 @@ export default function FurnitureCard({
             <div className="flex gap-2 flex-shrink-0">
               <button
                 type="button"
-                onClick={onSwap}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSwap();
+                }}
                 disabled={!canSwap}
                 title={canSwap ? 'Try another product' : 'No other options yet'}
                 className="px-3 py-1.5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
@@ -189,21 +218,18 @@ export default function FurnitureCard({
   }
 
   return (
-    <div className={`${shellClass} p-3 flex flex-col`} style={{ animationDelay: animDelay }} {...linkProps}>
+    <div
+      className={`${shellClass} p-3 flex flex-col`}
+      style={{ animationDelay: animDelay }}
+      {...linkProps}
+    >
       <div className="flex items-center justify-between mb-2">
         <span className="text-[#839958] font-bold text-[9px] uppercase tracking-widest truncate">{categoryLabel}</span>
         {inRoomToggle}
       </div>
 
       <div className="w-full aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg overflow-hidden shadow-inner relative mb-2">
-        <img
-          key={`${item.id}-${item.imageUrl || ''}`}
-          src={imgSrc}
-          alt={item.name}
-          referrerPolicy="no-referrer"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          onError={() => setImgSrc(CATEGORY_FALLBACK[item.category] ?? '')}
-        />
+        {productImage}
       </div>
 
       <div className="flex-1 flex flex-col gap-1 min-w-0">
@@ -219,7 +245,10 @@ export default function FurnitureCard({
           <div className="flex gap-1 flex-shrink-0">
             <button
               type="button"
-              onClick={onSwap}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSwap();
+              }}
               disabled={!canSwap}
               title={canSwap ? 'Try another product' : 'No other options yet'}
               className="px-2 py-0.5 border border-white/10 rounded text-[10px] font-bold hover:bg-white/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"

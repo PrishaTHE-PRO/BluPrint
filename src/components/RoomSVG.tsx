@@ -908,12 +908,20 @@ export default function RoomSVG({
   initialPlacement, onPlacementChange, colorByCategory,
 }: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
-  const dragRef = useRef<{ category: string; offsetX: number; offsetY: number } | null>(null);
+  const dragRef = useRef<{
+    category: string;
+    offsetX: number;
+    offsetY: number;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null>(null);
   const rotateRef = useRef<{
     category: string;
     center: PosFt;
     pointerStartAngle: number;
     rotationStart: number;
+    moved: boolean;
   } | null>(null);
   const resizeRef = useRef<{
     category: string;
@@ -930,6 +938,19 @@ export default function RoomSVG({
   const [rotating,   setRotating]   = useState<string | null>(null);
   const [resizing,   setResizing]   = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [coarsePointer, setCoarsePointer] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(pointer: coarse)');
+    const sync = () => setCoarsePointer(mq.matches);
+    sync();
+    mq.addEventListener?.('change', sync);
+    return () => mq.removeEventListener?.('change', sync);
+  }, []);
+
+  const handleHitR = coarsePointer ? 16 : 9;
+  const dragThresholdFt = coarsePointer ? 0.12 : 0.04;
 
   // Seed from a saved layout exactly once — re-validate against room/cutouts
   // so restored placements cannot sit in holes or outside the room.
@@ -1035,6 +1056,28 @@ export default function RoomSVG({
     };
   }, []);
 
+  const applyRotation = useCallback((category: string, nextRotation: number) => {
+    const item = furniture.find(f => f.category === category);
+    if (!item) return;
+    const scale = scales[category] ?? 1;
+    setRotations(prev => ({ ...prev, [category]: nextRotation }));
+    setPositions(prev => {
+      const occupiedZones = placedFurnitureZones(prev, furniture, rotations, scales, category);
+      return {
+        ...prev,
+        [category]: findValidFurniturePosition(
+          prev[category] ?? defaultPos(category, room),
+          item,
+          nextRotation,
+          cW,
+          cL,
+          [...forbiddenZones, ...occupiedZones],
+          scale,
+        ),
+      };
+    });
+  }, [furniture, rotations, scales, room, cW, cL, forbiddenZones]);
+
   const handlePointerDown = useCallback((category: string, e: React.PointerEvent) => {
     if (e.button !== 0) return; // right-click handled by onContextMenu
     e.preventDefault();
@@ -1047,6 +1090,9 @@ export default function RoomSVG({
       category,
       offsetX: clickFt.x - pos.x,
       offsetY: clickFt.y - pos.y,
+      startX: clickFt.x,
+      startY: clickFt.y,
+      moved: false,
     };
     setDragging(category);
     setSelectedCategory(category);
@@ -1063,11 +1109,13 @@ export default function RoomSVG({
     const { wFt, dFt } = pieceSizeFt(item, scales[category] ?? 1);
     const center = { x: position.x + wFt / 2, y: position.y + dFt / 2 };
     const pointer = clientToFt(e);
+    const rotationStart = rotations[category] ?? defaultRotation(category);
     rotateRef.current = {
       category,
       center,
       pointerStartAngle: Math.atan2(pointer.y - center.y, pointer.x - center.x) * 180 / Math.PI,
-      rotationStart: rotations[category] ?? defaultRotation(category),
+      rotationStart,
+      moved: false,
     };
     svgRef.current?.setPointerCapture(e.pointerId);
     setRotating(category);
@@ -1105,6 +1153,7 @@ export default function RoomSVG({
       e.stopPropagation();
     }
     if (resizingPiece) {
+      e.preventDefault();
       const pointer = clientToFt(e);
       const distance = Math.hypot(
         pointer.x - resizingPiece.center.x,
@@ -1140,6 +1189,7 @@ export default function RoomSVG({
 
     const rotatingPiece = rotateRef.current;
     if (rotatingPiece) {
+      e.preventDefault();
       const pointer = clientToFt(e);
       const pointerAngle = Math.atan2(
         pointer.y - rotatingPiece.center.y,
@@ -1148,6 +1198,9 @@ export default function RoomSVG({
       const nextRotation = rotatingPiece.rotationStart
         + pointerAngle
         - rotatingPiece.pointerStartAngle;
+      if (Math.abs(nextRotation - rotatingPiece.rotationStart) > 6) {
+        rotatingPiece.moved = true;
+      }
       const item = furniture.find(candidate => candidate.category === rotatingPiece.category);
       if (item) {
         const scale = scales[rotatingPiece.category] ?? 1;
@@ -1177,6 +1230,10 @@ export default function RoomSVG({
     const drag = dragRef.current;
     if (!drag) return;
     const clickFt = clientToFt(e);
+    const travel = Math.hypot(clickFt.x - drag.startX, clickFt.y - drag.startY);
+    if (!drag.moved && travel < dragThresholdFt) return;
+    drag.moved = true;
+    e.preventDefault();
     const item    = furniture.find(f => f.category === drag.category);
     if (!item) return;
     const rotation = rotations[drag.category] ?? defaultRotation(drag.category);
@@ -1199,13 +1256,19 @@ export default function RoomSVG({
       ),
       };
     });
-  }, [furniture, rotations, scales, clientToFt, cW, cL, forbiddenZones]);
+  }, [furniture, rotations, scales, clientToFt, cW, cL, forbiddenZones, dragThresholdFt, positions]);
 
   const handlePointerUp = useCallback((e?: React.PointerEvent) => {
+    const rotatingPiece = rotateRef.current;
+    // Tap rotate handle (little/no drag) → snap +90° — reliable on mobile
+    if (rotatingPiece && !rotatingPiece.moved) {
+      applyRotation(rotatingPiece.category, (rotatingPiece.rotationStart + 90) % 360);
+    }
+
     if (e) {
       e.preventDefault();
       e.stopPropagation();
-      if (svgRef.current?.hasPointerCapture(e.pointerId)) {
+      if (svgRef.current?.hasPointerCapture?.(e.pointerId)) {
         svgRef.current.releasePointerCapture(e.pointerId);
       }
     }
@@ -1215,7 +1278,7 @@ export default function RoomSVG({
     setDragging(null);
     setRotating(null);
     setResizing(null);
-  }, []);
+  }, [applyRotation]);
 
   const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -1313,18 +1376,23 @@ export default function RoomSVG({
       className="room-layout-canvas animate-reveal w-full"
       style={{ animationDelay: '0.4s' }}
       onMouseLeave={() => {
+        // Desktop hover clear only — touch selection must stick until tap-away
+        if (coarsePointer) return;
+        if (dragging || rotating || resizing) return;
         setSelectedCategory(null);
         onLinkCategory?.(null);
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <h3 className="text-base font-bold flex items-center gap-2">
+      <div className="flex items-center justify-between mb-3 px-1 gap-2">
+        <h3 className="text-base font-bold flex items-center gap-2 shrink-0">
           <iconify-icon icon="ph:layout-duotone" class="text-[#D3968C]" />
           2D Room Layout
         </h3>
-        <span className="text-[10px] text-[#F7F4D5]/40 font-medium">
-          Drag to move · top handle rotates · corner handle resizes
+        <span className="text-[10px] text-[#F7F4D5]/40 font-medium text-right">
+          {coarsePointer
+            ? 'Tap to select · drag to move · tap/drag top handle to rotate'
+            : 'Drag to move · top handle rotates · corner handle resizes'}
         </span>
       </div>
 
@@ -1332,17 +1400,15 @@ export default function RoomSVG({
       <svg
         ref={svgRef}
         viewBox={`0 0 ${vbW} ${vbH}`}
-        className="w-full rounded-xl"
+        className="w-full rounded-xl room-layout-canvas__svg"
         style={{ maxHeight: '78vh', display: 'block', touchAction: 'none', userSelect: 'none' }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        onPointerLeave={() => {
-          handlePointerUp();
+        onPointerDown={() => {
           setSelectedCategory(null);
           onLinkCategory?.(null);
         }}
-        onPointerDown={() => setSelectedCategory(null)}
       >
         <defs>
           <clipPath id="room-interior-clip">
@@ -1475,10 +1541,12 @@ export default function RoomSVG({
               style={{
                 cursor:     dragging === item.category ? 'grabbing' : 'grab',
                 transition: 'opacity 0.2s',
+                touchAction: 'none',
               }}
               onPointerDown={e => handlePointerDown(item.category, e)}
               onContextMenu={e => handleContextMenu(item.category, e)}
               onMouseEnter={() => {
+                if (coarsePointer) return;
                 setSelectedCategory(item.category);
                 onLinkCategory?.(item.category);
               }}
@@ -1496,10 +1564,10 @@ export default function RoomSVG({
               {/* Keep rotate/resize reachable — opaque hit bridge through the gap above the piece */}
               {showControls && (
                 <rect
-                  x={wPx / 2 - 14}
-                  y={-36}
-                  width={28}
-                  height={40}
+                  x={wPx / 2 - (handleHitR + 6)}
+                  y={-(handleHitR * 2 + 20)}
+                  width={(handleHitR + 6) * 2}
+                  height={handleHitR * 2 + 24}
                   fill="transparent"
                   pointerEvents="all"
                 />
@@ -1520,26 +1588,33 @@ export default function RoomSVG({
                     x1={wPx / 2}
                     y1={-3}
                     x2={wPx / 2}
-                    y2={-18}
+                    y2={-(handleHitR + 9)}
                     stroke="#D3968C"
                     strokeWidth={2}
                   />
                   <g
                     role="button"
                     aria-label={`Rotate ${CATEGORY_LABELS[item.category] ?? item.category}`}
-                    style={{ cursor: rotating === item.category ? 'grabbing' : 'grab' }}
+                    style={{ cursor: rotating === item.category ? 'grabbing' : 'grab', touchAction: 'none' }}
                     onPointerDown={e => handleRotatePointerDown(item.category, e)}
                   >
+                    {/* Invisible larger hit target for fingers */}
                     <circle
                       cx={wPx / 2}
-                      cy={-24}
-                      r={9}
+                      cy={-(handleHitR + 15)}
+                      r={handleHitR + 6}
+                      fill="transparent"
+                    />
+                    <circle
+                      cx={wPx / 2}
+                      cy={-(handleHitR + 15)}
+                      r={handleHitR}
                       fill="#D3968C"
                       stroke="#F7F4D5"
                       strokeWidth={2}
                     />
                     <path
-                      d={`M ${wPx / 2 - 4} -24 A 4 4 0 1 1 ${wPx / 2 + 2} -20`}
+                      d={`M ${wPx / 2 - handleHitR * 0.45} ${-(handleHitR + 15)} A ${handleHitR * 0.45} ${handleHitR * 0.45} 0 1 1 ${wPx / 2 + handleHitR * 0.22} ${-(handleHitR + 15) + handleHitR * 0.45}`}
                       fill="none"
                       stroke="#F7F4D5"
                       strokeWidth={1.8}
@@ -1599,10 +1674,11 @@ export default function RoomSVG({
                   role="button"
                   aria-label={`Resize ${CATEGORY_LABELS[item.category] ?? item.category}`}
                   transform={`translate(${wPx.toFixed(1)},${dPx.toFixed(1)})`}
-                  style={{ cursor: resizing === item.category ? 'grabbing' : 'nwse-resize' }}
+                  style={{ cursor: resizing === item.category ? 'grabbing' : 'nwse-resize', touchAction: 'none' }}
                   onPointerDown={e => handleResizePointerDown(item.category, e)}
                 >
-                  <circle r={9} fill="#839958" stroke="#F7F4D5" strokeWidth={2} />
+                  <circle r={handleHitR + 6} fill="transparent" />
+                  <circle r={handleHitR} fill="#839958" stroke="#F7F4D5" strokeWidth={2} />
                   <path
                     d="M -4 2 L 2 -4 M -1 4 L 4 -1"
                     fill="none"
@@ -1617,20 +1693,31 @@ export default function RoomSVG({
         })}
       </svg>
 
-      {/* Category legend / hover targets */}
+      {/* Category legend / tap targets */}
       <div className="mt-3 flex flex-wrap gap-1.5 px-1">
         {furniture.map(item => (
           <button
             key={item.id}
             type="button"
             className={[
-              'text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all',
-              linkedCategory === item.category
+              'text-[10px] font-bold px-2 py-1.5 rounded-full border transition-all',
+              linkedCategory === item.category || selectedCategory === item.category
                 ? 'bg-[#D3968C]/30 border-[#D3968C] text-[#F7F4D5]'
                 : 'bg-[#105666]/20 border-[#F7F4D5]/10 text-[#F7F4D5]/60 hover:border-[#D3968C]/40',
             ].join(' ')}
-            onMouseEnter={() => onLinkCategory?.(item.category)}
-            onMouseLeave={() => onLinkCategory?.(null)}
+            onClick={() => {
+              const next = selectedCategory === item.category ? null : item.category;
+              setSelectedCategory(next);
+              onLinkCategory?.(next);
+            }}
+            onMouseEnter={() => {
+              if (coarsePointer) return;
+              onLinkCategory?.(item.category);
+            }}
+            onMouseLeave={() => {
+              if (coarsePointer) return;
+              onLinkCategory?.(null);
+            }}
           >
             {CATEGORY_LABELS[item.category] ?? item.category}
           </button>

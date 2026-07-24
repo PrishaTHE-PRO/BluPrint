@@ -146,6 +146,7 @@
       line-height: 0;
     }
     .nav-signin { padding: 11px 15px; color: var(--blue-dark); font-size: 14px; font-weight: 700; }
+    .nav-cta__short { display: none; }
 
     html.dark-mode {
       color-scheme: dark;
@@ -569,6 +570,12 @@
 
     @media (max-width: 900px) {
       .nav-links { display: none; }
+      .site-nav {
+        width: calc(100% - 24px);
+        padding: 8px 10px 8px 14px;
+        gap: 10px;
+      }
+      .nav-actions { gap: 8px; flex-shrink: 0; margin-left: auto; }
       .hero { grid-template-columns: 1fr; padding-top: 150px; }
       .hero-copy { max-width: 680px; }
       .product-stage { min-height: 560px; }
@@ -582,8 +589,46 @@
     }
     @media (max-width: 600px) {
       .shell { width: min(100% - 32px, 1180px); }
-      .site-nav { top: 10px; min-height: 60px; border-radius: 16px; }
+      .site-nav {
+        top: 10px;
+        width: calc(100% - 16px);
+        min-height: 52px;
+        padding: 6px 8px 6px 10px;
+        border-radius: 16px;
+        gap: 8px;
+      }
+      .brand {
+        gap: 0;
+        margin-right: 0;
+        min-width: 0;
+        flex-shrink: 0;
+      }
+      .brand-name { display: none; }
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 18px;
+      }
       .nav-signin { display: none; }
+      .nav-actions { gap: 6px; }
+      .nav-theme-btn,
+      .nav-theme-switch {
+        flex-shrink: 0;
+        transform: scale(0.92);
+        transform-origin: center;
+      }
+      .site-nav .nav-cta {
+        min-height: 40px;
+        padding: 0 12px;
+        font-size: 13px;
+        gap: 6px;
+        border-radius: 11px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .nav-cta__full { display: none; }
+      .nav-cta__short { display: inline; }
       .hero { padding-top: 120px; padding-bottom: 56px; }
       .hero h1 { font-size: 52px; }
       .product-stage { min-height: 440px; margin-top: 10px; }
@@ -615,7 +660,7 @@
   <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html" aria-label="BluPrint home">
       <span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>
-      BluPrint
+      <span class="brand-name">BluPrint</span>
     </a>
     <div class="nav-links">
       <a href="#features">What it does</a>
@@ -625,7 +670,11 @@
     <div class="nav-actions">
       <div data-theme-switch class="nav-theme-btn nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
       <a class="nav-signin" href="login.html">Sign in</a>
-      <a class="button button-primary" href="login.html">Design my room <span aria-hidden="true">↗</span></a>
+      <a class="button button-primary nav-cta" href="login.html" aria-label="Design my room">
+        <span class="nav-cta__full">Design my room</span>
+        <span class="nav-cta__short">Design</span>
+        <span aria-hidden="true">↗</span>
+      </a>
     </div>
   </nav>
 

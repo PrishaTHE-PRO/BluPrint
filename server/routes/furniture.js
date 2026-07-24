@@ -481,7 +481,7 @@ const STYLE_FALLBACK = {
     images: {
       bed: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=800",
       nightstand: "https://images.unsplash.com/photo-1594026112284-02bb6f3352cd?auto=format&fit=crop&q=80&w=800",
-      dresser: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800",
+      dresser: "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
       bedroom_rug: "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
       bedside_lamp: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=800",
       wardrobe: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
@@ -634,6 +634,99 @@ const GENERIC_FALLBACK_IMAGES = {
   wall_art: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80&w=800",
 };
 
+/** Extra category photos so Swap cycles distinct pictures (not the same stock shot). */
+const CATEGORY_IMAGE_VARIANTS = {
+  bed: [
+    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=800",
+  ],
+  nightstand: [
+    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1594026112284-02bb6f3352cd?auto=format&fit=crop&q=80&w=800",
+  ],
+  dresser: [
+    "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&q=80&w=800",
+  ],
+  bedroom_rug: [
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+  ],
+  bedside_lamp: [
+    "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?auto=format&fit=crop&q=80&w=800",
+  ],
+  wardrobe: [
+    "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+  ],
+  sofa: [
+    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+  ],
+  coffee_table: [
+    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1532372320572-cda25653a26d?auto=format&fit=crop&q=80&w=800",
+  ],
+  rug: [
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1600166898405-da9535204843?auto=format&fit=crop&q=80&w=800",
+  ],
+  floor_lamp: [
+    "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?auto=format&fit=crop&q=80&w=800",
+  ],
+  accent_chair: [
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&q=80&w=800",
+  ],
+  side_table: [
+    "https://images.unsplash.com/photo-1594026112284-02bb6f3352cd?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+  ],
+  reading_nook: [
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&q=80&w=800",
+  ],
+  desk: [
+    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+  ],
+  office_chair: [
+    "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&q=80&w=800",
+  ],
+  dining_table: [
+    "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800",
+  ],
+  dining_chair: [
+    "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=800",
+  ],
+  vanity: [
+    "https://images.unsplash.com/photo-1594620302200-9a7622441566?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800",
+  ],
+  indoor_plants: [
+    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1459411552884-841db9b3cb2a?auto=format&fit=crop&q=80&w=800",
+  ],
+  wall_art: [
+    "https://images.unsplash.com/photo-1513519245088-0e12902e35a6?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1541961017774-22349e4a1262?auto=format&fit=crop&q=80&w=800",
+  ],
+};
+
+function fallbackImagePool(catKey, styleImage) {
+  const pool = [
+    styleImage,
+    GENERIC_FALLBACK_IMAGES[catKey],
+    ...(CATEGORY_IMAGE_VARIANTS[catKey] || []),
+  ].filter(Boolean);
+  return [...new Set(pool)];
+}
+
 const FALLBACK_PRICES = {
   bed: 890, nightstand: 160, dresser: 520, bedroom_rug: 240, bedside_lamp: 75, wardrobe: 680,
   sofa: 980, coffee_table: 220, rug: 260, floor_lamp: 120, accent_chair: 340, side_table: 140,
@@ -656,9 +749,7 @@ function fallbackItemsForCategory(cat, styleTag) {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
   const basePrice = FALLBACK_PRICES[cat.key] || 180;
-  const imageUrl = catalog.images[cat.key]
-    || GENERIC_FALLBACK_IMAGES[cat.key]
-    || GENERIC_FALLBACK_IMAGES.accent_chair;
+  const images = fallbackImagePool(cat.key, catalog.images[cat.key]);
 
   return [0, 1, 2].map((i) => {
     const finish = catalog.finishes[i % catalog.finishes.length];
@@ -669,7 +760,10 @@ function fallbackItemsForCategory(cat, styleTag) {
       category: cat.key,
       brand: catalog.brand,
       price: Math.round(basePrice * (1 + i * 0.12)),
-      imageUrl,
+      // Each swap option gets its own photo so the card image matches the item.
+      imageUrl: images[i % images.length]
+        || GENERIC_FALLBACK_IMAGES[cat.key]
+        || GENERIC_FALLBACK_IMAGES.accent_chair,
       buyUrl: `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(`${catalog.label} ${finish} ${cat.product || cat.key}`)}`,
       styleTag: style,
       color: tones[i % tones.length],

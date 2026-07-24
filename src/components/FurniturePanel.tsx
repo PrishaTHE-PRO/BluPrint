@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { FurnitureItem, Style } from '../types';
 import { orderedFurniture } from '../utils/furnitureLayout';
 import FurnitureCard from './FurnitureCard';
@@ -32,13 +32,23 @@ export default function FurniturePanel({
   hiddenCategories,
   onToggleInRoom,
 }: Props) {
+  const stripRef = useRef<HTMLDivElement>(null);
   const displayed = orderedFurniture(slots, roomType);
   const total = displayed
     .filter((item) => !hiddenCategories.has(item.category))
     .reduce((sum, item) => sum + item.price, 0);
 
+  // Keep the shop photo for the selected floor-plan piece in view (critical on mobile).
+  useEffect(() => {
+    if (!linkedCategory || !stripRef.current) return;
+    const card = stripRef.current.querySelector<HTMLElement>(
+      `[data-furniture-card="${CSS.escape(linkedCategory)}"]`,
+    );
+    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [linkedCategory]);
+
   const cards = displayed.map((item, i) => (
-    <div key={item.category} className="furniture-strip-card shrink-0">
+    <div key={item.id} className="furniture-strip-card shrink-0" data-furniture-card={item.category}>
       <FurnitureCard
         item={item}
         canSwap
@@ -130,7 +140,7 @@ export default function FurniturePanel({
       {views}
       <div className="furniture-h-strip mt-5 animate-reveal" style={{ animationDelay: '0.5s' }}>
         <div className="furniture-h-strip__label">Shop pieces</div>
-        <div className="furniture-h-strip__track custom-furniture-scroll">
+        <div ref={stripRef} className="furniture-h-strip__track custom-furniture-scroll">
           {cards}
         </div>
       </div>
