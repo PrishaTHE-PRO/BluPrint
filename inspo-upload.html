@@ -1108,6 +1108,9 @@
         state.selectedBathFixture = BATH_FIXTURES[Math.floor(Math.random() * BATH_FIXTURES.length)].id;
       }
       const preservedBudget = resolveBudgetTotal();
+      if (preservedBudget != null) {
+        localStorage.setItem('blueprintBudgetTotal', String(preservedBudget));
+      }
       localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
       localStorage.setItem('blueprintStyleResult', JSON.stringify({
         roomType:     state.selectedRoomType,

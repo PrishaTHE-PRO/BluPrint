@@ -104,6 +104,15 @@
       backdrop-filter: blur(22px);
     }
     .brand { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; font-size: 20px; font-weight: 700; }
+    .brand-name {
+      font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink);
+      line-height: 1;
+    }
     .brand-mark {
       display: grid;
       width: 38px;
@@ -601,14 +610,16 @@
         gap: 0;
         margin-right: 0;
         min-width: 0;
-        flex-shrink: 0;
+        flex-shrink: 1;
       }
-      .brand-name { display: none; }
-      .brand-mark {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        font-size: 18px;
+      .brand-name {
+        display: inline !important;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        max-width: 9.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .nav-signin { display: none; }
       .nav-actions { gap: 6px; }
@@ -659,8 +670,7 @@
   <span class="ambient-orb ambient-three"></span>
   <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html" aria-label="BluPrint home">
-      <span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>
-      <span class="brand-name">BluPrint</span>
+      <span class="brand-name">BLUPRINT</span>
     </a>
     <div class="nav-links">
       <a href="#features">What it does</a>
@@ -718,7 +728,7 @@
                 <path d="M32 280Q70 280 70 328" stroke="#294F7D" stroke-width="3" stroke-dasharray="5 4"/>
                 <path d="M145 28h105" stroke="#8FC5E7" stroke-width="9" stroke-linecap="round"/>
                 <text x="210" y="350" text-anchor="middle" fill="#756D63" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
-              </svg>
+      </svg>
             </div>
             <aside class="side-list" aria-hidden="true">
               <div class="side-heading"><span>Furniture</span><span>$4,920</span></div>
@@ -745,7 +755,7 @@
           <span>Measure</span><span>Inspire</span><span>Analyze</span><span>Arrange</span><span>Resize</span><span>Shop</span><span>Save</span>
         </div>
       </div>
-    </div>
+          </div>
 
     <section class="section shell" id="features">
       <div class="section-heading reveal">

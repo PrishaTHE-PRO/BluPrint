@@ -1554,6 +1554,25 @@ a.workflow-step:focus-visible {
   stroke-width: 14 !important;
   pointer-events: all;
 }
+.page-dimensions #editor-svg,
+.page-dimensions .placed-element-group,
+.page-dimensions .cutout-group,
+.page-dimensions .vertex-handle,
+.page-dimensions .window-resize-handle,
+.page-dimensions .cutout-move-hit,
+.page-dimensions .cutout-resize-handle-group,
+.page-dimensions .door-hit-area,
+.page-dimensions .finalized-cutout-hit {
+  touch-action: none;
+}
+@media (pointer: coarse) {
+  .page-dimensions .door-hit-area {
+    stroke-width: 28 !important;
+  }
+  .page-dimensions .cutout-resize-handle-hit {
+    r: 18;
+  }
+}
 .page-dimensions #window-template rect {
   fill: var(--dimension-window) !important;
   stroke: var(--dimension-window) !important;
@@ -2604,20 +2623,28 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-result .furniture-strip-card a {
     min-height: 32px;
   }
+  .page-dimensions {
+    overflow-x: hidden;
+  }
   .page-dimensions > .min-h-screen {
     min-height: 100dvh !important;
+    overflow-x: hidden !important;
     overflow-y: auto !important;
   }
   .page-dimensions main {
     overflow: visible !important;
     flex-direction: column;
     width: min(100% - 32px, 760px) !important;
+    max-width: 100% !important;
     padding: 18px 0 96px !important;
     gap: 18px !important;
+    box-sizing: border-box;
   }
   .page-dimensions main > section:first-child,
   .page-dimensions main > section:last-child {
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     min-height: auto !important;
     height: auto !important;
     margin-top: 0 !important;
@@ -2626,9 +2653,28 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-dimensions main > section:first-child {
     gap: 14px !important;
   }
+  /* Keep the floor-plan grid fully on-screen: width drives size, not min-height. */
   .page-dimensions .canvas-area {
-    min-height: clamp(340px, 62vh, 560px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
     aspect-ratio: 8 / 5;
+    margin-inline: auto;
+    overflow: hidden !important;
+  }
+  .page-dimensions #canvas-container,
+  .page-dimensions #editor-svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  .page-dimensions #editor-svg {
+    height: 100% !important;
+    display: block;
+    margin: 0 auto;
+    padding: 6px !important;
   }
   .page-dimensions main > section:last-child > div {
     overflow: visible !important;
@@ -2662,6 +2708,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .app-brand {
     min-width: 0;
     flex: 1 1 auto;
+    margin-left: -6px;
   }
   .app-brand > span {
     display: inline !important;
@@ -2706,37 +2753,36 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     padding: 24px 20px 60px !important;
   }
   .page-result .app-nav {
-    position: static !important;
-    z-index: 300 !important;
+    position: sticky !important;
+    top: 10px !important;
+    z-index: 400 !important;
   }
   .page-result .app-nav-links {
     display: none !important;
   }
   .page-result .profile-menu-wrap {
     position: relative;
-    z-index: 320 !important;
+    z-index: 420 !important;
   }
-  .page-result .profile-popup {
+  .page-result .profile-popup,
+  .profile-popup.profile-popup-fixed {
     position: fixed !important;
-    top: 66px !important;
-    right: 10px !important;
-    z-index: 999 !important;
-    width: min(300px, calc(100vw - 20px)) !important;
-    max-width: calc(100vw - 20px);
+    z-index: 5000 !important;
   }
   .page-result .workflow-steps {
-    justify-content: flex-start;
+    justify-content: center;
     gap: 8px !important;
     padding: 12px 16px !important;
-    overflow-x: auto;
-    scrollbar-width: none;
+    overflow-x: visible;
+    width: 100%;
+    margin-inline: auto;
   }
   .page-result .workflow-steps::-webkit-scrollbar {
     display: none;
   }
   .page-result .workflow-step {
     flex: 0 0 auto;
-    gap: 7px !important;
+    gap: 0 !important;
     font-size: 12px !important;
     white-space: nowrap;
   }
@@ -2832,6 +2878,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   }
   .page-dimensions main {
     width: calc(100% - 24px) !important;
+    max-width: 100% !important;
     padding-top: 14px !important;
     padding-bottom: 84px !important;
   }
@@ -2846,7 +2893,10 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     margin-top: 12px !important;
   }
   .page-dimensions .canvas-area {
-    min-height: 330px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    aspect-ratio: 8 / 5;
     border-radius: 14px !important;
   }
   .page-dimensions #editor-svg {
@@ -3054,13 +3104,14 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
 .profile-popup.hidden { display: none !important; }
 
 .page-result .app-nav {
-  z-index: 300 !important;
+  z-index: 400 !important;
 }
 .page-result .profile-menu-wrap {
-  z-index: 320 !important;
+  z-index: 420 !important;
 }
-.page-result .profile-popup {
-  z-index: 340 !important;
+.page-result .profile-popup,
+.profile-popup.profile-popup-fixed {
+  z-index: 5000 !important;
 }
 
 .profile-popup-header {
@@ -3220,7 +3271,7 @@ html.dark-mode .profile-popup-footer {
 .settings-overlay {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 5100;
   display: flex;
   align-items: center;
   justify-content: center;

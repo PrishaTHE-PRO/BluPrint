@@ -726,7 +726,7 @@ export default function RoomResult() {
         </div>
       </nav>
 
-      <main className="relative z-10 max-w-[1600px] mx-auto p-8 lg:p-12">
+      <main className="relative z-0 max-w-[1600px] mx-auto p-8 lg:p-12">
 
         <header className="mb-8 animate-reveal" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-baseline gap-4 mb-2">

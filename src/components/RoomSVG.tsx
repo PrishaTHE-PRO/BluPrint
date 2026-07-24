@@ -13,10 +13,13 @@ import { tonesFrom } from '../utils/furnitureColor';
 import { furnitureForm } from '../utils/furnitureShape';
 import {
   architectureForbiddenZonesFromLayout,
+  bedArchitectureZones,
   editorPtToFt as editorPtToFtShared,
   findValidFurniturePosition,
   furnitureBounds,
+  isBedLikeCategory,
   pieceSizeFt,
+  preferredBedPlacement,
   resolveFurniturePlacement,
   type ForbiddenRect,
   type PosFt,
@@ -147,6 +150,7 @@ function preferredFurniturePosition(
   furniture: FurnitureItem[],
   roomWidthFt: number,
   roomLengthFt: number,
+  rotations: Record<string, number> = {},
 ): PosFt {
   const { wFt, dFt } = pieceSizeFt(item);
   const inset = 0.35;
@@ -159,7 +163,11 @@ function preferredFurniturePosition(
     const anchorItem = furniture.find(candidate => candidate.category === category);
     const position = positions[category];
     return anchorItem && position
-      ? { position, size: pieceSizeFt(anchorItem) }
+      ? {
+          position,
+          size: pieceSizeFt(anchorItem),
+          rotation: rotations[category] ?? defaultRotation(category),
+        }
       : null;
   };
 
@@ -188,21 +196,43 @@ function preferredFurniturePosition(
         : { x: roomWidthFt - wFt - inset, y: roomLengthFt - dFt - inset };
     }
 
-    // Bedroom: headboard on the back wall, clear foot traffic, storage on
-    // opposite walls — no chair cluster along one edge.
+    // Bedroom: headboard flush to a wall (see preferredBedPlacement). Fallback
+    // here is top-wall centered if the smarter placer is not used.
     case 'bed':
+    case 'crib':
       return {
         x: Math.max(inset, (roomWidthFt - wFt) / 2),
         y: inset + Math.min(0.6, roomLengthFt * 0.04),
       };
     case 'nightstand': {
       const bed = anchor('bed');
-      return bed
-        ? {
-            x: Math.max(inset, bed.position.x - wFt - gap),
-            y: bed.position.y + Math.max(0, bed.size.dFt * 0.08),
-          }
-        : { x: inset, y: inset };
+      if (!bed) return { x: inset, y: inset };
+      const rot = ((bed.rotation % 360) + 360) % 360;
+      // Sit beside the headboard, not the foot.
+      if (rot === 90) {
+        // Headboard on right wall.
+        return {
+          x: bed.position.x + Math.max(0, bed.size.wFt - wFt) * 0.85,
+          y: Math.max(inset, bed.position.y - dFt - gap),
+        };
+      }
+      if (rot === 180) {
+        return {
+          x: Math.max(inset, bed.position.x - wFt - gap),
+          y: bed.position.y + Math.max(0, bed.size.dFt - dFt - bed.size.dFt * 0.08),
+        };
+      }
+      if (rot === 270) {
+        // Headboard on left wall.
+        return {
+          x: bed.position.x + Math.max(0, bed.size.wFt * 0.05),
+          y: Math.max(inset, bed.position.y - dFt - gap),
+        };
+      }
+      return {
+        x: Math.max(inset, bed.position.x - wFt - gap),
+        y: bed.position.y + Math.max(0, bed.size.dFt * 0.08),
+      };
     }
     case 'bedside_lamp': {
       const nightstand = anchor('nightstand');
@@ -357,7 +387,6 @@ function preferredFurniturePosition(
       return { x: roomWidthFt - wFt - inset, y: inset };
     case 'kitchen_shelf':
     case 'vanity':
-    case 'crib':
       return { x: inset, y: inset };
     case 'bath_mirror':
     case 'bath_light': {
@@ -959,23 +988,50 @@ export default function RoomSVG({
     seededRef.current = true;
     const { widthFt, lengthFt } = canvasDimsFt(room, roomLayout);
     const zones = architectureForbiddenZonesFromLayout(roomLayout);
+    const bedZones = bedArchitectureZones(roomLayout);
     const nextPositions: Record<string, PosFt> = { ...initialPlacement.positions };
     const nextRotations = { ...initialPlacement.rotations };
     const nextScales = { ...initialPlacement.scales };
 
     furniture.forEach((item) => {
-      const rotation = nextRotations[item.category] ?? defaultRotation(item.category);
       const scale = nextScales[item.category] ?? 1;
       const occupied = placedFurnitureZones(nextPositions, furniture, nextRotations, nextScales, item.category);
-      const desired = nextPositions[item.category]
-        ?? preferredFurniturePosition(item, nextPositions, furniture, widthFt, lengthFt);
+      let rotation = nextRotations[item.category] ?? defaultRotation(item.category);
+      let desired = nextPositions[item.category];
+
+      if (!desired && isBedLikeCategory(item.category)) {
+        const placement = preferredBedPlacement(
+          item,
+          widthFt,
+          lengthFt,
+          roomLayout,
+          [...bedZones, ...occupied],
+          scale,
+        );
+        desired = placement.position;
+        if (nextRotations[item.category] === undefined) {
+          rotation = placement.rotation;
+          nextRotations[item.category] = placement.rotation;
+        }
+      }
+
+      desired ??= preferredFurniturePosition(
+        item,
+        nextPositions,
+        furniture,
+        widthFt,
+        lengthFt,
+        nextRotations,
+      );
+
+      const archZones = isBedLikeCategory(item.category) ? bedZones : zones;
       const resolved = resolveFurniturePlacement(
         desired,
         item,
         rotation,
         widthFt,
         lengthFt,
-        [...zones, ...occupied],
+        [...archZones, ...occupied],
         scale,
       );
       nextPositions[item.category] = resolved.position;
@@ -1002,28 +1058,62 @@ export default function RoomSVG({
 
   // Initialise default positions when furniture changes — keep clear of cutouts.
   useEffect(() => {
+    const rotationUpdates: Record<string, number> = {};
+
     setPositions((prev) => {
       const next = { ...prev };
       const workingScales = { ...scales };
+      const workingRotations = { ...rotations };
       const scaleUpdates: Record<string, number> = {};
 
       furniture.forEach((item) => {
         const occupiedZones = placedFurnitureZones(
           next,
           furniture,
-          rotations,
+          workingRotations,
           workingScales,
           item.category,
         );
-        const rotation = rotations[item.category] ?? defaultRotation(item.category);
         const scale = workingScales[item.category] ?? 1;
+        let rotation = workingRotations[item.category] ?? defaultRotation(item.category);
+        let desired = next[item.category];
+
+        if (!desired && isBedLikeCategory(item.category)) {
+          const placement = preferredBedPlacement(
+            item,
+            cW,
+            cL,
+            roomLayout,
+            [...bedArchitectureZones(roomLayout), ...occupiedZones],
+            scale,
+          );
+          desired = placement.position;
+          if (workingRotations[item.category] === undefined) {
+            rotation = placement.rotation;
+            workingRotations[item.category] = placement.rotation;
+            rotationUpdates[item.category] = placement.rotation;
+          }
+        }
+
+        desired ??= preferredFurniturePosition(
+          item,
+          next,
+          furniture,
+          cW,
+          cL,
+          workingRotations,
+        );
+
+        const archZones = isBedLikeCategory(item.category)
+          ? bedArchitectureZones(roomLayout)
+          : forbiddenZones;
         const resolved = resolveFurniturePlacement(
-          next[item.category] ?? preferredFurniturePosition(item, next, furniture, cW, cL),
+          desired,
           item,
           rotation,
           cW,
           cL,
-          [...forbiddenZones, ...occupiedZones],
+          [...archZones, ...occupiedZones],
           scale,
         );
         next[item.category] = resolved.position;
@@ -1038,7 +1128,11 @@ export default function RoomSVG({
       }
       return next;
     });
-  }, [furniture, forbiddenZones, room, rotations, scales, cW, cL]);
+
+    if (Object.keys(rotationUpdates).length > 0) {
+      setRotations((prev) => ({ ...prev, ...rotationUpdates }));
+    }
+  }, [furniture, forbiddenZones, room, roomLayout, rotations, scales, cW, cL]);
 
   // Convert a pointer-event client coordinate to room-space feet
   const clientToFt = useCallback((e: React.PointerEvent): PosFt => {

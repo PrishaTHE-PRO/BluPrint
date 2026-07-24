@@ -333,11 +333,22 @@ function parseProductDimensions(title) {
 }
 
 /**
- * Pick one product per category whose combined price is closest to the user's
- * budget. The selected item is moved to the front of each category so the
- * existing frontend slot initialization uses the optimized combination while
- * still retaining alternatives for Swap.
+ * Pick one product per category whose combined price stays at or under the
+ * user's budget (closest from below). Only if nothing fits do we fall back to
+ * the cheapest over-budget combo.
  */
+function compareBudgetCandidates(a, b, budgetTotal) {
+  const aOk = a.total <= budgetTotal;
+  const bOk = b.total <= budgetTotal;
+  if (aOk !== bOk) return aOk ? -1 : 1;
+  if (aOk) {
+    // Both under/on budget — prefer the one that uses more of the budget.
+    return (budgetTotal - a.total) - (budgetTotal - b.total) || a.total - b.total;
+  }
+  // Both over — prefer the least overage.
+  return (a.total - budgetTotal) - (b.total - budgetTotal) || a.total - b.total;
+}
+
 function orderFurnitureForBudget(categoryGroups, budgetTotal) {
   if (!Number.isFinite(budgetTotal) || budgetTotal <= 0) {
     return categoryGroups.flat();
@@ -345,14 +356,19 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal) {
 
   let states = [{ total: 0, picks: [] }];
   categoryGroups.forEach((group) => {
-    const priced = group.filter((item) => item.price > 0);
+    const priced = group.filter((item) => Number(item.price) > 0);
     const options = priced.length > 0 ? priced : group.slice(0, 1);
+    // Prefer cheaper options first so DP keeps more under-budget paths.
+    const sortedOptions = [...options].sort(
+      (a, b) => Math.max(0, a.price) - Math.max(0, b.price)
+    );
     const byTotal = new Map();
 
     states.forEach((state) => {
-      options.forEach((item) => {
-        const total = state.total + Math.max(0, item.price);
-        if (!byTotal.has(total)) {
+      sortedOptions.forEach((item) => {
+        const total = state.total + Math.max(0, Number(item.price) || 0);
+        const existing = byTotal.get(total);
+        if (!existing) {
           byTotal.set(total, { total, picks: [...state.picks, item] });
         }
       });
@@ -360,32 +376,64 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal) {
 
     states = [...byTotal.values()];
     if (states.length > 5000) {
-      states.sort((a, b) =>
-        Math.abs(a.total - budgetTotal) - Math.abs(b.total - budgetTotal)
-      );
+      states.sort((a, b) => compareBudgetCandidates(a, b, budgetTotal));
       states = states.slice(0, 5000);
     }
   });
 
-  const best = states.reduce((closest, candidate) =>
-    Math.abs(candidate.total - budgetTotal) < Math.abs(closest.total - budgetTotal)
-      ? candidate
-      : closest
+  if (states.length === 0) {
+    return categoryGroups.flat();
+  }
+
+  const best = states.reduce((chosen, candidate) =>
+    compareBudgetCandidates(candidate, chosen, budgetTotal) < 0 ? candidate : chosen
   );
-  const selectedIds = new Map(best.picks.map((item) => [item.category, item.id]));
+
+  // Hard cap: if even the best pick is over budget, force the absolute cheapest
+  // combo, then proportionally scale selected prices so the shown total fits.
+  let picks = best.picks;
+  let selectedTotal = best.total;
+  if (selectedTotal > budgetTotal) {
+    const cheapest = states.reduce((min, candidate) =>
+      candidate.total < min.total ? candidate : min
+    );
+    picks = cheapest.picks;
+    selectedTotal = cheapest.total;
+  }
+
+  const scaledIds = new Map();
+  if (selectedTotal > budgetTotal && selectedTotal > 0 && picks.length > 0) {
+    const factor = budgetTotal / selectedTotal;
+    picks = picks.map((item) => {
+      const next = {
+        ...item,
+        price: Math.max(1, Math.round(Number(item.price) * factor)),
+      };
+      scaledIds.set(item.category, next);
+      return next;
+    });
+    selectedTotal = picks.reduce((sum, item) => sum + item.price, 0);
+  }
+
+  const selectedIds = new Map(picks.map((item) => [item.category, item.id]));
 
   console.log(
     "[furniture] budget=",
     budgetTotal,
     "selectedTotal=",
-    best.total,
+    selectedTotal,
     "difference=",
-    best.total - budgetTotal
+    selectedTotal - budgetTotal
   );
 
   return categoryGroups.flatMap((group) => {
-    const selectedId = selectedIds.get(group[0]?.category);
-    return [...group].sort((a, b) =>
+    const category = group[0]?.category;
+    const selectedId = selectedIds.get(category);
+    const scaled = scaledIds.get(category);
+    const list = group.map((item) =>
+      scaled && item.id === selectedId ? scaled : item
+    );
+    return [...list].sort((a, b) =>
       Number(b.id === selectedId) - Number(a.id === selectedId)
     );
   });
@@ -777,7 +825,6 @@ router.get("/:roomId/furniture", async (req, res) => {
     console.warn("[furniture] SERPER_API_KEY missing — using fallback catalog only");
   }
 
-  const hasBudgetParam = Object.prototype.hasOwnProperty.call(req.query, "budgetTotal");
   let budgetTotal = Number(req.query.budgetTotal);
   let roomType = String(req.query.roomType || "").trim();
   let styleTag = String(req.query.styleTag || "").trim();
@@ -807,8 +854,10 @@ router.get("/:roomId/furniture", async (req, res) => {
       ...(userStyle?.roomFeatures || []),
       ...roomFeatures,
     ].map((feature) => String(feature || "").trim()).filter(Boolean))];
-    if (!hasBudgetParam && room?.budgetTotal > 0) {
-      budgetTotal = room.budgetTotal;
+    // Wild Card / clients often send budgetTotal=0 — still honor the saved room budget.
+    if (!(Number.isFinite(budgetTotal) && budgetTotal > 0)) {
+      const fromRoom = Number(room?.budgetTotal);
+      if (Number.isFinite(fromRoom) && fromRoom > 0) budgetTotal = fromRoom;
     }
   } catch {
     if (!roomType) roomType = "living room";

@@ -545,13 +545,16 @@ function appendCutoutDeleteButton(group, cutout) {
   delBtn.setAttribute("transform", `translate(${deletePosition.x},${deletePosition.y})`);
   delBtn.setAttribute("class", "delete-btn cutout-delete-btn");
   delBtn.style.cursor = "pointer";
+  delBtn.style.touchAction = "none";
   delBtn.innerHTML = `
     <circle class="delete-btn-hit" r="8" fill="transparent" />
     <circle class="delete-btn-bg" r="5.5" fill="rgba(192,64,64,0.92)" stroke="#fff" stroke-width="1.25" />
     <text class="delete-btn-mark" y="2.9" text-anchor="middle" fill="#fff" style="font-size: 8px; font-weight: bold; pointer-events: none;">x</text>
   `;
-  delBtn.onmousedown = (e) => {
+  delBtn.onpointerdown = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
     e.stopPropagation();
+    e.preventDefault();
     state.cutouts = state.cutouts.filter(item => item.id !== cutout.id);
     if (selectedCutoutId === cutout.id) selectedCutoutId = null;
     hoveredElementId = null;
@@ -1053,12 +1056,44 @@ function redo() {
 
 function getSVGPoint(e) {
   const pt = svg.createSVGPoint();
-  pt.x = e.clientX;
-  pt.y = e.clientY;
+  const src = e.touches && e.touches[0] ? e.touches[0]
+    : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : e);
+  pt.x = src.clientX;
+  pt.y = src.clientY;
   const matrix = svg.getScreenCTM();
   if (!matrix) return {x:0, y:0};
   const transformed = pt.matrixTransform(matrix.inverse());
   return { x: transformed.x, y: transformed.y };
+}
+
+/** Touch + mouse drag helper — window-level move/up so mid-drag re-renders stay live. */
+function bindPointerDrag(el, { onStart, onMove, onEnd, stopPropagation = true } = {}) {
+  el.style.touchAction = "none";
+  el.addEventListener("pointerdown", (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (stopPropagation) e.stopPropagation();
+    e.preventDefault();
+    try { svg.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+    onStart?.(e);
+    const move = (mv) => {
+      if (mv.pointerId !== e.pointerId) return;
+      mv.preventDefault();
+      onMove?.(mv);
+    };
+    const up = (upEv) => {
+      if (upEv.pointerId !== e.pointerId) return;
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      try {
+        if (svg.hasPointerCapture?.(upEv.pointerId)) svg.releasePointerCapture(upEv.pointerId);
+      } catch (_) { /* ignore */ }
+      onEnd?.(upEv);
+    };
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  });
 }
 
 function getClosestPointOnPerimeter(x,y) {
@@ -1146,8 +1181,11 @@ function renderRoom() {
     hitArea.setAttribute("stroke-width", "22");
     hitArea.setAttribute("class", "finalized-cutout-hit");
     hitArea.setAttribute("pointer-events", "all");
-    hitArea.onmousedown = (e) => {
+    hitArea.style.touchAction = "none";
+    hitArea.onpointerdown = (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
       e.stopPropagation();
+      e.preventDefault();
       const index = state.finalizedCutouts.findIndex(item => item.id === cutout.id);
       if (index !== -1) reactivateFinalizedCutout(index);
     };
@@ -1224,10 +1262,14 @@ function renderElements() {
           c.setAttribute("fill", "var(--garden-rosy)");
           c.setAttribute("stroke", "white");
           c.setAttribute("class", "vertex-handle window-resize-handle");
-          c.onmousedown = (e) => {
-            e.stopPropagation();
-            let hasResized = false;
-            const onMove = (mv) => {
+          c.setAttribute("r", isPhoneLikeViewport() ? "10" : "6");
+          let hasResized = false;
+          bindPointerDrag(c, {
+            onStart: () => {
+              hasResized = false;
+              c.classList.add("dragging");
+            },
+            onMove: (mv) => {
               hasResized = true;
               const svgP = getSVGPoint(mv);
               const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
@@ -1256,14 +1298,12 @@ function renderElements() {
               coordTooltip.setAttribute("x", svgP.x + 10); coordTooltip.setAttribute("y", svgP.y - 10);
               coordTooltip.textContent = `${ft} ft (${Math.round(el.width)}px)`;
               renderAll();
-            };
-            const onUp = () => {
-              window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
+            },
+            onEnd: () => {
               coordTooltip.classList.add("hidden");
               if (hasResized) saveState();
-            };
-            window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
-          };
+            },
+          });
           return c;
         };
         gTransform.appendChild(createHandle(false));
@@ -1271,7 +1311,7 @@ function renderElements() {
       }
     }
     g.classList.add("element-hoverable");
-    g.setAttribute("style", "cursor: grab");
+    g.setAttribute("style", "cursor: grab; touch-action: none");
     if (el.type === "door") {
       g.addEventListener("mouseenter", (e) => {
         showDoorFlipTooltip(el);
@@ -1288,11 +1328,13 @@ function renderElements() {
     });
     itemGroup.addEventListener("mouseenter", () => { hoveredElementId = el.id; hoveredElementType = "element"; });
     itemGroup.addEventListener("mouseleave", () => { if (hoveredElementId === el.id) { hoveredElementId = null; hoveredElementType = null; } });
-    g.onmousedown = (e) => {
-      e.stopPropagation();
-      let hasMoved = false;
-      g.setAttribute("style", "cursor: grabbing");
-      const onMouseMove = (mv) => {
+    let hasMoved = false;
+    bindPointerDrag(g, {
+      onStart: () => {
+        hasMoved = false;
+        g.setAttribute("style", "cursor: grabbing; touch-action: none");
+      },
+      onMove: (mv) => {
         hasMoved = true;
         const svgP = getSVGPoint(mv);
         const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
@@ -1312,27 +1354,24 @@ function renderElements() {
             );
           }
         } else {
-          const w = el.width || 50;
           const gInner = g.querySelector('g');
           if (gInner) gInner.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle})`);
         }
         const nextDeletePosition = getElementDeletePosition(el);
         delBtn.setAttribute("transform", `translate(${nextDeletePosition.x},${nextDeletePosition.y})`);
-      };
-      const onMouseUp = () => {
-        window.removeEventListener("mousemove", onMouseMove); window.removeEventListener("mouseup", onMouseUp);
+      },
+      onEnd: () => {
         document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-        g.setAttribute("style", "cursor: grab");
+        g.setAttribute("style", "cursor: grab; touch-action: none");
         if (hasMoved) { saveState(); showToast(`${el.type} repositioned`); }
-      };
-      window.addEventListener("mousemove", onMouseMove);
-      window.addEventListener("mouseup", onMouseUp);
-    };
+      },
+    });
 
     const delBtn = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const deletePosition = getElementDeletePosition(el);
     delBtn.setAttribute("transform", `translate(${deletePosition.x},${deletePosition.y})`);
     delBtn.style.cursor = "pointer";
+    delBtn.style.touchAction = "none";
     delBtn.classList.add("delete-btn");
 
     delBtn.innerHTML = `
@@ -1341,8 +1380,10 @@ function renderElements() {
       <text class="delete-btn-mark" y="3.2" text-anchor="middle" fill="#fff" style="font-size: 9px; font-weight: bold; pointer-events: none;">x</text>
     `;
 
-    delBtn.onmousedown = (e) => {
+    delBtn.onpointerdown = (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
       e.stopPropagation();
+      e.preventDefault();
       state.elements = state.elements.filter((item) => item.id !== el.id);
       saveState();
       renderAll();
@@ -1375,8 +1416,11 @@ function renderCutouts() {
       visibleOutline.setAttribute("stroke-width", "2");
       visibleOutline.setAttribute("class", "cutout-preview-outline cursor-pointer element-hoverable");
       visibleOutline.setAttribute("vector-effect", "non-scaling-stroke");
-      visibleOutline.onmousedown = (e) => {
+      visibleOutline.style.touchAction = "none";
+      visibleOutline.onpointerdown = (e) => {
+        if (e.button !== undefined && e.button !== 0) return;
         e.stopPropagation();
+        e.preventDefault();
         selectedCutoutId = c.id;
         renderAll();
       };
@@ -1389,7 +1433,7 @@ function renderCutouts() {
       outline.setAttribute("stroke-width", "6");
       outline.setAttribute("stroke-opacity", "0.1");
       outline.setAttribute("class", "cutout-move-hit element-hoverable");
-      outline.setAttribute("style", "cursor: grab");
+      outline.setAttribute("style", "cursor: grab; touch-action: none");
       const visualOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       visualOutline.setAttribute("d", d);
       visualOutline.setAttribute("fill", "none");
@@ -1399,19 +1443,26 @@ function renderCutouts() {
       visualOutline.setAttribute("class", "cutout-active-outline");
       visualOutline.setAttribute("vector-effect", "non-scaling-stroke");
       visualOutline.setAttribute("pointer-events", "none");
-      outline.onmousedown = (e) => {
-        e.stopPropagation();
-        let hasMoved = false;
-        cutoutInteractionActive = true;
-        outline.setAttribute("style", "cursor: grabbing");
-        const startSvgP = getSVGPoint(e);
-        const originalPoints = c.points.map((p) => ({ ...p }));
-        const originalEdge = Number.isInteger(c.edgeIndex)
-          ? c.edgeIndex
-          : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
-        const metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
-        let activeEdge = originalEdge;
-        const onMouseMove = (mv) => {
+      let hasMoved = false;
+      let startSvgP = null;
+      let originalPoints = null;
+      let originalEdge = 0;
+      let metrics = null;
+      let activeEdge = 0;
+      bindPointerDrag(outline, {
+        onStart: (e) => {
+          hasMoved = false;
+          cutoutInteractionActive = true;
+          outline.setAttribute("style", "cursor: grabbing; touch-action: none");
+          startSvgP = getSVGPoint(e);
+          originalPoints = c.points.map((p) => ({ ...p }));
+          originalEdge = Number.isInteger(c.edgeIndex)
+            ? c.edgeIndex
+            : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
+          metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
+          activeEdge = originalEdge;
+        },
+        onMove: (mv) => {
           hasMoved = true;
           const currentSvgP = getSVGPoint(mv);
           if (c.source === "drawn") {
@@ -1439,18 +1490,14 @@ function renderCutouts() {
           c.edgeIndex = placed.edgeIndex;
           activeEdge = placed.edgeIndex;
           syncCutoutDom(c);
-        };
-        const onMouseUp = () => {
-          window.removeEventListener("mousemove", onMouseMove);
-          window.removeEventListener("mouseup", onMouseUp);
+        },
+        onEnd: () => {
           cutoutInteractionActive = false;
           document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          outline.setAttribute("style", "cursor: grab");
+          outline.setAttribute("style", "cursor: grab; touch-action: none");
           if (hasMoved) { saveState(); renderAll(); showToast("Cutout repositioned"); }
-        };
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
-      };
+        },
+      });
       g.appendChild(outline);
       g.appendChild(visualOutline);
 
@@ -1479,19 +1526,27 @@ function renderCutouts() {
 
         handleGroup.appendChild(hit);
         handleGroup.appendChild(visual);
-        handleGroup.onmousedown = (e) => {
-          e.stopPropagation();
-          let hasResized = false;
-          cutoutInteractionActive = true;
-          const startMouseP = getSVGPoint(e);
-          const originalPoints = c.points.map((p) => ({ ...p }));
-          const edgeIndex = Number.isInteger(c.edgeIndex)
-            ? c.edgeIndex
-            : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
-          const frame = getEdgeFrame(edgeIndex);
-          const startMetrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex });
-
-          const onMove = (mv) => {
+        let hasResized = false;
+        let startMouseP = null;
+        let originalPoints = null;
+        let edgeIndex = 0;
+        let frame = null;
+        let startMetrics = null;
+        bindPointerDrag(handleGroup, {
+          onStart: (e) => {
+            hasResized = false;
+            cutoutInteractionActive = true;
+            startMouseP = getSVGPoint(e);
+            originalPoints = c.points.map((p) => ({ ...p }));
+            edgeIndex = Number.isInteger(c.edgeIndex)
+              ? c.edgeIndex
+              : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
+            frame = getEdgeFrame(edgeIndex);
+            startMetrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex });
+            coordTooltip.classList.remove("hidden");
+            showCutoutSizeTooltip(point);
+          },
+          onMove: (mv) => {
             const svgP = getSVGPoint(mv);
             const along =
               (svgP.x - frame.p1.x) * frame.tx +
@@ -1518,11 +1573,8 @@ function renderCutouts() {
             hasResized = true;
             showCutoutSizeTooltip(svgP);
             syncCutoutDom(c);
-          };
-
-          const onUp = () => {
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
+          },
+          onEnd: () => {
             cutoutInteractionActive = false;
             coordTooltip.classList.add("hidden");
             if (hasResized) {
@@ -1530,13 +1582,8 @@ function renderCutouts() {
               renderAll();
               showToast("Cutout resized");
             }
-          };
-
-          coordTooltip.classList.remove("hidden");
-          showCutoutSizeTooltip(point);
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
-        };
+          },
+        });
 
         g.appendChild(handleGroup);
       };
@@ -1551,17 +1598,21 @@ function renderCutouts() {
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle.setAttribute("cx", p.x);
         circle.setAttribute("cy", p.y);
-        circle.setAttribute("r", c.source === "drawn" ? "6" : "7");
+        circle.setAttribute("r", c.source === "drawn"
+          ? (isPhoneLikeViewport() ? "10" : "6")
+          : (isPhoneLikeViewport() ? "11" : "7"));
         circle.setAttribute("fill", "var(--garden-rosy)");
         circle.setAttribute("stroke", "white");
         circle.setAttribute("class", "vertex-handle");
-        circle.onmousedown = (e) => {
-          e.stopPropagation();
-          circle.classList.add("dragging");
-          coordTooltip.classList.remove("hidden");
-          let hasResized = false;
-          cutoutInteractionActive = true;
-          const onMove = (mv) => {
+        let hasResized = false;
+        bindPointerDrag(circle, {
+          onStart: () => {
+            circle.classList.add("dragging");
+            coordTooltip.classList.remove("hidden");
+            hasResized = false;
+            cutoutInteractionActive = true;
+          },
+          onMove: (mv) => {
             const svgP = getSVGPoint(mv);
             const previousPts = cloneObj(c.points);
             const previousEdge = c.edgeIndex;
@@ -1592,22 +1643,18 @@ function renderCutouts() {
             hasResized = true;
             showCutoutSizeTooltip(c.points[pIdx]);
             syncCutoutDom(c);
-          };
-          const onUp = () => {
+          },
+          onEnd: () => {
             circle.classList.remove("dragging");
             cutoutInteractionActive = false;
             coordTooltip.classList.add("hidden");
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
             if (hasResized) {
               saveState();
               renderAll();
               showToast("Cutout resized");
             }
-          };
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
-        };
+          },
+        });
         g.appendChild(circle);
       });
     }
@@ -1844,7 +1891,8 @@ svg.addEventListener("dragenter", (e) => {
   e.stopPropagation();
 });
 
-svg.addEventListener("mousedown", (e) => {
+svg.style.touchAction = "none";
+svg.addEventListener("pointerdown", (e) => {
   if ((e.target === svg || e.target.id === 'svg-bg') && !e.target.closest('#drawing-layer')) {
     const svgP = getSVGPoint(e);
     const outsideRoom = !isPointInRoom(svgP.x, svgP.y);

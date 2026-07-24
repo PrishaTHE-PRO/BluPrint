@@ -352,6 +352,237 @@ export function architectureForbiddenZonesFromLayout(layout: RoomLayout | null |
   });
 }
 
+const WINDOW_SIZE_FT = 3.5;
+const BED_WALL_INSET = 0.2;
+type BedWall = 'top' | 'right' | 'bottom' | 'left';
+
+const BED_WALL_ROTATION: Record<BedWall, number> = {
+  // Matches SVG rotate + isoPartOps: headboard at local y≈0.
+  top: 0,
+  right: 90,
+  bottom: 180,
+  left: 270,
+};
+
+type WallOpening = {
+  kind: 'door' | 'window';
+  /** Distance along the wall from the wall's start corner (ft). */
+  along: number;
+  halfWidth: number;
+};
+
+function classifyOpeningWall(
+  x: number,
+  y: number,
+  roomWidthFt: number,
+  roomLengthFt: number,
+): BedWall {
+  const distTop = y;
+  const distBottom = roomLengthFt - y;
+  const distLeft = x;
+  const distRight = roomWidthFt - x;
+  const nearest = Math.min(distTop, distBottom, distLeft, distRight);
+  if (nearest === distTop) return 'top';
+  if (nearest === distBottom) return 'bottom';
+  if (nearest === distLeft) return 'left';
+  return 'right';
+}
+
+function openingsAlongWalls(
+  layout: RoomLayout | null | undefined,
+  roomWidthFt: number,
+  roomLengthFt: number,
+): Record<BedWall, WallOpening[]> {
+  const empty: Record<BedWall, WallOpening[]> = {
+    top: [], right: [], bottom: [], left: [],
+  };
+  if (!layout?.roomPoints?.length) return empty;
+
+  for (const el of layout.elements ?? []) {
+    if (el.type !== 'door' && el.type !== 'window') continue;
+    const ft = editorPtToFt(el.x, el.y, layout.roomPoints);
+    const wall = classifyOpeningWall(ft.x, ft.y, roomWidthFt, roomLengthFt);
+    const halfWidth = el.type === 'door'
+      ? DOOR_SIZE_FT / 2 + 0.75
+      : ((el.width ?? WINDOW_SIZE_FT * EDITOR_SCALE) / EDITOR_SCALE) / 2 + 0.35;
+    const along = wall === 'top' || wall === 'bottom' ? ft.x : ft.y;
+    empty[wall].push({ kind: el.type, along, halfWidth });
+  }
+  return empty;
+}
+
+function headboardInterval(
+  wall: BedWall,
+  position: PosFt,
+  item: Pick<FurnitureItem, 'category' | 'widthIn' | 'depthIn'>,
+  rotation: number,
+  scale: number,
+): { start: number; end: number } | null {
+  const bounds = furnitureBounds(position, item, rotation, scale);
+  if (wall === 'top' || wall === 'bottom') {
+    return { start: bounds.minX, end: bounds.maxX };
+  }
+  return { start: bounds.minY, end: bounds.maxY };
+}
+
+function intervalOverlapsOpening(
+  start: number,
+  end: number,
+  opening: WallOpening,
+  clearance = 0.35,
+): boolean {
+  const o0 = opening.along - opening.halfWidth - clearance;
+  const o1 = opening.along + opening.halfWidth + clearance;
+  return end > o0 && start < o1;
+}
+
+function bedPositionOnWall(
+  wall: BedWall,
+  alongCenter: number,
+  item: Pick<FurnitureItem, 'category' | 'widthIn' | 'depthIn'>,
+  roomWidthFt: number,
+  roomLengthFt: number,
+  scale: number,
+): { position: PosFt; rotation: number } {
+  const rotation = BED_WALL_ROTATION[wall];
+  const { wFt, dFt } = pieceSizeFt(item, scale);
+  const radians = (rotation * Math.PI) / 180;
+  const occupiedWidth = Math.abs(wFt * Math.cos(radians)) + Math.abs(dFt * Math.sin(radians));
+  const occupiedDepth = Math.abs(wFt * Math.sin(radians)) + Math.abs(dFt * Math.cos(radians));
+  const inset = BED_WALL_INSET;
+
+  let centerX = roomWidthFt / 2;
+  let centerY = roomLengthFt / 2;
+
+  if (wall === 'top') {
+    centerY = inset + occupiedDepth / 2;
+    centerX = Math.max(occupiedWidth / 2 + inset, Math.min(roomWidthFt - occupiedWidth / 2 - inset, alongCenter));
+  } else if (wall === 'bottom') {
+    centerY = roomLengthFt - inset - occupiedDepth / 2;
+    centerX = Math.max(occupiedWidth / 2 + inset, Math.min(roomWidthFt - occupiedWidth / 2 - inset, alongCenter));
+  } else if (wall === 'left') {
+    centerX = inset + occupiedWidth / 2;
+    centerY = Math.max(occupiedDepth / 2 + inset, Math.min(roomLengthFt - occupiedDepth / 2 - inset, alongCenter));
+  } else {
+    centerX = roomWidthFt - inset - occupiedWidth / 2;
+    centerY = Math.max(occupiedDepth / 2 + inset, Math.min(roomLengthFt - occupiedDepth / 2 - inset, alongCenter));
+  }
+
+  return {
+    rotation,
+    position: { x: centerX - wFt / 2, y: centerY - dFt / 2 },
+  };
+}
+
+/**
+ * Place a bed/crib with the headboard flush to a wall, never blocking a door,
+ * and preferring walls without windows along the headboard.
+ */
+export function preferredBedPlacement(
+  item: Pick<FurnitureItem, 'category' | 'widthIn' | 'depthIn'>,
+  roomWidthFt: number,
+  roomLengthFt: number,
+  layout: RoomLayout | null | undefined,
+  zones: ForbiddenRect[] = [],
+  scale = 1,
+): { position: PosFt; rotation: number } {
+  const openings = openingsAlongWalls(layout, roomWidthFt, roomLengthFt);
+  const walls: BedWall[] = ['top', 'bottom', 'left', 'right'];
+  const { wFt } = pieceSizeFt(item, scale);
+  const headboardSpan = Math.max(wFt, pieceSizeFt(item, scale).dFt * 0.35);
+
+  type Candidate = { position: PosFt; rotation: number; score: number };
+  const candidates: Candidate[] = [];
+
+  for (const wall of walls) {
+    const wallLen = wall === 'top' || wall === 'bottom' ? roomWidthFt : roomLengthFt;
+    const alongCenters = [
+      wallLen / 2,
+      wallLen * 0.35,
+      wallLen * 0.65,
+      wallLen * 0.25,
+      wallLen * 0.75,
+    ];
+
+    // Also try midpoints of clear spans between openings.
+    const wallOpenings = [...openings[wall]].sort((a, b) => a.along - b.along);
+    let cursor = 1.5;
+    for (const opening of wallOpenings) {
+      const gapEnd = opening.along - opening.halfWidth - 0.5;
+      if (gapEnd - cursor > headboardSpan) {
+        alongCenters.push((cursor + gapEnd) / 2);
+      }
+      cursor = opening.along + opening.halfWidth + 0.5;
+    }
+    if (wallLen - 1.5 - cursor > headboardSpan) {
+      alongCenters.push((cursor + wallLen - 1.5) / 2);
+    }
+
+    for (const along of alongCenters) {
+      const placed = bedPositionOnWall(wall, along, item, roomWidthFt, roomLengthFt, scale);
+      const clamped = clampFurniturePosition(
+        placed.position,
+        item,
+        placed.rotation,
+        roomWidthFt,
+        roomLengthFt,
+        scale,
+      );
+      if (overlapsForbiddenZone(clamped, item, placed.rotation, zones, scale)) continue;
+
+      const head = headboardInterval(wall, clamped, item, placed.rotation, scale);
+      if (!head) continue;
+
+      let score = 100;
+      // Prefer longer walls slightly (more centering room).
+      score += Math.min(wallLen, 20) * 0.4;
+      // Prefer centering on the wall.
+      score -= Math.abs(along - wallLen / 2) * 0.8;
+
+      let blockedByDoor = false;
+      for (const opening of wallOpenings) {
+        if (!intervalOverlapsOpening(head.start, head.end, opening)) continue;
+        if (opening.kind === 'door') {
+          blockedByDoor = true;
+          break;
+        }
+        // Soft penalty — try not to cover a window with the headboard.
+        score -= 55;
+      }
+      if (blockedByDoor) continue;
+
+      // Prefer top/back wall slightly for conventional bedroom layouts.
+      if (wall === 'top') score += 8;
+      if (wall === 'bottom') score += 4;
+
+      candidates.push({ position: clamped, rotation: placed.rotation, score });
+    }
+  }
+
+  if (candidates.length === 0) {
+    // Fallback: top wall, centered — still headboard-against-wall.
+    return bedPositionOnWall('top', roomWidthFt / 2, item, roomWidthFt, roomLengthFt, scale);
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+  return { position: candidates[0].position, rotation: candidates[0].rotation };
+}
+
+/** Extra keep-outs for beds: doors get wider clearance so the headboard never sits in an opening. */
+export function bedArchitectureZones(layout: RoomLayout | null | undefined): ForbiddenRect[] {
+  if (!layout?.roomPoints?.length) return architectureForbiddenZonesFromLayout(layout);
+  return architectureForbiddenZones({
+    roomPoints: layout.roomPoints,
+    cutouts: layout.cutouts,
+    doors: layout.elements.filter((el) => el.type === 'door'),
+    padding: 0.55,
+  });
+}
+
+export function isBedLikeCategory(category: string): boolean {
+  return category === 'bed' || category === 'crib';
+}
+
 /** Push every piece inside the room and out of cutouts/doors. */
 export function constrainFurnitureEntries<T extends {
   category: string;
