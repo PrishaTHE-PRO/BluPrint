@@ -1138,9 +1138,11 @@ button.theme-switch-btn {
   overflow: visible;
 }
 .dashboard-character {
+  --float-scale: 1.08;
   width: 250px;
   height: 280px;
   object-fit: contain;
+  transform-origin: center bottom;
   filter: drop-shadow(0 20px 24px rgba(61, 90, 128, .2));
 }
 .dashboard-welcome-copy { min-width: 0; }

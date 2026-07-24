@@ -42,7 +42,7 @@
         .garden-card { background: rgba(16,86,102,0.2); backdrop-filter: blur(12px); transition: all 0.5s cubic-bezier(0.23,1,0.32,1); border: 1px solid rgba(247,244,213,0.05); }
         .garden-card:hover { transform: translateY(-8px) scale(1.02); background: rgba(16,86,102,0.3); border-color: rgba(211,150,140,0.4); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4); }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(2deg); } }
+        @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg) scale(var(--float-scale, 1)); } 50% { transform: translateY(-20px) rotate(2deg) scale(var(--float-scale, 1)); } }
         @keyframes sparkle-pulse { 0%,100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
         .animate-reveal { animation: fadeInUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards; opacity: 0; }
         .floating-avatar { animation: float 6s ease-in-out infinite; }
@@ -140,9 +140,8 @@
             <div class="dashboard-character-wrap" aria-hidden="true">
                 <img
                     class="dashboard-character floating-avatar"
-                    src="https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/uploads/c8b9b493-90d2-48dc-beb9-1c448e14e0d2/1779936396285-b0204285/blueprintavatar.png"
+                    src="./assets/dashboard-avatar.png"
                     alt=""
-                    style="object-view-box: xywh(23.55% 14.37% 31.43% 47.54%);"
                 >
             </div>
             <div class="dashboard-welcome-copy">
