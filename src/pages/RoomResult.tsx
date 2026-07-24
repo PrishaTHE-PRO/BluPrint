@@ -94,6 +94,7 @@ export default function RoomResult() {
   const colorSourceIdsRef = useRef<Record<string, string>>({});
   const isoThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef  = useRef(false);
+  const slotsInitializedRef = useRef(false);
 
   const handlePlacementChange = useCallback((placement: Placement) => {
     placementRef.current = placement;
@@ -273,7 +274,13 @@ export default function RoomResult() {
       setHiddenCategories(new Set());
     }
 
-    setFurnitureSlots(init);
+    setFurnitureSlots((prev) => {
+      if (!slotsInitializedRef.current) {
+        slotsInitializedRef.current = true;
+        return init;
+      }
+      return { ...init, ...prev };
+    });
   }, [furniture, activePlacement]);
 
   const initialPlacement = useMemo<Placement | null>(() => {

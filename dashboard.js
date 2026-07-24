@@ -11,6 +11,13 @@ function setProfilePopupIdentity(name, email) {
     if (nameEl) nameEl.textContent = name || 'Account';
     if (emailEl) emailEl.textContent = email || 'Manage your BluPrint profile';
 }
+function setDashboardUserName(name) {
+    if (!userNameEl) return;
+    var cleanName = String(name || '').trim() || 'Designer';
+    userNameEl.textContent = cleanName + '!';
+    userNameEl.classList.toggle('is-long-name', cleanName.length > 12);
+    userNameEl.classList.toggle('is-extra-long-name', cleanName.length > 20);
+}
 if (profileBtn && profilePopup) {
     profileBtn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -59,7 +66,7 @@ if (settingsSaveBtn) {
                 if (auth.currentUser) {
                     await updateProfile(auth.currentUser, { displayName: newName });
                 }
-                if (userNameEl) userNameEl.textContent = newName + '!';
+                setDashboardUserName(newName);
                 setProfilePopupIdentity(newName, auth.currentUser && auth.currentUser.email);
             }
             if (newBirthday) localStorage.setItem('blueprintUserBirthday', newBirthday);
@@ -125,7 +132,7 @@ async function openSavedProject(room) {
 
 var cachedUserName = localStorage.getItem('blueprintUserName');
 if (userNameEl && cachedUserName) {
-    userNameEl.textContent = cachedUserName + '!';
+    setDashboardUserName(cachedUserName);
 }
 setProfilePopupIdentity(cachedUserName || 'Account', '');
 
@@ -143,9 +150,7 @@ onAuthStateChanged(auth, function(user) {
     }
 
     var name = user.displayName || user.email.split('@')[0];
-    if (userNameEl) {
-        userNameEl.textContent = name + '!';
-    }
+    setDashboardUserName(name);
     localStorage.setItem('blueprintUserName', name);
 
     // Store uid so other pages can use it

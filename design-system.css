@@ -1139,6 +1139,18 @@ button.theme-switch-btn {
   font-style: italic;
   line-height: 1.05;
 }
+.page-dashboard #user-name {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.page-dashboard #user-name.is-long-name {
+  font-size: 0.84em;
+}
+.page-dashboard #user-name.is-extra-long-name {
+  font-size: 0.68em;
+}
 .dashboard-new-room {
   display: inline-flex;
   width: fit-content;
@@ -2544,6 +2556,11 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
 }
 
 @media (max-width: 600px) {
+  html,
+  body.page-dashboard {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body:not(.page-login) nav { padding: 0 18px !important; }
   .dashboard-container { width: min(100% - 40px, 1152px); }
   body:not(.page-login) .app-nav {
@@ -2605,9 +2622,22 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   }
   .page-result .app-nav {
     position: static !important;
+    z-index: 300 !important;
   }
   .page-result .app-nav-links {
     display: none !important;
+  }
+  .page-result .profile-menu-wrap {
+    position: relative;
+    z-index: 320 !important;
+  }
+  .page-result .profile-popup {
+    position: fixed !important;
+    top: 66px !important;
+    right: 10px !important;
+    z-index: 999 !important;
+    width: min(300px, calc(100vw - 20px)) !important;
+    max-width: calc(100vw - 20px);
   }
   .page-result .workflow-steps {
     justify-content: flex-start;
@@ -2800,9 +2830,34 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     text-align: center;
   }
   .page-dashboard #projects-grid { grid-template-columns: 1fr !important; }
+  .page-dashboard .dashboard-hero {
+    overflow: hidden !important;
+    padding-top: 40px !important;
+  }
   .page-dashboard .dashboard-hero-layout {
     gap: 10px;
     min-height: 220px;
+    align-items: center;
+    overflow: hidden;
+  }
+  .page-dashboard .dashboard-welcome-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .page-dashboard .dashboard-hero h1 {
+    max-width: 100%;
+    margin-bottom: 18px;
+    font-size: clamp(34px, 14vw, 52px) !important;
+    line-height: 0.98;
+  }
+  .page-dashboard #user-name.is-long-name {
+    font-size: 0.76em;
+    line-height: 1.02;
+  }
+  .page-dashboard #user-name.is-extra-long-name {
+    font-size: 0.58em;
+    line-height: 1.08;
   }
   .dashboard-character-wrap {
     width: 150px;
@@ -2903,6 +2958,16 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   text-align: left;
 }
 .profile-popup.hidden { display: none !important; }
+
+.page-result .app-nav {
+  z-index: 300 !important;
+}
+.page-result .profile-menu-wrap {
+  z-index: 320 !important;
+}
+.page-result .profile-popup {
+  z-index: 340 !important;
+}
 
 .profile-popup-header {
   display: flex;

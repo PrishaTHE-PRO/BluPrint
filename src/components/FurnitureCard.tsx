@@ -148,6 +148,7 @@ export default function FurnitureCard({
       <div className={`${shellClass} p-4 flex gap-4 items-stretch`} style={{ animationDelay: animDelay }} {...linkProps}>
         <div className="w-28 h-28 bg-[#F7F4D5]/10 rounded-2xl overflow-hidden shadow-inner flex-shrink-0 relative">
           <img
+            key={`${item.id}-${item.imageUrl || ''}`}
             src={imgSrc}
             alt={item.name}
             referrerPolicy="no-referrer"
@@ -196,6 +197,7 @@ export default function FurnitureCard({
 
       <div className="w-full aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg overflow-hidden shadow-inner relative mb-2">
         <img
+          key={`${item.id}-${item.imageUrl || ''}`}
           src={imgSrc}
           alt={item.name}
           referrerPolicy="no-referrer"
