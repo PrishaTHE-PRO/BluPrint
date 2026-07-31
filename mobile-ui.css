@@ -175,12 +175,32 @@
 
   /* The dock's centre "+" is the new-room affordance. */
   .page-dashboard .dashboard-new-room { display: none !important; }
-  /* The ghost floor plan fights the tighter hero for space. */
-  .page-dashboard .dashboard-blueprint { display: none !important; }
+
+  /* Ghost floor plan. Its containing block is the hero row, which is only
+     ~116px tall here — and `position: static` can't detach it, because
+     .animate-reveal leaves a `transform: translateY(0)` behind (fill-mode:
+     both), and any transform makes an element a containing block. So
+     mobile-ui.js reparents it to <header>, which this makes positioned. */
+  body.page-dashboard .dashboard-hero { position: relative; }
+  .page-dashboard .dashboard-blueprint {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* The 900px rule's .14 was tuned for the old 344px hero; the greeting band
+       is roughly half that now, so lift it back to a readable density. */
+    opacity: .22;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  }
 
   /* --- stat strip ---------------------------------------------------- */
-  /* Sits below the hero row, inset to the same gutter as the deck. */
+  /* Sits below the hero row, inset to the same gutter as the deck.
+     position/z-index keep it above the ghost floor plan behind the hero. */
   .m-stats {
+    position: relative;
+    z-index: 1;
     display: flex;
     gap: 10px;
     margin: 22px 24px 0;
@@ -865,12 +885,35 @@
   }
   .page-projects .projects-header .dashboard-new-room { display: none !important; }
 
-  .page-projects .project-filter-chips { gap: 8px; }
+  /* The filter row is otherwise unstyled, so on a phone the chips ran under
+     the first card and the last one fell off the edge. Give it the same 24px
+     rhythm above and below, and let the chips wrap instead of overflowing. */
+  .page-projects .projects-main { padding: 0 0 24px !important; }
+  .page-projects .project-filters { margin-top: 24px; }
+  .page-projects .project-filter-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .page-projects .project-filter-group-label {
+    color: var(--bp-muted);
+    font: 600 12px var(--m-mono);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+  .page-projects .project-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
   .page-projects .project-filter {
     padding: 9px 15px !important;
     border-radius: 12px !important;
     font: 600 12px "DM Sans", sans-serif !important;
   }
+  .page-projects #all-projects-grid { margin-top: 24px; }
 
   /* Cards become compact list rows with a thumbnail. */
   .page-projects #all-projects-grid {
