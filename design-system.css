@@ -2130,6 +2130,25 @@ a.workflow-step:focus-visible {
   font-size: 13px;
 }
 .page-projects .projects-main { padding: 18px 0 80px !important; }
+/* The style filter row was unstyled, so the chips sat flush against the first
+   project card and overflowed the right edge once there were a few styles. */
+.page-projects .project-filters { margin-bottom: 28px; }
+.page-projects .project-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.page-projects .project-filter-group-label {
+  color: var(--bp-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.page-projects .project-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .page-projects .project-filter {
   padding: 7px 14px;
   border: 0;

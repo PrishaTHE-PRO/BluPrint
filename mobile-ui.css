@@ -899,7 +899,9 @@
      the first card and the last one fell off the edge. Give it the same 24px
      rhythm above and below, and let the chips wrap instead of overflowing. */
   .page-projects .projects-main { padding: 0 0 24px !important; }
-  .page-projects .project-filters { margin-top: 24px; }
+  /* margin-bottom is the shared stylesheet's 28px; the grid's own 24px
+     margin-top drives the gap here so the phone rhythm stays uniform. */
+  .page-projects .project-filters { margin-top: 24px; margin-bottom: 0; }
   .page-projects .project-filter-row {
     display: flex;
     flex-direction: column;
