@@ -169,6 +169,21 @@
     if (heroRow) heroRow.insertAdjacentElement('afterend', stats);
     else copy.appendChild(stats);
 
+    // The ghost floor plan is absolutely positioned against the hero row, which
+    // is short on mobile. Reparent it to <header> so it backs the whole hero.
+    // (CSS can't do this: the row keeps a transform from .animate-reveal, and a
+    // transformed element is a containing block whatever its `position` is.)
+    var blueprint = document.querySelector('.dashboard-blueprint');
+    var hero = document.querySelector('.dashboard-hero');
+    if (blueprint && hero && heroRow) {
+      var syncBlueprint = function (matches) {
+        if (matches && blueprint.parentNode !== hero) hero.insertBefore(blueprint, heroRow);
+        else if (!matches && blueprint.parentNode === hero) heroRow.appendChild(blueprint);
+      };
+      syncBlueprint(MQ.matches);
+      MQ.addEventListener('change', function (e) { syncBlueprint(e.matches); });
+    }
+
     var grid = document.getElementById('projects-grid');
     if (!grid) return;
 

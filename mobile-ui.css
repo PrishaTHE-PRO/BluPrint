@@ -76,8 +76,10 @@
     padding: 0 8px;
     border: 1px solid var(--bp-border);
     border-radius: 24px;
+    background: var(--bp-surface);
     background: color-mix(in srgb, var(--bp-surface) 86%, transparent);
     box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .5), 0 14px 34px rgba(28, 23, 20, .14);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
     backdrop-filter: blur(22px) saturate(150%);
     box-sizing: border-box;
     transition: transform .32s cubic-bezier(.22, 1, .36, 1), opacity .24s ease;
@@ -175,12 +177,32 @@
 
   /* The dock's centre "+" is the new-room affordance. */
   .page-dashboard .dashboard-new-room { display: none !important; }
-  /* The ghost floor plan fights the tighter hero for space. */
-  .page-dashboard .dashboard-blueprint { display: none !important; }
+
+  /* Ghost floor plan. Its containing block is the hero row, which is only
+     ~116px tall here — and `position: static` can't detach it, because
+     .animate-reveal leaves a `transform: translateY(0)` behind (fill-mode:
+     both), and any transform makes an element a containing block. So
+     mobile-ui.js reparents it to <header>, which this makes positioned. */
+  body.page-dashboard .dashboard-hero { position: relative; }
+  .page-dashboard .dashboard-blueprint {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* The 900px rule's .14 was tuned for the old 344px hero; the greeting band
+       is roughly half that now, so lift it back to a readable density. */
+    opacity: .22;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  }
 
   /* --- stat strip ---------------------------------------------------- */
-  /* Sits below the hero row, inset to the same gutter as the deck. */
+  /* Sits below the hero row, inset to the same gutter as the deck.
+     position/z-index keep it above the ghost floor plan behind the hero. */
   .m-stats {
+    position: relative;
+    z-index: 1;
     display: flex;
     gap: 10px;
     margin: 22px 24px 0;
@@ -211,6 +233,7 @@
     height: 3px;
     margin-top: 8px;
     border-radius: 2px;
+    background: var(--bp-soft);
     background: color-mix(in srgb, var(--bp-muted) 30%, transparent);
     overflow: hidden;
   }
@@ -287,6 +310,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
+    background: var(--bp-soft);
     background: color-mix(in srgb, var(--bp-muted) 38%, transparent);
     transition: background .25s ease, transform .25s ease;
   }
@@ -381,6 +405,7 @@
     width: 26px;
     height: 3px;
     border-radius: 2px;
+    background: var(--bp-soft);
     background: color-mix(in srgb, var(--bp-muted) 38%, transparent);
   }
   .m-steps > i.is-done { background: var(--bp-primary); }
@@ -445,7 +470,9 @@
     border-radius: 11px !important;
     padding: 7px 11px !important;
     border-radius: 11px !important;
+    background: var(--bp-surface) !important;
     background: color-mix(in srgb, var(--bp-surface) 86%, transparent) !important;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     color: var(--bp-muted) !important;
     font: 600 10px var(--m-mono) !important;
@@ -465,6 +492,7 @@
     font: 600 10px var(--m-mono);
     letter-spacing: .1em;
     white-space: nowrap;
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     transform: translateX(-50%);
     pointer-events: none;
@@ -486,10 +514,12 @@
     height: 36px;
     border: 0;
     border-radius: 12px;
+    background: var(--bp-surface);
     background: color-mix(in srgb, var(--bp-surface) 90%, transparent);
     color: var(--bp-ink);
     font-size: 17px;
     box-shadow: 0 2px 10px rgba(28, 23, 20, .08);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
   }
   .m-canvas-tools > button:disabled { opacity: .3; }
@@ -865,12 +895,37 @@
   }
   .page-projects .projects-header .dashboard-new-room { display: none !important; }
 
-  .page-projects .project-filter-chips { gap: 8px; }
+  /* The filter row is otherwise unstyled, so on a phone the chips ran under
+     the first card and the last one fell off the edge. Give it the same 24px
+     rhythm above and below, and let the chips wrap instead of overflowing. */
+  .page-projects .projects-main { padding: 0 0 24px !important; }
+  /* margin-bottom is the shared stylesheet's 28px; the grid's own 24px
+     margin-top drives the gap here so the phone rhythm stays uniform. */
+  .page-projects .project-filters { margin-top: 24px; margin-bottom: 0; }
+  .page-projects .project-filter-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .page-projects .project-filter-group-label {
+    color: var(--bp-muted);
+    font: 600 12px var(--m-mono);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+  .page-projects .project-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
   .page-projects .project-filter {
     padding: 9px 15px !important;
     border-radius: 12px !important;
     font: 600 12px "DM Sans", sans-serif !important;
   }
+  .page-projects #all-projects-grid { margin-top: 24px; }
 
   /* Cards become compact list rows with a thumbnail. */
   .page-projects #all-projects-grid {
