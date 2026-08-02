@@ -190,6 +190,164 @@
       border: 0;
     }
 
+    /* ------------------------------------------------------------------
+       Dark mode, part two.
+       The tokens above flip, but the product mockup, floating notes, chips
+       and feature art are written with literal `rgba(255,255,255,…)` and
+       light hexes, so they stayed in light mode — bright slabs sitting on a
+       near-black page. Everything below re-states those literals against the
+       dark palette. Light mode is untouched.
+       ------------------------------------------------------------------ */
+
+    /* Pills: a grey wash on dark, and the label was barely legible. */
+    html.dark-mode .eyebrow {
+      border-color: rgba(126, 168, 201, .26);
+      color: var(--blue-dark);
+      background: rgba(126, 168, 201, .12);
+    }
+    html.dark-mode .room-dimension,
+    html.dark-mode .feature-list span {
+      border-color: rgba(126, 168, 201, .24);
+      color: var(--blue-dark);
+      background: rgba(126, 168, 201, .14);
+      box-shadow: none;
+    }
+
+    /* "See how it works" was grey-on-grey. */
+    html.dark-mode .button-secondary {
+      border-color: rgba(232, 238, 244, .16);
+      color: var(--ink);
+      background: rgba(232, 238, 244, .06);
+    }
+    html.dark-mode .button-secondary:hover {
+      background: rgba(232, 238, 244, .12);
+      box-shadow: none;
+    }
+
+    /* The product mockup — the largest offender. */
+    html.dark-mode .app-window {
+      border-color: rgba(232, 238, 244, .12);
+      background: rgba(22, 30, 40, .78);
+    }
+    html.dark-mode .window-bar {
+      border-bottom-color: rgba(232, 238, 244, .09);
+      background: rgba(232, 238, 244, .045);
+    }
+    html.dark-mode .window-title { color: var(--muted); }
+    html.dark-mode .canvas {
+      border-color: rgba(126, 168, 201, .16);
+      background: #131b24;
+    }
+    html.dark-mode .side-heading { color: var(--ink); }
+    html.dark-mode .mini-card {
+      border-color: rgba(232, 238, 244, .1);
+      background: rgba(232, 238, 244, .055);
+      box-shadow: none;
+    }
+    /* !important: cards 2 and 3 carry inline `style` backgrounds in the
+       markup, which nothing short of !important can override. */
+    html.dark-mode .mini-image {
+      background: linear-gradient(145deg, rgba(126, 168, 201, .34), rgba(95, 143, 184, .16)) !important;
+    }
+    html.dark-mode .mini-card:nth-child(2) .mini-image {
+      background: linear-gradient(145deg, rgba(217, 195, 164, .3), rgba(126, 168, 201, .22)) !important;
+    }
+    html.dark-mode .mini-card:nth-child(3) .mini-image {
+      background: linear-gradient(145deg, rgba(138, 171, 130, .28), rgba(217, 195, 164, .22)) !important;
+    }
+    html.dark-mode .mini-line { background: rgba(232, 238, 244, .22); }
+
+    /* The plan drawing is a light-mode SVG with baked-in fills; remap them so
+       it reads as a blueprint on dark rather than a sheet of white paper. */
+    html.dark-mode .canvas::before {
+      opacity: .6;
+      background-image:
+        linear-gradient(rgba(126, 168, 201, .1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126, 168, 201, .1) 1px, transparent 1px);
+    }
+    html.dark-mode .floor-plan { filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .45)); }
+    html.dark-mode .floor-plan [fill="#FCFAF7"] { fill: #18212c; }
+    html.dark-mode .floor-plan [fill="#F8F5F0"] { fill: #1e2836; }
+    html.dark-mode .floor-plan [fill="#E5D8C8"] { fill: #4a4032; }
+    html.dark-mode .floor-plan [fill="#D8C7B5"] { fill: #574a39; }
+    html.dark-mode .floor-plan [fill="#DDE7DD"] { fill: #33453a; }
+    html.dark-mode .floor-plan [fill="#C7D9E5"] { fill: #2f4557; }
+    html.dark-mode .floor-plan [fill="#B8D4E8"] { fill: #3d5f7d; }
+    html.dark-mode .floor-plan [stroke="#294F7D"] { stroke: #7ea8c9; }
+    html.dark-mode .floor-plan [stroke="#8F7B68"] { stroke: #b9a488; }
+    html.dark-mode .floor-plan [stroke="#7D987F"] { stroke: #8aab82; }
+
+    /* Notes floated over the mockup: dark text on a light pane = invisible. */
+    html.dark-mode .floating-note {
+      border-color: rgba(232, 238, 244, .14);
+      color: var(--ink);
+      background: rgba(22, 30, 40, .92);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, .5);
+    }
+
+    /* Stats band and the scrolling keyword strip. */
+    html.dark-mode .stats {
+      border-color: rgba(232, 238, 244, .1);
+      background: rgba(232, 238, 244, .045);
+      box-shadow: none;
+    }
+    html.dark-mode .stat:hover { background: rgba(232, 238, 244, .07); }
+    html.dark-mode .marquee {
+      color: var(--blue-dark);
+      background: rgba(232, 238, 244, .035);
+    }
+
+    /* Feature cards and their artwork. */
+    html.dark-mode .feature-card { border-color: rgba(232, 238, 244, .1); }
+    html.dark-mode .feature-card:hover {
+      border-color: rgba(126, 168, 201, .36);
+      box-shadow: 0 30px 68px rgba(0, 0, 0, .55);
+    }
+    html.dark-mode .feature-visual {
+      border-color: rgba(232, 238, 244, .09);
+      background: linear-gradient(145deg, rgba(126, 168, 201, .14), rgba(232, 238, 244, .03));
+    }
+    html.dark-mode .feature-card:nth-child(2) .feature-icon,
+    html.dark-mode .feature-card:nth-child(5) .feature-icon {
+      color: #d9c3a4;
+      background: rgba(217, 195, 164, .14);
+    }
+    html.dark-mode .feature-card:nth-child(3) .feature-icon,
+    html.dark-mode .feature-card:nth-child(6) .feature-icon {
+      color: var(--green);
+      background: rgba(138, 171, 130, .16);
+    }
+    html.dark-mode .mini-room::after { background: rgba(217, 195, 164, .38); }
+    html.dark-mode .upload-stack span {
+      background: rgba(30, 40, 52, .96);
+      box-shadow: 0 9px 22px rgba(0, 0, 0, .45);
+    }
+    html.dark-mode .upload-stack span:nth-child(1) { background: rgba(217, 195, 164, .3); }
+    html.dark-mode .swatch-row span { box-shadow: inset 0 0 0 3px rgba(232, 238, 244, .18); }
+    html.dark-mode .budget-track { background: rgba(232, 238, 244, .12); }
+    html.dark-mode .transform-demo i { border-color: rgba(232, 238, 244, .85); }
+    html.dark-mode .shop-stack span {
+      background: rgba(30, 40, 52, .96);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
+    }
+    /* The product "photo" is a ::before with its own light gradient. */
+    html.dark-mode .shop-stack span::before {
+      background: linear-gradient(145deg, rgba(126, 168, 201, .3), rgba(217, 195, 164, .2));
+    }
+    html.dark-mode .shop-stack span:nth-child(3)::before {
+      background: linear-gradient(145deg, rgba(138, 171, 130, .3), rgba(217, 195, 164, .2));
+    }
+    html.dark-mode .capability-grid {
+      border-color: rgba(232, 238, 244, .09);
+      background: rgba(232, 238, 244, .035);
+    }
+
+    /* Warm orbs turned to muddy smudges against navy. */
+    html.dark-mode .ambient-orb { opacity: .4; }
+    html.dark-mode .ambient-one { background: rgba(126, 168, 201, .16); }
+    html.dark-mode .ambient-two { background: rgba(95, 143, 184, .2); }
+    html.dark-mode .ambient-three { background: rgba(138, 171, 130, .12); }
+
     .button {
       display: inline-flex;
       align-items: center;
