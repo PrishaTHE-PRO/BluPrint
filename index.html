@@ -199,6 +199,20 @@
        dark palette. Light mode is untouched.
        ------------------------------------------------------------------ */
 
+    /* "See how it works". Restored after the dark-token pass dropped it:
+       .button-secondary hardcodes `background: rgba(255,255,255,.66)` (and #fff
+       on hover), so without an override it renders as a near-white button on
+       the dark page. */
+    html.dark-mode .button-secondary {
+      border-color: rgba(232, 238, 244, .16);
+      color: var(--ink);
+      background: rgba(232, 238, 244, .06);
+    }
+    html.dark-mode .button-secondary:hover {
+      background: rgba(232, 238, 244, .12);
+      box-shadow: none;
+    }
+
     /* Pills: a grey wash on dark, and the label was barely legible. */
     html.dark-mode .eyebrow {
       border-color: rgba(126, 168, 201, .26);
