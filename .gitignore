@@ -10,3 +10,7 @@ server/.env.*
 !server/.env.example
 .idea/
 test.http
+
+# tool caches / scratch
+.kombai/
+_trash/

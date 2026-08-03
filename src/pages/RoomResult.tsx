@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import type { CSSProperties } from 'react';
 import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
@@ -21,6 +21,9 @@ import {
 import type { FurniturePlacement } from '../utils/furniturePlacement';
 import { resolveFurnitureColors, paletteFallback, colorFromName } from '../utils/furnitureColor';
 import { roomDimsFromPoints } from '../utils/furnitureConstraints';
+
+// Lazy so Three.js only loads when the user opens the 3D view.
+const Room3DView = lazy(() => import('../components/Room3DView'));
 
 const EMPTY_PLACEMENT: Placement = { positions: {}, rotations: {}, scales: {} };
 const ISO_THROTTLE_MS = 70;
@@ -590,6 +593,8 @@ export default function RoomResult() {
     return () => { cancelled = true; };
   }, [layoutFurniturePreview, style?.colorPalette]);
 
+  const [view3d, setView3d] = useState(true);
+
   const isoRoom = useMemo<IsoRoomInput>(() => {
     const rawItems: IsoFurnitureEntry[] = layoutFurniturePreview.map((item) => {
       const pos = livePlacement.positions[item.category];
@@ -826,7 +831,43 @@ export default function RoomResult() {
             />
           }
           isoContent={
-            <IsoRoomPreview room={isoRoom} label="3D preview · follows 2D" />
+            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+                <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.08)', borderRadius: 999, padding: 3 }}>
+                  <button
+                    type="button"
+                    onClick={() => setView3d(true)}
+                    aria-pressed={view3d}
+                    style={{
+                      border: 0, cursor: 'pointer', borderRadius: 999, padding: '5px 14px',
+                      fontSize: 13, fontWeight: 600,
+                      background: view3d ? '#839958' : 'transparent',
+                      color: view3d ? '#fff' : 'inherit',
+                    }}
+                  >Realistic 3D</button>
+                  <button
+                    type="button"
+                    onClick={() => setView3d(false)}
+                    aria-pressed={!view3d}
+                    style={{
+                      border: 0, cursor: 'pointer', borderRadius: 999, padding: '5px 14px',
+                      fontSize: 13, fontWeight: 600,
+                      background: !view3d ? '#839958' : 'transparent',
+                      color: !view3d ? '#fff' : 'inherit',
+                    }}
+                  >2D sketch</button>
+                </div>
+              </div>
+              <div style={{ flex: 1, minHeight: 320 }}>
+                {view3d ? (
+                  <Suspense fallback={<div style={{ padding: 16, color: '#888', font: '14px system-ui' }}>Loading 3D…</div>}>
+                    <Room3DView isoRoom={isoRoom} heightFt={layoutRoomPreview.heightFt} styleTag={s?.styleTag} />
+                  </Suspense>
+                ) : (
+                  <IsoRoomPreview room={isoRoom} label="2D sketch preview" />
+                )}
+              </div>
+            </div>
           }
         />
 

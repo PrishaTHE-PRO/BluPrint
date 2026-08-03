@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BluPrint · 3D Room</title>
+<style>
+  html,body{margin:0;height:100%;font-family:system-ui}
+  #stage{position:absolute;inset:0}
+  .bar{position:absolute;top:12px;left:12px;z-index:2;background:#fff;padding:8px 12px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  select{font:inherit;padding:4px}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.185.1/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.185.1/examples/jsm/"
+}}
+</script>
+</head><body>
+<div class="bar">Style:
+  <select id="style">
+    <option value="scandinavian">Scandinavian</option>
+    <option value="modern">Modern</option>
+    <option value="bohemian">Bohemian</option>
+    <option value="industrial">Industrial</option>
+    <option value="minimalist">Minimalist</option>
+  </select>
+</div>
+<div id="stage"></div>
+<script type="module" src="/room3d/room3d-demo.js"></script>
+</body></html>
