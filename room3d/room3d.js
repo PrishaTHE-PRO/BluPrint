@@ -253,7 +253,7 @@ export function createRoomViewer(container, opts = {}) {
   // lighting
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8d7b6a, 0.55));
   const key = new THREE.DirectionalLight(0xfff2e0, 1.15);
-  key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+  key.castShadow = true; key.shadow.mapSize.set(1024, 1024);  // 2048 was 4x the texels for no visible gain at this size
   key.shadow.camera.near = 1; key.shadow.camera.far = 60;
   key.shadow.camera.left = -20; key.shadow.camera.right = 20; key.shadow.camera.top = 20; key.shadow.camera.bottom = -20;
   key.shadow.bias = -0.0004;
@@ -262,9 +262,24 @@ export function createRoomViewer(container, opts = {}) {
 
   const roomGroup = new THREE.Group(); scene.add(roomGroup);
 
-  let raf;
-  function loop() { raf = requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); }
-  loop();
+  // Render on demand, not every frame. The old loop re-rendered continuously
+  // — soft shadows off a 2048 map at devicePixelRatio 2 — even when nobody was
+  // touching the room, which kept a core busy for the whole time the results
+  // page was open. Now a frame is drawn only when the camera actually moves
+  // (OrbitControls.update() reports that, and keeps reporting it while damping
+  // settles) or when something explicitly asks for one.
+  let raf = null;
+  function drawFrame() {
+    raf = null;
+    const moving = controls.update();
+    renderer.render(scene, camera);
+    if (moving) requestFrame();       // keep going until damping settles
+  }
+  function requestFrame() {
+    if (raf === null) raf = requestAnimationFrame(drawFrame);
+  }
+  controls.addEventListener('change', requestFrame);
+  requestFrame();
 
   function resize() {
     const w = container.clientWidth || 800, h = container.clientHeight || 500;
@@ -274,6 +289,7 @@ export function createRoomViewer(container, opts = {}) {
     // at 2x the container, overflows it, grows the auto-height parent, and
     // re-triggers this ResizeObserver in a runaway loop.
     renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+    requestFrame();
   }
   const ro = new (window.ResizeObserver || function () { this.observe = () => {}; this.disconnect = () => {}; })(resize);
   ro.observe(container); resize();
@@ -345,8 +361,9 @@ export function createRoomViewer(container, opts = {}) {
     camera.near = 0.1; camera.far = maxD * 20; camera.updateProjectionMatrix();
     key.position.set(W * 0.4 + 6, H + 10, L * 0.2 + 8);
     controls.update();
+    requestFrame();   // rendering is on demand now — the scene just changed
   }
 
-  function dispose() { cancelAnimationFrame(raf); ro.disconnect?.(); controls.dispose(); renderer.dispose(); renderer.domElement.remove(); }
+  function dispose() { if (raf !== null) cancelAnimationFrame(raf); ro.disconnect?.(); controls.dispose(); renderer.dispose(); renderer.domElement.remove(); }
   return { render, dispose, scene, camera, renderer };
 }

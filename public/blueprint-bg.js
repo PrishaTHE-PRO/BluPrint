@@ -45,10 +45,6 @@
   var svg = [
     '<svg viewBox="10 10 660 540" preserveAspectRatio="xMidYMid slice">',
     '  <defs>',
-    '    <filter id="bp-ink" x="-5%" y="-5%" width="110%" height="110%">',
-    '      <feTurbulence type="fractalNoise" baseFrequency="0.014 0.02" numOctaves="2" seed="7" result="n"/>',
-    '      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/>',
-    '    </filter>',
     '    <pattern id="bp-grid" width="22" height="22" patternUnits="userSpaceOnUse">',
     '      <path d="M22 0 H0 V22" fill="none" stroke="currentColor" stroke-width="0.5"/>',
     '    </pattern>',
@@ -56,7 +52,12 @@
     '      <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="0.6"/>',
     '    </pattern>',
     '  </defs>',
-    '  <g filter="url(#bp-ink)">',
+    // No filter here on purpose. This layer is position:fixed and full-viewport,
+    // so an feTurbulence + feDisplacementMap "ink wobble" had to re-rasterize
+    // whenever anything repainted above it — every pointermove of a cutout drag
+    // and every frame of the 3D canvas. At opacity .10 the wobble was invisible
+    // anyway, so the cost bought nothing.
+    '  <g>',
     '    <rect x="18" y="18" width="646" height="476" fill="url(#bp-grid)" opacity=".55"/>',
     '    <rect class="bp-fill" x="40" y="40" width="210" height="210"/>',
     '    <rect class="bp-fill" x="250" y="40" width="200" height="210"/>',

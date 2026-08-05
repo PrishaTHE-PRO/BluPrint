@@ -1409,6 +1409,73 @@ function renderCutouts() {
     }
     const d = pointsToPath(c.points);
 
+    // Drag state lives out here so the same handlers can be bound whether or not
+    // the cutout is currently selected. Previously only the selected variant was
+    // draggable, so the first press on an unselected cutout merely selected it —
+    // you had to press a second time to actually move it.
+    let hasMoved = false;
+    let startSvgP = null;
+    let originalPoints = null;
+    let originalEdge = 0;
+    let metrics = null;
+    let activeEdge = 0;
+    // Look the hit path up by id rather than capturing it: selecting re-renders
+    // the group, so the node captured at bind time may already be detached.
+    const setGrabCursor = (value) => {
+      const live = placedGroup.querySelector(`[data-cutout-id="${c.id}"] path.cutout-move-hit`);
+      if (live) live.setAttribute("style", `cursor: ${value}; touch-action: none`);
+    };
+
+    const cutoutMove = {
+      onStart: (e) => {
+        hasMoved = false;
+        cutoutInteractionActive = true;
+        setGrabCursor("grabbing");
+        startSvgP = getSVGPoint(e);
+        originalPoints = c.points.map((p) => ({ ...p }));
+        originalEdge = Number.isInteger(c.edgeIndex)
+          ? c.edgeIndex
+          : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
+        metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
+        activeEdge = originalEdge;
+      },
+      onMove: (mv) => {
+        hasMoved = true;
+        const currentSvgP = getSVGPoint(mv);
+        if (c.source === "drawn") {
+          const dx = currentSvgP.x - startSvgP.x;
+          const dy = currentSvgP.y - startSvgP.y;
+          const testPoints = originalPoints.map((p) => ({ x: p.x + dx, y: p.y + dy }));
+          if (!isCutoutValid(testPoints)) return;
+          c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
+          syncCutoutDom(c);
+          return;
+        }
+        const snap = pickStickyEdge(currentSvgP.x, currentSvgP.y, activeEdge);
+        const frame = getEdgeFrame(snap.edgeIndex);
+        const centerAlong =
+          (snap.point.x - frame.p1.x) * frame.tx +
+          (snap.point.y - frame.p1.y) * frame.ty;
+        const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, metrics.width, metrics.depth);
+        if (!isCutoutValid(placed.points)) return;
+        const testCutout = { ...c, ...placed };
+        if (checkCollision(testCutout, c.id)) return;
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+        if (edgeEl) edgeEl.classList.add("active");
+        c.points = placed.points;
+        c.edgeIndex = placed.edgeIndex;
+        activeEdge = placed.edgeIndex;
+        syncCutoutDom(c);
+      },
+      onEnd: () => {
+        cutoutInteractionActive = false;
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        setGrabCursor("grab");
+        if (hasMoved) { saveState(); renderAll(); showToast("Cutout repositioned"); }
+      },
+    };
+
     if (selectedCutoutId !== c.id) {
       const visibleOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       visibleOutline.setAttribute("d", d);
@@ -1418,13 +1485,17 @@ function renderCutouts() {
       visibleOutline.setAttribute("class", "cutout-preview-outline cursor-pointer element-hoverable");
       visibleOutline.setAttribute("vector-effect", "non-scaling-stroke");
       visibleOutline.style.touchAction = "none";
-      visibleOutline.onpointerdown = (e) => {
-        if (e.button !== undefined && e.button !== 0) return;
-        e.stopPropagation();
-        e.preventDefault();
-        selectedCutoutId = c.id;
-        renderAll();
-      };
+      // Select and start dragging in one gesture. renderAll() below swaps this
+      // node out, but bindPointerDrag listens on window and syncCutoutDom looks
+      // the group up by id, so the drag carries on across the re-render.
+      bindPointerDrag(visibleOutline, {
+        ...cutoutMove,
+        onStart: (e) => {
+          selectedCutoutId = c.id;
+          renderAll();
+          cutoutMove.onStart(e);
+        },
+      });
       g.appendChild(visibleOutline);
     } else {
       const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -1444,61 +1515,7 @@ function renderCutouts() {
       visualOutline.setAttribute("class", "cutout-active-outline");
       visualOutline.setAttribute("vector-effect", "non-scaling-stroke");
       visualOutline.setAttribute("pointer-events", "none");
-      let hasMoved = false;
-      let startSvgP = null;
-      let originalPoints = null;
-      let originalEdge = 0;
-      let metrics = null;
-      let activeEdge = 0;
-      bindPointerDrag(outline, {
-        onStart: (e) => {
-          hasMoved = false;
-          cutoutInteractionActive = true;
-          outline.setAttribute("style", "cursor: grabbing; touch-action: none");
-          startSvgP = getSVGPoint(e);
-          originalPoints = c.points.map((p) => ({ ...p }));
-          originalEdge = Number.isInteger(c.edgeIndex)
-            ? c.edgeIndex
-            : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
-          metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
-          activeEdge = originalEdge;
-        },
-        onMove: (mv) => {
-          hasMoved = true;
-          const currentSvgP = getSVGPoint(mv);
-          if (c.source === "drawn") {
-            const dx = currentSvgP.x - startSvgP.x;
-            const dy = currentSvgP.y - startSvgP.y;
-            const testPoints = originalPoints.map((p) => ({ x: p.x + dx, y: p.y + dy }));
-            if (!isCutoutValid(testPoints)) return;
-            c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
-            syncCutoutDom(c);
-            return;
-          }
-          const snap = pickStickyEdge(currentSvgP.x, currentSvgP.y, activeEdge);
-          const frame = getEdgeFrame(snap.edgeIndex);
-          const centerAlong =
-            (snap.point.x - frame.p1.x) * frame.tx +
-            (snap.point.y - frame.p1.y) * frame.ty;
-          const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, metrics.width, metrics.depth);
-          if (!isCutoutValid(placed.points)) return;
-          const testCutout = { ...c, ...placed };
-          if (checkCollision(testCutout, c.id)) return;
-          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-          if (edgeEl) edgeEl.classList.add("active");
-          c.points = placed.points;
-          c.edgeIndex = placed.edgeIndex;
-          activeEdge = placed.edgeIndex;
-          syncCutoutDom(c);
-        },
-        onEnd: () => {
-          cutoutInteractionActive = false;
-          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          outline.setAttribute("style", "cursor: grab; touch-action: none");
-          if (hasMoved) { saveState(); renderAll(); showToast("Cutout repositioned"); }
-        },
-      });
+      bindPointerDrag(outline, cutoutMove);
       g.appendChild(outline);
       g.appendChild(visualOutline);
 
