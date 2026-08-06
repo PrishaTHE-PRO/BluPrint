@@ -89,8 +89,22 @@ export default function Room3DView({ isoRoom, heightFt = 9, styleTag, className 
     <div
       ref={ref}
       className={`room3d-view ${className}`.trim()}
-      // overflow:hidden is a backstop: the canvas can never grow this box
-      style={{ width: '100%', height: '100%', minHeight: 320, overflow: 'hidden' }}
+      // overflow:hidden is a backstop: the canvas can never grow this box.
+      // The blueprint grid lives here rather than in the scene so it covers the
+      // whole background edge to edge — the WebGL canvas is transparent over it.
+      // Cream + 16px cells match the 2D sketch's paper patch (ISO_COLORS.patch
+      // and .grid in isoRoomRender.ts).
+      style={{
+        width: '100%',
+        height: '100%',
+        minHeight: 320,
+        overflow: 'hidden',
+        backgroundColor: '#fbf7ee',
+        backgroundImage:
+          'linear-gradient(rgba(47,80,125,.14) 1px, transparent 1px),'
+          + 'linear-gradient(90deg, rgba(47,80,125,.14) 1px, transparent 1px)',
+        backgroundSize: '16px 16px',
+      }}
     />
   );
 }
