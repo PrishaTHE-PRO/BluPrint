@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import type { FurnitureItem, Style } from '../types';
 import { orderedFurniture } from '../utils/furnitureLayout';
 import FurnitureCard from './FurnitureCard';
@@ -38,14 +38,10 @@ export default function FurniturePanel({
     .filter((item) => !hiddenCategories.has(item.category))
     .reduce((sum, item) => sum + item.price, 0);
 
-  // Keep the shop photo for the selected floor-plan piece in view (critical on mobile).
-  useEffect(() => {
-    if (!linkedCategory || !stripRef.current) return;
-    const card = stripRef.current.querySelector<HTMLElement>(
-      `[data-furniture-card="${CSS.escape(linkedCategory)}"]`,
-    );
-    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [linkedCategory]);
+  // Selecting a piece on the floor plan deliberately does NOT scroll the strip.
+  // scrollIntoView walks up every scrollable ancestor, so it moved the page as
+  // well as the strip and yanked the view out from under you. The selected card
+  // is still highlighted via `linkedCategory` — it just stays where it is.
 
   const cards = displayed.map((item, i) => (
     <div key={item.id} className="furniture-strip-card shrink-0" data-furniture-card={item.category}>
