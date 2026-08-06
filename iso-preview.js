@@ -825,20 +825,20 @@ function renderIsoRoom(room) {
     const vbW = maxX - minX + pad * 2, vbH = maxY - minY + pad * 2;
     svg.setAttribute('viewBox', `${vbX.toFixed(0)} ${vbY.toFixed(0)} ${vbW.toFixed(0)} ${vbH.toFixed(0)}`);
 
-    // Paper-grid patch background — a faint blueprint grid on a rounded cream
-    // panel behind the room, on the card's white. Unique pattern id per card.
-    const center = isoProject(W / 2, L / 2, 0);
+    // Paper-grid background — a faint blueprint grid on cream, filling the whole
+    // card behind the room. Unique pattern id per card.
     const gid = 'iso-grid-' + String(room._id || room.name || 'room').replace(/[^a-zA-Z0-9_-]/g, '');
     const defs = document.createElementNS(svgNs, 'defs');
     defs.innerHTML =
         `<pattern id="${gid}" width="16" height="16" patternUnits="userSpaceOnUse">` +
         `<path d="M16 0 L0 0 0 16" fill="none" stroke="${ISO_COLORS.grid}" stroke-width="1"></path></pattern>`;
     svg.appendChild(defs);
-    const px = center.px - vbW * 0.42, py = center.py - vbH * 0.42, pw = vbW * 0.84, ph = vbH * 0.84;
+    // Full-bleed: the paper and its grid fill the whole viewBox instead of a
+    // rounded patch floating at 84% in the middle of the card.
     const panel = document.createElementNS(svgNs, 'rect');
-    panel.setAttribute('x', px.toFixed(1)); panel.setAttribute('y', py.toFixed(1));
-    panel.setAttribute('width', pw.toFixed(1)); panel.setAttribute('height', ph.toFixed(1));
-    panel.setAttribute('rx', '18'); panel.setAttribute('fill', ISO_COLORS.patch);
+    panel.setAttribute('x', vbX.toFixed(1)); panel.setAttribute('y', vbY.toFixed(1));
+    panel.setAttribute('width', vbW.toFixed(1)); panel.setAttribute('height', vbH.toFixed(1));
+    panel.setAttribute('fill', ISO_COLORS.patch);
     const gridRect = panel.cloneNode();
     gridRect.setAttribute('fill', `url(#${gid})`);
     svg.appendChild(panel);
