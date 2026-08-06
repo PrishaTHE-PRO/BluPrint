@@ -952,12 +952,6 @@ export default function RoomSVG({
     rotationStart: number;
     moved: boolean;
   } | null>(null);
-  const resizeRef = useRef<{
-    category: string;
-    center: PosFt;
-    pointerStartDistance: number;
-    scaleStart: number;
-  } | null>(null);
   const seededRef = useRef(false);
 
   const [positions,  setPositions]  = useState<Record<string, PosFt>>({});
@@ -965,7 +959,6 @@ export default function RoomSVG({
   const [scales,     setScales]     = useState<Record<string, number>>({});
   const [dragging,   setDragging]   = useState<string | null>(null);
   const [rotating,   setRotating]   = useState<string | null>(null);
-  const [resizing,   setResizing]   = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
 
@@ -991,7 +984,8 @@ export default function RoomSVG({
     const bedZones = bedArchitectureZones(roomLayout);
     const nextPositions: Record<string, PosFt> = { ...initialPlacement.positions };
     const nextRotations = { ...initialPlacement.rotations };
-    const nextScales = { ...initialPlacement.scales };
+    // Everything renders at true product scale; saved per-piece scales are dropped.
+    const nextScales: Record<string, number> = {};
 
     furniture.forEach((item) => {
       const scale = nextScales[item.category] ?? 1;
@@ -1035,7 +1029,7 @@ export default function RoomSVG({
         scale,
       );
       nextPositions[item.category] = resolved.position;
-      nextScales[item.category] = resolved.scale;
+      nextScales[item.category] = 1;
     });
 
     setPositions(nextPositions);
@@ -1217,68 +1211,10 @@ export default function RoomSVG({
     onLinkCategory?.(category);
   }, [furniture, positions, room, rotations, scales, clientToFt, onLinkCategory]);
 
-  const handleResizePointerDown = useCallback((category: string, e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const item = furniture.find(candidate => candidate.category === category);
-    if (!item) return;
-    const scale = scales[category] ?? 1;
-    const position = positions[category] ?? defaultPos(category, room);
-    const { wFt, dFt } = pieceSizeFt(item, scale);
-    const center = { x: position.x + wFt / 2, y: position.y + dFt / 2 };
-    const pointer = clientToFt(e);
-    resizeRef.current = {
-      category,
-      center,
-      pointerStartDistance: Math.max(0.1, Math.hypot(pointer.x - center.x, pointer.y - center.y)),
-      scaleStart: scale,
-    };
-    svgRef.current?.setPointerCapture(e.pointerId);
-    setResizing(category);
-    setSelectedCategory(category);
-    onLinkCategory?.(category);
-  }, [furniture, positions, room, scales, clientToFt, onLinkCategory]);
-
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const resizingPiece = resizeRef.current;
-    if (resizingPiece || rotateRef.current || dragRef.current) {
+    if (rotateRef.current || dragRef.current) {
       e.preventDefault();
       e.stopPropagation();
-    }
-    if (resizingPiece) {
-      e.preventDefault();
-      const pointer = clientToFt(e);
-      const distance = Math.hypot(
-        pointer.x - resizingPiece.center.x,
-        pointer.y - resizingPiece.center.y,
-      );
-      const nextScale = Math.max(
-        0.5,
-        Math.min(2, resizingPiece.scaleStart * distance / resizingPiece.pointerStartDistance),
-      );
-      const item = furniture.find(candidate => candidate.category === resizingPiece.category);
-      if (!item) return;
-      const rotation = rotations[resizingPiece.category] ?? defaultRotation(resizingPiece.category);
-      const { wFt, dFt } = pieceSizeFt(item, nextScale);
-      const occupiedZones = placedFurnitureZones(positions, furniture, rotations, scales, resizingPiece.category);
-      setScales(prev => ({ ...prev, [resizingPiece.category]: nextScale }));
-      setPositions(prev => ({
-        ...prev,
-        [resizingPiece.category]: findValidFurniturePosition(
-          {
-            x: resizingPiece.center.x - wFt / 2,
-            y: resizingPiece.center.y - dFt / 2,
-          },
-          item,
-          rotation,
-          cW,
-          cL,
-          [...forbiddenZones, ...occupiedZones],
-          nextScale,
-        ),
-      }));
-      return;
     }
 
     const rotatingPiece = rotateRef.current;
@@ -1368,10 +1304,8 @@ export default function RoomSVG({
     }
     dragRef.current = null;
     rotateRef.current = null;
-    resizeRef.current = null;
     setDragging(null);
     setRotating(null);
-    setResizing(null);
   }, [applyRotation]);
 
   const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
@@ -1472,7 +1406,7 @@ export default function RoomSVG({
       onMouseLeave={() => {
         // Desktop hover clear only — touch selection must stick until tap-away
         if (coarsePointer) return;
-        if (dragging || rotating || resizing) return;
+        if (dragging || rotating) return;
         setSelectedCategory(null);
         onLinkCategory?.(null);
       }}
@@ -1486,7 +1420,7 @@ export default function RoomSVG({
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium text-right">
           {coarsePointer
             ? 'Tap to select · drag to move · tap/drag top handle to rotate'
-            : 'Drag to move · top handle rotates · corner handle resizes'}
+            : 'Drag to move · top handle rotates'}
         </span>
       </div>
 
@@ -1620,10 +1554,9 @@ export default function RoomSVG({
           const isLinked = activeCategory === item.category;
           const showControls = isLinked
             || rotating === item.category
-            || resizing === item.category
             || dragging === item.category;
           const isDimmed = Boolean(activeCategory && activeCategory !== item.category
-            && rotating !== item.category && resizing !== item.category && dragging !== item.category);
+            && rotating !== item.category && dragging !== item.category);
           const isRug    = item.category === 'rug';
 
           return (
@@ -1761,27 +1694,6 @@ export default function RoomSVG({
                 </g>
               )}
 
-              {/* Bottom-right resize handle. Its distance from the piece center
-                  determines scale, preserving the product's aspect ratio. */}
-              {showControls && (
-                <g
-                  role="button"
-                  aria-label={`Resize ${CATEGORY_LABELS[item.category] ?? item.category}`}
-                  transform={`translate(${wPx.toFixed(1)},${dPx.toFixed(1)})`}
-                  style={{ cursor: resizing === item.category ? 'grabbing' : 'nwse-resize', touchAction: 'none' }}
-                  onPointerDown={e => handleResizePointerDown(item.category, e)}
-                >
-                  <circle r={handleHitR + 6} fill="transparent" />
-                  <circle r={handleHitR} fill="#839958" stroke="#F7F4D5" strokeWidth={2} />
-                  <path
-                    d="M -4 2 L 2 -4 M -1 4 L 4 -1"
-                    fill="none"
-                    stroke="#F7F4D5"
-                    strokeWidth={1.8}
-                    strokeLinecap="round"
-                  />
-                </g>
-              )}
             </g>
           );
         })}

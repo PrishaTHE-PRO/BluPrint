@@ -604,7 +604,7 @@ export default function RoomResult() {
         x: pos?.x ?? 0,
         y: pos?.y ?? 0,
         rotation: livePlacement.rotations[item.category] ?? 0,
-        scale: livePlacement.scales[item.category] ?? 1,
+        scale: 1,   // furniture is always to scale with the room
         hidden: false,
         color,
         item: {

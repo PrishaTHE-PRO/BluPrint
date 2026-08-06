@@ -102,7 +102,9 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
         x:        toNumber(entry.x),
         y:        toNumber(entry.y),
         rotation: toNumber(entry.rotation),
-        scale:    Math.max(0.5, Math.min(2, toNumber(entry.scale, 1))),
+        // Ingestion point for saved layouts — drop any scale stored back when the
+        // resize handle existed, so old designs come back at true scale.
+        scale:    1,
         ...(color ? { color } : {}),
         item:     color ? { ...item, color } : item,
       };
@@ -135,7 +137,9 @@ export function buildFurniturePlacement(args: {
   scales:    Record<string, number>;
   colors?:   Record<string, string>;
 }): FurniturePlacement {
-  const { roomId, styleTag, budgetTotal, roomFeatures, slots, hidden, positions, rotations, scales, colors } = args;
+  // `scales` is still accepted by the type for call-site compatibility, but is
+  // no longer read — every piece is written at scale 1.
+  const { roomId, styleTag, budgetTotal, roomFeatures, slots, hidden, positions, rotations, colors } = args;
 
   return {
     version: FURNITURE_PLACEMENT_VERSION,
@@ -155,7 +159,10 @@ export function buildFurniturePlacement(args: {
           x:        toNumber(positions[item.category]?.x),
           y:        toNumber(positions[item.category]?.y),
           rotation: toNumber(rotations[item.category]),
-          scale:    Math.max(0.5, Math.min(2, toNumber(scales[item.category], 1))),
+          // Furniture is always drawn at its real product dimensions, so scale
+          // is pinned to 1. Kept in the payload for compatibility with layouts
+          // saved while manual resizing existed.
+          scale:    1,
           ...(color ? { color } : {}),
           item:     color ? { ...item, color } : item,
         };
@@ -177,7 +184,7 @@ export function readPlacement(placement: FurniturePlacement) {
     slots[entry.category]     = entry.item;
     positions[entry.category] = { x: entry.x, y: entry.y };
     rotations[entry.category] = entry.rotation;
-    scales[entry.category]    = entry.scale;
+    scales[entry.category]    = 1;   // ignore any scale stored by the old resize handle
     const color = entry.color || (entry.item as FurnitureItem & { color?: string }).color;
     if (typeof color === 'string' && color) colors[entry.category] = color;
     if (entry.hidden) hidden.add(entry.category);
