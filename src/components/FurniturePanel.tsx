@@ -4,7 +4,6 @@ import { orderedFurniture } from '../utils/furnitureLayout';
 import FurnitureCard from './FurnitureCard';
 
 interface Props {
-  items:            FurnitureItem[];
   slots:            Record<string, FurnitureItem>;
   onSwap:           (category: string) => void;
   style:            Style;
@@ -19,7 +18,6 @@ interface Props {
 }
 
 export default function FurniturePanel({
-  items,
   slots,
   onSwap,
   style,

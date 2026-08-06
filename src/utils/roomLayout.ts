@@ -28,6 +28,14 @@ function normalizePoint(value: unknown): RoomPoint {
   };
 }
 
+/** Ids come from saved JSON, so they can be anything. Anything that isn't a
+ *  string or number becomes '' rather than being passed through — an object id
+ *  would otherwise survive and later stringify to "[object Object]", which can
+ *  collide with other elements when ids are matched. */
+function isIdLike(value: unknown): value is string | number {
+  return typeof value === 'string' || typeof value === 'number';
+}
+
 function normalizeElement(value: unknown): ArchitectureElement {
   if (!value || typeof value !== 'object') {
     return { id: '', type: 'door', x: 0, y: 0, angle: 0 };
@@ -42,7 +50,7 @@ function normalizeElement(value: unknown): ArchitectureElement {
   };
 
   return {
-    id: element.id ?? '',
+    id: isIdLike(element.id) ? element.id : '',
     type: element.type === 'window' ? 'window' : 'door',
     x: toNumber(element.x),
     y: toNumber(element.y),
@@ -61,7 +69,7 @@ function normalizeCutout(value: unknown): ArchitectureCutout {
   };
 
   return {
-    id: cutout.id ?? '',
+    id: isIdLike(cutout.id) ? cutout.id : '',
     type: 'cutout',
     points: Array.isArray(cutout.points) ? cutout.points.map(normalizePoint) : [],
   };

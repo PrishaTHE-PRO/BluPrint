@@ -808,7 +808,6 @@ export default function RoomResult() {
         </header>
 
         <FurniturePanel
-          items={furniture}
           slots={furnitureSlots}
           onSwap={handleSwap}
           style={s}
