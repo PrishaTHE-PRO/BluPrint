@@ -63,6 +63,11 @@ export default function Room3DView({ isoRoom, heightFt = 9, styleTag, className 
       heightFt,
       scale,
       roomPoints: isoRoom.roomPoints,
+      // Architecture was never forwarded, which is why doors, windows and
+      // cutouts were missing from the 3D view — the 2D preview reads these same
+      // two fields off isoRoom.
+      elements: isoRoom.elements,
+      cutouts: isoRoom.cutouts,
       furnitureLayout: (isoRoom.items || [])
         .filter((it) => !it.hidden)
         .map((it) => {

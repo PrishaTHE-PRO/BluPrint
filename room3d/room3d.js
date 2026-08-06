@@ -321,16 +321,113 @@ export function createRoomViewer(container, opts = {}) {
       (Number.isFinite(fy) ? fy : L / 2) + d / 2 - L / 2,
     ];
 
-    // floor
-    const floor = box(W, 0.1, L, mat(P.floor, { rough: 0.9 }), 0, -0.05, 0);
-    floor.receiveShadow = true; roomGroup.add(floor);
-    // two far walls (dollhouse: open toward +X / +Z where the camera sits)
+    // ---- room shell -------------------------------------------------------
+    // roomPoints / elements / cutouts all arrive in EDITOR PIXELS at `scale`
+    // (20px = 1ft), with y growing downward. Convert to feet and centre on the
+    // origin so they line up with the furniture, whose feet are already
+    // measured from the room's top-left.
+    const pxScale = layout.scale || 20;
+    const px = pts.length >= 3 ? pts.map(p => p.x) : null;
+    const py = pts.length >= 3 ? pts.map(p => p.y) : null;
+    const originX = px ? Math.min(...px) : 0;
+    const originY = py ? Math.min(...py) : 0;
+    const toFt = (p) => ({
+      x: (p.x - originX) / pxScale - W / 2,
+      z: (p.y - originY) / pxScale - L / 2,
+    });
+    // Fall back to the plain rectangle when there is no saved polygon.
+    const outline = pts.length >= 3
+      ? pts.map(toFt)
+      : [
+          { x: -W / 2, z: -L / 2 }, { x: W / 2, z: -L / 2 },
+          { x: W / 2, z: L / 2 },   { x: -W / 2, z: L / 2 },
+        ];
+
+    // Floor built from the actual polygon, with cutouts punched out as holes
+    // (the old flat box could not represent either).
+    const floorShape = new THREE.Shape(outline.map(p => new THREE.Vector2(p.x, p.z)));
+    for (const cut of layout.cutouts || []) {
+      const cp = (cut.points || []).filter(pt => Number.isFinite(pt.x) && Number.isFinite(pt.y));
+      if (cp.length < 3) continue;
+      floorShape.holes.push(new THREE.Path(cp.map(toFt).map(p => new THREE.Vector2(p.x, p.z))));
+    }
+    const floorGeo = new THREE.ExtrudeGeometry(floorShape, { depth: 0.1, bevelEnabled: false });
+    // Shape lives in XY; rotate so its Y becomes world Z and the extrusion
+    // hangs downward, leaving the walking surface at y = 0.
+    floorGeo.rotateX(Math.PI / 2);
+    const floor = new THREE.Mesh(floorGeo, mat(P.floor, { rough: 0.9 }));
+    floor.receiveShadow = true;
+    roomGroup.add(floor);
+
+    // Walls follow every polygon edge, not just two. BackSide means the walls
+    // between you and the room are culled automatically, so the dollhouse view
+    // survives orbiting instead of only working from one fixed angle.
     const wm = mat(P.wall, { rough: 0.95 });
-    roomGroup.add(box(W, H, 0.2, wm, 0, H / 2, -L / 2 - 0.1));   // back (-Z)
-    roomGroup.add(box(0.2, H, L, wm, -W / 2 - 0.1, H / 2, 0));   // left (-X)
-    // baseboard accents
-    roomGroup.add(box(W, 0.3, 0.22, mat(P.woodDark), 0, 0.15, -L / 2 - 0.08));
-    roomGroup.add(box(0.22, 0.3, L, mat(P.woodDark), -W / 2 - 0.08, 0.15, 0));
+    wm.side = THREE.BackSide;
+    const baseM = mat(P.woodDark);
+    baseM.side = THREE.BackSide;
+    const edges = [];
+    for (let i = 0; i < outline.length; i += 1) {
+      const a = outline[i], b = outline[(i + 1) % outline.length];
+      const dx = b.x - a.x, dz = b.z - a.z;
+      const len = Math.hypot(dx, dz);
+      if (len < 0.01) continue;
+      const midX = (a.x + b.x) / 2, midZ = (a.z + b.z) / 2;
+      const angle = Math.atan2(dz, dx);
+      edges.push({ a, b, midX, midZ, angle, len });
+
+      const wall = box(len, H, 0.2, wm, midX, H / 2, midZ);
+      wall.rotation.y = -angle;
+      roomGroup.add(wall);
+      const baseboard = box(len, 0.3, 0.22, baseM, midX, 0.15, midZ);
+      baseboard.rotation.y = -angle;
+      roomGroup.add(baseboard);
+    }
+
+    // ---- doors and windows ------------------------------------------------
+    // Drawn as framed panels set into the wall face rather than boolean holes:
+    // no CSG dependency, and they stay legible from any orbit angle.
+    const nearestEdge = (p) => {
+      let best = null, bestD = Infinity;
+      for (const e of edges) {
+        const vx = e.b.x - e.a.x, vz = e.b.z - e.a.z;
+        const lenSq = vx * vx + vz * vz || 1;
+        let t = ((p.x - e.a.x) * vx + (p.z - e.a.z) * vz) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        const cxp = e.a.x + vx * t, czp = e.a.z + vz * t;
+        const d = Math.hypot(p.x - cxp, p.z - czp);
+        if (d < bestD) { bestD = d; best = { edge: e, x: cxp, z: czp }; }
+      }
+      return best;
+    };
+    const glass = mat(0xbcd8ec, { rough: 0.1, metal: 0.05 });
+    glass.transparent = true; glass.opacity = 0.55;
+    for (const el of layout.elements || []) {
+      if (!el || (el.type !== 'door' && el.type !== 'window')) continue;
+      if (!Number.isFinite(el.x) || !Number.isFinite(el.y)) continue;
+      const spot = nearestEdge(toFt(el));
+      if (!spot) continue;
+      const isDoor = el.type === 'door';
+      // `width` is stored in editor px for windows; doors use a 3ft standard.
+      const wFt = isDoor ? 3 : Math.max(1.5, (Number(el.width) || 60) / pxScale);
+      const hFt = isDoor ? Math.min(6.8, H - 0.2) : Math.min(3.6, H - 3);
+      const sill = isDoor ? hFt / 2 : Math.min(3, H - hFt - 0.4) + hFt / 2;
+      const g = new THREE.Group();
+      // frame sits a hair proud of the wall on both faces so it reads from
+      // inside and out
+      g.add(box(wFt + 0.22, hFt + 0.22, 0.3, mat(P.woodDark), 0, 0, 0));
+      g.add(box(wFt, hFt, 0.34, isDoor ? mat(P.wood) : glass, 0, 0, 0));
+      if (isDoor) {
+        // handle, on the +X side of the leaf
+        const knob = cyl(0.07, 0.07, 0.16, mat(P.metal, { metal: 0.7, rough: 0.35 }));
+        knob.rotation.z = Math.PI / 2;
+        knob.position.set(wFt / 2 - 0.35, 0, 0.2);
+        g.add(knob);
+      }
+      g.position.set(spot.x, sill, spot.z);
+      g.rotation.y = -spot.edge.angle;
+      roomGroup.add(g);
+    }
 
     // furniture
     for (const f of layout.furnitureLayout || []) {
