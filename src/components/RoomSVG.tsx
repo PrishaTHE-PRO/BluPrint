@@ -1058,7 +1058,6 @@ export default function RoomSVG({
       const next = { ...prev };
       const workingScales = { ...scales };
       const workingRotations = { ...rotations };
-      const scaleUpdates: Record<string, number> = {};
 
       furniture.forEach((item) => {
         const occupiedZones = placedFurnitureZones(
@@ -1111,15 +1110,11 @@ export default function RoomSVG({
           scale,
         );
         next[item.category] = resolved.position;
+        // resolveFurniturePlacement no longer rescales, so this always matches
+        // the scale we passed in — pieces keep their real size.
         workingScales[item.category] = resolved.scale;
-        if (Math.abs(resolved.scale - scale) > 0.001) {
-          scaleUpdates[item.category] = resolved.scale;
-        }
       });
 
-      if (Object.keys(scaleUpdates).length > 0) {
-        setScales((prevScales) => ({ ...prevScales, ...scaleUpdates }));
-      }
       return next;
     });
 
