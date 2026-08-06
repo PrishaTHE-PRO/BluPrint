@@ -142,9 +142,12 @@ const BUILDERS = {
     return g;
   },
   pendant(w, d, h, P) {
-    const g = new THREE.Group(); const m = mat(P.metal, { metal: 0.6, rough: 0.4 });
+    const g = new THREE.Group();
     const shade = cyl(w * 0.5, w * 0.2, Math.min(h, 1.2), mat(0xfdf3d8, { rough: 0.5, emissive: 0x3a3320 }));
-    g.add(shade); // caller hangs it near ceiling
+    g.add(shade);
+    // The drop rod and ceiling canopy are added by the caller — the only place
+    // that knows the ceiling height. Without them this is a shade floating in
+    // mid-air, which is exactly how it looked.
     return g;
   },
   rug(w, d) {
@@ -497,7 +500,23 @@ export function createRoomViewer(container, opts = {}) {
       g.position.set(x, 0, z);
       g.rotation.y = (-(f.rot || 0) * Math.PI) / 180;
       // lift wall/ceiling items
-      if (CEIL_ITEMS.has(entry.archetype)) g.position.y = H - Math.min(h, 1.4) - 0.2 + h / 2;
+      if (CEIL_ITEMS.has(entry.archetype)) {
+        g.position.y = H - Math.min(h, 1.4) - 0.2 + h / 2;
+        // Hang it: a drop rod from the top of the shade to the ceiling, plus a
+        // canopy where it meets the ceiling. Built in the group's local space so
+        // it travels with the piece. The shade used to be drawn with nothing
+        // above it, which read as a head with no stand.
+        const rodMat = mat(P.metal, { metal: 0.6, rough: 0.4 });
+        const localShadeTop = Math.min(h, 1.2) / 2;
+        const localCeiling = H - g.position.y;
+        const dropLen = Math.max(0.05, localCeiling - localShadeTop);
+        const rod = cyl(0.03, 0.03, dropLen, rodMat);
+        rod.position.y = localShadeTop + dropLen / 2;
+        g.add(rod);
+        const canopy = cyl(0.2, 0.2, 0.06, rodMat);
+        canopy.position.y = localCeiling - 0.03;
+        g.add(canopy);
+      }
       else if (entry.archetype === 'wall_art') g.position.y = H * 0.55;
       else if (entry.archetype === 'wall_shelf') g.position.y = H * 0.5;
       roomGroup.add(g);
