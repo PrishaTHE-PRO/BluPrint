@@ -25,6 +25,11 @@ const PALETTES = {
 const pal = (s) => PALETTES[s] || PALETTES.modern;
 
 // ---- material + mesh helpers ---------------------------------------------
+/** Darken a colour toward black, for frames and legs under a product colour. */
+function shadeHex(colour, k) {
+  return new THREE.Color(colour).multiplyScalar(k).getHex();
+}
+
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: o.rough ?? 0.75, metalness: o.metal ?? 0, ...o });
 function box(w, h, d, m, x = 0, y = 0, z = 0) {
   const g = new THREE.BoxGeometry(w, h, d);
@@ -359,13 +364,12 @@ export function createRoomViewer(container, opts = {}) {
     floor.receiveShadow = true;
     roomGroup.add(floor);
 
-    // Walls follow every polygon edge, not just two. BackSide means the walls
-    // between you and the room are culled automatically, so the dollhouse view
-    // survives orbiting instead of only working from one fixed angle.
+    // Dollhouse: only the two far sides get walls, so the room stays open toward
+    // the camera at +X/+Z. Every edge is still tracked, because openings on the
+    // omitted sides are marked on the floor instead.
+    const cx0 = outline.reduce((sum, p) => sum + p.x, 0) / outline.length;
+    const cz0 = outline.reduce((sum, p) => sum + p.z, 0) / outline.length;
     const wm = mat(P.wall, { rough: 0.95 });
-    wm.side = THREE.BackSide;
-    const baseM = mat(P.woodDark);
-    baseM.side = THREE.BackSide;
     const edges = [];
     for (let i = 0; i < outline.length; i += 1) {
       const a = outline[i], b = outline[(i + 1) % outline.length];
@@ -374,12 +378,17 @@ export function createRoomViewer(container, opts = {}) {
       if (len < 0.01) continue;
       const midX = (a.x + b.x) / 2, midZ = (a.z + b.z) / 2;
       const angle = Math.atan2(dz, dx);
-      edges.push({ a, b, midX, midZ, angle, len });
+      // Outward normal = midpoint pushed away from the room centre. Far walls
+      // are the ones whose outward direction points away from the camera.
+      const outX = midX - cx0, outZ = midZ - cz0;
+      const isFarWall = (outX + outZ) < 0;
+      edges.push({ a, b, midX, midZ, angle, len, isFarWall });
+      if (!isFarWall) continue;
 
       const wall = box(len, H, 0.2, wm, midX, H / 2, midZ);
       wall.rotation.y = -angle;
       roomGroup.add(wall);
-      const baseboard = box(len, 0.3, 0.22, baseM, midX, 0.15, midZ);
+      const baseboard = box(len, 0.3, 0.22, mat(P.woodDark), midX, 0.15, midZ);
       baseboard.rotation.y = -angle;
       roomGroup.add(baseboard);
     }
@@ -424,9 +433,45 @@ export function createRoomViewer(container, opts = {}) {
         knob.position.set(wFt / 2 - 0.35, 0, 0.2);
         g.add(knob);
       }
-      g.position.set(spot.x, sill, spot.z);
-      g.rotation.y = -spot.edge.angle;
-      roomGroup.add(g);
+      // The 3D panel only makes sense where there is a wall to set it into.
+      if (spot.edge.isFarWall) {
+        g.position.set(spot.x, sill, spot.z);
+        g.rotation.y = -spot.edge.angle;
+        roomGroup.add(g);
+      }
+
+      // Floor marking, drawn for every opening so the ones on the two open
+      // sides are still readable: a threshold strip across the gap, plus a
+      // quarter-circle swing arc for doors (the floor-plan convention).
+      // Doors use BluPrint's rose, windows the palette accent, so the two read
+      // apart at a glance. (No palette defines a rose, hence the literal.)
+      const markColour = isDoor ? 0xd3968c : P.accent;
+      const markMat = mat(markColour, { rough: 0.9 });
+      const strip = box(wFt, 0.04, isDoor ? 0.5 : 0.28, markMat, spot.x, 0.02, spot.z);
+      strip.rotation.y = -spot.edge.angle;
+      strip.castShadow = false;
+      roomGroup.add(strip);
+
+      if (isDoor) {
+        // Hinge at one end of the opening; sweep the arc toward the room.
+        const along = { x: Math.cos(spot.edge.angle), z: Math.sin(spot.edge.angle) };
+        const hinge = { x: spot.x - along.x * (wFt / 2), z: spot.z - along.z * (wFt / 2) };
+        const inward = { x: cx0 - spot.x, z: cz0 - spot.z };
+        // Which way does the arc turn? Cross product of the wall direction with
+        // the inward direction gives the sign.
+        const turn = (along.x * inward.z - along.z * inward.x) >= 0 ? 1 : -1;
+        const arc = new THREE.Mesh(
+          new THREE.RingGeometry(wFt - 0.06, wFt, 32, 1, 0, Math.PI / 2),
+          markMat,
+        );
+        arc.rotation.x = -Math.PI / 2;                       // lay it flat
+        arc.rotation.z = turn > 0
+          ? -spot.edge.angle
+          : -spot.edge.angle - Math.PI / 2;                  // sweep into the room
+        arc.position.set(hinge.x, 0.02, hinge.z);
+        arc.receiveShadow = false;
+        roomGroup.add(arc);
+      }
     }
 
     // furniture
@@ -438,7 +483,14 @@ export function createRoomViewer(container, opts = {}) {
       const w = (f.wIn || cwIn) * IN, d = (f.dIn || cdIn) * IN, h = (f.hIn || chIn) * IN;
       const build = BUILDERS[entry.archetype] || BUILDERS.box;
       // tint the piece toward its product color (matches the 2D preview) when given
-      const Pi = f.color ? { ...P, wood: f.color, fabric: f.color } : P;
+      // Match the 2D preview, which fills the whole piece with the resolved
+      // product colour. Overriding only wood+fabric left legs and frames on the
+      // palette's woodDark — the most-used key in the builders — so a walnut
+      // sofa came out with walnut cushions and generic dark legs. Derive the
+      // frame tone from the product colour instead of ignoring it.
+      const Pi = f.color
+        ? { ...P, wood: f.color, fabric: f.color, woodDark: shadeHex(f.color, 0.62) }
+        : P;
       const g = build(w, d, h, Pi);
       if (entry.archetype === 'rug') g.traverse(o => { if (o.material) o.material = mat(f.color || P.accent, { rough: 1 }); if (o.position) o.position.y = 0.025; });
       const [x, z] = placeXZ(f.x, f.y, w, d);
