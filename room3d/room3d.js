@@ -243,13 +243,9 @@ const CEIL_ITEMS = new Set(['pendant']);
 export function createRoomViewer(container, opts = {}) {
   const P = pal(opts.style);
   const scene = new THREE.Scene();
-  // Transparent by default so the grid behind the canvas covers the whole
-  // background. Pass a colour explicitly to opt back into an opaque scene.
-  scene.background = opts.background ? new THREE.Color(opts.background) : null;
+  scene.background = new THREE.Color(opts.background || 0xf2efe9);
 
-  // alpha so the container's blueprint grid shows through behind the room —
-  // a solid scene.background would cover it.
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
