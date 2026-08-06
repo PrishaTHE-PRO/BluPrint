@@ -282,7 +282,19 @@ export default function RoomResult() {
         slotsInitializedRef.current = true;
         return init;
       }
-      return { ...init, ...prev };
+      const merged = { ...init, ...prev };
+      // Bail out when nothing actually changed. This effect also runs on
+      // `activePlacement`, so saving used to hand back a fresh object with
+      // identical contents — and that identity change cascades: new slots ->
+      // new furniture array -> the plan re-resolves every piece against every
+      // other piece -> anything sitting close together gets shoved apart. That
+      // is why furniture jumped around when you hit Save. Returning `prev`
+      // makes React skip the update entirely.
+      const prevKeys = Object.keys(prev);
+      const mergedKeys = Object.keys(merged);
+      const unchanged = prevKeys.length === mergedKeys.length
+        && mergedKeys.every((key) => merged[key] === prev[key]);
+      return unchanged ? prev : merged;
     });
   }, [furniture, activePlacement]);
 
