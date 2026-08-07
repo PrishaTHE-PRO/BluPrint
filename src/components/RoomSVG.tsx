@@ -356,9 +356,24 @@ function preferredFurniturePosition(
     case 'dining_rug':
     case 'island_cart':
     case 'kitchen_rug':
-    case 'bath_mat':
     case 'nursery_rug':
       return centered;
+    case 'bath_mat': {
+      // A bath mat belongs on the floor you step onto, not floating mid-room.
+      // Sit it just inside whichever fixture is actually present.
+      const fixture = anchor('bathtub') || anchor('standing_shower') || anchor('vanity');
+      if (!fixture) return centered;
+      // Step off toward the middle of the room, so a fixture on the bottom wall
+      // gets its mat above it rather than pushed outside the room.
+      const fixtureMidY = fixture.position.y + fixture.size.dFt / 2;
+      const y = fixtureMidY < roomLengthFt / 2
+        ? fixture.position.y + fixture.size.dFt + 0.25
+        : fixture.position.y - dFt - 0.25;
+      return {
+        x: fixture.position.x + (fixture.size.wFt - wFt) / 2,
+        y: Math.max(inset, Math.min(y, roomLengthFt - dFt - inset)),
+      };
+    }
     case 'dining_chair': {
       const table = anchor('dining_table');
       return table
@@ -372,19 +387,29 @@ function preferredFurniturePosition(
         : centered;
     }
     case 'pendant_light': {
+      // Hangs above the island, so in plan it sits over the island's centre. It
+      // used to be pushed a full depth clear, reading as a second object parked
+      // beside the island rather than lighting it.
       const island = anchor('island_cart');
       return island
-        ? { x: island.position.x + (island.size.wFt - wFt) / 2, y: island.position.y - dFt - gap }
+        ? {
+            x: island.position.x + (island.size.wFt - wFt) / 2,
+            y: island.position.y + (island.size.dFt - dFt) / 2,
+          }
         : centered;
     }
 
     // Large storage and plumbing pieces stay against room edges.
     case 'bookshelf':
     case 'kitchen_storage':
-    case 'bath_storage':
     case 'nursery_dresser':
     case 'bar_cabinet':
       return { x: roomWidthFt - wFt - inset, y: inset };
+    // Bath storage used to share the top-right corner with both the tub and the
+    // shower — three fixtures on one spot, which the resolver then scattered.
+    case 'bath_storage':
+      // Right wall, mid-height — clear of the shower above and the tub below.
+      return { x: roomWidthFt - wFt - inset, y: (roomLengthFt - dFt) / 2 };
     case 'kitchen_shelf':
     case 'vanity':
       return { x: inset, y: inset };
@@ -437,9 +462,15 @@ function preferredFurniturePosition(
       }
       return { x: centered.x, y: inset };
     }
+    // The bathroom set offers vanity, tub, shower and storage at once, and a
+    // small bathroom cannot fit a vanity and a tub on the same wall. Give each
+    // large fixture its own wall so the collision resolver is not left to
+    // scatter three overlapping pieces.
     case 'bathtub':
-      return { x: roomWidthFt - wFt - inset, y: inset };
+      // Long fixture: run it along the bottom wall.
+      return { x: inset, y: roomLengthFt - dFt - inset };
     case 'standing_shower':
+      // Opposite corner from the vanity, on the top wall.
       return { x: roomWidthFt - wFt - inset, y: inset };
     case 'dining_light': {
       const table = anchor('dining_table');
