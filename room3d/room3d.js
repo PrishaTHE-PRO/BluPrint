@@ -478,6 +478,9 @@ export function createRoomViewer(container, opts = {}) {
     }
 
     // furniture
+    // Track what was placed so tabletop items can be stood on the piece they
+    // share a footprint with, instead of being swallowed by it.
+    const placed = [];
     for (const f of layout.furnitureLayout || []) {
       if (f.hidden) continue;
       const entry = catalogEntry(f.category);
@@ -519,7 +522,29 @@ export function createRoomViewer(container, opts = {}) {
       }
       else if (entry.archetype === 'wall_art') g.position.y = H * 0.55;
       else if (entry.archetype === 'wall_shelf') g.position.y = H * 0.5;
+      placed.push({ g, archetype: entry.archetype, x, z, w, d, h });
       roomGroup.add(g);
+    }
+
+    // A table lamp sits ON the dresser or nightstand it shares a spot with. It
+    // was drawn at floor level like everything else, so it vanished inside the
+    // cupboard rather than standing on top of it.
+    const TABLETOP = new Set(['lamp_table']);
+    const SUPPORTS = new Set([
+      'storage', 'storage_sm', 'storage_tall', 'table_low', 'table_tall', 'shelf', 'shelf_tall',
+    ]);
+    for (const piece of placed) {
+      if (!TABLETOP.has(piece.archetype)) continue;
+      let support = null;
+      for (const other of placed) {
+        if (other === piece || !SUPPORTS.has(other.archetype)) continue;
+        const overlapX = Math.abs(piece.x - other.x) < (piece.w + other.w) / 2;
+        const overlapZ = Math.abs(piece.z - other.z) < (piece.d + other.d) / 2;
+        // Tallest overlapping surface wins, so a lamp between a nightstand and a
+        // low table ends up on the higher one rather than half-buried.
+        if (overlapX && overlapZ && (!support || other.h > support.h)) support = other;
+      }
+      if (support) piece.g.position.y = support.h;
     }
 
     // frame camera

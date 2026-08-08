@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { IsoRoomInput } from '../utils/isoRoomRender';
+import { pieceSizeFt } from '../utils/furnitureConstraints';
 // @ts-ignore - plain JS Three.js viewer (no types)
 import { createRoomViewer } from '../../room3d/room3d.js';
 
@@ -77,8 +78,14 @@ export default function Room3DView({ isoRoom, heightFt = 9, styleTag, className 
             x: it.x,
             y: it.y,
             rot: it.rotation || 0,
-            wIn: it.item?.widthIn ? it.item.widthIn * sc : undefined,
-            dIn: it.item?.depthIn ? it.item.depthIn * sc : undefined,
+            // Always send explicit dimensions, resolved with the SAME helper the
+            // 2D plan uses. Leaving these undefined let room3d fall back to its
+            // own catalog, which disagrees with the 2D defaults — an area rug is
+            // 96x72 in 2D but 96x60 in the catalog, and a nursery rug is
+            // landscape in 2D and portrait (60x84) in the catalog, which is why
+            // a rug drawn vertical in 2D came out horizontal in 3D.
+            wIn: pieceSizeFt({ category: it.category, widthIn: it.item?.widthIn, depthIn: it.item?.depthIn }, sc).wFt * 12,
+            dIn: pieceSizeFt({ category: it.category, widthIn: it.item?.widthIn, depthIn: it.item?.depthIn }, sc).dFt * 12,
             color: it.color || it.item?.color,
           };
         }),
