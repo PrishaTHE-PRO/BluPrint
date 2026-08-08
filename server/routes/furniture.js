@@ -186,13 +186,100 @@ function roomTypeSearchPhrase(roomType) {
   return "interior";
 }
 
+/**
+ * The user's palette arrives as hex, but a shopping search needs words. Map each
+ * swatch to the nearest of a small set of furniture-relevant colour names.
+ * Without this the palette the user picked (and the palette pulled off their
+ * inspiration image) had no effect on which products came back at all.
+ */
+/**
+ * The user's palette arrives as hex, but a shopping search needs words. Naming a
+ * colour by nearest RGB distance is perceptually wrong — it called a warm beige
+ * "light grey" and a slate blue "teal" — so classify by hue, with saturation
+ * deciding neutral vs coloured and lightness picking the shade.
+ * Without any of this the palette the user chose (and the one pulled off their
+ * inspiration image) had no bearing on which products came back.
+ */
+function hexToRgb(value) {
+  const hex = String(value || "").trim().replace(/^#/, "");
+  if (!/^[0-9a-f]{6}$/i.test(hex)) return null;
+  const n = parseInt(hex, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function rgbToHsl([r, g, b]) {
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return { h: 0, s: 0, l };
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h;
+  if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0));
+  else if (max === gn) h = (bn - rn) / d + 2;
+  else h = (rn - gn) / d + 4;
+  return { h: h * 60, s, l };
+}
+
+/** A furniture-shopping colour word for one swatch. */
+function colorWordFor(value) {
+  const rgb = hexToRgb(value);
+  if (!rgb) return null;
+  const { h, s, l } = rgbToHsl(rgb);
+
+  // Near-neutral: name it by lightness. Warm neutrals read as cream/beige
+  // rather than grey, which is the distinction the RGB version kept losing.
+  // 0.12, not 0.15: muted greens like sage sit just above this and were being
+  // swallowed by the neutral branch and named "light grey".
+  if (s < 0.12) {
+    if (l < 0.12) return "black";
+    if (l < 0.3) return "charcoal";
+    if (l < 0.62) return "grey";
+    return "light grey";
+  }
+  if (s < 0.3 && l > 0.7 && h >= 20 && h < 70) return "cream";
+
+  if (h < 15 || h >= 345) return l < 0.4 ? "rust" : "terracotta";
+  if (h < 40) {
+    if (l < 0.25) return "espresso";
+    if (l < 0.45) return "walnut";
+    if (l < 0.6) return s > 0.45 ? "terracotta" : "brown";
+    return s > 0.35 ? "tan" : "beige";
+  }
+  if (h < 55) return l < 0.5 ? "camel" : "beige";
+  if (h < 70) return l < 0.5 ? "olive" : "mustard";
+  // 70-95 is yellow-green: moss and olive live here, not gold.
+  if (h < 95) return l < 0.55 ? "olive" : "sage";
+  if (h < 160) return s < 0.35 ? "sage" : (l < 0.45 ? "green" : "sage");
+  if (h < 200) return "teal";
+  if (h < 250) {
+    if (l < 0.32) return "navy";
+    return l > 0.65 ? "light blue" : "blue";
+  }
+  if (h < 290) return "purple";
+  return l > 0.6 ? "pink" : "burgundy";
+}
+
+/** De-duplicated colour words for a palette, in the order the user chose them. */
+function paletteWords(palette) {
+  const words = [];
+  for (const swatch of Array.isArray(palette) ? palette : []) {
+    const word = colorWordFor(swatch);
+    if (word && !words.includes(word)) words.push(word);
+  }
+  return words;
+}
+
 /** Build a Serper shopping query that keeps style + room type in the product search. */
-function buildFurnitureQuery(styleTag, roomType, product, { short = false } = {}) {
+function buildFurnitureQuery(styleTag, roomType, product, { short = false, colors = [] } = {}) {
   const style = styleProfile(styleTag);
   const room = roomTypeSearchPhrase(roomType);
+  // One colour word only: two or more over-constrains the shopping query and
+  // tends to return nothing.
+  const colorWord = colors[0] || "";
   const parts = short
-    ? [style.phrase, product]
-    : [style.phrase, room, product, style.accents];
+    ? [colorWord, style.phrase, product]
+    : [style.phrase, room, colorWord, product, style.accents];
   return parts.map((part) => String(part || "").trim()).filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
@@ -205,17 +292,28 @@ function styleMatchScore(title, styleTag) {
   ), 0);
 }
 
-function rankItemsForStyle(items, styleTag) {
+/** How many of the user's palette words appear in a product title. */
+function colorMatchScore(title, colors) {
+  const text = String(title || "").toLowerCase();
+  if (!Array.isArray(colors) || !colors.length) return 0;
+  return colors.reduce((score, word) => (
+    text.includes(String(word).toLowerCase()) ? score + 1 : score
+  ), 0);
+}
+
+function rankItemsForStyle(items, styleTag, colors = []) {
   return [...items].sort((a, b) => {
+    // Style first — a "mid-century walnut sofa" beats a beige one that is not
+    // mid-century — then the user's palette as the tie-breaker.
     const scoreDiff = styleMatchScore(b.name, styleTag) - styleMatchScore(a.name, styleTag);
     if (scoreDiff !== 0) return scoreDiff;
-    return 0;
+    return colorMatchScore(b.name, colors) - colorMatchScore(a.name, colors);
   });
 }
 
 /** Prefer products whose titles actually mention the style; keep a soft fallback if none do. */
-function preferStyleMatched(items, styleTag) {
-  const ranked = rankItemsForStyle(items, styleTag);
+function preferStyleMatched(items, styleTag, colors = []) {
+  const ranked = rankItemsForStyle(items, styleTag, colors);
   const matched = ranked.filter((item) => styleMatchScore(item.name, styleTag) > 0);
   return matched.length >= 2 ? matched : ranked;
 }
@@ -439,13 +537,16 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal) {
   });
 }
 
-async function searchCategory(styleTag, roomType, cat) {
+async function searchCategory(styleTag, roomType, cat, colors = []) {
   const style = normalizeStyleTag(styleTag);
   const product = cat.product || cat.key;
   // Never search without the style — generic results are why rooms look off-style.
+  // Colour-led query first, then the same search without it, so a palette that
+  // happens to return nothing degrades to style-only rather than to empty.
   const queries = [
+    buildFurnitureQuery(style, roomType, product, { colors }),
     buildFurnitureQuery(style, roomType, product),
-    buildFurnitureQuery(style, roomType, product, { short: true }),
+    buildFurnitureQuery(style, roomType, product, { short: true, colors }),
     `${styleProfile(style).phrase} ${product}`,
   ].filter((q, i, arr) => q && arr.indexOf(q) === i);
 
@@ -489,7 +590,7 @@ async function searchCategory(styleTag, roomType, cat) {
         });
 
       if (mapped.length > 0) {
-        return preferStyleMatched(mapped, style).slice(0, 6);
+        return preferStyleMatched(mapped, style, colors).slice(0, 6);
       }
     } catch (error) {
       lastError = error;
@@ -828,6 +929,12 @@ router.get("/:roomId/furniture", async (req, res) => {
   let budgetTotal = Number(req.query.budgetTotal);
   let roomType = String(req.query.roomType || "").trim();
   let styleTag = String(req.query.styleTag || "").trim();
+  // The palette the user picked, plus whatever was pulled off their inspiration
+  // image. Arrives as repeated ?color=#rrggbb params.
+  const paletteHexes = (Array.isArray(req.query.color) ? req.query.color : [req.query.color])
+    .filter(Boolean)
+    .map(String);
+  const colors = paletteWords(paletteHexes);
   let roomFeatures = (Array.isArray(req.query.roomFeature)
     ? req.query.roomFeature
     : [req.query.roomFeature])
@@ -889,7 +996,7 @@ router.get("/:roomId/furniture", async (req, res) => {
   );
 
   const results = await Promise.allSettled(
-    categories.map((cat) => searchCategory(styleTag, roomType, cat))
+    categories.map((cat) => searchCategory(styleTag, roomType, cat, colors))
   );
   results.forEach((result, index) => {
     if (result.status === "rejected") {

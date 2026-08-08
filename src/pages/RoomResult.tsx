@@ -315,6 +315,7 @@ export default function RoomResult() {
         style.roomType,
         style.roomFeatures,
         style.budgetTotal,
+        style.colorPalette,
       ).then((freshItems) => {
         const freshInCategory = freshItems.filter((i) => i.category === category);
         if (freshInCategory.length < 2) return;
@@ -445,6 +446,7 @@ export default function RoomResult() {
         roomType,
         parsedStyle.roomFeatures,
         parsedStyle.budgetTotal,
+        parsedStyle.colorPalette,
       );
       return;
     }
@@ -486,6 +488,7 @@ export default function RoomResult() {
       roomType,
       parsedStyle.roomFeatures,
       parsedStyle.budgetTotal,
+      parsedStyle.colorPalette,
     );
   }, []);
 
@@ -495,6 +498,7 @@ export default function RoomResult() {
     roomType = '',
     roomFeatures: string[] = [],
     budgetTotal = 0,
+    colorPalette: string[] = [],
   ): Promise<FurnitureItem[]> {
     const params = new URLSearchParams({
       styleTag,
@@ -502,6 +506,9 @@ export default function RoomResult() {
       budgetTotal: String(Math.max(0, budgetTotal)),
     });
     roomFeatures.forEach((feature) => params.append('roomFeature', feature));
+    // The palette drives both the shopping query and the ranking server-side.
+    // Without it the colours the user picked had no bearing on what came back.
+    colorPalette.forEach((hex) => params.append('color', hex));
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
     return fetch(url)
