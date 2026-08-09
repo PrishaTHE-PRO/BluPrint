@@ -822,6 +822,18 @@ function DiningTableIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorT
   );
 }
 
+/** Framed art seen from above: a frame band with the picture face inside. */
+function WallArtIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
+  const frame = Math.min(d * 0.35, 0.9);
+  return (
+    <g>
+      <rect width={w} height={d} rx={1.5} fill={t.dark} stroke="#0A3323" strokeWidth={1.5} />
+      <rect x={frame} y={frame * 0.6} width={Math.max(0, w - frame * 2)} height={Math.max(0, d - frame * 1.2)}
+            fill={t.base} stroke="#0A3323" strokeWidth={0.7} opacity={0.75} />
+    </g>
+  );
+}
+
 function ShelfIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
   return (
     <g>
@@ -921,6 +933,7 @@ function FurnitureIcon({ item, wPx, dPx, color }: { item: FurnitureItem; wPx: nu
       return <LoungeChairIcon {...p} />;
     case 'smart_lighting':     return <LampIcon {...p} />;
     case 'floating_shelves':   return <ShelfIcon {...p} />;
+    case 'wall_art':           return <WallArtIcon {...p} />;
     case 'indoor_plants':      return <FloorLampIcon {...p} />;
     case 'full_length_mirror': return <CoffeeTableIcon {...p} />;
     case 'workspace_desk':     return <DeskIcon {...p} />;

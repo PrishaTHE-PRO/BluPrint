@@ -51,6 +51,11 @@ export const FURNITURE_CATALOG = {
   bookshelf:       g('Bookshelf', 'shelf_tall', [32, 12, 72], [99, 399], ['office'], 'bookshelf'),
   desk_lamp:       g('Desk lamp', 'lamp_table', [8, 8, 18], [25, 99], ['lighting'], 'desk lamp'),
   storage_cabinet: g('Storage cabinet', 'storage_tall', [36, 18, 72], [149, 599], ['office'], 'storage cabinet'),
+  // wardrobe and bookcase are offered by the app (see CATEGORY_LABELS) but had
+  // no entry here, so catalogEntry() fell through to DEFAULT_ENTRY — archetype
+  // 'box' at 24x24x24in. A wardrobe rendered as a 2ft cube.
+  wardrobe:        g('Wardrobe', 'storage_tall', [48, 24, 78], [299, 1199], ['bedroom'], 'wardrobe armoire'),
+  bookcase:        g('Bookcase', 'shelf_tall', [36, 13, 72], [99, 449], ['living'], 'bookcase shelving unit'),
   monitor_stand:   g('Monitor stand', 'table_low', [22, 9, 5], [25, 89], ['office'], 'monitor stand riser'),
   // Dining
   dining_table:    g('Dining table', 'table_tall', [72, 36, 30], [299, 1199], ['dining'], 'dining table'),
