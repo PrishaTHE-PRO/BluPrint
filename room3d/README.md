@@ -15,9 +15,10 @@ Three.js. **No Pascal, no Next.js, no dependency mess.**
   price range, style tags, a shopping link, and which 3D shape to draw. This is
   the reliable dimension source (Serper title-parsing is flaky); it also drives
   correct 3D scale.
-- `room3d/furniture-prompt.js` — a tightened, **structured** GPT-4o prompt +
-  JSON schema. GPT returns validated picks (category, real dimensions, style
-  tags, price, priority, shopping query) instead of prose.
+- `server/services/furniturePlanner.js` — the structured GPT-4o planner. Returns
+  validated picks (category, real dimensions, style tags, price, priority,
+  shopping query) instead of prose. **Now wired up**; it used to live here as an
+  unused sketch (`furniture-prompt.js`).
 - `room3d/room3d-demo.js` + `room3d.html` — a runnable demo with a style switcher.
 
 ## See it now (zero install)
@@ -63,10 +64,13 @@ back to a clean box. Add or refine sizes in `furniture-catalog.js`.
 
 1. **Catalog** gives every pick a real size → furniture renders at true scale in
    both your 2D plan and the new 3D view.
-2. **GPT prompt** (`furniture-prompt.js`) picks *what* to buy as structured JSON;
-   feed each `search_query` into your existing Serper call in
-   `server/routes/furniture.js` to get the real product (price, image, buy link),
-   and keep GPT's dimensions for scale.
+2. **Planner** (`server/services/furniturePlanner.js`) picks *what* to buy as
+   structured JSON. `server/routes/furniture.js` runs each `search_query`
+   through Serper for the real product (price, image, buy link) and keeps the
+   planned dimensions wherever the product's own title does not state them.
+   If the planner is unavailable — no `OPENAI_API_KEY`, a timeout, a malformed
+   reply — the route falls back to the fixed per-room-type category table, so
+   results never depend on it.
 3. **Viewer** (`room3d.js`) draws the room + those picks in clean 3D.
 
 ## Notes / next steps

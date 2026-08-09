@@ -2,6 +2,7 @@ const express = require("express");
 const axios   = require("axios");
 const Style   = require("../models/Style");
 const Room    = require("../models/Room");
+const { planFurniture } = require("../services/furniturePlanner");
 
 const router = express.Router();
 
@@ -544,6 +545,9 @@ async function searchCategory(styleTag, roomType, cat, colors = []) {
   // Colour-led query first, then the same search without it, so a palette that
   // happens to return nothing degrades to style-only rather than to empty.
   const queries = [
+    // A planned pick brings its own shopping phrase; try it first, then fall
+    // back to the built queries so a poor phrase cannot return nothing.
+    cat.searchQuery || "",
     buildFurnitureQuery(style, roomType, product, { colors }),
     buildFurnitureQuery(style, roomType, product),
     buildFurnitureQuery(style, roomType, product, { short: true, colors }),
@@ -585,6 +589,11 @@ async function searchCategory(styleTag, roomType, cat, colors = []) {
             imageUrl: item.resolvedImageUrl,
             buyUrl:   item.resolvedLink,
             styleTag: style,
+            // Planned dimensions first, then the product's own if its title
+            // states them. Real sizes win because they are true; the planned
+            // ones fill the gap that previously fell through to generic
+            // per-category defaults.
+            ...(cat.plannedDims || {}),
             ...dimensions,
           };
         });
@@ -945,7 +954,7 @@ router.get("/:roomId/furniture", async (req, res) => {
     const [userStyle, aiStyle, room] = await Promise.all([
       Style.findOne({ roomId: req.params.roomId, source: "user" }),
       Style.findOne({ roomId: req.params.roomId, source: "ai" }),
-      Room.findById(req.params.roomId).select("budgetTotal"),
+      Room.findById(req.params.roomId).select("budgetTotal widthFt lengthFt heightFt"),
     ]);
     if (!roomType) {
       roomType = userStyle?.roomType || aiStyle?.roomType || "living room";
@@ -978,10 +987,41 @@ router.get("/:roomId/furniture", async (req, res) => {
     roomType,
     roomFeatures,
   );
-  const categories = [
+  const fixedCategories = [
     ...baseCategories,
     ...categoriesForFeatures(roomFeatures, baseCategories, roomType),
   ];
+
+  // Ask the model what this specific room should hold. The fixed table above is
+  // keyed only on room type, so it proposes the same set for a 6x8 bathroom as
+  // for a 12x14 one — including both a tub and a standing shower. The planner
+  // sees the actual dimensions, style, palette and budget.
+  const plan = await planFurniture({
+    roomType,
+    widthFt: room?.widthFt,
+    lengthFt: room?.lengthFt,
+    heightFt: room?.heightFt || 9,
+    style: styleTag,
+    budgetTotal,
+    features: roomFeatures,
+    colors,
+  });
+
+  // Planner picks carry their own search phrase and real dimensions; the fixed
+  // table stays as the fallback whenever the planner is unavailable or unusable.
+  const categories = plan
+    ? plan.picks.map((pick) => ({
+        key: pick.category,
+        product: pick.label,
+        searchQuery: pick.searchQuery,
+        plannedDims: {
+          widthIn: pick.widthIn,
+          depthIn: pick.depthIn,
+          ...(pick.heightIn ? { heightIn: pick.heightIn } : {}),
+        },
+      }))
+    : fixedCategories;
+  console.log("[furniture] plan source=", plan ? `planner (${categories.length} picks)` : "fixed table");
   console.log(
     "[furniture] roomType=",
     roomType,
