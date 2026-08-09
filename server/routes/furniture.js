@@ -950,12 +950,17 @@ router.get("/:roomId/furniture", async (req, res) => {
     .map((feature) => String(feature || "").trim())
     .filter(Boolean);
 
+  // Declared out here on purpose: the planner below needs the room's
+  // dimensions, and a `const` inside the try block is not visible to it.
+  let roomDoc = null;
+
   try {
     const [userStyle, aiStyle, room] = await Promise.all([
       Style.findOne({ roomId: req.params.roomId, source: "user" }),
       Style.findOne({ roomId: req.params.roomId, source: "ai" }),
       Room.findById(req.params.roomId).select("budgetTotal widthFt lengthFt heightFt"),
     ]);
+    roomDoc = room;
     if (!roomType) {
       roomType = userStyle?.roomType || aiStyle?.roomType || "living room";
     }
@@ -998,9 +1003,9 @@ router.get("/:roomId/furniture", async (req, res) => {
   // sees the actual dimensions, style, palette and budget.
   const plan = await planFurniture({
     roomType,
-    widthFt: room?.widthFt,
-    lengthFt: room?.lengthFt,
-    heightFt: room?.heightFt || 9,
+    widthFt: roomDoc?.widthFt,
+    lengthFt: roomDoc?.lengthFt,
+    heightFt: roomDoc?.heightFt || 9,
     style: styleTag,
     budgetTotal,
     features: roomFeatures,
