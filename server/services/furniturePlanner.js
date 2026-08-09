@@ -108,14 +108,16 @@ async function planFurniture(room) {
       {
         model: process.env.OPENAI_PLANNER_MODEL || DEFAULT_MODEL,
         response_format: { type: "json_schema", json_schema: RESPONSE_SCHEMA },
-        max_tokens: 1500,
+        max_tokens: 900,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: buildUserPrompt(room) },
         ],
       },
       {
-        timeout: 30000,
+        // 30s meant a slow model could hold the whole results page on its own,
+        // before a single product search had started. Fall back sooner.
+        timeout: 9000,
         headers: {
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           "Content-Type": "application/json",

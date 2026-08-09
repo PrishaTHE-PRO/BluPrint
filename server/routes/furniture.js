@@ -4,6 +4,29 @@ const Style   = require("../models/Style");
 const Room    = require("../models/Room");
 const { planFurniture } = require("../services/furniturePlanner");
 
+// A furniture fetch costs one GPT call plus a Serper search per category, so it
+// is slow by nature and the same request repeats every time the results page
+// mounts. Cache the finished list per room + inputs; the page then loads from
+// memory on revisit instead of re-running the whole pipeline.
+const RESULT_CACHE = new Map();
+const RESULT_TTL_MS = 15 * 60 * 1000;
+const RESULT_CACHE_MAX = 200;
+
+function cacheGet(key) {
+  const hit = RESULT_CACHE.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > RESULT_TTL_MS) { RESULT_CACHE.delete(key); return null; }
+  return hit.value;
+}
+
+function cacheSet(key, value) {
+  if (RESULT_CACHE.size >= RESULT_CACHE_MAX) {
+    // Cheap eviction: drop the oldest insertion. Map preserves insertion order.
+    RESULT_CACHE.delete(RESULT_CACHE.keys().next().value);
+  }
+  RESULT_CACHE.set(key, { at: Date.now(), value });
+}
+
 const router = express.Router();
 
 const LIVING_ROOM = [
@@ -544,13 +567,12 @@ async function searchCategory(styleTag, roomType, cat, colors = []) {
   // Never search without the style — generic results are why rooms look off-style.
   // Colour-led query first, then the same search without it, so a palette that
   // happens to return nothing degrades to style-only rather than to empty.
+  // Each attempt is a 10s network call made in sequence, so the list is kept
+  // short on purpose: five attempts meant a slow Serper could hold one category
+  // for the best part of a minute.
   const queries = [
-    // A planned pick brings its own shopping phrase; try it first, then fall
-    // back to the built queries so a poor phrase cannot return nothing.
     cat.searchQuery || "",
     buildFurnitureQuery(style, roomType, product, { colors }),
-    buildFurnitureQuery(style, roomType, product),
-    buildFurnitureQuery(style, roomType, product, { short: true, colors }),
     `${styleProfile(style).phrase} ${product}`,
   ].filter((q, i, arr) => q && arr.indexOf(q) === i);
 
@@ -565,7 +587,7 @@ async function searchCategory(styleTag, roomType, cat, colors = []) {
             "X-API-KEY": process.env.SERPER_API_KEY,
             "Content-Type": "application/json",
           },
-          timeout: 10000,
+          timeout: 7000,
         }
       );
 
@@ -992,6 +1014,19 @@ router.get("/:roomId/furniture", async (req, res) => {
     roomType,
     roomFeatures,
   );
+  // Everything above only normalises inputs, so this is the first point where
+  // the cache key is fully known — and it comes before the GPT call and any
+  // product search.
+  const cacheKey = [
+    req.params.roomId, roomType, styleTag, budgetTotal,
+    roomFeatures.join("|"), colors.join("|"),
+  ].join("::");
+  const cached = cacheGet(cacheKey);
+  if (cached) {
+    console.log("[furniture] cache hit", cacheKey);
+    return res.json(cached);
+  }
+
   const fixedCategories = [
     ...baseCategories,
     ...categoriesForFeatures(roomFeatures, baseCategories, roomType),
@@ -1064,6 +1099,7 @@ router.get("/:roomId/furniture", async (req, res) => {
     return res.status(502).json({ error: "Furniture search returned no results" });
   }
 
+  cacheSet(cacheKey, furniture);
   res.json(furniture);
 });
 
