@@ -978,11 +978,17 @@
         const selectedRoomFeatures = featuresWithBathFixture();
         // User-picked style is authoritative for furniture shopping. AI still
         // fills mood/palette when the user left those thinner.
+        // When the user gave us photos, the analysis of those photos is the
+        // answer and the picks only fill gaps. Previously a pick overrode the
+        // image every time, so uploading a photo changed nothing about style.
+        const fromImages = state.uploadedFiles.length > 0;
         const analysisResult = {
           ...ai,
           roomType:     state.selectedRoomType,
-          styleTag:     state.selectedStyle || ai.styleTag || 'Modern',
-          moodTags:     ai.moodTags?.length ? ai.moodTags : [state.selectedMood],
+          styleTag:     fromImages
+            ? (ai.styleTag || state.selectedStyle || 'Modern')
+            : (state.selectedStyle || ai.styleTag || 'Modern'),
+          moodTags:     ai.moodTags?.length ? ai.moodTags : (state.selectedMood ? [state.selectedMood] : []),
           colorPalette: ai.colorPalette?.length ? ai.colorPalette : state.selectedColors.map(c => c.hex || c),
           // User picks are requirements, not suggestions. Preserve every
           // selected feature even when AI returns a different feature list.
@@ -994,10 +1000,31 @@
         localStorage.setItem('blueprintStyleResult', JSON.stringify(analysisResult));
         btn.textContent = 'Analysis complete';
         showAnalysisPanel(analysisResult);
+        prefetchFurniture(analysisResult);
       } catch (e) {
         showError(e.message || 'Analysis failed. Make sure the server is running and try again.');
       }
     });
+
+    // Warm the furniture search while the user is still reading the analysis.
+    // The result page makes this exact request, and the server caches per
+    // room + style + budget + palette + features — so by the time they click
+    // through it is a cache hit instead of a GPT call plus a search per
+    // category. Fire and forget: a failure costs nothing, the result page just
+    // does the work itself.
+    function prefetchFurniture(analysis) {
+      try {
+        if (!analysis || !ROOM_ID) return;
+        const params = new URLSearchParams({
+          styleTag: analysis.styleTag || '',
+          roomType: analysis.roomType || '',
+          budgetTotal: String(Math.max(0, Number(analysis.budgetTotal) || 0)),
+        });
+        (analysis.roomFeatures || []).forEach((f) => params.append('roomFeature', f));
+        (analysis.colorPalette || []).forEach((c) => params.append('color', c));
+        fetch(`/api/rooms/${ROOM_ID}/furniture?${params.toString()}`).catch(() => {});
+      } catch (_) { /* never block the page on a warm-up */ }
+    }
 
     function showAnalysisPanel(analysis) {
       const panel = document.getElementById('ai-analysis-panel');
@@ -1114,8 +1141,7 @@
       if (preservedBudget != null) {
         localStorage.setItem('blueprintBudgetTotal', String(preservedBudget));
       }
-      localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
-      localStorage.setItem('blueprintStyleResult', JSON.stringify({
+      const wildResult = {
         roomType:     state.selectedRoomType,
         styleTag:     state.selectedStyle,
         moodTags:     [state.selectedMood],
@@ -1124,7 +1150,12 @@
         confidence:   1,
         // Keep the user's budget; Wild Card only randomizes style/mood/colors/features.
         budgetTotal:  preservedBudget ?? 0,
-      }));
+      };
+      localStorage.setItem('blueprintCurrentRoomType', state.selectedRoomType || '');
+      localStorage.setItem('blueprintStyleResult', JSON.stringify(wildResult));
+      // Wild Card goes straight to the result page, so warm the search now —
+      // this is the path with the least time to hide the wait.
+      prefetchFurniture(wildResult);
       if (ROOM_ID) {
         try { await saveToBackend(ROOM_ID); } catch (e) { console.warn('[wild-card save]', e); }
       }
