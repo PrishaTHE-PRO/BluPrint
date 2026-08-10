@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
 import { defaultRotation } from '../components/RoomSVG';
+import FurnitureLoadingOverlay from '../components/FurnitureLoadingOverlay';
 import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 import IsoRoomPreview from '../components/IsoRoomPreview';
@@ -382,6 +383,28 @@ export default function RoomResult() {
       .catch((err) => console.error('[rename]', err));
   }, [nameDraft, savedLayout]);
 
+  // Regenerate: re-run the search for this room, bypassing the server cache.
+  // Placement is reseeded from the new set, so it is a genuinely fresh design
+  // rather than the same products shuffled.
+  const handleRegenerate = useCallback(() => {
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    const raw = localStorage.getItem('blueprintStyleResult');
+    if (!roomId || !raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      slotsInitializedRef.current = false;   // let the new items seed fresh slots
+      fetchFurniture(
+        roomId,
+        parsed.styleTag,
+        parsed.roomType || localStorage.getItem('blueprintCurrentRoomType') || '',
+        parsed.roomFeatures || [],
+        parsed.budgetTotal || 0,
+        parsed.colorPalette || [],
+        true,
+      );
+    } catch { /* a malformed style blob just means no regenerate */ }
+  }, []);
+
   const handleSaveLayout = useCallback(async () => {
     setSaveStatus('saving');
     const placement = await persistPlacement({
@@ -500,6 +523,7 @@ export default function RoomResult() {
     roomFeatures: string[] = [],
     budgetTotal = 0,
     colorPalette: string[] = [],
+    refresh = false,
   ): Promise<FurnitureItem[]> {
     const params = new URLSearchParams({
       styleTag,
@@ -510,6 +534,8 @@ export default function RoomResult() {
     // The palette drives both the shopping query and the ranking server-side.
     // Without it the colours the user picked had no bearing on what came back.
     colorPalette.forEach((hex) => params.append('color', hex));
+    // Regenerate: tell the server to skip its cached list for this room.
+    if (refresh) params.set('refresh', '1');
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
     return fetch(url)
@@ -690,6 +716,10 @@ export default function RoomResult() {
 
   return (
     <div className="relative min-h-screen grid-background">
+      <FurnitureLoadingOverlay
+        open={furnitureLoading}
+        label={furniture.length ? 'Rebuilding your room' : 'Furnishing your room'}
+      />
       <div className="noise-texture" />
 
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -794,6 +824,15 @@ export default function RoomResult() {
               </p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={handleRegenerate}
+                disabled={furnitureLoading}
+                title="Pick a fresh set of furniture for this room"
+                className="px-6 py-3 bg-[#839958] hover:bg-[#93aa63] disabled:opacity-50 disabled:cursor-wait text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm"
+              >
+                <iconify-icon icon="ph:arrows-clockwise-bold" />
+                {furnitureLoading ? 'Regenerating…' : 'Regenerate'}
+              </button>
               <a
                 href="/dashboard.html"
                 className="px-6 py-3 bg-[#105666] hover:bg-[#156a7d] text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm no-underline"

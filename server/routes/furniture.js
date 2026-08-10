@@ -1021,7 +1021,10 @@ router.get("/:roomId/furniture", async (req, res) => {
     req.params.roomId, roomType, styleTag, budgetTotal,
     roomFeatures.join("|"), colors.join("|"),
   ].join("::");
-  const cached = cacheGet(cacheKey);
+  // ?refresh=1 is the Regenerate button: skip the cached list and re-run the
+  // pipeline, then overwrite the entry so the next visit is fast again.
+  const forceRefresh = String(req.query.refresh || "") === "1";
+  const cached = forceRefresh ? null : cacheGet(cacheKey);
   if (cached) {
     console.log("[furniture] cache hit", cacheKey);
     return res.json(cached);
