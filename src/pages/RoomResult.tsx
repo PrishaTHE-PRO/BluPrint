@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } fro
 import type { CSSProperties } from 'react';
 import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
+import { defaultRotation } from '../components/RoomSVG';
 import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 import IsoRoomPreview from '../components/IsoRoomPreview';
@@ -622,7 +623,7 @@ export default function RoomResult() {
         category: item.category,
         x: pos?.x ?? 0,
         y: pos?.y ?? 0,
-        rotation: livePlacement.rotations[item.category] ?? 0,
+        rotation: livePlacement.rotations[item.category] ?? defaultRotation(item.category),
         scale: 1,   // furniture is always to scale with the room
         hidden: false,
         color,

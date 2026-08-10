@@ -136,7 +136,10 @@ function defaultPos(category: string, room: Room): PosFt {
   };
 }
 
-function defaultRotation(category: string) {
+/** Exported so the result page falls back to the SAME default the plan uses.
+ *  It defaulted to 0 while the plan defaulted to this table, so a sofa (180)
+ *  faced backwards in the 3D room and the iso sketch. */
+export function defaultRotation(category: string) {
   return DEFAULT_ROTATION[category] ?? 0;
 }
 

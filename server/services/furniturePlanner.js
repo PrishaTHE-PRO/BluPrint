@@ -82,7 +82,57 @@ const RESPONSE_SCHEMA = {
   },
 };
 
+// Categories that belong in each room. Offering the whole list regardless of
+// room type is how a living room ended up with a crib and a nursery rug in it.
+const ROOM_CATEGORIES = {
+  living: ["sofa", "coffee_table", "rug", "floor_lamp", "accent_chair", "side_table", "bookcase", "reading_nook"],
+  bedroom: ["bed", "nightstand", "bedroom_rug", "bedside_lamp", "dresser", "wardrobe", "reading_nook"],
+  kitchen: ["island_cart", "bar_stool", "kitchen_rug", "kitchen_storage", "kitchen_shelf", "pendant_light"],
+  bathroom: ["vanity", "bath_mirror", "bath_storage", "bath_mat", "bath_light", "shower_curtain", "bathtub", "standing_shower"],
+  office: ["desk", "office_chair", "bookshelf", "desk_lamp", "storage_cabinet", "monitor_stand", "bookcase"],
+  dining: ["dining_table", "dining_chair", "dining_rug", "sideboard", "dining_light", "bar_cabinet"],
+  nursery: ["crib", "nursery_dresser", "rocking_chair", "nursery_rug", "nursery_shelf", "nursery_lamp"],
+};
+
+// Decor that suits any room. Deliberately small — these are accents, and the
+// piece cap below still applies to them.
+const UNIVERSAL_CATEGORIES = ["indoor_plants", "wall_art", "floating_shelves", "smart_lighting"];
+
+function roomKey(roomType) {
+  const t = String(roomType || "").toLowerCase();
+  if (t.includes("bath")) return "bathroom";
+  if (t.includes("kitchen")) return "kitchen";
+  if (t.includes("nursery") || t.includes("baby")) return "nursery";
+  if (t.includes("dining")) return "dining";
+  if (t.includes("office") || t.includes("study") || t.includes("desk")) return "office";
+  if (t.includes("bed")) return "bedroom";
+  return "living";
+}
+
+function categoriesForRoom(roomType) {
+  const key = roomKey(roomType);
+  const base = ROOM_CATEGORIES[key] || ROOM_CATEGORIES.living;
+  // A bathroom does not want a plant-and-wall-art package; everywhere else can.
+  // Copy, never the shared array — pushing onto UNIVERSAL_CATEGORIES would grow
+  // it by one on every bedroom request for the life of the process.
+  const extras = key === "bathroom" ? [] : [...UNIVERSAL_CATEGORIES];
+  if (key === "bedroom") extras.push("full_length_mirror");
+  return [...new Set([...base, ...extras])].filter((c) => ALLOWED_CATEGORIES.includes(c));
+}
+
+/**
+ * How many pieces a room should hold. Driven by floor area, not budget — a
+ * bigger budget should buy better pieces, not more of them, which is why a high
+ * budget used to fill the room with clutter.
+ */
+function maxPiecesFor(widthFt, lengthFt) {
+  const area = Math.max(1, Number(widthFt) * Number(lengthFt));
+  return Math.max(3, Math.min(8, Math.round(area / 28)));
+}
+
 function buildUserPrompt({ roomType, widthFt, lengthFt, heightFt, style, budgetTotal, features = [], colors = [] }) {
+  const allowed = categoriesForRoom(roomType);
+  const maxPieces = maxPiecesFor(widthFt, lengthFt);
   return [
     `Room type: ${roomType}`,
     `Dimensions: ${widthFt} ft wide x ${lengthFt} ft long x ${heightFt} ft high (${Math.round(widthFt * lengthFt)} sq ft)`,
@@ -90,7 +140,8 @@ function buildUserPrompt({ roomType, widthFt, lengthFt, heightFt, style, budgetT
     colors.length ? `Colour palette: ${colors.join(", ")}` : "",
     `Budget: ${budgetTotal ? "$" + budgetTotal : "flexible"}`,
     features.length ? `Requested features: ${features.join(", ")}` : "",
-    `Allowed categories: ${ALLOWED_CATEGORIES.join(", ")}`,
+    `Choose AT MOST ${maxPieces} pieces. A larger budget means better pieces, not more of them.`,
+    `Allowed categories (this room type only): ${allowed.join(", ")}`,
   ].filter(Boolean).join("\n");
 }
 
@@ -130,14 +181,15 @@ async function planFurniture(room) {
     const parsed = JSON.parse(raw);
     const picks = Array.isArray(parsed?.picks) ? parsed.picks : [];
 
-    // Trust nothing: drop anything outside the allowed list or without usable
-    // dimensions, and de-duplicate categories so one category cannot be planned
-    // twice and collide with itself on the floor plan.
+    // Trust nothing: the prompt asks for a scoped list and a piece cap, but a
+    // model can ignore both. Enforce them here so a stray crib cannot reach a
+    // living room and a big budget cannot fill the floor.
+    const allowedHere = new Set(categoriesForRoom(room.roomType));
     const seen = new Set();
     const clean = [];
     for (const pick of picks) {
       const category = String(pick?.category || "");
-      if (!ALLOWED_CATEGORIES.includes(category) || seen.has(category)) continue;
+      if (!allowedHere.has(category) || seen.has(category)) continue;
       const w = Number(pick?.dimensions_in?.w);
       const d = Number(pick?.dimensions_in?.d);
       const h = Number(pick?.dimensions_in?.h);
@@ -157,8 +209,11 @@ async function planFurniture(room) {
     }
     if (!clean.length) return null;
 
+    // Priority 1 is the anchor piece, so trimming from the end drops the most
+    // optional things first.
     clean.sort((a, b) => a.priority - b.priority);
-    return { picks: clean, budgetUsed: Number(parsed?.budget_used_usd) || 0 };
+    const capped = clean.slice(0, maxPiecesFor(room.widthFt, room.lengthFt));
+    return { picks: capped, budgetUsed: Number(parsed?.budget_used_usd) || 0 };
   } catch (error) {
     const detail = error?.response?.data?.error?.message || error?.message;
     console.error("[furniture] planner failed, using the fixed category table:", detail || "");
