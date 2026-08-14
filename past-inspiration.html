@@ -170,7 +170,7 @@
 <script type="module" src="/src/theme-switch.tsx"></script>
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { auth, isFirebaseConfigured } from "./firebase.mjs";
+    import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
     import { renderProjectRoomPreview, getRoomPreviewLayout } from "./iso-preview.js";
 
     const ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
@@ -196,7 +196,7 @@
         let style = room.style;
         if (!style && (room.furnitureLayout || room.layout)) {
             try {
-                const docs = await fetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
+                const docs = await authedFetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
                 style = (Array.isArray(docs) && (docs.find((s) => s.source === 'user') || docs[0])) || null;
             } catch (_) { /* ignore */ }
         }
@@ -319,7 +319,8 @@
 
     async function loadAllProjects(userId) {
         try {
-            const res = await fetch('/api/rooms?userId=' + encodeURIComponent(userId));
+            // userId is ignored by the API now — the server scopes to the verified token.
+            const res = await authedFetch('/api/rooms');
             if (!res.ok) throw new Error();
             const rooms = await res.json();
 
@@ -327,7 +328,7 @@
             if (rooms.some(room => !Object.prototype.hasOwnProperty.call(room, 'style'))) {
                 await Promise.all(rooms.map(async room => {
                     try {
-                        const styleRes = await fetch('/api/rooms/' + room._id + '/style');
+                        const styleRes = await authedFetch('/api/rooms/' + room._id + '/style');
                         const styles = styleRes.ok ? await styleRes.json() : [];
                         room.style = styles.find(style => style.source === 'user') || null;
                     } catch {
@@ -425,7 +426,7 @@
                     if (deleteBtn.dataset.confirming) {
                         deleteBtn.disabled = true;
                         try {
-                            const res = await fetch('/api/rooms/' + room._id, { method: 'DELETE' });
+                            const res = await authedFetch('/api/rooms/' + room._id, { method: 'DELETE' });
                             if (res.ok) {
                                 card.style.transition = 'opacity 0.3s';
                                 card.style.opacity = '0';

@@ -29,6 +29,12 @@ function cacheSet(key, value) {
 
 const router = express.Router();
 
+// This route fans out to GPT-4o and Serper on our own API keys, so leaving it
+// open was a standing invitation to run up the bill.
+const { requireAuth, requireRoomOwner } = require("../middleware/auth");
+router.use(requireAuth);
+router.use("/:roomId", requireRoomOwner);
+
 const LIVING_ROOM = [
   { key: "sofa",         product: "sofa" },
   { key: "coffee_table", product: "coffee table" },

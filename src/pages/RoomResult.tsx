@@ -23,6 +23,7 @@ import {
 import type { FurniturePlacement } from '../utils/furniturePlacement';
 import { resolveFurnitureColors, paletteFallback, colorFromName } from '../utils/furnitureColor';
 import { roomDimsFromPoints } from '../utils/furnitureConstraints';
+import { authedFetch } from '../../firebase.mjs';
 
 // Lazy so Three.js only loads when the user opens the 3D view.
 const Room3DView = lazy(() => import('../components/Room3DView'));
@@ -167,7 +168,7 @@ export default function RoomResult() {
     if (opts?.showStatus !== false) setSaveStatus('saving');
     persistInFlightRef.current = true;
     try {
-      const res = await fetch(`/api/rooms/${roomId}`, {
+      const res = await authedFetch(`/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ furnitureLayout: placement }),
@@ -374,7 +375,7 @@ export default function RoomResult() {
 
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
     if (!roomId) return;
-    fetch(`/api/rooms/${roomId}`, {
+    authedFetch(`/api/rooms/${roomId}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(nextLayout ? { name: next, layout: nextLayout } : { name: next }),
@@ -476,7 +477,8 @@ export default function RoomResult() {
     }
 
     Promise.all([
-      fetch(`/api/rooms?userId=${userId}`)
+      // The server scopes this to the verified token; userId is no longer sent.
+      authedFetch('/api/rooms')
         .then(r => r.json())
         .then((rooms: any[]) => {
           const match = rooms.find(r => r._id === roomId);
@@ -538,7 +540,7 @@ export default function RoomResult() {
     if (refresh) params.set('refresh', '1');
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
-    return fetch(url)
+    return authedFetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
       .then((items: FurnitureItem[]) => {
         setFurniture(items);

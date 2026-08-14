@@ -385,7 +385,7 @@
 <script type="module">
     // ── Backend ───────────────────────────────────────────────────────
     import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { auth } from "./firebase.mjs";
+    import { auth, authedFetch } from "./firebase.mjs";
 
     const profileBtn = document.getElementById('profile-btn');
     const profilePopup = document.getElementById('profile-popup');
@@ -957,7 +957,7 @@
 
       try {
         await saveToBackend(ROOM_ID);
-        const res = await fetch(`/api/rooms/${ROOM_ID}/analyze-style`, {
+        const res = await authedFetch(`/api/rooms/${ROOM_ID}/analyze-style`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({
@@ -1022,7 +1022,7 @@
         });
         (analysis.roomFeatures || []).forEach((f) => params.append('roomFeature', f));
         (analysis.colorPalette || []).forEach((c) => params.append('color', c));
-        fetch(`/api/rooms/${ROOM_ID}/furniture?${params.toString()}`).catch(() => {});
+        authedFetch(`/api/rooms/${ROOM_ID}/furniture?${params.toString()}`).catch(() => {});
       } catch (_) { /* never block the page on a warm-up */ }
     }
 
@@ -1072,7 +1072,7 @@
         if (state.uploadedFiles.length) {
           const form = new FormData();
           state.uploadedFiles.forEach(file => form.append('images', file));
-          const r = await fetch(base + '/images', { method: 'POST', body: form });
+          const r = await authedFetch(base + '/images', { method: 'POST', body: form });
           if (!r.ok) {
             let msg = 'Image upload failed';
             try { const e = await r.json(); msg = e.error || msg; } catch {}
@@ -1080,7 +1080,7 @@
           }
         }
 
-        await fetch(base + '/style', {
+        await authedFetch(base + '/style', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1102,7 +1102,7 @@
         // existing room budget by posting 0 from Wild Card / analyze.
         const budgetToSave = resolveBudgetTotal();
         if (budgetToSave != null) {
-          const budgetResponse = await fetch(base + '/budget', {
+          const budgetResponse = await authedFetch(base + '/budget', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ budgetTotal: budgetToSave }),

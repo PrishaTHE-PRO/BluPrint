@@ -33,6 +33,23 @@
     return n;
   }
 
+  /** Escapes text that is about to be concatenated into an innerHTML string.
+   *  Room names are user-supplied and round-trip through the server, so they
+   *  must never be pasted into markup raw. */
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /** el() variant for plain text — no HTML parsing at all. */
+  function elText(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = String(text);
+    return n;
+  }
+
   /** Run `cb` once `sel` exists — the result page mounts its chrome via React. */
   function whenReady(sel, cb) {
     var found = document.querySelector(sel);
@@ -115,7 +132,7 @@
     back.setAttribute('aria-label', 'Back');
 
     var title = el('div', 'm-stepbar-title');
-    title.appendChild(el('strong', null, roomName()));
+    title.appendChild(elText('strong', null, roomName()));
     title.appendChild(el('small', null, cfg.sub));
 
     var steps = el('div', 'm-steps');
@@ -267,7 +284,7 @@
           '<a class="m-resume-row" href="room-dimensions.html">' +
             '<span class="m-resume-icon"><iconify-icon icon="ph:frame-corners-duotone"></iconify-icon></span>' +
             '<span class="m-resume-copy"><strong>' +
-              (label ? 'Finish the ' + label + ' walls' : 'Draw your first set of walls') +
+              (label ? 'Finish the ' + esc(label) + ' walls' : 'Draw your first set of walls') +
             '</strong><small>You stopped mid-wall. Bold choice.</small></span>' +
             '<span class="m-chev">›</span></a>' +
           '<a class="m-resume-row" href="inspo-upload.html">' +

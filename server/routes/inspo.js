@@ -5,8 +5,14 @@ const cloudinary = require("cloudinary").v2;
 const InspirationImage = require("../models/InspirationImage");
 const Style = require("../models/Style");
 const { scrapePinterestBoard } = require("../services/pinterestScraper");
+const { requireAuth, requireRoomOwner } = require("../middleware/auth");
 
 const router = express.Router();
+
+// Every route here is /:roomId/... — inspiration images, style picks and the
+// budget all belong to a room, so they inherit that room's ownership.
+router.use(requireAuth);
+router.use("/:roomId", requireRoomOwner);
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

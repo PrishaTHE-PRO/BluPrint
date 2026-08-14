@@ -2,6 +2,11 @@ const express = require('express');
 const router  = express.Router();
 const Room    = require('../models/Room');
 const Style   = require('../models/Style');
+const { requireAuth, requireRoomOwner } = require('../middleware/auth');
+
+// Every room route is owner-only. Ownership comes from the verified token, not
+// from anything the client sends.
+router.use(requireAuth);
 
 function toNumber(value, fallback = 0) {
     const parsed = Number(value);
@@ -136,7 +141,10 @@ function sanitizeFurnitureLayout(layout) {
 // POST / — save a new room
 router.post('/', async (req, res) => {
     try {
-        const { userId, name, layout } = req.body;
+        // userId comes from the verified token. It used to be read from the
+        // body, which let anyone create rooms under another person's id.
+        const userId = req.uid;
+        const { name, layout } = req.body;
         const widthFt  = toNumber(req.body.widthFt);
         const lengthFt = toNumber(req.body.lengthFt);
         const heightFt = toNumber(req.body.heightFt, 8);
@@ -166,7 +174,9 @@ router.post('/', async (req, res) => {
 // GET / — fetch all rooms for a user
 router.get('/', async (req, res) => {
     try {
-        const rooms = await Room.find({ userId: req.query.userId })
+        // Scoped to the caller. ?userId= is ignored — honouring it was how any
+        // user's room list could be read by asking for it.
+        const rooms = await Room.find({ userId: req.uid })
             .sort({ createdAt: -1 })
             .lean();
         const roomIds = rooms.map((room) => room._id);
@@ -194,10 +204,9 @@ router.get('/', async (req, res) => {
 });
 
 // PATCH /:roomId — update room dimensions/layout
-router.patch('/:roomId', async (req, res) => {
+router.patch('/:roomId', requireRoomOwner, async (req, res) => {
     try {
-        const current = await Room.findById(req.params.roomId);
-        if (!current) return res.status(404).json({ error: 'Room not found.' });
+        const current = req.room;
 
         const name     = typeof req.body.name === 'string' && req.body.name.trim() ? req.body.name.trim() : current.name;
         const widthFt  = req.body.widthFt  !== undefined ? toNumber(req.body.widthFt, current.widthFt)   : current.widthFt;
@@ -229,7 +238,7 @@ router.patch('/:roomId', async (req, res) => {
 });
 
 // DELETE /:roomId — remove a room
-router.delete('/:roomId', async (req, res) => {
+router.delete('/:roomId', requireRoomOwner, async (req, res) => {
     try {
         await Room.findByIdAndDelete(req.params.roomId);
         res.status(200).json({ ok: true });
