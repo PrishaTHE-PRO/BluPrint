@@ -241,6 +241,19 @@
       border-color: rgba(126, 168, 201, .16);
       background: #131b24;
     }
+    /* Hero 3D controls: the light versions are near-white glass, which on the
+       dark canvas (#131b24) would glare. Mirror them as dark glass instead. */
+    html.dark-mode .hero-3d-hint,
+    html.dark-mode .hero-styles {
+      border-color: rgba(126, 168, 201, .18);
+      background: rgba(19, 27, 36, .82);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .38);
+      color: var(--muted);
+    }
+    html.dark-mode .hero-chip { color: var(--muted); }
+    html.dark-mode .hero-chip:hover { background: rgba(126, 168, 201, .16); color: var(--ink); }
+    html.dark-mode .hero-chip.is-active { background: var(--blue-dark); color: #0f1720; }
+
     html.dark-mode .side-heading { color: var(--ink); }
     html.dark-mode .mini-card {
       border-color: rgba(232, 238, 244, .1);
@@ -454,7 +467,64 @@
       background-image: linear-gradient(rgba(61,90,128,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(61,90,128,.08) 1px, transparent 1px);
       background-size: 22px 22px;
     }
-    .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); }
+    .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); transition: opacity .5s ease; }
+    .floor-plan.is-faded { opacity: 0; }
+
+    /* Live 3D room, layered over the SVG plan. Stays invisible (and zero-cost)
+       until the viewer actually mounts and JS adds .is-live. */
+    .hero-3d { position: absolute; inset: 0; z-index: 1; opacity: 0; border-radius: 20px; transition: opacity .6s ease; }
+    .hero-3d.is-live { opacity: 1; }
+    .hero-3d canvas { width: 100% !important; height: 100% !important; border-radius: 20px; cursor: grab; }
+    .hero-3d canvas:active { cursor: grabbing; }
+
+    .hero-3d-hint, .hero-styles { opacity: 0; transition: opacity .45s ease .2s; pointer-events: none; }
+    .hero-3d.is-live ~ .hero-3d-hint, .hero-3d.is-live ~ .hero-styles { opacity: 1; }
+    .hero-3d.is-live ~ .hero-styles { pointer-events: auto; }
+    /* Once they have grabbed the room, the instruction has done its job. */
+    .hero-3d.has-interacted ~ .hero-3d-hint { opacity: 0; }
+
+    .hero-3d-hint {
+      position: absolute; top: 12px; left: 50%; z-index: 2;
+      display: flex; align-items: center; gap: 6px;
+      margin: 0; padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 6px 16px rgba(46,58,68,.1);
+      color: #6f675e; font-size: 11px; font-weight: 700; white-space: nowrap;
+      transform: translateX(-50%);
+      backdrop-filter: blur(6px);
+    }
+    .hero-styles {
+      position: absolute; bottom: 12px; left: 50%; z-index: 2;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;
+      max-width: calc(100% - 20px); padding: 5px;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      box-shadow: 0 8px 22px rgba(46,58,68,.12);
+      transform: translateX(-50%);
+      backdrop-filter: blur(10px);
+    }
+    .hero-chip {
+      padding: 6px 13px;
+      border: 0; border-radius: 999px;
+      background: transparent;
+      color: #6f675e; font-family: inherit; font-size: 11px; font-weight: 700;
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease;
+    }
+    .hero-chip:hover { background: rgba(61,90,128,.09); color: var(--blue-dark); }
+    .hero-chip.is-active { background: var(--blue-dark); color: #fff; }
+    .hero-chip:focus-visible { outline: 2px solid var(--blue-dark); outline-offset: 2px; }
+
+    /* Compositing a blurred, animated, 3D-transformed panel on top of a live
+       WebGL canvas is a real cost for no visual gain — settle the window once
+       the room is doing the moving. */
+    .app-window.is-live { animation: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-3d, .floor-plan, .hero-3d-hint, .hero-styles { transition: none; }
+    }
     .side-list { display: flex; flex-direction: column; gap: 11px; }
     .side-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; font-size: 11px; font-weight: 800; }
     .mini-card { padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.86); box-shadow: 0 7px 16px rgba(46,58,68,.05); }
@@ -890,6 +960,21 @@
                 <path d="M145 28h105" stroke="#8FC5E7" stroke-width="9" stroke-linecap="round"/>
                 <text x="210" y="350" text-anchor="middle" fill="#756D63" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
       </svg>
+
+              <!-- Live 3D room. Empty until src/landing-hero3d.js lazily mounts
+                   the viewer; the SVG plan above is what shows until then, and
+                   permanently on reduced-motion or no-WebGL. -->
+              <div class="hero-3d" data-hero-3d></div>
+              <p class="hero-3d-hint" aria-hidden="true">
+                <iconify-icon icon="ph:hand-grabbing-duotone"></iconify-icon> Drag to look around
+              </p>
+              <div class="hero-styles" data-hero-styles role="group" aria-label="Preview room style">
+                <button type="button" class="hero-chip is-active" data-style="modern" aria-pressed="true">Modern</button>
+                <button type="button" class="hero-chip" data-style="scandinavian" aria-pressed="false">Scandi</button>
+                <button type="button" class="hero-chip" data-style="bohemian" aria-pressed="false">Boho</button>
+                <button type="button" class="hero-chip" data-style="industrial" aria-pressed="false">Industrial</button>
+                <button type="button" class="hero-chip" data-style="minimalist" aria-pressed="false">Minimal</button>
+              </div>
             </div>
             <aside class="side-list" aria-hidden="true">
               <div class="side-heading"><span>Furniture</span><span>$4,920</span></div>

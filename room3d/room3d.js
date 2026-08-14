@@ -558,5 +558,8 @@ export function createRoomViewer(container, opts = {}) {
   }
 
   function dispose() { if (raf !== null) cancelAnimationFrame(raf); ro.disconnect?.(); controls.dispose(); renderer.dispose(); renderer.domElement.remove(); }
-  return { render, dispose, scene, camera, renderer };
+  // controls/requestFrame are exposed so a caller can drive the on-demand loop
+  // itself — the landing hero uses them for a gentle idle auto-rotate, which
+  // needs to ask for frames that no user input triggered.
+  return { render, dispose, scene, camera, renderer, controls, requestFrame };
 }
