@@ -534,7 +534,8 @@
     .side-list { display: flex; flex-direction: column; gap: 11px; }
     .side-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; font-size: 11px; font-weight: 800; }
     .mini-card { padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.86); box-shadow: 0 7px 16px rgba(46,58,68,.05); }
-    .mini-image { height: 55px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(145deg, #d8e8f1, #e8ded2); }
+    .mini-image { display: grid; place-items: center; height: 55px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(145deg, #d8e8f1, #e8ded2); }
+    .mini-image iconify-icon { color: var(--blue-dark); font-size: 26px; opacity: .78; }
     .mini-line { width: 74%; height: 5px; margin-bottom: 5px; border-radius: 999px; background: #cfc8bf; }
     .mini-line.short { width: 42%; background: #97acbe; }
     .floating-note {
@@ -1005,9 +1006,11 @@
             </div>
             <aside class="side-list" aria-hidden="true">
               <div class="side-heading"><span>Furniture</span><span>$4,920</span></div>
-              <div class="mini-card"><div class="mini-image"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
-              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#e6dbce,#dce8ed)"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
-              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#dce7dc,#e8ded2)"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <!-- Icons match the pieces actually standing in the 3D room, so
+                   the list reads as that room's furniture rather than stock art. -->
+              <div class="mini-card"><div class="mini-image"><iconify-icon icon="ph:armchair-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#e6dbce,#dce8ed)"><iconify-icon icon="ph:lamp-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#dce7dc,#e8ded2)"><iconify-icon icon="ph:plant-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
             </aside>
           </div>
         </div>
