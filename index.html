@@ -387,7 +387,9 @@
 
     .hero {
       display: grid;
-      grid-template-columns: .88fr 1.12fr;
+      /* The stage carries a live 3D room and a five-way style switcher now, so
+         it gets more of the row than the copy does. */
+      grid-template-columns: .78fr 1.22fr;
       gap: clamp(42px, 6vw, 86px);
       align-items: center;
       min-height: 100vh;
@@ -436,7 +438,7 @@
     .product-stage { position: relative; min-height: 610px; perspective: 1200px; }
     .app-window {
       position: absolute;
-      inset: 30px 0 40px 24px;
+      inset: 30px 0 40px 0;
       overflow: hidden;
       border: 1px solid rgba(255,255,255,.8);
       border-radius: 28px;
@@ -451,7 +453,7 @@
     .window-dot:nth-child(2) { background: #c4d5df; }
     .window-dot:nth-child(3) { background: #bacdbd; }
     .window-title { margin-left: auto; color: #8c857d; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    .planner { display: grid; grid-template-columns: 1fr 160px; height: calc(100% - 48px); padding: 22px; gap: 17px; }
+    .planner { display: grid; grid-template-columns: 1fr 148px; height: calc(100% - 48px); padding: 22px; gap: 17px; }
     .canvas {
       position: relative;
       display: grid;
@@ -494,22 +496,26 @@
       transform: translateX(-50%);
       backdrop-filter: blur(6px);
     }
+    /* Stretched across the card rather than centred in a pill: five equal
+       chips spread the full width, so the switcher reads as a toolbar instead
+       of a bubble crowded with labels. */
     .hero-styles {
-      position: absolute; bottom: 12px; left: 50%; z-index: 2;
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;
-      max-width: calc(100% - 20px); padding: 5px;
+      position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 2;
+      display: flex; align-items: center; gap: 4px;
+      padding: 5px;
       border: 1px solid rgba(255,255,255,.7);
-      border-radius: 999px;
+      border-radius: 15px;
       background: rgba(255,255,255,.78);
       box-shadow: 0 8px 22px rgba(46,58,68,.12);
-      transform: translateX(-50%);
       backdrop-filter: blur(10px);
     }
     .hero-chip {
-      padding: 6px 13px;
-      border: 0; border-radius: 999px;
+      flex: 1 1 0;              /* equal widths — the "paced out" part */
+      padding: 7px 4px;
+      border: 0; border-radius: 11px;
       background: transparent;
       color: #6f675e; font-family: inherit; font-size: 11px; font-weight: 700;
+      white-space: nowrap;
       cursor: pointer;
       transition: background .2s ease, color .2s ease;
     }
@@ -790,6 +796,18 @@
     }
     .footer-links { display: flex; gap: 24px; }
 
+    .footer-legal {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      width: 100%;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      gap: 28px;
+    }
+    .footer-copy { flex-shrink: 0; margin: 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .footer-fineprint { max-width: 680px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; opacity: .82; }
+
     .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1); }
     .reveal.visible { opacity: 1; transform: translateY(0); }
     @keyframes app-float { 0%,100% { transform: rotateY(-4deg) rotateX(2deg) translateY(0); } 50% { transform: rotateY(-2deg) rotateX(1deg) translateY(-8px); } }
@@ -877,9 +895,17 @@
       .app-window { inset: 20px 0; transform: none; animation: none; }
       .planner { grid-template-columns: 1fr; padding: 14px; }
       .side-list { display: none; }
+      /* "Industrial" is the long one — it stops fitting five-across once the
+         canvas is only a phone wide. */
+      .hero-styles { bottom: 8px; left: 8px; right: 8px; gap: 2px; padding: 4px; }
+      .hero-chip { padding: 7px 2px; font-size: 10px; letter-spacing: -.01em; }
       .floating-note { font-size: 10px; }
       .note-one { right: -8px; }
-      .note-two { left: -8px; }
+      /* The style switcher now occupies the bottom of the card, and this note
+         sits above it in z-order — left at bottom:8px it would cover the chips
+         and swallow their clicks. Anchor it to the top instead, below the
+         drag hint. */
+      .note-two { top: 96px; bottom: auto; left: -8px; }
       .stats { grid-template-columns: 1fr; margin-bottom: 84px; }
       .stat + .stat { border-top: 1px solid var(--line); border-left: 0; }
       .section { padding-bottom: 84px; }
@@ -888,6 +914,7 @@
       .final-cta { padding: 96px 0; }
       footer { gap: 28px; }
       .footer-bar { align-items: flex-start; flex-direction: column; gap: 16px; }
+      .footer-legal { align-items: flex-start; flex-direction: column; gap: 12px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -1109,6 +1136,14 @@
       <span>Rooms that work beautifully.</span>
       <div class="footer-links"><a href="#features">Features</a><a href="login.html">Sign in</a></div>
     </div>
+    <div class="footer-legal">
+      <p class="footer-copy">&copy; <span data-year>2026</span> BluPrint. All rights reserved.</p>
+      <p class="footer-fineprint">
+        Furniture suggestions, prices and availability come from third-party retailers and can
+        change at any time. BluPrint is not affiliated with, and does not endorse, any retailer or
+        brand shown. Room plans are design suggestions — measure your own space before buying.
+      </p>
+    </div>
   </footer>
 <script src="./theme-toggle.js" defer></script>
 <script type="module" src="/src/theme-switch.tsx"></script>
@@ -1122,6 +1157,12 @@
       });
     }, { threshold: 0.14 });
     document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
+
+    // Keeps the copyright year current. The markup carries a real year as a
+    // fallback, so this going missing degrades to a stale year, not a blank.
+    document.querySelectorAll('[data-year]').forEach((el) => {
+      el.textContent = String(new Date().getFullYear());
+    });
   </script>
   <script type="module" src="/src/landing.jsx"></script>
 </body>
