@@ -82,7 +82,9 @@
   var DOCK = [
     { key: 'home',   href: 'dashboard.html',        icon: 'ph:house-duotone',       label: 'Home'   },
     { key: 'rooms',  href: 'past-inspiration.html', icon: 'ph:squares-four-duotone', label: 'Rooms'  },
-    { key: 'plan',   href: 'room-dimensions.html',  icon: 'ph:plus-bold',           label: 'New room', fab: true },
+    // newRoom: clears the stored room first (see public/new-room.js). Without
+    // it this FAB reopened the previous room and saved over it.
+    { key: 'plan',   href: 'room-dimensions.html',  icon: 'ph:plus-bold',           label: 'New room', fab: true, newRoom: true },
     { key: 'inspo',  href: 'inspo-upload.html',     icon: 'ph:sparkle-duotone',     label: 'Style'  },
     { key: 'result', href: 'room-result.html',      icon: 'ph:cube-duotone',        label: 'Design' }
   ];
@@ -97,6 +99,7 @@
     DOCK.forEach(function (item) {
       var a = el('a', item.fab ? 'm-dock-fab' : 'm-dock-item');
       a.href = item.href;
+      if (item.newRoom) a.setAttribute('data-new-room', '');
       if (item.fab) {
         a.setAttribute('aria-label', item.label);
         a.innerHTML = '<iconify-icon icon="' + item.icon + '"></iconify-icon>';
@@ -172,9 +175,9 @@
     var quip = el('p', 'm-quip m-only', '');
     var stats = el('div', 'm-stats m-only');
     stats.innerHTML =
-      '<div class="m-stat"><p class="m-stat-value" data-m-sqft>—</p>' +
+      '<div class="m-stat"><p class="m-stat-value" data-m-sqft>-</p>' +
         '<p class="m-stat-label">sq ft drawn</p></div>' +
-      '<div class="m-stat"><p class="m-stat-value" data-m-done>—</p>' +
+      '<div class="m-stat"><p class="m-stat-value" data-m-done>-</p>' +
         '<p class="m-stat-label" data-m-done-label>rooms finished</p>' +
         '<div class="m-stat-bar"><i data-m-bar style="width:0"></i></div></div>';
 
@@ -447,7 +450,7 @@
     if (slider) {
       var head = el('div', 'm-budget-head m-only',
         '<h2 style="margin:0;font:500 20px Fraunces,serif;letter-spacing:-.02em">Budget</h2>' +
-        '<strong data-m-budget>—</strong>');
+        '<strong data-m-budget>-</strong>');
       var scale = el('div', 'm-budget-scale m-only',
         '<span>$' + Number(slider.min || 500).toLocaleString() + '</span>' +
         '<span>$' + Number(slider.max || 25000).toLocaleString() + '</span>');

@@ -174,7 +174,7 @@ async function loadProjects(userId) {
         const rooms = await res.json();
 
         if (!rooms.length) {
-            grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-2 py-12">No projects yet — click "Get Started" to create your first room!</p>';
+            grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-2 py-12">No projects yet. Click "Get Started" to create your first room!</p>';
             grid.setAttribute('aria-busy', 'false');
             return;
         }
@@ -280,7 +280,7 @@ async function loadProjects(userId) {
         grid.appendChild(cards);
         grid.setAttribute('aria-busy', 'false');
     } catch {
-        grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-2 py-12">Could not load projects — is the server running?</p>';
+        grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-2 py-12">Could not load projects. Is the server running?</p>';
         grid.setAttribute('aria-busy', 'false');
     }
 }
@@ -322,7 +322,7 @@ function startRename(card, room) {
                 if (!res.ok) throw new Error('rename failed (' + res.status + ')');
             } catch (err) {
                 console.error('[rename]', err);
-                alert('Rename failed — is the server running? Try again.');
+                alert('Rename failed. Is the server running? Try again.');
             }
         } else {
             h3.textContent = room.name || 'Untitled Room';

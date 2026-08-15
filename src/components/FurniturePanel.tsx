@@ -15,6 +15,10 @@ interface Props {
   onLinkCategory?:  (category: string | null) => void;
   hiddenCategories: Set<string>;
   onToggleInRoom:   (category: string) => void;
+  /** Re-runs the search, trimming pieces until the set actually fits. */
+  onGenerateUnderBudget?: () => void;
+  /** True once a trim-to-fit run has already been tried for this room. */
+  underBudgetTried?: boolean;
 }
 
 export default function FurniturePanel({
@@ -29,12 +33,18 @@ export default function FurniturePanel({
   onLinkCategory,
   hiddenCategories,
   onToggleInRoom,
+  onGenerateUnderBudget,
+  underBudgetTried = false,
 }: Props) {
   const stripRef = useRef<HTMLDivElement>(null);
   const displayed = orderedFurniture(slots, roomType);
   const total = displayed
     .filter((item) => !hiddenCategories.has(item.category))
     .reduce((sum, item) => sum + item.price, 0);
+
+  const budget = style.budgetTotal > 0 ? style.budgetTotal : 0;
+  const overBudget = budget > 0 && total > budget;
+  const overBy = overBudget ? total - budget : 0;
 
   // Selecting a piece on the floor plan deliberately does NOT scroll the strip.
   // scrollIntoView walks up every scrollable ancestor, so it moved the page as
@@ -83,6 +93,43 @@ export default function FurniturePanel({
     </div>
   );
 
+  // Shown only when the real total genuinely exceeds the budget. Until now the
+  // server quietly scaled prices down so this could almost never happen.
+  const budgetNotice = overBudget && (
+    <div
+      role="status"
+      className="animate-reveal mb-4 rounded-2xl border border-[#D3968C]/30 bg-[#D3968C]/10 px-4 py-3"
+      style={{ animationDelay: '0.42s' }}
+    >
+      <div className="flex items-start gap-3">
+        <span className="text-[#D3968C] text-lg leading-none mt-0.5 shrink-0">
+          <iconify-icon icon="ph:hand-heart-duotone" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-[#F7F4D5]">
+            Sorry, we went over budget.
+          </p>
+          <p className="text-xs text-[#F7F4D5]/60 mt-1 leading-relaxed">
+            {underBudgetTried
+              ? `We trimmed this room as far as we could without leaving it empty, but the pieces that fit your room still come to $${total.toLocaleString()}, which is $${overBy.toLocaleString()} over your $${budget.toLocaleString()} budget.`
+              : `We tried to stay as close to your original $${budget.toLocaleString()} as we could, but this set comes to $${total.toLocaleString()}, which is $${overBy.toLocaleString()} over. You can swap or remove any piece, or let us rebuild the room to fit.`}
+          </p>
+          {onGenerateUnderBudget && !underBudgetTried && (
+            <button
+              type="button"
+              onClick={onGenerateUnderBudget}
+              disabled={loading}
+              className="mt-3 px-4 py-2 rounded-xl bg-[#839958] hover:bg-[#93aa63] disabled:opacity-50 disabled:cursor-wait text-white text-xs font-bold inline-flex items-center gap-2 transition-all"
+            >
+              <iconify-icon icon="ph:scissors-duotone" />
+              Generate under budget
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const views = (
     <div className="result-dual-pane">
       <div className="result-dual-pane__view result-dual-pane__view--iso">
@@ -122,8 +169,9 @@ export default function FurniturePanel({
     return (
       <section className="mb-10 result-furniture-section">
         {header}
+        {budgetNotice}
         {views}
-        <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found — try re-analyzing your room.</p>
+        <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found. Try re-analyzing your room.</p>
       </section>
     );
   }
@@ -131,6 +179,7 @@ export default function FurniturePanel({
   return (
     <section className="mb-10 result-furniture-section">
       {header}
+      {budgetNotice}
       {views}
       <div className="furniture-h-strip mt-5 animate-reveal" style={{ animationDelay: '0.5s' }}>
         <div className="furniture-h-strip__label">Shop pieces</div>

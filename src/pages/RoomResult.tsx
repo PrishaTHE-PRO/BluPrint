@@ -82,6 +82,9 @@ export default function RoomResult() {
   const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
+  // Whether a trim-to-fit run has already happened, so the over-budget notice
+  // stops offering a button that has nothing further to trim.
+  const [underBudgetTried, setUnderBudgetTried] = useState(false);
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
   const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const [loading,          setLoading]          = useState(true);
@@ -394,6 +397,7 @@ export default function RoomResult() {
     try {
       const parsed = JSON.parse(raw);
       slotsInitializedRef.current = false;   // let the new items seed fresh slots
+      setUnderBudgetTried(false);            // a fresh set deserves a fresh offer
       fetchFurniture(
         roomId,
         parsed.styleTag,
@@ -404,6 +408,29 @@ export default function RoomResult() {
         true,
       );
     } catch { /* a malformed style blob just means no regenerate */ }
+  }, []);
+
+  // "Generate under budget" on the over-budget notice. Same pipeline as
+  // Regenerate, but the server trims pieces until the total fits.
+  const handleGenerateUnderBudget = useCallback(() => {
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    const raw = localStorage.getItem('blueprintStyleResult');
+    if (!roomId || !raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      slotsInitializedRef.current = false;
+      setUnderBudgetTried(true);
+      fetchFurniture(
+        roomId,
+        parsed.styleTag,
+        parsed.roomType || localStorage.getItem('blueprintCurrentRoomType') || '',
+        parsed.roomFeatures || [],
+        parsed.budgetTotal || 0,
+        parsed.colorPalette || [],
+        true,
+        true,
+      );
+    } catch { /* a malformed style blob just means no trim */ }
   }, []);
 
   const handleSaveLayout = useCallback(async () => {
@@ -526,6 +553,7 @@ export default function RoomResult() {
     budgetTotal = 0,
     colorPalette: string[] = [],
     refresh = false,
+    strictBudget = false,
   ): Promise<FurnitureItem[]> {
     const params = new URLSearchParams({
       styleTag,
@@ -538,6 +566,9 @@ export default function RoomResult() {
     colorPalette.forEach((hex) => params.append('color', hex));
     // Regenerate: tell the server to skip its cached list for this room.
     if (refresh) params.set('refresh', '1');
+    // Trim-to-fit: the server drops the most optional pieces until the set is
+    // actually within budget, instead of overshooting.
+    if (strictBudget) params.set('strictBudget', '1');
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
     return authedFetch(url)
@@ -878,6 +909,8 @@ export default function RoomResult() {
           onLinkCategory={setLinkedCategory}
           hiddenCategories={hiddenCategories}
           onToggleInRoom={handleToggleInRoom}
+          onGenerateUnderBudget={handleGenerateUnderBudget}
+          underBudgetTried={underBudgetTried}
           centerContent={
             <RoomSVG
               room={layoutRoom}

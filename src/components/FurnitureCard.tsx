@@ -194,7 +194,7 @@ export default function FurnitureCard({
           </div>
           <div className="flex items-center justify-between gap-2 mt-3">
             <span className="text-lg font-bold text-[#F7F4D5] flex-shrink-0">
-              {item.price > 0 ? `$${item.price.toLocaleString()}` : '—'}
+              {item.price > 0 ? `$${item.price.toLocaleString()}` : '-'}
             </span>
             <div className="flex gap-2 flex-shrink-0">
               <button
@@ -240,7 +240,7 @@ export default function FurnitureCard({
 
         <div className="mt-auto pt-1.5 flex items-center justify-between gap-1 border-t border-[#F7F4D5]/10">
           <span className="text-sm font-bold flex-shrink-0">
-            {item.price > 0 ? `$${item.price.toLocaleString()}` : '—'}
+            {item.price > 0 ? `$${item.price.toLocaleString()}` : '-'}
           </span>
           <div className="flex gap-1 flex-shrink-0">
             <button

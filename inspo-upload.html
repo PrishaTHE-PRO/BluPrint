@@ -166,7 +166,7 @@
                   <iconify-icon icon="ph:piggy-bank-duotone" class="text-[#D3968C]"></iconify-icon>
                   Your Budget
                 </h3>
-                <p class="text-sm text-[#F7F4D5]/50 mt-1">No pressure — your room can keep its financial secrets.</p>
+                <p class="text-sm text-[#F7F4D5]/50 mt-1">No pressure. Your room can keep its financial secrets.</p>
               </div>
               <span class="px-3 py-1 rounded-full bg-[#839958]/20 border border-[#839958]/30 text-[#F7F4D5]/70 text-xs font-bold uppercase tracking-wider">Totally optional</span>
             </div>
@@ -183,7 +183,7 @@
             </div>
 
             <div class="flex items-center justify-between gap-4">
-              <p id="budget-status" class="text-sm font-medium text-[#F7F4D5]/50">Budget-free and fabulous — move the slider only if you want to.</p>
+              <p id="budget-status" class="text-sm font-medium text-[#F7F4D5]/50">Budget-free and fabulous. Move the slider only if you want to.</p>
               <button type="button" id="clear-budget" class="hidden shrink-0 text-sm font-bold text-[#D3968C] hover:text-[#F7F4D5] transition-colors">Clear budget</button>
             </div>
           </div>
@@ -322,7 +322,7 @@
           <div class="ai-analysis-label">
             <span><iconify-icon icon="ph:sparkle-bold"></iconify-icon></span>
             <strong>AI Analysis</strong>
-            <em id="ai-confidence">—</em>
+            <em id="ai-confidence">-</em>
           </div>
           <h2 id="ai-style-title">Your Style</h2>
           <p id="ai-style-description">Your personalized style profile is ready.</p>
@@ -369,10 +369,10 @@
         <div class="settings-contact">
           <h3>Need help?</h3>
           <ul>
-            <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
-            <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-            <li><strong>Prisha Agarwalla</strong> — <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
-            <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
+            <li><strong>Aditi Amarnath</strong>: <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
+            <li><strong>Nidhi Gandhi</strong>: <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
+            <li><strong>Prisha Agarwalla</strong>: <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
+            <li><strong>Saanvi Gandhari</strong>: <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
           </ul>
         </div>
       </div>
@@ -613,7 +613,7 @@
       if (value === '' || !Number.isFinite(parsed) || parsed <= 0) {
         state.budgetTotal = null;
         budgetInput.value = '';
-        budgetStatus.textContent = 'Budget-free and fabulous — move the slider only if you want to.';
+        budgetStatus.textContent = 'Budget-free and fabulous. Move the slider only if you want to.';
         clearBudget.classList.add('hidden');
         localStorage.removeItem('blueprintBudgetTotal');
         return;
@@ -623,7 +623,7 @@
       state.budgetTotal = budget;
       budgetSlider.value = String(budget);
       budgetInput.value = String(budget);
-      budgetStatus.textContent = `Lovely — we’ll aim to keep the furniture around $${budget.toLocaleString()}.`;
+      budgetStatus.textContent = `Lovely, we’ll aim to keep the furniture around $${budget.toLocaleString()}.`;
       clearBudget.classList.remove('hidden');
       localStorage.setItem('blueprintBudgetTotal', String(budget));
     }
@@ -947,7 +947,7 @@
       }
 
       if (!ROOM_ID) {
-        showError('No room found — go back to the dashboard and create a room first.');
+        showError('No room found. Go back to the dashboard and create a room first.');
         return;
       }
 

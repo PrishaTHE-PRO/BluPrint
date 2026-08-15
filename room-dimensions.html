@@ -2003,7 +2003,7 @@ svg.addEventListener("drop", (e) => {
         selectedCutoutId = newCutout.id;
         saveState();
         renderAll();
-        showToast("Wall cutout added — drag the green handles to adjust");
+        showToast("Wall cutout added. Drag the green handles to adjust");
       } else {
         showToast("Drop the cutout onto a wall");
         ghost.classList.add("hidden");
@@ -2221,6 +2221,36 @@ let roomAutosaving = false;
 let lastRoomAutosaveSig = '';
 let roomAutosaveArmed = false;
 
+/**
+ * Saves the room, creating it when the stored id no longer resolves.
+ *
+ * PATCH /api/rooms/:id 404s for an id that points at a deleted room — or at a
+ * room belonging to a different account — and the caller swallowed that as
+ * "Saved locally", so the room silently never reached the database. Falling
+ * back to POST turns a stale id into a new room instead of a lost one.
+ */
+async function saveRoomToServer(body) {
+  const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
+
+  if (existingRoomId) {
+    const patched = await authedFetch(`/api/rooms/${existingRoomId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (patched.ok) return patched;
+    if (patched.status !== 404) return patched;   // 401/500 are real failures
+    // Stale id: drop it so the POST below is treated as a fresh room.
+    localStorage.removeItem("blueprintCurrentRoomId");
+  }
+
+  return authedFetch("/api/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 function snapshotLocalRoomMeta(layout) {
   localStorage.setItem("blueprintCurrentRoomName", layout.roomName);
   localStorage.setItem("blueprintCurrentRoomWidth", String(layout.widthFt));
@@ -2277,22 +2307,15 @@ async function flushRoomAutosave() {
   snapshotLocalRoomMeta(layoutSnapshot);
 
   try {
-    const res = await authedFetch(
-      existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-      {
-        method: existingRoomId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          name: roomName,
-          widthFt,
-          lengthFt,
-          heightFt,
-          sqft: layoutSnapshot.sqft,
-          layout: layoutSnapshot,
-        }),
-      },
-    );
+    const res = await saveRoomToServer({
+      userId,
+      name: roomName,
+      widthFt,
+      lengthFt,
+      heightFt,
+      sqft: layoutSnapshot.sqft,
+      layout: layoutSnapshot,
+    });
     if (!res.ok) throw new Error("autosave failed (" + res.status + ")");
     const room = await res.json();
     if (room && room._id) {
@@ -2410,22 +2433,15 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
     btn.innerHTML = "Saving...";
 
     try {
-      const res = await authedFetch(
-        existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-        {
-          method: existingRoomId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            name: roomName,
-            widthFt,
-            lengthFt,
-            heightFt,
-            sqft: layoutSnapshot.sqft,
-            layout: layoutSnapshot,
-          }),
-        },
-      );
+      const res = await saveRoomToServer({
+        userId,
+        name: roomName,
+        widthFt,
+        lengthFt,
+        heightFt,
+        sqft: layoutSnapshot.sqft,
+        layout: layoutSnapshot,
+      });
       if (!res.ok) throw new Error("save failed (" + res.status + ")");
       const room = await res.json();
       localStorage.setItem("blueprintCurrentRoomId", room._id);
@@ -2442,7 +2458,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
       });
     } catch (err) {
       console.warn("[save room]", err);
-      showToast("Saved locally — continuing");
+      showToast("Saved locally, continuing");
     }
 
     window.location.href = "inspo-upload.html";

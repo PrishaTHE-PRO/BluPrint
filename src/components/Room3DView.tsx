@@ -45,7 +45,7 @@ export default function Room3DView({ isoRoom, heightFt = 9, styleTag, className 
     } catch (e) {
       console.error('[Room3DView] WebGL init failed', e);
       el.innerHTML =
-        '<div style="padding:16px;color:#888;font:14px system-ui">3D view needs WebGL — it may be disabled in this browser.</div>';
+        '<div style="padding:16px;color:#888;font:14px system-ui">3D view needs WebGL. It may be disabled in this browser.</div>';
       return;
     }
     viewerRef.current = viewer;

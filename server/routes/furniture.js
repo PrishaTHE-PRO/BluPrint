@@ -477,12 +477,10 @@ function compareBudgetCandidates(a, b, budgetTotal) {
   return (a.total - budgetTotal) - (b.total - budgetTotal) || a.total - b.total;
 }
 
-function orderFurnitureForBudget(categoryGroups, budgetTotal) {
-  if (!Number.isFinite(budgetTotal) || budgetTotal <= 0) {
-    return categoryGroups.flat();
-  }
-
+/** Cheapest-fitting pick per category, or null when there is nothing to pick. */
+function bestComboForGroups(categoryGroups, budgetTotal) {
   let states = [{ total: 0, picks: [] }];
+
   categoryGroups.forEach((group) => {
     const priced = group.filter((item) => Number(item.price) > 0);
     const options = priced.length > 0 ? priced : group.slice(0, 1);
@@ -495,8 +493,7 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal) {
     states.forEach((state) => {
       sortedOptions.forEach((item) => {
         const total = state.total + Math.max(0, Number(item.price) || 0);
-        const existing = byTotal.get(total);
-        if (!existing) {
+        if (!byTotal.has(total)) {
           byTotal.set(total, { total, picks: [...state.picks, item] });
         }
       });
@@ -509,59 +506,72 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal) {
     }
   });
 
-  if (states.length === 0) {
+  if (states.length === 0) return null;
+  return states.reduce((chosen, candidate) =>
+    compareBudgetCandidates(candidate, chosen, budgetTotal) < 0 ? candidate : chosen
+  );
+}
+
+/**
+ * Chooses one product per category against the budget.
+ *
+ * `strict` is the "generate under budget" button: rather than returning a set
+ * that overshoots, drop the most optional pieces until the total actually fits.
+ * Groups arrive anchor-first (the planner sorts by priority), so trimming from
+ * the end sheds a plant before it sheds the sofa.
+ *
+ * NOTE: this used to scale the selected prices down by budget/total whenever the
+ * cheapest set overshot — a $900 sofa was displayed as $600 purely so the
+ * on-screen total would fit. The totals looked right and the "Est. $x / $y"
+ * badge could essentially never go red, but the numbers were fiction and the
+ * retailer still charged the real price. Real prices are reported now, which is
+ * what makes an honest over-budget notice possible at all.
+ */
+function orderFurnitureForBudget(categoryGroups, budgetTotal, { strict = false } = {}) {
+  if (!Number.isFinite(budgetTotal) || budgetTotal <= 0) {
     return categoryGroups.flat();
   }
 
-  const best = states.reduce((chosen, candidate) =>
-    compareBudgetCandidates(candidate, chosen, budgetTotal) < 0 ? candidate : chosen
-  );
+  let groups = categoryGroups;
+  let best = bestComboForGroups(groups, budgetTotal);
+  if (!best) return categoryGroups.flat();
 
-  // Hard cap: if even the best pick is over budget, force the absolute cheapest
-  // combo, then proportionally scale selected prices so the shown total fits.
+  if (strict) {
+    // Never strip the room back to nothing — a bed alone is still a bedroom,
+    // but an empty one is a broken result.
+    const MIN_GROUPS = 2;
+    while (best && best.total > budgetTotal && groups.length > MIN_GROUPS) {
+      groups = groups.slice(0, -1);
+      best = bestComboForGroups(groups, budgetTotal);
+    }
+    if (!best) return categoryGroups.flat();
+  }
+
+  // Still over? Take the outright cheapest combination and report it honestly.
   let picks = best.picks;
   let selectedTotal = best.total;
   if (selectedTotal > budgetTotal) {
-    const cheapest = states.reduce((min, candidate) =>
-      candidate.total < min.total ? candidate : min
-    );
-    picks = cheapest.picks;
-    selectedTotal = cheapest.total;
-  }
-
-  const scaledIds = new Map();
-  if (selectedTotal > budgetTotal && selectedTotal > 0 && picks.length > 0) {
-    const factor = budgetTotal / selectedTotal;
-    picks = picks.map((item) => {
-      const next = {
-        ...item,
-        price: Math.max(1, Math.round(Number(item.price) * factor)),
-      };
-      scaledIds.set(item.category, next);
-      return next;
-    });
-    selectedTotal = picks.reduce((sum, item) => sum + item.price, 0);
+    const cheapest = bestComboForGroups(groups, Number.POSITIVE_INFINITY);
+    if (cheapest && cheapest.total < selectedTotal) {
+      picks = cheapest.picks;
+      selectedTotal = cheapest.total;
+    }
   }
 
   const selectedIds = new Map(picks.map((item) => [item.category, item.id]));
 
   console.log(
-    "[furniture] budget=",
-    budgetTotal,
-    "selectedTotal=",
-    selectedTotal,
-    "difference=",
-    selectedTotal - budgetTotal
+    "[furniture] budget=", budgetTotal,
+    "selectedTotal=", selectedTotal,
+    "difference=", selectedTotal - budgetTotal,
+    strict ? `strict (kept ${groups.length}/${categoryGroups.length} categories)` : ""
   );
 
-  return categoryGroups.flatMap((group) => {
-    const category = group[0]?.category;
-    const selectedId = selectedIds.get(category);
-    const scaled = scaledIds.get(category);
-    const list = group.map((item) =>
-      scaled && item.id === selectedId ? scaled : item
-    );
-    return [...list].sort((a, b) =>
+  // Only the retained groups: in strict mode the dropped ones must not come
+  // back in the payload, or the client would price them straight back in.
+  return groups.flatMap((group) => {
+    const selectedId = selectedIds.get(group[0]?.category);
+    return [...group].sort((a, b) =>
       Number(b.id === selectedId) - Number(a.id === selectedId)
     );
   });
@@ -1023,9 +1033,14 @@ router.get("/:roomId/furniture", async (req, res) => {
   // Everything above only normalises inputs, so this is the first point where
   // the cache key is fully known — and it comes before the GPT call and any
   // product search.
+  // ?strictBudget=1 — "generate under budget": trim pieces until the set fits
+  // rather than overshooting. Part of the cache key, or a strict result and a
+  // normal one for the same room would overwrite each other.
+  const strictBudget = String(req.query.strictBudget || "") === "1";
   const cacheKey = [
     req.params.roomId, roomType, styleTag, budgetTotal,
     roomFeatures.join("|"), colors.join("|"),
+    strictBudget ? "strict" : "any",
   ].join("::");
   // ?refresh=1 is the Regenerate button: skip the cached list and re-run the
   // pipeline, then overwrite the entry so the next visit is fast again.
@@ -1102,7 +1117,7 @@ router.get("/:roomId/furniture", async (req, res) => {
       return fallbackItemsForCategory(categories[index], styleTag);
     })
     .filter((group) => group.length > 0);
-  const furniture = orderFurnitureForBudget(categoryGroups, budgetTotal);
+  const furniture = orderFurnitureForBudget(categoryGroups, budgetTotal, { strict: strictBudget });
 
   if (furniture.length === 0) {
     return res.status(502).json({ error: "Furniture search returned no results" });
