@@ -2278,7 +2278,11 @@ function scheduleRoomAutosave() {
 
 async function flushRoomAutosave() {
   if (roomAutosaving) return;
-  const userId = localStorage.getItem("blueprintUserId");
+  // Ask Firebase, not a localStorage breadcrumb. blueprintUserId is only ever
+  // written by dashboard.js, so a signed-in user who reached this page without
+  // passing through the dashboard had every autosave bail here in silence.
+  // The server derives the owner from the token regardless.
+  const userId = await currentUid();
   if (!userId) return;
 
   const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
@@ -2391,7 +2395,9 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
   btn.addEventListener("click", async () => {
     if (saving) return;
 
-    const userId = localStorage.getItem("blueprintUserId");
+    // Same as the autosave: a missing breadcrumb was bouncing genuinely
+    // signed-in people to the login page.
+    const userId = await currentUid();
     if (!userId) {
       window.location.href = "login.html";
       return;
@@ -2496,7 +2502,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
 <script type="module" src="/src/theme-switch.tsx"></script>
 <script type="module">
   import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
+  import { auth, isFirebaseConfigured, authedFetch, currentUid } from "./firebase.mjs";
   const profileBtn = document.getElementById('profile-btn');
   const profilePopup = document.getElementById('profile-popup');
   const settingsBtn = document.getElementById('settings-btn');

@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
-import { auth, isFirebaseConfigured } from "./firebase.mjs";
+import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
 import { renderRoomPreview, getRoomPreviewLayout, escapeHtml } from "./iso-preview.js";
 
 var logoutBtn = document.getElementById('logout-btn');
@@ -108,7 +108,7 @@ async function openSavedProject(room) {
     let style = room.style;
     if (!style && (room.furnitureLayout || room.layout)) {
         try {
-            const docs = await fetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
+            const docs = await authedFetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
             style = (Array.isArray(docs) && (docs.find((s) => s.source === 'user') || docs[0])) || null;
         } catch (_) { /* ignore */ }
     }
@@ -169,7 +169,8 @@ async function loadProjects(userId) {
 
     try {
         // no-store so a freshly-saved layout is always reflected (never a cached GET).
-        const res = await fetch('/api/rooms?userId=' + encodeURIComponent(userId), { cache: 'no-store' });
+        // The API scopes to the verified token now; userId is no longer sent.
+        const res = await authedFetch('/api/rooms', { cache: 'no-store' });
         if (!res.ok) throw new Error();
         const rooms = await res.json();
 
@@ -246,7 +247,7 @@ async function loadProjects(userId) {
                     deleteBtn.textContent = '...';
                     deleteBtn.disabled = true;
                     try {
-                        const res = await fetch('/api/rooms/' + room._id, { method: 'DELETE' });
+                        const res = await authedFetch('/api/rooms/' + room._id, { method: 'DELETE' });
                         if (res.ok) {
                             card.style.transition = 'opacity 0.3s';
                             card.style.opacity = '0';
@@ -314,7 +315,7 @@ function startRename(card, room) {
             h3.textContent = next;
             input.replaceWith(h3);
             try {
-                const res = await fetch('/api/rooms/' + room._id, {
+                const res = await authedFetch('/api/rooms/' + room._id, {
                     method:  'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ name: next }),
