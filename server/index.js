@@ -1,5 +1,11 @@
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
+// The Firebase config lives in the project-root .env as VITE_* (Vite reads it
+// at build time). server/middleware/auth.js falls back to
+// VITE_FIREBASE_PROJECT_ID, but that fallback could never fire locally because
+// only server/.env was ever loaded, so every API route answered 503. dotenv
+// does not overwrite variables that are already set, so server/.env still wins.
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
