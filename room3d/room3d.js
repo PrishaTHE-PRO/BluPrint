@@ -30,7 +30,13 @@ function shadeHex(colour, k) {
   return new THREE.Color(colour).multiplyScalar(k).getHex();
 }
 
-const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: o.rough ?? 0.75, metalness: o.metal ?? 0, ...o });
+// `rough`/`metal` are this file's shorthand, not THREE property names. They are
+// destructured out rather than spread through: `...o` was passing them straight
+// into MeshStandardMaterial, which warned "'rough' is not a property" for every
+// material built, tens of times per render. Other keys (emissive, transparent,
+// opacity) are real THREE properties and still pass through untouched.
+const mat = (color, { rough, metal, ...rest } = {}) =>
+  new THREE.MeshStandardMaterial({ color, roughness: rough ?? 0.75, metalness: metal ?? 0, ...rest });
 function box(w, h, d, m, x = 0, y = 0, z = 0) {
   const g = new THREE.BoxGeometry(w, h, d);
   const mesh = new THREE.Mesh(g, m);
