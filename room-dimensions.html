@@ -61,6 +61,110 @@
   </style>
   <link rel="stylesheet" href="./design-system.css">
   <link rel="stylesheet" href="./mobile-ui.css">
+  <style id="photo-mode-styles">
+    /* Photo / Dimensions subtab. Same idea as the FT/M .unit-toggle, larger. */
+    .input-mode-toggle {
+      display: inline-flex;
+      align-self: center;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, .4);
+      border: 1px solid rgba(255, 255, 255, .1);
+    }
+    .input-mode-toggle button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      color: rgba(247, 244, 213, .5);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease;
+    }
+    .input-mode-toggle button iconify-icon { font-size: 18px; }
+    .input-mode-toggle button:hover { color: #F7F4D5; }
+    .input-mode-toggle button.is-active { background: #D3968C; color: #fff; }
+
+    #photo-panel { flex-direction: column; gap: 0; }
+    #photo-panel.hidden { display: none; }
+    .photo-dropzone {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      transition: background .2s ease;
+    }
+    .photo-dropzone:focus-visible { box-shadow: inset 0 0 0 3px rgba(211, 150, 140, .6); }
+    .photo-dropzone.is-over { background: rgba(211, 150, 140, .1); }
+    .photo-dropzone__empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 32px;
+      border: 2px dashed rgba(247, 244, 213, .25);
+      border-radius: 24px;
+      text-align: center;
+    }
+    .photo-dropzone__empty p { margin: 0; }
+    .photo-dropzone__preview {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .photo-panel__bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(247, 244, 213, .08);
+      background: rgba(0, 0, 0, .18);
+    }
+    .photo-panel__status { margin: 0; font-size: 12px; color: rgba(247, 244, 213, .65); }
+    .photo-panel__status.is-error { color: #F7B8AE; }
+    .photo-panel__replace {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      border: 1px solid rgba(247, 244, 213, .2);
+      border-radius: 10px;
+      background: transparent;
+      color: #F7F4D5;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .photo-panel__replace:hover { background: rgba(247, 244, 213, .08); }
+    .photo-estimate-summary {
+      margin: 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, .2);
+      border: 1px solid rgba(255, 255, 255, .05);
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(247, 244, 213, .75);
+    }
+    .photo-estimate-summary strong { color: #F7F4D5; }
+    /* The editor and the save code still read these; only the visuals go. */
+    #dimension-fields.hidden { display: none; }
+  </style>
 </head>
 <body class="page-dimensions">
 <div class="min-h-screen relative flex flex-col grid-background bg-[#0A3323] font-['Quicksand',sans-serif] text-[#F7F4D5] overflow-hidden" data-sd-id="1">
@@ -138,6 +242,16 @@
           </button>
         </div>
       </header>
+      <!-- Photo / Dimensions. A sibling of the header, not inside it: the
+           phone layout hides this section's header entirely. -->
+      <div id="input-mode-toggle" class="input-mode-toggle" role="tablist" aria-label="How to define your room">
+        <button type="button" id="mode-photo" class="is-active" role="tab" aria-selected="true">
+          <iconify-icon icon="ph:camera-duotone"></iconify-icon> Photo
+        </button>
+        <button type="button" id="mode-dimensions" role="tab" aria-selected="false">
+          <iconify-icon icon="ph:ruler-duotone"></iconify-icon> Dimensions
+        </button>
+      </div>
       <div id="canvas-container" class="flex-1 canvas-area relative flex items-center justify-center overflow-hidden garden-card ghibli-border" data-sd-id="33">
         <svg id="editor-svg" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet" class="w-full h-full p-2 select-none" data-sd-id="34">
           <defs>
@@ -192,6 +306,22 @@
         </svg>
         <div class="absolute bottom-8 right-8" data-sd-id="35">
           <div id="area-badge" class="px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-xs font-bold text-white/60 uppercase tracking-widest" data-sd-id="36">Total Area: 180 SQ FT</div>
+        </div>
+      </div>
+      <!-- Photo mode replaces the canvas with this. Same card styling, same slot. -->
+      <div id="photo-panel" class="flex-1 relative flex items-center justify-center overflow-hidden garden-card ghibli-border hidden" hidden>
+        <div id="photo-dropzone" class="photo-dropzone" role="button" tabindex="0" aria-label="Upload a photo of your room">
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" class="sr-only" tabindex="-1">
+          <div id="photo-empty" class="photo-dropzone__empty">
+            <iconify-icon icon="ph:camera-plus-duotone" class="text-5xl text-[#D3968C]"></iconify-icon>
+            <p class="text-lg font-bold text-[#F7F4D5]">Drop a photo of your room</p>
+            <p class="text-sm text-[#F7F4D5]/50">or click to choose one. JPEG, PNG or WebP, up to 8 MB.</p>
+          </div>
+          <img id="photo-preview" alt="Your room" class="photo-dropzone__preview" hidden>
+        </div>
+        <div class="photo-panel__bar">
+          <p id="photo-status" class="photo-panel__status" aria-live="polite">We will estimate the room size from your photo.</p>
+          <button type="button" id="photo-replace" class="photo-panel__replace" hidden>Replace photo</button>
         </div>
       </div>
     </section>
@@ -252,7 +382,8 @@
               <label for="room-name" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="66">ROOM NAME</label>
               <input type="text" id="room-name" value="My Room" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67">
             </div>
-            <div class="grid grid-cols-2 gap-5" data-sd-id="68">
+            <p id="photo-estimate-summary" class="photo-estimate-summary" hidden></p>
+            <div id="dimension-fields" class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
                 <div class="relative" data-sd-id="71">
@@ -2229,6 +2360,211 @@ let roomAutosaveArmed = false;
  * "Saved locally", so the room silently never reached the database. Falling
  * back to POST turns a stale id into a new room instead of a lost one.
  */
+// ---------------------------------------------------------------------------
+// Photo mode. The Photo tab lets someone skip drawing: they upload a photo of
+// the room, the server estimates its size and type, and the estimate is
+// written into the same width/length/height inputs the editor and the save
+// code already read. Dimensions mode is the page exactly as it was.
+// ---------------------------------------------------------------------------
+const photoMode = (() => {
+  const btnPhoto = document.getElementById("mode-photo");
+  const btnDims = document.getElementById("mode-dimensions");
+  const canvasEl = document.getElementById("canvas-container");
+  const panel = document.getElementById("photo-panel");
+  const dropzone = document.getElementById("photo-dropzone");
+  const input = document.getElementById("photo-input");
+  const empty = document.getElementById("photo-empty");
+  const preview = document.getElementById("photo-preview");
+  const status = document.getElementById("photo-status");
+  const replaceBtn = document.getElementById("photo-replace");
+  const summary = document.getElementById("photo-estimate-summary");
+  const dimFields = document.getElementById("dimension-fields");
+
+  const MAX_BYTES = 8 * 1024 * 1024;
+  const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+
+  const state = {
+    active: true,
+    photoUrl: null,
+    estimate: null,
+    analyzing: false,
+  };
+  try { state.photoUrl = localStorage.getItem("blueprintCurrentRoomPhotoUrl") || null; } catch {}
+
+  if (!btnPhoto || !btnDims || !canvasEl || !panel) {
+    return { get active() { return false; }, get photoUrl() { return null; }, savePayload() { return {}; } };
+  }
+
+  function setStatus(text, isError) {
+    if (!status) return;
+    status.textContent = text || "";
+    status.classList.toggle("is-error", Boolean(isError));
+  }
+
+  function fmt(ft) {
+    return currentUnit === "m" ? (ft * FT_TO_M).toFixed(1) + " m" : ft + " ft";
+  }
+
+  function updateSummary() {
+    if (!summary) return;
+    if (!state.active) { summary.hidden = true; return; }
+    summary.hidden = false;
+    if (state.estimate && !state.estimate.fallback) {
+      summary.innerHTML =
+        "Estimated <strong>" + fmt(state.estimate.widthFt) + " x " + fmt(state.estimate.lengthFt) +
+        "</strong> from your photo. Switch to Dimensions to adjust.";
+    } else if (state.estimate && state.estimate.fallback) {
+      summary.innerHTML =
+        "We could not estimate this room, so it is set to <strong>" + fmt(state.estimate.widthFt) + " x " +
+        fmt(state.estimate.lengthFt) + "</strong>. Switch to Dimensions to adjust.";
+    } else if (state.photoUrl) {
+      summary.textContent = "Using the size saved with your photo. Switch to Dimensions to adjust.";
+    } else {
+      summary.textContent = "Upload a photo and we will estimate the room size for you.";
+    }
+  }
+
+  function setMode(mode) {
+    state.active = mode === "photo";
+    document.body.dataset.inputMode = mode;
+    btnPhoto.classList.toggle("is-active", state.active);
+    btnDims.classList.toggle("is-active", !state.active);
+    btnPhoto.setAttribute("aria-selected", state.active ? "true" : "false");
+    btnDims.setAttribute("aria-selected", state.active ? "false" : "true");
+    canvasEl.classList.toggle("hidden", state.active);
+    panel.classList.toggle("hidden", !state.active);
+    panel.hidden = !state.active;
+    if (dimFields) dimFields.classList.toggle("hidden", state.active);
+    updateSummary();
+  }
+
+  function showPreview(src) {
+    if (!preview) return;
+    preview.src = src;
+    preview.hidden = false;
+    if (empty) empty.hidden = true;
+    if (replaceBtn) replaceBtn.hidden = false;
+  }
+
+  function applyEstimate(payload) {
+    const estimate = payload.estimate || {};
+    state.photoUrl = payload.photoUrl;
+    state.estimate = estimate;
+    try {
+      localStorage.setItem("blueprintCurrentRoomPhotoUrl", payload.photoUrl);
+      // The inspo page owns the room type once the user picks one there;
+      // only seed it when nothing has been chosen yet.
+      if (estimate.roomType && !localStorage.getItem("blueprintCurrentRoomType")) {
+        localStorage.setItem("blueprintCurrentRoomType", estimate.roomType);
+      }
+    } catch {}
+
+    const w = Number(estimate.widthFt), l = Number(estimate.lengthFt), h = Number(estimate.heightFt);
+    if (Number.isFinite(w) && Number.isFinite(l) && w > 0 && l > 0) {
+      const toUnit = (ft) => currentUnit === "m" ? (ft * FT_TO_M).toFixed(2) : String(ft);
+      widthInput.value = toUnit(w);
+      lengthInput.value = toUnit(l);
+      if (Number.isFinite(h) && h > 0) heightInput.value = String(h);
+      // Redraws the room at the estimated size through the editor's own path.
+      if (typeof widthInput.oninput === "function") widthInput.oninput();
+    }
+
+    if (estimate.fallback) {
+      setStatus("We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; switch to Dimensions to adjust.", true);
+    } else {
+      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling. Switch to Dimensions to adjust.");
+    }
+    updateSummary();
+  }
+
+  async function handleFile(file) {
+    if (!file) return;
+    if (!ACCEPTED.includes(file.type)) {
+      setStatus("Please choose a JPEG, PNG or WebP photo.", true);
+      showToast("Please choose a JPEG, PNG or WebP photo");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setStatus("That photo is over 8 MB. Please choose a smaller one.", true);
+      showToast("Photo must be 8 MB or smaller");
+      return;
+    }
+
+    showPreview(URL.createObjectURL(file));
+    setStatus("Estimating the room size from your photo...");
+    state.analyzing = true;
+    try {
+      const form = new FormData();
+      form.append("photo", file);
+      const res = await authedFetch("/api/rooms/photo-analyze", { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not analyze that photo.");
+      applyEstimate(data);
+    } catch (err) {
+      const message = (err && err.message) || "Could not analyze that photo.";
+      // The preview stays so they can retry; Dimensions is always available.
+      setStatus(message + " Try another photo, or switch to Dimensions.", true);
+      showToast(message);
+    } finally {
+      state.analyzing = false;
+    }
+  }
+
+  function pick() { if (input) input.click(); }
+
+  btnPhoto.addEventListener("click", () => setMode("photo"));
+  btnDims.addEventListener("click", () => setMode("dimensions"));
+
+  if (dropzone) {
+    dropzone.addEventListener("click", pick);
+    dropzone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); }
+    });
+    dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("is-over"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("is-over"));
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("is-over");
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      void handleFile(file);
+    });
+  }
+  if (input) {
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      input.value = "";
+      void handleFile(file);
+    });
+  }
+  if (replaceBtn) {
+    replaceBtn.addEventListener("click", (e) => { e.stopPropagation(); pick(); });
+  }
+
+  // A returning room with a photo reopens on it; otherwise an empty drop zone.
+  if (state.photoUrl) {
+    showPreview(state.photoUrl);
+    setStatus("Photo saved with this room. Replace it to estimate again.");
+  }
+  setMode("photo");
+
+  return {
+    get active() { return state.active; },
+    get photoUrl() { return state.photoUrl; },
+    get analyzing() { return state.analyzing; },
+    /**
+     * What to merge into the room save body. Dimensions mode sends null so the
+     * server drops the photo (and any render made from it). Photo mode with no
+     * analyzed photo sends nothing, so an existing photo is not wiped by an
+     * autosave that fires before the upload finishes.
+     */
+    savePayload() {
+      if (!state.active) return { photoUrl: null };
+      if (state.photoUrl) return { photoUrl: state.photoUrl, photoEstimate: state.estimate || undefined };
+      return {};
+    },
+  };
+})();
+
 async function saveRoomToServer(body) {
   const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
 
@@ -2319,6 +2655,7 @@ async function flushRoomAutosave() {
       heightFt,
       sqft: layoutSnapshot.sqft,
       layout: layoutSnapshot,
+      ...photoMode.savePayload(),
     });
     if (!res.ok) throw new Error("autosave failed (" + res.status + ")");
     const room = await res.json();
@@ -2430,6 +2767,16 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
     }
     setDimensionError("");
 
+    // Photo mode has nothing to hand the results page without a photo.
+    if (photoMode.active && !photoMode.photoUrl) {
+      const message = photoMode.analyzing
+        ? "Still estimating your room from the photo. One moment."
+        : "Upload a photo of your room, or switch to Dimensions.";
+      setDimensionError(message);
+      showToast(message);
+      return;
+    }
+
     snapshotLocalRoomMeta(layoutSnapshot);
     persistRoomLayout(layoutSnapshot);
 
@@ -2447,8 +2794,14 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
         heightFt,
         sqft: layoutSnapshot.sqft,
         layout: layoutSnapshot,
+        ...photoMode.savePayload(),
       });
       if (!res.ok) throw new Error("save failed (" + res.status + ")");
+      // Dimensions mode removed the photo; the local copy must go too, or the
+      // next visit would reopen on a photo the server no longer has.
+      if (!photoMode.active) {
+        try { localStorage.removeItem("blueprintCurrentRoomPhotoUrl"); } catch {}
+      }
       const room = await res.json();
       localStorage.setItem("blueprintCurrentRoomId", room._id);
       persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
@@ -2503,6 +2856,12 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
 <script type="module">
   import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { auth, isFirebaseConfigured, authedFetch, currentUid } from "./firebase.mjs";
+  // The editor above is a classic <script>, not a module, yet its save code
+  // calls authedFetch and currentUid. Module imports are scoped to this block,
+  // so without these two lines every save threw ReferenceError, which the
+  // catch reported as "Saved locally, continuing" while nothing was saved.
+  window.authedFetch = authedFetch;
+  window.currentUid = currentUid;
   const profileBtn = document.getElementById('profile-btn');
   const profilePopup = document.getElementById('profile-popup');
   const settingsBtn = document.getElementById('settings-btn');

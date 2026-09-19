@@ -20,9 +20,9 @@ Then open [http://localhost:5173](http://localhost:5173).
 | `/` | Landing page |
 | `/login.html` | Sign in / sign up |
 | `/dashboard.html` | Dashboard — your recent rooms |
-| `/room-dimensions.html` | Draw the room, place doors and windows (Saanvi) |
+| `/room-dimensions.html` | Photo tab: upload a photo and we estimate the size. Dimensions tab: draw the room, place doors and windows (Saanvi) |
 | `/inspo-upload.html` | Upload inspiration → refine style picks → AI analysis (Nidhi + Aditi) |
-| `/room-result.html` | Furniture results, in 2D or 3D (Prisha) |
+| `/room-result.html` | Furniture results: 2D plan next to a render of your own photo, or a 3D view when there is no photo (Prisha) |
 | `/past-inspiration.html` | All saved projects |
 
 ## Firebase
@@ -50,7 +50,32 @@ CLOUDINARY_CLOUD_NAME=   # from cloudinary.com → Dashboard
 CLOUDINARY_API_KEY=      # from cloudinary.com → Dashboard
 CLOUDINARY_API_SECRET=   # from cloudinary.com → Dashboard
 OPENAI_API_KEY=          # from platform.openai.com → API keys
+SERPER_API_KEY=          # from serper.dev (shopping search)
+FIREBASE_PROJECT_ID=     # same value as VITE_FIREBASE_PROJECT_ID in the root .env
+OPENAI_IMAGE_MODEL=gpt-image-1     # room photo renders (optional, this is the default)
+OPENAI_IMAGE_SIZE=1536x1024        # optional
+OPENAI_IMAGE_QUALITY=medium        # optional
 ```
+
+Image edits cost far more per call than chat completions, which is why medium
+quality at 1536x1024 is the default. Raise `OPENAI_IMAGE_QUALITY` to `high` only if
+the renders are worth it to you.
+
+### Photo mode and renders
+
+On the dimensions page the **Photo** tab (the default) takes a photo of the room
+instead of a drawing. The server uploads it to Cloudinary and asks GPT-4o Vision
+for the room type, size and the furniture already in it (`POST /api/rooms/photo-analyze`),
+and the estimate fills the same width/length inputs the editor uses. The
+**Dimensions** tab is the drawing editor as before.
+
+When a room has a photo, the results page shows it in place of the 3D view with a
+**Render my room** button. That calls `POST /api/rooms/:roomId/render`, which
+composites the currently visible products into the photo with the OpenAI image
+edit endpoint (the real product photos are passed as references), then asks
+GPT-4o where each product landed so the page can draw hover hotspots with Buy
+links. Renders only run from that button and **Re-render**, never automatically,
+and the last render is saved on the room so a revisit shows it instantly.
 
 ### Getting Cloudinary credentials
 1. Sign up at [cloudinary.com](https://cloudinary.com) (free tier is enough)
@@ -68,12 +93,18 @@ OPENAI_API_KEY=          # from platform.openai.com → API keys
 src/
   components/
     RoomSVG.tsx          2D floor plan
-    Room3DView.tsx       React wrapper for the 3D viewer
+    Room3DView.tsx       React wrapper for the 3D viewer (rooms without a photo)
+    RoomRenderView.tsx   your photo with the products rendered in, plus hover hotspots
     FurnitureCard.tsx    furniture item card
     FurniturePanel.tsx   furniture list + budget tracker
   pages/
     RoomResult.tsx       room result page
 room3d/                  Three.js room viewer (plain JS)
+server/
+  routes/render.js       POST /api/rooms/:id/render
+  services/roomPhotoAnalyzer.js   size + type estimate from a room photo
+  services/roomRenderer.js        image edit + hotspot pass
+  utils/cloudinary.js    shared upload helper
 public/                  scripts served as-is — see the note below
 design-system.css        shared styling for every page
 mobile-ui.css / .js      phone layout, loaded on top of the design system

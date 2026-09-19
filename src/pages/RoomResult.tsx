@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
+import type { Room, RoomRender, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
 import { defaultRotation } from '../components/RoomSVG';
 import FurnitureLoadingOverlay from '../components/FurnitureLoadingOverlay';
 import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
-import IsoRoomPreview from '../components/IsoRoomPreview';
+import RoomRenderView from '../components/RoomRenderView';
 import type { IsoFurnitureEntry, IsoRoomInput } from '../utils/isoRoomRender';
 import { Link000 } from '@/components/ui/skiper-ui/skiper40';
 import SwitchMode from '../components/SwitchMode';
@@ -517,6 +517,8 @@ export default function RoomResult() {
               lengthFt: match.lengthFt,
               heightFt: match.heightFt,
               sqft:     match.sqft,
+              photoUrl: typeof match.photoUrl === 'string' ? match.photoUrl : null,
+              render:   match.render && typeof match.render.url === 'string' ? match.render : null,
             });
 
             if (isRoomArchitectureLayout(match.layout)) {
@@ -584,6 +586,13 @@ export default function RoomResult() {
       })
       .finally(() => setFurnitureLoading(false));
   }
+
+  // The render pane reports a finished render here so the badge and hotspots
+  // refresh without a reload. Only the render field changes; nothing else on
+  // the room is touched.
+  const handleRenderSaved = useCallback((render: RoomRender) => {
+    setRoom((prev) => (prev ? { ...prev, render } : prev));
+  }, []);
 
   // Hooks must stay above any conditional returns.
   const layoutRoomPreview = useMemo(
@@ -672,8 +681,6 @@ export default function RoomResult() {
     return () => { cancelled = true; };
   }, [layoutFurniturePreview, style?.colorPalette]);
 
-  const [view3d, setView3d] = useState(true);
-
   const isoRoom = useMemo<IsoRoomInput>(() => {
     const rawItems: IsoFurnitureEntry[] = layoutFurniturePreview.map((item) => {
       const pos = livePlacement.positions[item.category];
@@ -746,6 +753,10 @@ export default function RoomResult() {
   const layoutRoom = layoutRoomPreview;
   const roomName = renamedName ?? layoutRoom.name;
   const layoutFurniture = layoutFurniturePreview;
+  // Feet, from the drawn polygon when there is one so hints share the plan's
+  // coordinate space; otherwise the saved room dimensions.
+  const renderRoomDims = roomDimsFromPoints(savedLayout?.roomPoints)
+    ?? { widthFt: layoutRoom.widthFt, lengthFt: layoutRoom.lengthFt };
 
   return (
     <div className="relative min-h-screen grid-background">
@@ -926,43 +937,27 @@ export default function RoomResult() {
             />
           }
           isoContent={
-            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
-                <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.08)', borderRadius: 999, padding: 3 }}>
-                  <button
-                    type="button"
-                    onClick={() => setView3d(true)}
-                    aria-pressed={view3d}
-                    style={{
-                      border: 0, cursor: 'pointer', borderRadius: 999, padding: '5px 14px',
-                      fontSize: 13, fontWeight: 600,
-                      background: view3d ? '#839958' : 'transparent',
-                      color: view3d ? '#fff' : 'inherit',
-                    }}
-                  >Realistic 3D</button>
-                  <button
-                    type="button"
-                    onClick={() => setView3d(false)}
-                    aria-pressed={!view3d}
-                    style={{
-                      border: 0, cursor: 'pointer', borderRadius: 999, padding: '5px 14px',
-                      fontSize: 13, fontWeight: 600,
-                      background: !view3d ? '#839958' : 'transparent',
-                      color: !view3d ? '#fff' : 'inherit',
-                    }}
-                  >2D sketch</button>
-                </div>
-              </div>
-              <div style={{ flex: 1, minHeight: 320 }}>
-                {view3d ? (
+            room?.photoUrl ? (
+              // A photo means the real products get composited into the
+              // user's own room. The 3D stand-ins only appear without one.
+              <RoomRenderView
+                room={room}
+                items={layoutFurniture}
+                placement={livePlacement}
+                roomDims={renderRoomDims}
+                linkedCategory={linkedCategory}
+                onLinkCategory={setLinkedCategory}
+                onRenderSaved={handleRenderSaved}
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, minHeight: 320 }}>
                   <Suspense fallback={<div style={{ padding: 16, color: '#888', font: '14px system-ui' }}>Loading 3D…</div>}>
                     <Room3DView isoRoom={isoRoom} heightFt={layoutRoomPreview.heightFt} styleTag={s?.styleTag} />
                   </Suspense>
-                ) : (
-                  <IsoRoomPreview room={isoRoom} label="2D sketch preview" />
-                )}
+                </div>
               </div>
-            </div>
+            )
           }
         />
 

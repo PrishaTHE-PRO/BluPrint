@@ -478,6 +478,30 @@
     background-size: 22px 22px !important;
   }
   .page-dimensions #svg-bg { display: none; }
+
+  /* Photo / Dimensions subtab and the photo panel take the canvas's slot. */
+  .page-dimensions .input-mode-toggle {
+    margin: 14px 16px 0 !important;
+    align-self: stretch;
+    justify-content: center;
+  }
+  .page-dimensions .input-mode-toggle button { flex: 1 1 0; justify-content: center; padding: 12px 10px; }
+  .page-dimensions #photo-panel {
+    width: auto !important;
+    height: 430px !important;
+    min-height: 430px !important;
+    margin: 14px 16px 0 !important;
+    border: 1px solid var(--bp-border) !important;
+    border-radius: 24px !important;
+    background: var(--m-card) !important;
+    box-shadow: var(--m-sh) !important;
+  }
+  .page-dimensions #photo-panel.hidden { display: none !important; }
+  /* No canvas in photo mode means nothing to drag doors onto. The library
+     half of the element sheet goes; the sheet itself stays so Room name and
+     Save & Continue remain reachable on a phone. */
+  body[data-input-mode="photo"].page-dimensions .element-library-panel { display: none !important; }
+  body[data-input-mode="photo"].page-dimensions .m-canvas-hint { display: none !important; }
   /* !important throughout: design-system.css pins this bottom-right at 600px. */
   .page-dimensions #area-badge {
     position: absolute !important;

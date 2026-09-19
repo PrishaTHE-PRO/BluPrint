@@ -73,6 +73,10 @@ app.use("/api/rooms/:roomId/analyze-style", expensiveLimiter);
 app.use("/api/rooms/:roomId/furniture", expensiveLimiter);
 app.use("/api/rooms/:roomId/pinterest", expensiveLimiter);
 app.use("/api/rooms/:roomId/images", expensiveLimiter);
+// Photo mode: one Vision call per upload, one image edit plus a Vision call
+// per render. The render is the single most expensive request in the app.
+app.use("/api/rooms/photo-analyze", expensiveLimiter);
+app.use("/api/rooms/:roomId/render", expensiveLimiter);
 
 // cheap wake-up target for the keep-alive ping. touches nothing, answers instantly
 app.get("/healthz", (req, res) => {
@@ -83,10 +87,16 @@ app.get("/healthz", (req, res) => {
   });
 });
 
+// rooms.js goes first. The other three routers guard every "/:roomId" path
+// with requireRoomOwner, and a "/:roomId" pattern matches "photo-analyze" as
+// a room id, which would 404 that route before rooms.js ever saw it. Nothing
+// in rooms.js shadows the others: its paths are "/", "/photo-analyze" and a
+// single-segment "/:roomId", none of which match "/:roomId/images" and co.
+app.use("/api/rooms", require("./routes/rooms"));
 app.use("/api/rooms", require("./routes/inspo"));
 app.use("/api/rooms", require("./routes/styleRoutes"));
-app.use("/api/rooms", require("./routes/rooms"));
 app.use("/api/rooms", require("./routes/furniture"));
+app.use("/api/rooms", require("./routes/render"));
 app.use("/api", require("./routes/imageProxy"));
 
 // vite hashes asset filenames, so they can be cached hard. html stays fresh

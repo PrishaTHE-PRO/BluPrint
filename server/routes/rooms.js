@@ -3,6 +3,9 @@ const router  = express.Router();
 const Room    = require('../models/Room');
 const Style   = require('../models/Style');
 const { requireAuth, requireRoomOwner } = require('../middleware/auth');
+const multer  = require('multer');
+const { uploadToCloudinary } = require('../utils/cloudinary');
+const { estimateRoom } = require('../services/roomPhotoAnalyzer');
 
 // Every room route is owner-only. Ownership comes from the verified token, not
 // from anything the client sends.
@@ -138,6 +141,75 @@ function sanitizeFurnitureLayout(layout) {
     };
 }
 
+// Only our own Cloudinary account is an acceptable photo source. Anything
+// else in this field would be a stored URL we later fetch server-side, which
+// is the SSRF the image proxy already had to close.
+const PHOTO_URL_PREFIX = 'https://res.cloudinary.com/';
+
+/**
+ * Reads body.photoUrl. Absent means "leave it alone"; null means "remove";
+ * a Cloudinary https URL means "set". Anything else is rejected by the caller.
+ */
+function readPhotoUrl(body) {
+    if (!body || !Object.prototype.hasOwnProperty.call(body, 'photoUrl')) return { provided: false };
+    const value = body.photoUrl;
+    if (value === null) return { provided: true, value: null };
+    if (typeof value === 'string' && value.startsWith(PHOTO_URL_PREFIX)) return { provided: true, value };
+    return { provided: true, invalid: true };
+}
+
+function sanitizePhotoEstimate(value) {
+    if (!value || typeof value !== 'object') return null;
+    return {
+        roomType: typeof value.roomType === 'string' ? value.roomType.slice(0, 32) : '',
+        widthFt: toNumber(value.widthFt),
+        lengthFt: toNumber(value.lengthFt),
+        heightFt: toNumber(value.heightFt),
+        existingFurniture: Array.isArray(value.existingFurniture)
+            ? value.existingFurniture.map((f) => String(f || '').trim()).filter(Boolean).slice(0, 12)
+            : [],
+        confidence: Math.max(0, Math.min(1, toNumber(value.confidence))),
+        fallback: Boolean(value.fallback),
+    };
+}
+
+const photoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+    fileFilter(req, file, cb) {
+        cb(null, /^image\/(jpeg|png|webp)$/.test(file.mimetype));
+    },
+});
+
+// POST /photo-analyze: upload a room photo and estimate the room from it.
+// Declared before the /:roomId routes; this router is also mounted ahead of
+// the others in server/index.js, whose "/:roomId" owner check would otherwise
+// read "photo-analyze" as a room id. Needs auth but no room yet: the room is
+// created afterwards with the returned photoUrl.
+router.post('/photo-analyze', (req, res, next) => {
+    photoUpload.single('photo')(req, res, (err) => {
+        if (err) {
+            const message = err.code === 'LIMIT_FILE_SIZE'
+                ? 'Photo must be 8 MB or smaller.'
+                : 'Could not read that photo.';
+            return res.status(400).json({ error: message });
+        }
+        next();
+    });
+}, async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Attach a JPEG, PNG or WebP photo in the "photo" field.' });
+    }
+    try {
+        const photoUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'bluprint/rooms');
+        const estimate = await estimateRoom(photoUrl);
+        res.json({ photoUrl, estimate });
+    } catch (error) {
+        console.error('Photo upload error:', error.message);
+        res.status(502).json({ error: 'Could not upload the photo. Please try again.' });
+    }
+});
+
 // POST / — save a new room
 router.post('/', async (req, res) => {
     try {
@@ -145,6 +217,10 @@ router.post('/', async (req, res) => {
         // body, which let anyone create rooms under another person's id.
         const userId = req.uid;
         const { name, layout } = req.body;
+        const photo = readPhotoUrl(req.body);
+        if (photo.invalid) {
+            return res.status(400).json({ error: 'photoUrl must be a Cloudinary https URL or null.' });
+        }
         const widthFt  = toNumber(req.body.widthFt);
         const lengthFt = toNumber(req.body.lengthFt);
         const heightFt = toNumber(req.body.heightFt, 8);
@@ -158,6 +234,8 @@ router.post('/', async (req, res) => {
             heightFt,
             sqft,
             layout: sanitizeLayout(layout, roomFields),
+            photoUrl: photo.provided ? photo.value : null,
+            photoEstimate: photo.provided && photo.value ? sanitizePhotoEstimate(req.body.photoEstimate) : null,
         });
         const saved   = await newRoom.save();
         if (saved.layout && !saved.layout.roomId) {
@@ -227,6 +305,24 @@ router.patch('/:roomId', requireRoomOwner, async (req, res) => {
 
         if (Object.prototype.hasOwnProperty.call(req.body, 'furnitureLayout')) {
             current.furnitureLayout = sanitizeFurnitureLayout(req.body.furnitureLayout);
+        }
+
+        const photo = readPhotoUrl(req.body);
+        if (photo.invalid) {
+            return res.status(400).json({ error: 'photoUrl must be a Cloudinary https URL or null.' });
+        }
+        if (photo.provided) {
+            // A render belongs to one specific photo. Removing or swapping the
+            // photo leaves a picture of a room that no longer exists.
+            if (photo.value !== current.photoUrl) {
+                current.render = null;
+                current.markModified('render');
+            }
+            current.photoUrl = photo.value;
+            current.photoEstimate = photo.value
+                ? (sanitizePhotoEstimate(req.body.photoEstimate) || current.photoEstimate || null)
+                : null;
+            current.markModified('photoEstimate');
         }
 
         const saved = await current.save();
