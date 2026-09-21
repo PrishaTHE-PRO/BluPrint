@@ -1314,48 +1314,6 @@ body:not(.page-login) nav.workflow-steps {
 .workflow-step.completed strong { color: var(--bp-ink); }
 .workflow-step.completed iconify-icon { font-size: 12px; }
 .workflow-connector.completed { background: var(--dimension-primary, var(--bp-primary)); }
-.page-dimensions .define-room-subtabs {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  width: fit-content;
-  margin: 4px auto -32px;
-  padding: 4px;
-  border: 1px solid var(--bp-border);
-  border-radius: 999px;
-  background: var(--bp-soft);
-  transform: translateY(50px);
-  position: relative;
-  z-index: 2;
-}
-.page-dimensions .define-room-subtab {
-  min-width: 104px;
-  min-height: 34px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--bp-muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.page-dimensions .define-room-subtab.is-active {
-  background: var(--dimension-primary, var(--bp-primary));
-  color: #fff;
-}
-.page-dimensions .define-room-subtab:focus-visible {
-  outline: 2px solid var(--dimension-primary, var(--bp-primary));
-  outline-offset: 2px;
-}
-.page-dimensions .define-room-image-upload-panel {
-  min-height: 620px;
-}
-.page-dimensions [data-room-tab-panel][hidden] {
-  display: none !important;
-}
 /* Clickable steps — jump between Define Room / Add Inspiration / View Design */
 a.workflow-step {
   text-decoration: none;

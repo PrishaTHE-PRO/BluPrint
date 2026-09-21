@@ -124,12 +124,7 @@
     <div class="workflow-connector" data-sd-id="22"></div>
     <a class="workflow-step" href="room-result.html" aria-label="Go to View Design" data-sd-id="23"><span data-sd-id="24">3</span><strong>View Design</strong><iconify-icon class="workflow-arrow" icon="ph:arrow-right-bold"></iconify-icon></a>
   </nav>
-  <div class="define-room-subtabs" role="tablist" aria-label="Define room options">
-    <button id="tab-image-upload" class="define-room-subtab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-image-upload" data-room-tab="image-upload">Image Upload</button>
-    <button id="tab-draw-room" class="define-room-subtab" type="button" role="tab" aria-selected="false" aria-controls="panel-draw-room" data-room-tab="draw-room">Draw Room</button>
-  </div>
-  <main id="panel-image-upload" class="define-room-image-upload-panel flex-1 max-w-[1600px] mx-auto w-full" role="tabpanel" aria-labelledby="tab-image-upload" data-room-tab-panel="image-upload"></main>
-  <main id="panel-draw-room" class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full" role="tabpanel" aria-labelledby="tab-draw-room" data-room-tab-panel="draw-room" hidden data-sd-id="25">
+  <main class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full" data-sd-id="25">
     <section class="w-[70%] relative flex flex-col gap-4 overflow-hidden h-full" data-sd-id="26">
       <header class="animate-slide-right flex-shrink-0" data-sd-id="27">
         <h1 class="text-4xl font-bold text-[#F7F4D5]" data-sd-id="28">Define your room</h1>
@@ -2518,19 +2513,6 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
   const settingsSaveBtn = document.getElementById('settings-save-btn');
   const settingsSaveStatus = document.getElementById('settings-save-status');
   const logoutBtn = document.getElementById('logout-btn');
-  document.querySelectorAll('.define-room-subtab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const selectedTab = tab.dataset.roomTab;
-      document.querySelectorAll('.define-room-subtab').forEach((button) => {
-        const isSelected = button === tab;
-        button.classList.toggle('is-active', isSelected);
-        button.setAttribute('aria-selected', isSelected ? 'true' : 'false');
-      });
-      document.querySelectorAll('[data-room-tab-panel]').forEach((panel) => {
-        panel.hidden = panel.dataset.roomTabPanel !== selectedTab;
-      });
-    });
-  });
   function setIdentity(name, email) {
     const n = document.querySelector('[data-profile-name]');
     const e = document.querySelector('[data-profile-email]');
