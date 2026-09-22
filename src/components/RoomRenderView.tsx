@@ -88,6 +88,7 @@ export default function RoomRenderView({
   onRenderSaved,
 }: Props) {
   const [rendering, setRendering] = useState(false);
+  const [relocating, setRelocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pct, setPct] = useState(0);
   const [line, setLine] = useState(0);
@@ -170,6 +171,24 @@ export default function RoomRenderView({
     }
   }, [rendering, items, placement, roomDims, room.roomId, onRenderSaved]);
 
+  // Re-runs only the locate passes on the existing picture. Two Vision calls
+  // rather than a new image edit, so it is the cheap way to fix the boxes.
+  const refreshHotspots = useCallback(async () => {
+    if (relocating || rendering || !render) return;
+    setRelocating(true);
+    setError(null);
+    try {
+      const res = await authedFetch(`/api/rooms/${room.roomId}/render/hotspots`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `Could not locate furniture (${res.status})`);
+      onRenderSaved(data as RoomRender);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not locate furniture');
+    } finally {
+      setRelocating(false);
+    }
+  }, [relocating, rendering, render, room.roomId, onRenderSaved]);
+
   const link = (category: string | null) => onLinkCategory?.(category);
 
   return (
@@ -187,9 +206,21 @@ export default function RoomRenderView({
         {render && (
           <button
             type="button"
+            className="room-render-view__btn room-render-view__btn--small room-render-view__btn--ghost"
+            onClick={refreshHotspots}
+            disabled={relocating || rendering}
+            title="Find the furniture in this picture again without generating a new one"
+          >
+            <iconify-icon icon={relocating ? 'ph:circle-notch-bold' : 'ph:crosshair-simple-bold'} />
+            {relocating ? 'Locating...' : 'Refresh hotspots'}
+          </button>
+        )}
+        {render && (
+          <button
+            type="button"
             className="room-render-view__btn room-render-view__btn--small"
             onClick={runRender}
-            disabled={rendering || items.length === 0}
+            disabled={rendering || relocating || items.length === 0}
           >
             <iconify-icon icon="ph:arrows-clockwise-bold" /> Re-render
           </button>
@@ -208,7 +239,7 @@ export default function RoomRenderView({
           />
         )}
 
-        {render && box && !rendering && (
+        {render && box && !rendering && !relocating && (
           <div
             className="room-render-view__layer"
             style={{ left: box.left, top: box.top, width: box.width, height: box.height }}

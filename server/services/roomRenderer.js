@@ -323,4 +323,21 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
   };
 }
 
-module.exports = { renderRoom, buildEditPrompt, normalizeHotspots, MAX_REFERENCE_IMAGES };
+/**
+ * Locate passes only, on a render that already exists. Fetches the saved
+ * image back from Cloudinary (our own URL, still through the guarded agent)
+ * and uses the product summaries stored with the render.
+ */
+async function relocateRender(render) {
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
+  const image = await downloadImage(render.url);
+  if (!image) throw new Error("Could not fetch the saved render");
+  const products = render.items.filter((p) => p && p.category && p.imageUrl);
+  if (products.length === 0) throw new Error("The render has no products to locate");
+  const startedAt = Date.now();
+  const hotspots = await locateProducts(image.buffer, render.url, products);
+  console.log("[render] hotspots refreshed in", Date.now() - startedAt, "ms:", hotspots.length, "found");
+  return hotspots;
+}
+
+module.exports = { renderRoom, relocateRender, buildEditPrompt, normalizeHotspots, MAX_REFERENCE_IMAGES };

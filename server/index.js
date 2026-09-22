@@ -77,6 +77,7 @@ app.use("/api/rooms/:roomId/images", expensiveLimiter);
 // per render. The render is the single most expensive request in the app.
 app.use("/api/rooms/photo-analyze", expensiveLimiter);
 app.use("/api/rooms/:roomId/render", expensiveLimiter);
+app.use("/api/rooms/:roomId/render/hotspots", expensiveLimiter);
 
 // cheap wake-up target for the keep-alive ping. touches nothing, answers instantly
 app.get("/healthz", (req, res) => {

@@ -9,7 +9,7 @@ const express = require("express");
 const Room = require("../models/Room");
 const { requireAuth, requireRoomOwner } = require("../middleware/auth");
 const { assertPublicUrl } = require("../utils/safeRequest");
-const { renderRoom } = require("../services/roomRenderer");
+const { renderRoom, relocateRender } = require("../services/roomRenderer");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -98,6 +98,26 @@ router.post("/:roomId/render", requireRoomOwner, async (req, res) => {
     // Upstream trouble of any kind is a 502 from the client's point of view;
     // the message carries the model's own error text when there is one.
     res.status(502).json({ error: error?.message || "Render failed" });
+  }
+});
+
+// POST /:roomId/render/hotspots. Re-runs only the locate passes on the render
+// the room already has. Two Vision calls instead of an image edit, so it is
+// the cheap way to fix hover boxes without generating a new picture.
+router.post("/:roomId/render/hotspots", requireRoomOwner, async (req, res) => {
+  const room = req.room;
+  if (!room.render?.url || !Array.isArray(room.render.items) || room.render.items.length === 0) {
+    return res.status(400).json({ error: "This room has no render to locate furniture in." });
+  }
+  try {
+    const hotspots = await relocateRender(room.render);
+    room.render = { ...room.render, hotspots };
+    room.markModified("render");
+    await room.save();
+    res.json(room.render);
+  } catch (error) {
+    console.error("[render] hotspot refresh failed:", error?.message || error);
+    res.status(502).json({ error: error?.message || "Could not locate the furniture" });
   }
 });
 

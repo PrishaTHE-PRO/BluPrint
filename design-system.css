@@ -4097,6 +4097,12 @@ html.dark-mode input.room-name-input {
   border-radius: 10px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
 }
+.page-result .room-render-view__btn--ghost {
+  background: rgba(23, 20, 15, .78);
+  border: 1px solid rgba(247, 244, 213, .25);
+  backdrop-filter: blur(6px);
+}
+.page-result .room-render-view__btn--ghost:hover { background: rgba(23, 20, 15, .92); }
 .page-result .room-render-view__toolbar {
   position: absolute;
   top: 10px;
