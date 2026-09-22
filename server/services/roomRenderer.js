@@ -16,6 +16,11 @@
 //   - a mask is optional.
 //   - GPT image models always return b64_json; there is no url option.
 //
+// Hotspots come from gridLocator.js: a lettered grid is drawn over the render
+// and GPT-4o reports cell ranges, which it reads far more reliably than the
+// fractional coordinates the first version asked for. If that pass throws,
+// the older fraction-based pass below runs as a fallback.
+//
 // Failure policy: a product whose thumbnail cannot be fetched is skipped, never
 // fatal. A hotspot pass that fails still returns the picture with no hotspots.
 // Only the image edit itself failing is an error, because there is nothing to
@@ -24,6 +29,7 @@
 const axios = require("axios");
 const { httpAgent, httpsAgent } = require("../utils/safeRequest");
 const { uploadToCloudinary } = require("../utils/cloudinary");
+const { locateOnGrid } = require("./gridLocator");
 
 const IMAGE_EDIT_URL = "https://api.openai.com/v1/images/edits";
 const CHAT_URL = "https://api.openai.com/v1/chat/completions";
@@ -181,10 +187,11 @@ const HOTSPOT_SCHEMA = {
 };
 
 /**
- * Asks GPT-4o where each product landed in the rendered image. Boxes are
- * normalized 0..1 with a top-left origin. Returns [] on any failure.
+ * Fallback only: asks GPT-4o for boxes as fractions of the image. Kept because
+ * it needs nothing but the render URL, so it still works if the grid pass
+ * cannot run. Returns [] on any failure.
  */
-async function locateProducts(renderUrl, products) {
+async function locateProductsByFraction(renderUrl, products) {
   const labels = products.map((p) => `${p.category}: ${p.name}`).join("\n");
   try {
     const response = await axios.post(
@@ -222,9 +229,25 @@ async function locateProducts(renderUrl, products) {
     return normalizeHotspots(parsed?.items, products);
   } catch (error) {
     const detail = error?.response?.data?.error?.message || error?.message;
-    console.error("[render] hotspot pass failed, returning the render without hover:", detail || "");
+    console.error("[render] fraction hotspot pass failed, returning the render without hover:", detail || "");
     return [];
   }
+}
+
+/**
+ * Grid pass first; fraction pass if it throws. Both are best effort, so this
+ * never rejects. Takes the PNG bytes because the grid is drawn in memory.
+ */
+async function locateProducts(renderPng, renderUrl, products) {
+  try {
+    const hotspots = await locateOnGrid(renderPng, products);
+    if (hotspots.length > 0) return hotspots;
+    console.warn("[render] grid pass found nothing, trying the fraction pass");
+  } catch (error) {
+    const detail = error?.response?.data?.error?.message || error?.message;
+    console.error("[render] grid hotspot pass failed, falling back to fractions:", detail || "");
+  }
+  return locateProductsByFraction(renderUrl, products);
 }
 
 /** Drops missing or degenerate boxes and clamps the rest into the image. */
@@ -279,7 +302,7 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
   const url = await uploadToCloudinary(png, "image/png", "bluprint/renders");
   console.log("[render] image ready in", Date.now() - startedAt, "ms");
 
-  const hotspots = await locateProducts(url, products);
+  const hotspots = await locateProducts(png, url, products);
   console.log("[render] done in", Date.now() - startedAt, "ms with", hotspots.length, "hotspot(s)");
 
   return {
