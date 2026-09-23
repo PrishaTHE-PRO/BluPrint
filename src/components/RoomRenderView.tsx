@@ -41,6 +41,11 @@ const LINES = [
 const DEFAULT_WIDTH_IN = 30;
 const DEFAULT_DEPTH_IN = 30;
 
+// Hover boxes over the render are switched off for now: the outlined regions
+// read as stickers on the picture. The server still computes and saves them
+// with every render, so flipping this back on needs no new renders.
+const SHOW_HOTSPOTS = false;
+
 /** "sofa: against the back wall, left third", built from thirds of each axis. */
 export function buildLayoutHints(
   items: FurnitureItem[],
@@ -203,7 +208,7 @@ export default function RoomRenderView({
             Furniture changed since last render
           </span>
         )}
-        {render && (
+        {SHOW_HOTSPOTS && render && (
           <button
             type="button"
             className="room-render-view__btn room-render-view__btn--small room-render-view__btn--ghost"
@@ -239,7 +244,7 @@ export default function RoomRenderView({
           />
         )}
 
-        {render && box && !rendering && !relocating && (
+        {SHOW_HOTSPOTS && render && box && !rendering && !relocating && (
           <div
             className="room-render-view__layer"
             style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
@@ -322,7 +327,9 @@ export default function RoomRenderView({
 
       {render && !rendering && (
         <p className="room-render-view__caption">
-          Hover a piece to see the product. Move furniture in the plan, then re-render to update.
+          {SHOW_HOTSPOTS
+            ? 'Hover a piece to see the product. Move furniture in the plan, then re-render to update.'
+            : 'Your room with the recommended pieces. Move furniture in the plan, then re-render to update.'}
         </p>
       )}
     </div>

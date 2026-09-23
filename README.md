@@ -53,13 +53,17 @@ OPENAI_API_KEY=          # from platform.openai.com → API keys
 SERPER_API_KEY=          # from serper.dev (shopping search)
 FIREBASE_PROJECT_ID=     # same value as VITE_FIREBASE_PROJECT_ID in the root .env
 OPENAI_IMAGE_MODEL=gpt-image-1     # room photo renders (optional, this is the default)
-OPENAI_IMAGE_SIZE=1536x1024        # optional
 OPENAI_IMAGE_QUALITY=medium        # optional
+OPENAI_IMAGE_INPUT_FIDELITY=high   # optional; keeps the original room as it is
 ```
 
 Image edits cost far more per call than chat completions, which is why medium
-quality at 1536x1024 is the default. Raise `OPENAI_IMAGE_QUALITY` to `high` only if
-the renders are worth it to you.
+quality is the default. Raise `OPENAI_IMAGE_QUALITY` to `high` only if the renders
+are worth it to you. The output size follows the photo's orientation unless
+`OPENAI_IMAGE_SIZE` is set. `OPENAI_IMAGE_INPUT_FIDELITY=high` tells the model to
+hold the walls, floor, windows and lighting steady and change only the furniture;
+if the model in use rejects the parameter, the render retries without it and
+logs that it did.
 
 ### Photo mode and renders
 

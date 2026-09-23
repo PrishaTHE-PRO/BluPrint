@@ -14,6 +14,8 @@
 //   - size is one of 1024x1024, 1536x1024, 1024x1536, auto.
 //   - quality is one of low, medium, high, auto.
 //   - a mask is optional.
+//   - input_fidelity: "high" makes the model preserve the input image's
+//     details; models that do not support it reject the parameter with a 400.
 //   - GPT image models always return b64_json; there is no url option.
 //
 // Hotspots come from gridLocator.js: a lettered grid is drawn over the render
@@ -27,6 +29,7 @@
 // show without it.
 
 const axios = require("axios");
+const sharp = require("sharp");
 const { httpAgent, httpsAgent } = require("../utils/safeRequest");
 const { uploadToCloudinary } = require("../utils/cloudinary");
 const { locateOnGrid } = require("./gridLocator");
@@ -37,6 +40,9 @@ const CHAT_URL = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_IMAGE_MODEL = "gpt-image-1";
 const DEFAULT_IMAGE_SIZE = "1536x1024";
 const DEFAULT_IMAGE_QUALITY = "medium";
+// On by default: the whole point is to keep the user's room recognisably
+// theirs, and without this the model treats the photo as loose inspiration.
+const DEFAULT_INPUT_FIDELITY = "high";
 const DEFAULT_HOTSPOT_MODEL = "gpt-4o";
 
 // Room photo plus references must stay within the 16-image cap. The route caps
@@ -76,6 +82,32 @@ function extensionFor(contentType) {
 }
 
 /**
+ * Output size matched to the photo's own orientation. A fixed 3:2 output
+ * forced portrait and squarish photos to be reframed, which changed the room
+ * before a single piece of furniture was placed. OPENAI_IMAGE_SIZE still wins
+ * when set explicitly.
+ */
+async function pickSize(roomImage) {
+  if (process.env.OPENAI_IMAGE_SIZE) return process.env.OPENAI_IMAGE_SIZE;
+  try {
+    const { width, height } = await sharp(roomImage.buffer).metadata();
+    if (width && height) {
+      // Nearest available aspect, compared in log space so 4:3 and 3:4 are
+      // treated symmetrically. A 4:3 photo lands on 3:2, which crops less of
+      // it than squaring it would.
+      const target = Math.log(width / height);
+      const options = [["1536x1024", 1.5], ["1024x1024", 1], ["1024x1536", 1 / 1.5]];
+      return options.reduce((best, opt) =>
+        Math.abs(Math.log(opt[1]) - target) < Math.abs(Math.log(best[1]) - target) ? opt : best,
+      )[0];
+    }
+  } catch (error) {
+    console.warn("[render] could not read the photo's size, using the default:", error?.message || "");
+  }
+  return DEFAULT_IMAGE_SIZE;
+}
+
+/**
  * The instruction to the image model. Products are numbered to match the
  * order of the reference images that follow the room photo, so "reference 2"
  * is unambiguous.
@@ -98,27 +130,25 @@ function buildEditPrompt({ products, layoutHints, existingFurniture }) {
     : "Remove any existing furniture that the new pieces replace.";
 
   return [
-    "The first image is the user's actual room. Keep its walls, floor, windows, doors, lighting, and camera angle exactly as they are.",
+    "The first image is a photograph of the user's actual room. This is an edit of that photograph, not a new picture inspired by it.",
+    "Keep everything that is not furniture exactly as it is in the photo: the walls and their colour, the floor and its material, the ceiling, every window and door and what is visible through them, curtains and blinds, radiators, light fixtures, wall art, the time of day and the lighting, and the camera position, angle and framing. Do not repaint, restyle, brighten, crop, or reframe the room.",
     removal,
-    "Place each of the following products in the room, matching its reference image as closely as possible in shape, colour, and material:",
+    "Do not remove, move, or alter anything that is not furniture being replaced.",
+    "Place each of the following products in the room, matching its reference image as closely as possible in shape, colour, and material, at a realistic size for the room:",
     ...lines,
-    "Photorealistic result with consistent perspective and shadows. No text, labels, or watermarks.",
+    "Photorealistic result with perspective, shadows and lighting consistent with the original photo. No text, labels, or watermarks.",
   ].join("\n");
 }
 
-/** One multipart call to the image edit endpoint. Returns a PNG buffer. */
-async function editImage({ roomImage, references, prompt }) {
+/** Builds the multipart body. `inputFidelity` null leaves the field out. */
+function buildEditForm({ roomImage, references, prompt, size, inputFidelity }) {
   const form = new FormData();
   form.append("model", process.env.OPENAI_IMAGE_MODEL || DEFAULT_IMAGE_MODEL);
   form.append("prompt", prompt);
   form.append("n", "1");
-  form.append("size", process.env.OPENAI_IMAGE_SIZE || DEFAULT_IMAGE_SIZE);
+  form.append("size", size);
   form.append("quality", process.env.OPENAI_IMAGE_QUALITY || DEFAULT_IMAGE_QUALITY);
-  // Only sent when configured: not every image model accepts it, and an
-  // unknown parameter fails the whole request.
-  if (process.env.OPENAI_IMAGE_INPUT_FIDELITY) {
-    form.append("input_fidelity", process.env.OPENAI_IMAGE_INPUT_FIDELITY);
-  }
+  if (inputFidelity) form.append("input_fidelity", inputFidelity);
 
   form.append(
     "image[]",
@@ -132,7 +162,35 @@ async function editImage({ roomImage, references, prompt }) {
       `product-${i + 1}.${extensionFor(ref.contentType)}`,
     );
   });
+  return form;
+}
 
+/** True when a 400 is the model refusing the input_fidelity parameter itself. */
+function rejectsInputFidelity(status, message) {
+  return status === 400 && /input_fidelity/i.test(String(message || ""));
+}
+
+/**
+ * One multipart call to the image edit endpoint. Returns a PNG buffer.
+ *
+ * input_fidelity is sent by default. If the configured model answers 400
+ * naming that parameter, the call is retried once without it: a model that
+ * cannot hold the room steady is still better than no render at all, and the
+ * log says which happened.
+ */
+async function editImage({ roomImage, references, prompt, size }) {
+  const wanted = process.env.OPENAI_IMAGE_INPUT_FIDELITY || DEFAULT_INPUT_FIDELITY;
+  const fidelity = wanted === "off" ? null : wanted;
+  try {
+    return await postEdit(buildEditForm({ roomImage, references, prompt, size, inputFidelity: fidelity }));
+  } catch (error) {
+    if (!fidelity || !rejectsInputFidelity(error?.status, error?.message)) throw error;
+    console.warn(`[render] ${process.env.OPENAI_IMAGE_MODEL || DEFAULT_IMAGE_MODEL} rejected input_fidelity, retrying without it. The room will be held less faithfully.`);
+    return postEdit(buildEditForm({ roomImage, references, prompt, size, inputFidelity: null }));
+  }
+}
+
+async function postEdit(form) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), EDIT_TIMEOUT_MS);
   try {
@@ -298,7 +356,8 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
 
   const products = usable.map((f) => f.item);
   const prompt = buildEditPrompt({ products, layoutHints, existingFurniture });
-  const png = await editImage({ roomImage, references: usable.map((f) => f.image), prompt });
+  const size = await pickSize(roomImage);
+  const png = await editImage({ roomImage, references: usable.map((f) => f.image), prompt, size });
   const url = await uploadToCloudinary(png, "image/png", "bluprint/renders");
   console.log("[render] image ready in", Date.now() - startedAt, "ms");
 
@@ -340,4 +399,4 @@ async function relocateRender(render) {
   return hotspots;
 }
 
-module.exports = { renderRoom, relocateRender, buildEditPrompt, normalizeHotspots, MAX_REFERENCE_IMAGES };
+module.exports = { renderRoom, relocateRender, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES };
