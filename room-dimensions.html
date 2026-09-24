@@ -69,8 +69,9 @@
       gap: 4px;
       padding: 4px;
       border-radius: 14px;
-      background: rgba(0, 0, 0, .4);
-      border: 1px solid rgba(255, 255, 255, .1);
+      background: var(--bp-surface);
+      border: 1px solid var(--bp-border);
+      box-shadow: var(--bp-shadow);
     }
     .input-mode-toggle button {
       display: inline-flex;
@@ -80,7 +81,7 @@
       border: 0;
       border-radius: 11px;
       background: transparent;
-      color: rgba(247, 244, 213, .5);
+      color: var(--bp-muted);
       font-weight: 700;
       font-size: 12px;
       letter-spacing: .08em;
@@ -89,7 +90,7 @@
       transition: background .2s ease, color .2s ease;
     }
     .input-mode-toggle button iconify-icon { font-size: 18px; }
-    .input-mode-toggle button:hover { color: #F7F4D5; }
+    .input-mode-toggle button:hover { color: var(--bp-ink); }
     .input-mode-toggle button.is-active { background: #D3968C; color: #fff; }
 
     #photo-panel { flex-direction: column; gap: 0; }
@@ -114,7 +115,7 @@
       align-items: center;
       gap: 8px;
       padding: 32px;
-      border: 2px dashed rgba(247, 244, 213, .25);
+      border: 2px dashed var(--bp-border);
       border-radius: 24px;
       text-align: center;
     }
@@ -134,36 +135,64 @@
       gap: 12px;
       width: 100%;
       padding: 10px 16px;
-      border-top: 1px solid rgba(247, 244, 213, .08);
-      background: rgba(0, 0, 0, .18);
+      border-top: 1px solid var(--bp-border);
+      background: rgba(28, 23, 20, .03);
     }
-    .photo-panel__status { margin: 0; font-size: 12px; color: rgba(247, 244, 213, .65); }
-    .photo-panel__status.is-error { color: #F7B8AE; }
+    .photo-panel__status { margin: 0; font-size: 12px; color: var(--bp-muted); }
+    .photo-panel__status.is-error { color: #b8453c; }
     .photo-panel__replace {
       flex-shrink: 0;
       padding: 8px 14px;
-      border: 1px solid rgba(247, 244, 213, .2);
+      border: 1px solid var(--bp-border);
       border-radius: 10px;
       background: transparent;
-      color: #F7F4D5;
+      color: var(--bp-ink);
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
     }
-    .photo-panel__replace:hover { background: rgba(247, 244, 213, .08); }
+    .photo-panel__replace:hover { background: rgba(28, 23, 20, .05); }
     .photo-estimate-summary {
       margin: 0;
       padding: 14px 16px;
       border-radius: 16px;
-      background: rgba(0, 0, 0, .2);
-      border: 1px solid rgba(255, 255, 255, .05);
+      background: rgba(28, 23, 20, .04);
+      border: 1px solid var(--bp-border);
       font-size: 13px;
       line-height: 1.5;
-      color: rgba(247, 244, 213, .75);
+      color: var(--bp-muted);
     }
-    .photo-estimate-summary strong { color: #F7F4D5; }
+    .photo-estimate-summary strong { color: var(--bp-ink); }
     /* The editor and the save code still read these; only the visuals go. */
     #dimension-fields.hidden { display: none; }
+
+    /* The preview and empty-state rules above set display, which beats the
+       browser's [hidden] rule, so toggling .hidden on them did nothing: the
+       empty state stayed and the preview never appeared. Restore the
+       attribute's meaning inside the panel. */
+    #photo-panel [hidden] { display: none !important; }
+    .page-dimensions #photo-panel { cursor: default !important; }
+
+    /* Photo mode has no plan to drag doors onto, so the Element Library gives
+       way to a short explanation of what the photo does. */
+    .photo-blurb { display: none; }
+    body[data-input-mode="photo"] .photo-blurb { display: block; }
+    body[data-input-mode="photo"] .element-library-panel { display: none; }
+    .photo-blurb__card {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(211, 150, 140, .08);
+      border: 1px solid rgba(211, 150, 140, .18);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--bp-muted);
+    }
+    .photo-blurb__card p { margin: 0; }
+    .photo-blurb__card p + p { margin-top: 10px; }
+    .photo-blurb__card strong { color: var(--bp-ink); }
+    .photo-blurb__steps { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .photo-blurb__steps li { display: flex; gap: 10px; align-items: flex-start; }
+    .photo-blurb__steps iconify-icon { flex-shrink: 0; margin-top: 2px; font-size: 18px; color: #D3968C; }
   </style>
 </head>
 <body class="page-dimensions">
@@ -327,6 +356,23 @@
     </section>
     <section class="w-[30%] animate-slide-right flex flex-col h-full" style="animation-delay: 0.3s" data-sd-id="37">
       <div class="garden-card ghibli-border p-6 flex-1 overflow-y-auto flex flex-col gap-6 custom-scrollbar" data-sd-id="38">
+        <!-- Shown in Photo mode in place of the Element Library. -->
+        <div class="photo-blurb space-y-4" id="photo-blurb">
+          <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]">
+            <iconify-icon icon="ph:camera-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>
+            Photo mode
+          </h2>
+          <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-[0.15em]">YOUR ROOM, FURNISHED IN YOUR OWN PHOTO</p>
+          <div class="photo-blurb__card">
+            <p><strong>Upload one photo of the room</strong> and we take it from there.</p>
+            <ul class="photo-blurb__steps">
+              <li><iconify-icon icon="ph:ruler-duotone"></iconify-icon><span>We estimate the room's size and type from the photo. You can adjust the numbers in the Dimensions tab.</span></li>
+              <li><iconify-icon icon="ph:armchair-duotone"></iconify-icon><span>On the results page, the furniture we recommend is placed right into your photo, so you see the real pieces in your real room.</span></li>
+              <li><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon><span>Prefer to draw the room and place doors and windows yourself? Switch to Dimensions above.</span></li>
+            </ul>
+            <p>A clear, well-lit shot taken from a doorway or corner works best.</p>
+          </div>
+        </div>
         <div class="element-library-panel space-y-4" data-sd-id="39">
           <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]" data-sd-id="40">
             <iconify-icon icon="ph:shapes-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>

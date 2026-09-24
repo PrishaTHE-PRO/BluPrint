@@ -1392,7 +1392,12 @@ a.workflow-step:focus-visible {
   border-color: var(--bp-border) !important;
   box-shadow: var(--bp-shadow) !important;
 }
-.page-dimensions .canvas-area {
+/* #photo-panel takes the canvas's slot in Photo mode. It gets every sizing
+   rule the canvas gets (here and in the breakpoints below) because flex-1
+   alone let it collapse to its status bar, leaving the photo preview an
+   absolutely positioned image with no box to paint in. */
+.page-dimensions .canvas-area,
+.page-dimensions #photo-panel {
   min-height: 620px;
   border: 1px solid rgba(41, 79, 125, .16) !important;
   border-radius: 16px !important;
@@ -2675,7 +2680,8 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     gap: 14px !important;
   }
   /* Keep the floor-plan grid fully on-screen: width drives size, not min-height. */
-  .page-dimensions .canvas-area {
+  .page-dimensions .canvas-area,
+  .page-dimensions #photo-panel {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -2914,7 +2920,8 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-dimensions header .flex {
     margin-top: 12px !important;
   }
-  .page-dimensions .canvas-area {
+  .page-dimensions .canvas-area,
+  .page-dimensions #photo-panel {
     width: 100% !important;
     max-width: 100% !important;
     min-height: 0 !important;
@@ -3679,7 +3686,8 @@ html.dark-mode body.page-dimensions .garden-card:hover {
   border-color: rgba(126, 168, 201, 0.28) !important;
   transform: none !important;
 }
-html.dark-mode body.page-dimensions .canvas-area {
+html.dark-mode body.page-dimensions .canvas-area,
+html.dark-mode body.page-dimensions #photo-panel {
   background: linear-gradient(165deg, #334860 0%, #2a3d54 55%, #243447 100%) !important;
   border: 1px solid rgba(126, 168, 201, 0.22) !important;
   border-radius: 18px !important;
