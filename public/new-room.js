@@ -28,6 +28,9 @@
     'blueprintStyleResult',
     'blueprintRoomLayout',
     'blueprintBudgetTotal',
+    // Photo mode. Left out of this list at first, so New Room reopened the
+    // editor with the previous room's photo already in the drop zone.
+    'blueprintCurrentRoomPhotoUrl',
   ];
 
   function startNewRoom() {

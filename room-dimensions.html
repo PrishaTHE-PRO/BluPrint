@@ -2435,7 +2435,16 @@ const photoMode = (() => {
     estimate: null,
     analyzing: false,
   };
-  try { state.photoUrl = localStorage.getItem("blueprintCurrentRoomPhotoUrl") || null; } catch {}
+  // A saved photo is only meaningful for a saved room. If there is no room id
+  // this is a fresh room, and any photo left in storage belongs to an old one.
+  try {
+    const stored = localStorage.getItem("blueprintCurrentRoomPhotoUrl") || null;
+    if (stored && localStorage.getItem("blueprintCurrentRoomId")) {
+      state.photoUrl = stored;
+    } else if (stored) {
+      localStorage.removeItem("blueprintCurrentRoomPhotoUrl");
+    }
+  } catch {}
 
   if (!btnPhoto || !btnDims || !canvasEl || !panel) {
     return { get active() { return false; }, get photoUrl() { return null; }, savePayload() { return {}; } };
