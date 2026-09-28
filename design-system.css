@@ -1392,6 +1392,45 @@ a.workflow-step:focus-visible {
   border-color: var(--bp-border) !important;
   box-shadow: var(--bp-shadow) !important;
 }
+/* Image Upload / Draw Room subtabs. Aditi's rules from the
+   define-room-image-tab branch, kept verbatim so the two lines of work match. */
+.page-dimensions .define-room-subtabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: fit-content;
+  margin: 4px auto -32px;
+  padding: 4px;
+  border: 1px solid var(--bp-border);
+  border-radius: 999px;
+  background: var(--bp-soft);
+  transform: translateY(50px);
+  position: relative;
+  z-index: 2;
+}
+.page-dimensions .define-room-subtab {
+  min-width: 104px;
+  min-height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bp-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.page-dimensions .define-room-subtab.is-active {
+  background: var(--dimension-primary, var(--bp-primary));
+  color: #fff;
+}
+.page-dimensions .define-room-subtab:focus-visible {
+  outline: 2px solid var(--dimension-primary, var(--bp-primary));
+  outline-offset: 2px;
+}
+
 /* #photo-panel takes the canvas's slot in Photo mode. It gets every sizing
    rule the canvas gets (here and in the breakpoints below) because flex-1
    alone let it collapse to its status bar, leaving the photo preview an

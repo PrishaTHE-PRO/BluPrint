@@ -62,36 +62,8 @@
   <link rel="stylesheet" href="./design-system.css">
   <link rel="stylesheet" href="./mobile-ui.css">
   <style id="photo-mode-styles">
-    /* Photo / Dimensions subtab. Same idea as the FT/M .unit-toggle, larger. */
-    .input-mode-toggle {
-      display: inline-flex;
-      align-self: center;
-      gap: 4px;
-      padding: 4px;
-      border-radius: 14px;
-      background: var(--bp-surface);
-      border: 1px solid var(--bp-border);
-      box-shadow: var(--bp-shadow);
-    }
-    .input-mode-toggle button {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 22px;
-      border: 0;
-      border-radius: 11px;
-      background: transparent;
-      color: var(--bp-muted);
-      font-weight: 700;
-      font-size: 12px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background .2s ease, color .2s ease;
-    }
-    .input-mode-toggle button iconify-icon { font-size: 18px; }
-    .input-mode-toggle button:hover { color: var(--bp-ink); }
-    .input-mode-toggle button.is-active { background: #D3968C; color: #fff; }
+    /* The Image Upload / Draw Room pill is Aditi's .define-room-subtabs in
+       design-system.css. Only the panel styles live here. */
 
     #photo-panel { flex-direction: column; gap: 0; }
     #photo-panel.hidden { display: none; }
@@ -257,6 +229,13 @@
     <div class="workflow-connector" data-sd-id="22"></div>
     <a class="workflow-step" href="room-result.html" aria-label="Go to View Design" data-sd-id="23"><span data-sd-id="24">3</span><strong>View Design</strong><iconify-icon class="workflow-arrow" icon="ph:arrow-right-bold"></iconify-icon></a>
   </nav>
+  <!-- Image Upload / Draw Room. Aditi's subtab design (define-room-image-tab
+       branch): a centred pill above the whole page, not inside the canvas
+       column. Same class names and ids as hers so the branches line up. -->
+  <div class="define-room-subtabs" role="tablist" aria-label="Define room options">
+    <button id="tab-image-upload" class="define-room-subtab is-active" type="button" role="tab" aria-selected="true" aria-controls="photo-panel" data-room-tab="image-upload">Image Upload</button>
+    <button id="tab-draw-room" class="define-room-subtab" type="button" role="tab" aria-selected="false" aria-controls="canvas-container" data-room-tab="draw-room">Draw Room</button>
+  </div>
   <main class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full" data-sd-id="25">
     <section class="w-[70%] relative flex flex-col gap-4 overflow-hidden h-full" data-sd-id="26">
       <header class="animate-slide-right flex-shrink-0" data-sd-id="27">
@@ -271,16 +250,6 @@
           </button>
         </div>
       </header>
-      <!-- Photo / Dimensions. A sibling of the header, not inside it: the
-           phone layout hides this section's header entirely. -->
-      <div id="input-mode-toggle" class="input-mode-toggle" role="tablist" aria-label="How to define your room">
-        <button type="button" id="mode-photo" class="is-active" role="tab" aria-selected="true">
-          <iconify-icon icon="ph:camera-duotone"></iconify-icon> Photo
-        </button>
-        <button type="button" id="mode-dimensions" role="tab" aria-selected="false">
-          <iconify-icon icon="ph:ruler-duotone"></iconify-icon> Dimensions
-        </button>
-      </div>
       <div id="canvas-container" class="flex-1 canvas-area relative flex items-center justify-center overflow-hidden garden-card ghibli-border" data-sd-id="33">
         <svg id="editor-svg" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet" class="w-full h-full p-2 select-none" data-sd-id="34">
           <defs>
@@ -360,15 +329,15 @@
         <div class="photo-blurb space-y-4" id="photo-blurb">
           <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]">
             <iconify-icon icon="ph:camera-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>
-            Photo mode
+            Image Upload
           </h2>
           <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-[0.15em]">YOUR ROOM, FURNISHED IN YOUR OWN PHOTO</p>
           <div class="photo-blurb__card">
             <p><strong>Upload one photo of the room</strong> and we take it from there.</p>
             <ul class="photo-blurb__steps">
-              <li><iconify-icon icon="ph:ruler-duotone"></iconify-icon><span>We estimate the room's size and type from the photo. You can adjust the numbers in the Dimensions tab.</span></li>
+              <li><iconify-icon icon="ph:ruler-duotone"></iconify-icon><span>We estimate the room's size and type from the photo. You can adjust the numbers in the Draw Room tab.</span></li>
               <li><iconify-icon icon="ph:armchair-duotone"></iconify-icon><span>On the results page, the furniture we recommend is placed right into your photo, so you see the real pieces in your real room.</span></li>
-              <li><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon><span>Prefer to draw the room and place doors and windows yourself? Switch to Dimensions above.</span></li>
+              <li><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon><span>Prefer to draw the room and place doors and windows yourself? Switch to Draw Room above.</span></li>
             </ul>
             <p>A clear, well-lit shot taken from a doorway or corner works best.</p>
           </div>
@@ -2413,8 +2382,8 @@ let roomAutosaveArmed = false;
 // code already read. Dimensions mode is the page exactly as it was.
 // ---------------------------------------------------------------------------
 const photoMode = (() => {
-  const btnPhoto = document.getElementById("mode-photo");
-  const btnDims = document.getElementById("mode-dimensions");
+  const btnPhoto = document.getElementById("tab-image-upload");
+  const btnDims = document.getElementById("tab-draw-room");
   const canvasEl = document.getElementById("canvas-container");
   const panel = document.getElementById("photo-panel");
   const dropzone = document.getElementById("photo-dropzone");
@@ -2467,13 +2436,13 @@ const photoMode = (() => {
     if (state.estimate && !state.estimate.fallback) {
       summary.innerHTML =
         "Estimated <strong>" + fmt(state.estimate.widthFt) + " x " + fmt(state.estimate.lengthFt) +
-        "</strong> from your photo. Switch to Dimensions to adjust.";
+        "</strong> from your photo. Switch to Draw Room to adjust.";
     } else if (state.estimate && state.estimate.fallback) {
       summary.innerHTML =
         "We could not estimate this room, so it is set to <strong>" + fmt(state.estimate.widthFt) + " x " +
-        fmt(state.estimate.lengthFt) + "</strong>. Switch to Dimensions to adjust.";
+        fmt(state.estimate.lengthFt) + "</strong>. Switch to Draw Room to adjust.";
     } else if (state.photoUrl) {
-      summary.textContent = "Using the size saved with your photo. Switch to Dimensions to adjust.";
+      summary.textContent = "Using the size saved with your photo. Switch to Draw Room to adjust.";
     } else {
       summary.textContent = "Upload a photo and we will estimate the room size for you.";
     }
@@ -2527,7 +2496,7 @@ const photoMode = (() => {
     if (estimate.fallback) {
       setStatus("We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; switch to Dimensions to adjust.", true);
     } else {
-      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling. Switch to Dimensions to adjust.");
+      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling. Switch to Draw Room to adjust.");
     }
     updateSummary();
   }
@@ -2558,7 +2527,7 @@ const photoMode = (() => {
     } catch (err) {
       const message = (err && err.message) || "Could not analyze that photo.";
       // The preview stays so they can retry; Dimensions is always available.
-      setStatus(message + " Try another photo, or switch to Dimensions.", true);
+      setStatus(message + " Try another photo, or switch to Draw Room.", true);
       showToast(message);
     } finally {
       state.analyzing = false;
@@ -2826,7 +2795,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
     if (photoMode.active && !photoMode.photoUrl) {
       const message = photoMode.analyzing
         ? "Still estimating your room from the photo. One moment."
-        : "Upload a photo of your room, or switch to Dimensions.";
+        : "Upload a photo of your room, or switch to Draw Room.";
       setDimensionError(message);
       showToast(message);
       return;
