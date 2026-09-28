@@ -2425,6 +2425,17 @@ const photoMode = (() => {
     status.classList.toggle("is-error", Boolean(isError));
   }
 
+  /**
+   * In Image Upload mode the dimension error element lives inside
+   * #dimension-fields, which is hidden, so a blocked Save & Continue was
+   * announced only by a toast that faded in seconds. Mirror it here.
+   */
+  function showBlockingError(message) {
+    setDimensionError(message);
+    if (state.active) setStatus(message, true);
+    showToast(message);
+  }
+
   function fmt(ft) {
     return currentUnit === "m" ? (ft * FT_TO_M).toFixed(1) + " m" : ft + " ft";
   }
@@ -2501,6 +2512,31 @@ const photoMode = (() => {
     updateSummary();
   }
 
+  // Phone photos are routinely 4 to 12 MB and 4000 px wide. The analyzer and
+  // the renderer never need more than about 2000 px, and an upload over the
+  // 8 MB limit was being rejected before the server logged anything, which
+  // left the user with a preview and no estimate. Resize on a canvas first;
+  // if anything about that fails, the original goes up as before.
+  const MAX_EDGE = 2048;
+  async function shrinkForUpload(file) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+      if (scale === 1 && file.size <= MAX_BYTES) { bitmap.close(); return file; }
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.86));
+      if (!blob) return file;
+      return new File([blob], (file.name || "room").replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+    } catch (err) {
+      console.warn("[photo] could not resize, uploading the original", err);
+      return file;
+    }
+  }
+
   async function handleFile(file) {
     if (!file) return;
     if (!ACCEPTED.includes(file.type)) {
@@ -2508,18 +2544,18 @@ const photoMode = (() => {
       showToast("Please choose a JPEG, PNG or WebP photo");
       return;
     }
-    if (file.size > MAX_BYTES) {
-      setStatus("That photo is over 8 MB. Please choose a smaller one.", true);
-      showToast("Photo must be 8 MB or smaller");
-      return;
-    }
 
     showPreview(URL.createObjectURL(file));
-    setStatus("Estimating the room size from your photo...");
+    setStatus("Preparing your photo...");
     state.analyzing = true;
     try {
+      const upload = await shrinkForUpload(file);
+      if (upload.size > MAX_BYTES) {
+        throw new Error("That photo is over 8 MB even after resizing. Please choose a smaller one.");
+      }
+      setStatus("Estimating the room size from your photo...");
       const form = new FormData();
-      form.append("photo", file);
+      form.append("photo", upload, upload.name || "room.jpg");
       const res = await authedFetch("/api/rooms/photo-analyze", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not analyze that photo.");
@@ -2575,6 +2611,7 @@ const photoMode = (() => {
     get active() { return state.active; },
     get photoUrl() { return state.photoUrl; },
     get analyzing() { return state.analyzing; },
+    showBlockingError,
     /**
      * What to merge into the room save body. Dimensions mode sends null so the
      * server drops the photo (and any render made from it). Photo mode with no
@@ -2796,8 +2833,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
       const message = photoMode.analyzing
         ? "Still estimating your room from the photo. One moment."
         : "Upload a photo of your room, or switch to Draw Room.";
-      setDimensionError(message);
-      showToast(message);
+      photoMode.showBlockingError(message);
       return;
     }
 

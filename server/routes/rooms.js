@@ -192,14 +192,19 @@ router.post('/photo-analyze', (req, res, next) => {
             const message = err.code === 'LIMIT_FILE_SIZE'
                 ? 'Photo must be 8 MB or smaller.'
                 : 'Could not read that photo.';
+            // Rejections used to leave no trace, so a failed upload looked
+            // like a request that never arrived.
+            console.warn('[photo-analyze] rejected upload:', err.code || err.message);
             return res.status(400).json({ error: message });
         }
         next();
     });
 }, async (req, res) => {
     if (!req.file) {
+        console.warn('[photo-analyze] rejected upload: no accepted image in the "photo" field');
         return res.status(400).json({ error: 'Attach a JPEG, PNG or WebP photo in the "photo" field.' });
     }
+    console.log('[photo-analyze] received', req.file.mimetype, Math.round(req.file.size / 1024), 'KB');
     try {
         const photoUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'bluprint/rooms');
         const estimate = await estimateRoom(photoUrl);

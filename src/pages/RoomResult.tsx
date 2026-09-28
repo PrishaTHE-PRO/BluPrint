@@ -453,7 +453,6 @@ export default function RoomResult() {
 
   useEffect(() => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
-    const userId = localStorage.getItem('blueprintUserId');
     const raw    = localStorage.getItem('blueprintStyleResult');
 
     if (!raw) {
@@ -490,7 +489,12 @@ export default function RoomResult() {
       return;
     }
 
-    if (!roomId || !userId) {
+    // Only the room id gates the fetch. This used to also require the
+    // blueprintUserId breadcrumb, which only dashboard.js writes; without it
+    // the room was never loaded, so photoUrl was never seen and the page fell
+    // back to the 3D view for a room that had a photo. The server takes the
+    // owner from the token, so the breadcrumb was never doing anything here.
+    if (!roomId) {
       setLoading(false);
       fetchFurniture(
         roomId ?? 'unknown',
