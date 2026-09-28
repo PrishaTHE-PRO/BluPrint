@@ -313,39 +313,65 @@ function buildFurnitureQuery(styleTag, roomType, product, { short = false, color
   return parts.map((part) => String(part || "").trim()).filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
-function styleMatchScore(title, styleTag) {
-  const text = String(title || "").toLowerCase();
+/** Words to look for in a product title, from the style profile plus the
+ * planner's own style tags for that pick. Lowercased, de-duplicated. */
+function styleWordsFor(styleTag, styleTags = []) {
   const { match } = styleProfile(styleTag);
-  if (!match.length) return 0;
-  return match.reduce((score, keyword) => (
-    text.includes(String(keyword).toLowerCase()) ? score + 1 : score
-  ), 0);
+  const words = [...match, ...(Array.isArray(styleTags) ? styleTags : [])]
+    .map((w) => String(w || "").trim().toLowerCase())
+    .filter((w) => w.length > 2);
+  return [...new Set(words)];
 }
 
-/** How many of the user's palette words appear in a product title. */
-function colorMatchScore(title, colors) {
+function countHits(text, words, cap) {
+  let hits = 0;
+  for (const word of words) {
+    if (text.includes(word)) hits += 1;
+    if (hits >= cap) break;
+  }
+  return hits;
+}
+
+/**
+ * How well one product matches what the user asked for. Style words carry the
+ * most weight, then the palette (any swatch, not only the first), then mood.
+ * Capped per signal so one very wordy title cannot swamp the rest.
+ *
+ * This used to be two scores that only decided the order candidates were
+ * listed in, and the budget picker then ignored that order. The score is now
+ * stored on the item and drives the pick.
+ */
+function matchScore(title, { styleTag, colors = [], moods = [], styleTags = [] } = {}) {
   const text = String(title || "").toLowerCase();
-  if (!Array.isArray(colors) || !colors.length) return 0;
-  return colors.reduce((score, word) => (
-    text.includes(String(word).toLowerCase()) ? score + 1 : score
-  ), 0);
+  if (!text) return 0;
+  const styleWords = styleWordsFor(styleTag, styleTags);
+  const colorWords = (Array.isArray(colors) ? colors : []).map((c) => String(c).toLowerCase());
+  const moodWords = (Array.isArray(moods) ? moods : []).map((m) => String(m).toLowerCase()).filter((m) => m.length > 2);
+  return (
+    3 * countHits(text, styleWords, 2) +
+    2 * countHits(text, colorWords, 2) +
+    1 * countHits(text, moodWords, 2)
+  );
 }
 
-function rankItemsForStyle(items, styleTag, colors = []) {
-  return [...items].sort((a, b) => {
-    // Style first — a "mid-century walnut sofa" beats a beige one that is not
-    // mid-century — then the user's palette as the tie-breaker.
-    const scoreDiff = styleMatchScore(b.name, styleTag) - styleMatchScore(a.name, styleTag);
-    if (scoreDiff !== 0) return scoreDiff;
-    return colorMatchScore(b.name, colors) - colorMatchScore(a.name, colors);
-  });
+/** Kept for callers that only need the style part. */
+function styleMatchScore(title, styleTag) {
+  return countHits(String(title || "").toLowerCase(), styleWordsFor(styleTag), 2);
 }
 
-/** Prefer products whose titles actually mention the style; keep a soft fallback if none do. */
-function preferStyleMatched(items, styleTag, colors = []) {
-  const ranked = rankItemsForStyle(items, styleTag, colors);
-  const matched = ranked.filter((item) => styleMatchScore(item.name, styleTag) > 0);
-  return matched.length >= 2 ? matched : ranked;
+/**
+ * Scores and sorts a category's candidates, best match first. Products whose
+ * titles mention the style at all are preferred when there are enough of
+ * them; otherwise the whole list stays so a category never comes back empty.
+ */
+function preferStyleMatched(items, styleTag, colors = [], moods = [], styleTags = []) {
+  const scored = items.map((item) => ({
+    ...item,
+    matchScore: matchScore(item.name, { styleTag, colors, moods, styleTags }),
+  }));
+  scored.sort((a, b) => b.matchScore - a.matchScore);
+  const matched = scored.filter((item) => styleMatchScore(item.name, styleTag) > 0);
+  return matched.length >= 2 ? matched : scored;
 }
 
 function categoriesForRoomType(roomType) {
@@ -470,21 +496,41 @@ function compareBudgetCandidates(a, b, budgetTotal) {
   const bOk = b.total <= budgetTotal;
   if (aOk !== bOk) return aOk ? -1 : 1;
   if (aOk) {
-    // Both under/on budget — prefer the one that uses more of the budget.
+    // Both fit. The best style and colour match wins; using more of the
+    // budget only breaks ties. The budget is a ceiling, not a target, and a
+    // set that matches the inspiration is worth more than one that spends.
+    const scoreDiff = (b.score || 0) - (a.score || 0);
+    if (scoreDiff !== 0) return scoreDiff;
     return (budgetTotal - a.total) - (budgetTotal - b.total) || a.total - b.total;
   }
-  // Both over — prefer the least overage.
-  return (a.total - budgetTotal) - (b.total - budgetTotal) || a.total - b.total;
+  // Both over: least overage first, then the better match.
+  const overDiff = (a.total - budgetTotal) - (b.total - budgetTotal);
+  if (overDiff !== 0) return overDiff;
+  return (b.score || 0) - (a.score || 0);
 }
 
-/** Cheapest-fitting pick per category, or null when there is nothing to pick. */
-function bestComboForGroups(categoryGroups, budgetTotal) {
-  let states = [{ total: 0, picks: [] }];
+/** Lowest total wins outright. For the over-budget fallback only. */
+function compareCheapest(a, b) {
+  return a.total - b.total || (b.score || 0) - (a.score || 0);
+}
+
+/**
+ * Best pick per category against the budget, or null when there is nothing
+ * to pick. Every state carries the summed matchScore of its picks; among
+ * combinations that fit, the highest score wins (see compareBudgetCandidates).
+ * `prefer: "cheapest"` ignores matching and finds the lowest total, for the
+ * case where nothing fits at all.
+ */
+function bestComboForGroups(categoryGroups, budgetTotal, { prefer = "match" } = {}) {
+  const compare = prefer === "cheapest"
+    ? compareCheapest
+    : (a, b) => compareBudgetCandidates(a, b, budgetTotal);
+  let states = [{ total: 0, score: 0, picks: [] }];
 
   categoryGroups.forEach((group) => {
     const priced = group.filter((item) => Number(item.price) > 0);
     const options = priced.length > 0 ? priced : group.slice(0, 1);
-    // Prefer cheaper options first so DP keeps more under-budget paths.
+    // Cheaper first so the DP keeps more under-budget paths alive.
     const sortedOptions = [...options].sort(
       (a, b) => Math.max(0, a.price) - Math.max(0, b.price)
     );
@@ -493,23 +539,26 @@ function bestComboForGroups(categoryGroups, budgetTotal) {
     states.forEach((state) => {
       sortedOptions.forEach((item) => {
         const total = state.total + Math.max(0, Number(item.price) || 0);
-        if (!byTotal.has(total)) {
-          byTotal.set(total, { total, picks: [...state.picks, item] });
+        const score = state.score + (Number(item.matchScore) || 0);
+        const existing = byTotal.get(total);
+        // Same total, different products: keep the better-matching path. The
+        // old code kept whichever came first, which after the price sort was
+        // effectively random with respect to style.
+        if (!existing || score > existing.score) {
+          byTotal.set(total, { total, score, picks: [...state.picks, item] });
         }
       });
     });
 
     states = [...byTotal.values()];
     if (states.length > 5000) {
-      states.sort((a, b) => compareBudgetCandidates(a, b, budgetTotal));
+      states.sort(compare);
       states = states.slice(0, 5000);
     }
   });
 
   if (states.length === 0) return null;
-  return states.reduce((chosen, candidate) =>
-    compareBudgetCandidates(candidate, chosen, budgetTotal) < 0 ? candidate : chosen
-  );
+  return states.reduce((chosen, candidate) => (compare(candidate, chosen) < 0 ? candidate : chosen));
 }
 
 /**
@@ -551,7 +600,7 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal, { strict = false }
   let picks = best.picks;
   let selectedTotal = best.total;
   if (selectedTotal > budgetTotal) {
-    const cheapest = bestComboForGroups(groups, Number.POSITIVE_INFINITY);
+    const cheapest = bestComboForGroups(groups, Number.POSITIVE_INFINITY, { prefer: "cheapest" });
     if (cheapest && cheapest.total < selectedTotal) {
       picks = cheapest.picks;
       selectedTotal = cheapest.total;
@@ -564,6 +613,7 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal, { strict = false }
     "[furniture] budget=", budgetTotal,
     "selectedTotal=", selectedTotal,
     "difference=", selectedTotal - budgetTotal,
+    "matchScore=", picks.reduce((sum, item) => sum + (Number(item.matchScore) || 0), 0),
     strict ? `strict (kept ${groups.length}/${categoryGroups.length} categories)` : ""
   );
 
@@ -577,7 +627,7 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal, { strict = false }
   });
 }
 
-async function searchCategory(styleTag, roomType, cat, colors = []) {
+async function searchCategory(styleTag, roomType, cat, colors = [], moods = []) {
   const style = normalizeStyleTag(styleTag);
   const product = cat.product || cat.key;
   // Never search without the style — generic results are why rooms look off-style.
@@ -637,7 +687,7 @@ async function searchCategory(styleTag, roomType, cat, colors = []) {
         });
 
       if (mapped.length > 0) {
-        return preferStyleMatched(mapped, style, colors).slice(0, 6);
+        return preferStyleMatched(mapped, style, colors, moods, cat.styleTags).slice(0, 6);
       }
     } catch (error) {
       lastError = error;
@@ -967,6 +1017,28 @@ function fallbackItemsForCategory(cat, styleTag) {
   });
 }
 
+/**
+ * Colour words and mood tags from every source, user first. The user's own
+ * palette leads, then whatever the request carried, then the palette GPT-4o
+ * read off the inspiration images, so the vision result always contributes
+ * even when the client sends nothing. Mood tags come from the analysis (the
+ * user cannot pick them) with anything the user doc carries first.
+ */
+function mergeStyleInputs({ userStyle, aiStyle, queryHexes = [] } = {}) {
+  const hexes = [
+    ...(userStyle?.colorPalette || []),
+    ...(Array.isArray(queryHexes) ? queryHexes : []),
+    ...(aiStyle?.colorPalette || []),
+  ];
+  const colors = paletteWords(hexes).slice(0, 4);
+  const moods = [...new Set(
+    [...(userStyle?.moodTags || []), ...(aiStyle?.moodTags || [])]
+      .map((m) => String(m || "").trim().toLowerCase())
+      .filter((m) => m.length > 2),
+  )].slice(0, 6);
+  return { colors, moods };
+}
+
 // GET /api/rooms/:roomId/furniture?styleTag=minimalist&roomType=bedroom
 router.get("/:roomId/furniture", async (req, res) => {
   if (!process.env.SERPER_API_KEY) {
@@ -981,7 +1053,11 @@ router.get("/:roomId/furniture", async (req, res) => {
   const paletteHexes = (Array.isArray(req.query.color) ? req.query.color : [req.query.color])
     .filter(Boolean)
     .map(String);
-  const colors = paletteWords(paletteHexes);
+  // Filled in below from the saved user picks and the AI image analysis. The
+  // query string used to be the only source, so whenever the client did not
+  // forward the palette the search ran colour-blind.
+  let colors = paletteWords(paletteHexes);
+  let moods = [];
   let roomFeatures = (Array.isArray(req.query.roomFeature)
     ? req.query.roomFeature
     : [req.query.roomFeature])
@@ -1013,6 +1089,7 @@ router.get("/:roomId/furniture", async (req, res) => {
       ...(userStyle?.roomFeatures || []),
       ...roomFeatures,
     ].map((feature) => String(feature || "").trim()).filter(Boolean))];
+    ({ colors, moods } = mergeStyleInputs({ userStyle, aiStyle, queryHexes: paletteHexes }));
     // Wild Card / clients often send budgetTotal=0 — still honor the saved room budget.
     if (!(Number.isFinite(budgetTotal) && budgetTotal > 0)) {
       const fromRoom = Number(room?.budgetTotal);
@@ -1039,7 +1116,7 @@ router.get("/:roomId/furniture", async (req, res) => {
   const strictBudget = String(req.query.strictBudget || "") === "1";
   const cacheKey = [
     req.params.roomId, roomType, styleTag, budgetTotal,
-    roomFeatures.join("|"), colors.join("|"),
+    roomFeatures.join("|"), colors.join("|"), moods.join("|"),
     strictBudget ? "strict" : "any",
   ].join("::");
   // ?refresh=1 is the Regenerate button: skip the cached list and re-run the
@@ -1069,6 +1146,7 @@ router.get("/:roomId/furniture", async (req, res) => {
     budgetTotal,
     features: roomFeatures,
     colors,
+    moods,
   });
 
   // Planner picks carry their own search phrase and real dimensions; the fixed
@@ -1078,6 +1156,7 @@ router.get("/:roomId/furniture", async (req, res) => {
         key: pick.category,
         product: pick.label,
         searchQuery: pick.searchQuery,
+        styleTags: pick.styleTags,
         plannedDims: {
           widthIn: pick.widthIn,
           depthIn: pick.depthIn,
@@ -1091,6 +1170,10 @@ router.get("/:roomId/furniture", async (req, res) => {
     roomType,
     "styleTag=",
     styleTag,
+    "colors=",
+    colors.join(","),
+    "moods=",
+    moods.join(","),
     "queryExample=",
     buildFurnitureQuery(styleTag, roomType, categories[0]?.product || "furniture"),
     "features=",
@@ -1100,7 +1183,7 @@ router.get("/:roomId/furniture", async (req, res) => {
   );
 
   const results = await Promise.allSettled(
-    categories.map((cat) => searchCategory(styleTag, roomType, cat, colors))
+    categories.map((cat) => searchCategory(styleTag, roomType, cat, colors, moods))
   );
   results.forEach((result, index) => {
     if (result.status === "rejected") {
@@ -1128,3 +1211,9 @@ router.get("/:roomId/furniture", async (req, res) => {
 });
 
 module.exports = router;
+module.exports.matchScore = matchScore;
+module.exports.preferStyleMatched = preferStyleMatched;
+module.exports.mergeStyleInputs = mergeStyleInputs;
+module.exports.orderFurnitureForBudget = orderFurnitureForBudget;
+module.exports.bestComboForGroups = bestComboForGroups;
+module.exports.paletteWords = paletteWords;
