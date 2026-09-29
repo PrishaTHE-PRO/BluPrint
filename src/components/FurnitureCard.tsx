@@ -19,7 +19,7 @@ const BUY_BTN_CLASS =
   'buy-btn group relative inline-flex items-center justify-center overflow-hidden ' +
   'bg-[#D3968C] text-white font-bold shadow transition-colors hover:bg-[#c1867b] whitespace-nowrap';
 
-function BuyButton({ href, className = '' }: { href: string; className?: string }) {
+export function BuyButton({ href, className = '' }: { href: string; className?: string }) {
   return (
     <a
       href={href}

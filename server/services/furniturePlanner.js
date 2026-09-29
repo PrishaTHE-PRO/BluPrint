@@ -42,8 +42,8 @@ Rules:
 - A small room gets fewer pieces. Never propose both a bathtub and a standing_shower unless the room is at least 60 sq ft.
 - Give realistic real-world dimensions in INCHES for each pick (width along wall, depth, height).
 - Split the budget sensibly; anchor pieces (bed/sofa/dining_table) take the larger share.
-- style_tags must reflect the requested style so product search returns on-style items.
-- search_query is a concise shopping phrase combining style, colour and product.
+- style_tags must reflect the requested style and mood so product search returns on-style items; use words a retailer would put in a product title (for example "walnut", "rattan", "linen", "matte black").
+- search_query is a concise shopping phrase combining style, one palette colour and the product.
 Return ONLY JSON matching the schema. No commentary.`;
 
 const RESPONSE_SCHEMA = {
@@ -130,7 +130,7 @@ function maxPiecesFor(widthFt, lengthFt) {
   return Math.max(3, Math.min(8, Math.round(area / 28)));
 }
 
-function buildUserPrompt({ roomType, widthFt, lengthFt, heightFt, style, budgetTotal, features = [], colors = [] }) {
+function buildUserPrompt({ roomType, widthFt, lengthFt, heightFt, style, budgetTotal, features = [], colors = [], moods = [] }) {
   const allowed = categoriesForRoom(roomType);
   const maxPieces = maxPiecesFor(widthFt, lengthFt);
   return [
@@ -138,6 +138,9 @@ function buildUserPrompt({ roomType, widthFt, lengthFt, heightFt, style, budgetT
     `Dimensions: ${widthFt} ft wide x ${lengthFt} ft long x ${heightFt} ft high (${Math.round(widthFt * lengthFt)} sq ft)`,
     `Style: ${style}`,
     colors.length ? `Colour palette: ${colors.join(", ")}` : "",
+    // Read off the inspiration images by the vision pass. Steers the search
+    // phrases toward the feel of the room, not only its style label.
+    moods.length ? `Mood from the inspiration images: ${moods.join(", ")}` : "",
     `Budget: ${budgetTotal ? "$" + budgetTotal : "flexible"}`,
     features.length ? `Requested features: ${features.join(", ")}` : "",
     `Choose AT MOST ${maxPieces} pieces. A larger budget means better pieces, not more of them.`,
@@ -204,6 +207,11 @@ async function planFurniture(room) {
         estPrice: Number(pick.est_price_usd) || 0,
         priority: Number.isFinite(Number(pick.priority)) ? Number(pick.priority) : 5,
         searchQuery: String(pick.search_query || "").trim(),
+        // Was collected from the model and then dropped. The route now scores
+        // each product's title against these as well as the style profile.
+        styleTags: Array.isArray(pick.style_tags)
+          ? pick.style_tags.map((t) => String(t || "").trim().toLowerCase()).filter(Boolean).slice(0, 6)
+          : [],
         rationale: String(pick.rationale || ""),
       });
     }

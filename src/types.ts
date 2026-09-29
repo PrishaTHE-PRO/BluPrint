@@ -1,3 +1,32 @@
+/** One product's box in a generated render. Normalized 0..1, top-left origin. */
+export interface RenderHotspot {
+  category: string;
+  itemId:   string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Product summary stored with a render so hover cards work on a revisit. */
+export interface RenderItem {
+  id:       string;
+  category: string;
+  name:     string;
+  brand:    string;
+  price:    number;
+  imageUrl: string;
+  buyUrl:   string;
+}
+
+export interface RoomRender {
+  url:       string;
+  createdAt: string;
+  itemIds:   string[];
+  hotspots:  RenderHotspot[];
+  items?:    RenderItem[];
+}
+
 export interface Room {
   roomId:   string;
   name:     string;
@@ -5,6 +34,10 @@ export interface Room {
   lengthFt: number;
   heightFt: number;
   sqft:     number;
+  /** Cloudinary URL of the user's own room photo; null when the room was drawn. */
+  photoUrl?: string | null;
+  /** The last generated render into that photo, if any. */
+  render?:   RoomRender | null;
 }
 
 export interface Style {
