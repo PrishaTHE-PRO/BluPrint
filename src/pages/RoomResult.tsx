@@ -594,8 +594,27 @@ export default function RoomResult() {
   // The render pane reports a finished render here so the badge and hotspots
   // refresh without a reload. Only the render field changes; nothing else on
   // the room is touched.
+  // Positions projected from the picture, pushed into the plan with a fresh
+  // key each time so RoomSVG applies them even if the values repeat. The
+  // autosave on livePlacement then persists the matched plan.
+  const [planOverride, setPlanOverride] = useState<{
+    key: number;
+    positions: Record<string, { x: number; y: number }>;
+    rotations: Record<string, number>;
+  } | null>(null);
+
   const handleRenderSaved = useCallback((render: RoomRender) => {
     setRoom((prev) => (prev ? { ...prev, render } : prev));
+    const placements = Array.isArray(render.placements) ? render.placements : [];
+    if (placements.length === 0) return;
+    const positions: Record<string, { x: number; y: number }> = {};
+    const rotations: Record<string, number> = {};
+    for (const p of placements) {
+      if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+      positions[p.category] = { x: p.x, y: p.y };
+      if (Number.isFinite(p.rotation)) rotations[p.category] = p.rotation as number;
+    }
+    setPlanOverride({ key: Date.now(), positions, rotations });
   }, []);
 
   // Hooks must stay above any conditional returns.
@@ -936,6 +955,7 @@ export default function RoomResult() {
               onLinkCategory={setLinkedCategory}
               onRemove={handleRemoveFromRoom}
               initialPlacement={initialPlacement}
+              applyPlacement={planOverride}
               onPlacementChange={handlePlacementChange}
               colorByCategory={colorByCategory}
             />
