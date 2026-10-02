@@ -17,14 +17,29 @@ export interface RenderItem {
   price:    number;
   imageUrl: string;
   buyUrl:   string;
+  widthIn?: number;
+  depthIn?: number;
+}
+
+/** Where a product sits on the floor plan, projected from the render.
+ *  Top-left corner in feet, same space as the plan's Placement. */
+export interface RenderPlacement {
+  category:  string;
+  itemId:    string;
+  x:         number;
+  y:         number;
+  rotation?: number;
+  /** True when the back wall could not be found and a typical camera was assumed. */
+  approx?:   boolean;
 }
 
 export interface RoomRender {
-  url:       string;
-  createdAt: string;
-  itemIds:   string[];
-  hotspots:  RenderHotspot[];
-  items?:    RenderItem[];
+  url:         string;
+  createdAt:   string;
+  itemIds:     string[];
+  hotspots:    RenderHotspot[];
+  items?:      RenderItem[];
+  placements?: RenderPlacement[];
 }
 
 export interface Room {

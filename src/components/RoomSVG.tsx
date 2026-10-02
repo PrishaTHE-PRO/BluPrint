@@ -112,6 +112,12 @@ interface Props {
   onRemove?:        (cat: string) => void;
   /** Restored placement from a saved layout; applied once when it arrives. */
   initialPlacement?: Placement | null;
+  /**
+   * Positions pushed in after seeding, e.g. the plan being matched to a
+   * rendered picture. Applied whenever `key` changes; validated the same way
+   * the seed is so nothing lands in a cutout or outside the room.
+   */
+  applyPlacement?: { key: number; positions: Record<string, PosFt>; rotations?: Record<string, number> } | null;
   /** Fires whenever a piece is dragged or rotated, so the parent can save it. */
   onPlacementChange?: (placement: Placement) => void;
   /** Dominant / palette color per furniture category for 2D fills. */
@@ -981,7 +987,7 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 
 export default function RoomSVG({
   room, furniture, roomLayout, linkedCategory, onLinkCategory, onRemove,
-  initialPlacement, onPlacementChange, colorByCategory,
+  initialPlacement, applyPlacement, onPlacementChange, colorByCategory,
 }: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{
@@ -1083,6 +1089,41 @@ export default function RoomSVG({
     setRotations(nextRotations);
     setScales(nextScales);
   }, [initialPlacement, furniture, room, roomLayout]);
+
+  // Apply positions pushed in from outside (the plan matching a render).
+  // Unlike the seed this runs every time the key changes, and only for the
+  // categories it names, so pieces the render did not locate stay put.
+  const appliedKeyRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!applyPlacement || applyPlacement.key === appliedKeyRef.current) return;
+    appliedKeyRef.current = applyPlacement.key;
+    const { widthFt, lengthFt } = canvasDimsFt(room, roomLayout);
+    const zones = architectureForbiddenZonesFromLayout(roomLayout);
+    const bedZones = bedArchitectureZones(roomLayout);
+    setPositions((prevPositions) => {
+      const nextPositions: Record<string, PosFt> = { ...prevPositions };
+      const nextRotations = { ...rotations, ...(applyPlacement.rotations || {}) };
+      // Pushed pieces go first so they claim their spot; the rest are only
+      // re-validated against them.
+      const pushed = furniture.filter((item) => applyPlacement.positions[item.category]);
+      for (const item of pushed) {
+        const occupied = placedFurnitureZones(nextPositions, furniture, nextRotations, {}, item.category);
+        const archZones = isBedLikeCategory(item.category) ? bedZones : zones;
+        const resolved = resolveFurniturePlacement(
+          applyPlacement.positions[item.category],
+          item,
+          nextRotations[item.category] ?? defaultRotation(item.category),
+          widthFt,
+          lengthFt,
+          [...archZones, ...occupied],
+          1,
+        );
+        nextPositions[item.category] = resolved.position;
+      }
+      if (applyPlacement.rotations) setRotations(nextRotations);
+      return nextPositions;
+    });
+  }, [applyPlacement, furniture, room, roomLayout, rotations]);
 
   // Report placement upward so Save Layout can capture it.
   useEffect(() => {

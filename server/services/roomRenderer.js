@@ -131,6 +131,7 @@ function buildEditPrompt({ products, layoutHints, existingFurniture }) {
 
   return [
     "The first image is a photograph of the user's actual room. This is an edit of that photograph, not a new picture inspired by it.",
+    "Treat the camera as standing at the front of the room looking toward the back wall. Placement notes below are given from that viewpoint: left and right as seen in the photo, back meaning near the far wall, front meaning near the camera.",
     "Keep everything that is not furniture exactly as it is in the photo: the walls and their colour, the floor and its material, the ceiling, every window and door and what is visible through them, curtains and blinds, radiators, light fixtures, wall art, the time of day and the lighting, and the camera position, angle and framing. Do not repaint, restyle, brighten, crop, or reframe the room.",
     removal,
     "Do not remove, move, or alter anything that is not furniture being replaced.",
@@ -298,14 +299,80 @@ async function locateProductsByFraction(renderUrl, products) {
  */
 async function locateProducts(renderPng, renderUrl, products) {
   try {
-    const hotspots = await locateOnGrid(renderPng, products);
-    if (hotspots.length > 0) return hotspots;
+    const result = await locateOnGrid(renderPng, products);
+    if (result.hotspots.length > 0) return result;
     console.warn("[render] grid pass found nothing, trying the fraction pass");
   } catch (error) {
     const detail = error?.response?.data?.error?.message || error?.message;
     console.error("[render] grid hotspot pass failed, falling back to fractions:", detail || "");
   }
-  return locateProductsByFraction(renderUrl, products);
+  return { hotspots: await locateProductsByFraction(renderUrl, products), floor: null };
+}
+
+// Pieces that hang on a wall rather than stand on the floor. Their box's
+// bottom edge says nothing about depth, so they are placed against the back
+// wall at the x position where they appear.
+const WALL_MOUNTED = new Set([
+  "wall_art", "floating_shelves", "pendant_light", "dining_light", "bath_light",
+  "smart_lighting", "bath_mirror", "kitchen_shelf", "nursery_shelf", "wall_shelf",
+]);
+// Pieces with a front: turned to face into the room from whichever half
+// they sit in. RoomSVG's rotation 0 faces the front (camera) side.
+const FACING = new Set(["sofa", "bed", "accent_chair", "dining_chair", "office_chair", "rocking_chair", "desk", "crib", "reading_nook"]);
+// Typical doorway shot when the locate pass could not find the back wall.
+const DEFAULT_FLOOR = { backLeft: { x: 0.15, y: 0.45 }, backRight: { x: 0.85, y: 0.45 } };
+// Image rows near the bottom cover less floor than rows near the back wall;
+// a mild curve on the depth fraction corrects most of that without a camera.
+const DEPTH_GAMMA = 0.7;
+
+/**
+ * Projects each located product from the picture onto the floor plan.
+ *
+ * The floor in the photo is taken to be the trapezoid between the back
+ * wall's floor line and the bottom edge of the image, with the near corners
+ * at the image's bottom corners (where a doorway shot puts them). A product's
+ * floor-contact point is the bottom centre of its box: its depth is how far
+ * down that trapezoid it sits, its left-to-right position is where it falls
+ * between the floor's edges at that depth. Plan x runs left to right across
+ * the back wall; plan y runs from the back wall (0) to the camera (lengthFt).
+ *
+ * This is deliberately a geometric estimate rather than a reconstruction: a
+ * plan that puts the sofa on the correct wall at the correct side, in the
+ * right order relative to everything else, is what matching the picture
+ * means here. Positions are top-left corners in feet, clamped to the room.
+ */
+function projectToPlan({ hotspots, floor, products, room }) {
+  const W = Number(room?.widthFt) || 0;
+  const L = Number(room?.lengthFt) || 0;
+  if (!W || !L || !Array.isArray(hotspots) || hotspots.length === 0) return [];
+  const f = floor || DEFAULT_FLOOR;
+  const approx = !floor;
+  const yBack = (f.backLeft.y + f.backRight.y) / 2;
+  const byCategory = new Map(products.map((p) => [String(p.category).toLowerCase(), p]));
+  const clamp01 = (v) => Math.min(1, Math.max(0, v));
+
+  return hotspots.map((h) => {
+    const product = byCategory.get(h.category) || {};
+    const wFt = Math.max(0.5, (Number(product.widthIn) || 30) / 12);
+    const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
+    const px = h.x + h.w / 2;
+    const wall = WALL_MOUNTED.has(h.category);
+    // Floor contact: the bottom of the box, unless the piece hangs on a wall.
+    const py = wall ? yBack : h.y + h.h;
+    const t = wall ? 0 : Math.pow(clamp01((py - yBack) / Math.max(0.05, 1 - yBack)), DEPTH_GAMMA);
+    // The floor widens toward the camera: its edges run from the back
+    // corners to the image's bottom corners.
+    const xl = f.backLeft.x * (1 - t);
+    const xr = f.backRight.x + (1 - f.backRight.x) * t;
+    const xFrac = clamp01((px - xl) / Math.max(0.05, xr - xl));
+    const cx = xFrac * W;
+    const cy = wall ? dFt / 2 + 0.1 : t * L;
+    const x = Math.min(Math.max(0, cx - wFt / 2), Math.max(0, W - wFt));
+    const y = Math.min(Math.max(0, cy - dFt / 2), Math.max(0, L - dFt));
+    const placement = { category: h.category, itemId: h.itemId, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, approx };
+    if (FACING.has(h.category)) placement.rotation = cy > L / 2 ? 180 : 0;
+    return placement;
+  });
 }
 
 /** Drops missing or degenerate boxes and clamps the rest into the image. */
@@ -335,7 +402,7 @@ function normalizeHotspots(items, products) {
  * Full pipeline. `items` are the validated product summaries from the route.
  * Resolves the render document to store on the room.
  */
-async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture = [] }) {
+async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture = [], room = null }) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
   const startedAt = Date.now();
 
@@ -361,14 +428,19 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
   const url = await uploadToCloudinary(png, "image/png", "bluprint/renders");
   console.log("[render] image ready in", Date.now() - startedAt, "ms");
 
-  const hotspots = await locateProducts(png, url, products);
-  console.log("[render] done in", Date.now() - startedAt, "ms with", hotspots.length, "hotspot(s)");
+  const { hotspots, floor } = await locateProducts(png, url, products);
+  const placements = projectToPlan({ hotspots, floor, products, room });
+  console.log("[render] done in", Date.now() - startedAt, "ms with", hotspots.length, "hotspot(s),", placements.length, "plan position(s)");
 
   return {
     url,
     createdAt: new Date().toISOString(),
     itemIds: products.map((p) => String(p.id)),
     hotspots,
+    floor,
+    // Where each product sits on the floor plan, projected from the picture,
+    // so the 2D plan can be matched to what was actually rendered.
+    placements,
     // Stored so a revisit can show hover cards without refetching furniture.
     items: products.map((p) => ({
       id: String(p.id),
@@ -378,6 +450,10 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
       price: Number(p.price) || 0,
       imageUrl: p.imageUrl,
       buyUrl: p.buyUrl,
+      // Kept so a later re-locate can size the plan footprint without the
+      // furniture search.
+      widthIn: p.widthIn,
+      depthIn: p.depthIn,
     })),
   };
 }
@@ -387,16 +463,17 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
  * image back from Cloudinary (our own URL, still through the guarded agent)
  * and uses the product summaries stored with the render.
  */
-async function relocateRender(render) {
+async function relocateRender(render, room = null) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
   const image = await downloadImage(render.url);
   if (!image) throw new Error("Could not fetch the saved render");
   const products = render.items.filter((p) => p && p.category && p.imageUrl);
   if (products.length === 0) throw new Error("The render has no products to locate");
   const startedAt = Date.now();
-  const hotspots = await locateProducts(image.buffer, render.url, products);
-  console.log("[render] hotspots refreshed in", Date.now() - startedAt, "ms:", hotspots.length, "found");
-  return hotspots;
+  const { hotspots, floor } = await locateProducts(image.buffer, render.url, products);
+  const placements = projectToPlan({ hotspots, floor, products, room });
+  console.log("[render] hotspots refreshed in", Date.now() - startedAt, "ms:", hotspots.length, "found,", placements.length, "plan position(s)");
+  return { hotspots, floor, placements };
 }
 
-module.exports = { renderRoom, relocateRender, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES };
+module.exports = { renderRoom, relocateRender, projectToPlan, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES, DEFAULT_FLOOR };

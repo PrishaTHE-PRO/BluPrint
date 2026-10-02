@@ -46,7 +46,12 @@ const DEFAULT_DEPTH_IN = 30;
 // with every render, so flipping this back on needs no new renders.
 const SHOW_HOTSPOTS = false;
 
-/** "sofa: against the back wall, left third", built from thirds of each axis. */
+/**
+ * One short placement note per piece for the image model, read off the plan
+ * from the camera's point of view (plan top = back wall, plan bottom = the
+ * camera). Percentages and wall adjacency rather than thirds, so a re-render
+ * after moving a piece lands where the plan put it.
+ */
 export function buildLayoutHints(
   items: FurnitureItem[],
   placement: Placement,
@@ -57,13 +62,28 @@ export function buildLayoutHints(
   return items.slice(0, 8).map((item) => {
     const pos = placement.positions[item.category];
     if (!pos) return `${item.category}: anywhere it fits naturally`;
-    const cx = pos.x + ((item.widthIn ?? DEFAULT_WIDTH_IN) / 12) / 2;
-    const cy = pos.y + ((item.depthIn ?? DEFAULT_DEPTH_IN) / 12) / 2;
+    const wFt = (item.widthIn ?? DEFAULT_WIDTH_IN) / 12;
+    const dFt = (item.depthIn ?? DEFAULT_DEPTH_IN) / 12;
+    const cx = pos.x + wFt / 2;
+    const cy = pos.y + dFt / 2;
     const fx = Math.min(1, Math.max(0, cx / w));
     const fy = Math.min(1, Math.max(0, cy / l));
-    const depth = fy < 1 / 3 ? 'against the back wall' : fy < 2 / 3 ? 'in the middle of the room' : 'near the front, closest to the camera';
-    const side = fx < 1 / 3 ? 'left third' : fx < 2 / 3 ? 'centre' : 'right third';
-    return `${item.category}: ${depth}, ${side}`.slice(0, 120);
+    const pct = Math.round(fx * 100);
+    const touchesBack = pos.y <= 0.75;
+    const touchesFront = pos.y + dFt >= l - 0.75;
+    const touchesLeft = pos.x <= 0.75;
+    const touchesRight = pos.x + wFt >= w - 0.75;
+    const wall = touchesBack ? 'against the back wall'
+      : touchesFront ? 'at the front of the room, nearest the camera'
+      : touchesLeft ? 'against the left wall'
+      : touchesRight ? 'against the right wall'
+      : fy < 0.5 ? 'in the back half of the room, away from the walls' : 'in the front half of the room, away from the walls';
+    const across = `${pct}% of the way across from the left wall`;
+    const rot = placement.rotations[item.category] ?? 0;
+    const faces = ['sofa', 'bed', 'accent_chair', 'desk'].includes(item.category)
+      ? (rot === 180 ? ', facing the back wall' : ', facing the camera')
+      : '';
+    return `${item.category}: ${wall}, ${across}${faces}`.slice(0, 120);
   });
 }
 
@@ -158,6 +178,8 @@ export default function RoomRenderView({
           price: i.price,
           imageUrl: i.imageUrl,
           buyUrl: i.buyUrl,
+          widthIn: i.widthIn,
+          depthIn: i.depthIn,
         })),
         layoutHints: buildLayoutHints(items, placement, roomDims),
       };
@@ -208,16 +230,16 @@ export default function RoomRenderView({
             Furniture changed since last render
           </span>
         )}
-        {SHOW_HOTSPOTS && render && (
+        {render && (
           <button
             type="button"
             className="room-render-view__btn room-render-view__btn--small room-render-view__btn--ghost"
             onClick={refreshHotspots}
             disabled={relocating || rendering}
-            title="Find the furniture in this picture again without generating a new one"
+            title="Find each piece in this picture and move the floor plan to match, without generating a new picture"
           >
             <iconify-icon icon={relocating ? 'ph:circle-notch-bold' : 'ph:crosshair-simple-bold'} />
-            {relocating ? 'Locating...' : 'Refresh hotspots'}
+            {relocating ? 'Matching plan...' : 'Match plan to picture'}
           </button>
         )}
         {render && (
@@ -328,8 +350,8 @@ export default function RoomRenderView({
       {render && !rendering && (
         <p className="room-render-view__caption">
           {SHOW_HOTSPOTS
-            ? 'Hover a piece to see the product. Move furniture in the plan, then re-render to update.'
-            : 'Your room with the recommended pieces. Move furniture in the plan, then re-render to update.'}
+            ? 'Hover a piece to see the product. The plan is matched to this picture; move furniture in the plan, then re-render to update.'
+            : 'Your room with the recommended pieces. The plan is matched to this picture; move furniture in the plan, then re-render to update.'}
         </p>
       )}
     </div>

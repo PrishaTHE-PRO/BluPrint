@@ -2366,6 +2366,11 @@ let roomAutosaveTimer = null;
 let roomAutosaving = false;
 let lastRoomAutosaveSig = '';
 let roomAutosaveArmed = false;
+// True once the user has actually changed something on this visit. Autosave
+// never writes without it: opening the page and leaving used to create a
+// default "My Room" on the dashboard every time, because the leave-page
+// flush had no idea whether anything had been touched.
+let roomDirty = false;
 
 /**
  * Saves the room, creating it when the stored id no longer resolves.
@@ -2494,6 +2499,10 @@ const photoMode = (() => {
       }
     } catch {}
 
+    // Uploading a photo is deliberate, so the room may be created from here
+    // even if the user never touches a dimension field.
+    roomDirty = true;
+
     const w = Number(estimate.widthFt), l = Number(estimate.lengthFt), h = Number(estimate.heightFt);
     if (Number.isFinite(w) && Number.isFinite(l) && w > 0 && l > 0) {
       const toUnit = (ft) => currentUnit === "m" ? (ft * FT_TO_M).toFixed(2) : String(ft);
@@ -2618,8 +2627,11 @@ const photoMode = (() => {
      * analyzed photo sends nothing, so an existing photo is not wiped by an
      * autosave that fires before the upload finishes.
      */
-    savePayload() {
-      if (!state.active) return { photoUrl: null };
+    savePayload({ explicit = false } = {}) {
+      // Draw Room drops the photo (and the render made from it) only on a
+      // deliberate Save & Continue. An autosave that fired while the user was
+      // just looking at the Draw Room tab must not wipe either.
+      if (!state.active) return explicit ? { photoUrl: null } : {};
       if (state.photoUrl) return { photoUrl: state.photoUrl, photoEstimate: state.estimate || undefined };
       return {};
     },
@@ -2665,6 +2677,7 @@ function scheduleRoomAutosave() {
   snapshotLocalRoomMeta(layoutSnapshot);
 
   if (!roomAutosaveArmed) return;
+  roomDirty = true;
 
   if (roomAutosaveTimer) clearTimeout(roomAutosaveTimer);
   roomAutosaveTimer = setTimeout(() => {
@@ -2675,6 +2688,9 @@ function scheduleRoomAutosave() {
 
 async function flushRoomAutosave() {
   if (roomAutosaving) return;
+  // Nothing changed, nothing to save. This is the whole fix for phantom
+  // rooms: a leave-page flush on an untouched page must not create one.
+  if (!roomDirty) return;
   // Ask Firebase, not a localStorage breadcrumb. blueprintUserId is only ever
   // written by dashboard.js, so a signed-in user who reached this page without
   // passing through the dashboard had every autosave bail here in silence.
@@ -2854,7 +2870,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
         heightFt,
         sqft: layoutSnapshot.sqft,
         layout: layoutSnapshot,
-        ...photoMode.savePayload(),
+        ...photoMode.savePayload({ explicit: true }),
       });
       if (!res.ok) throw new Error("save failed (" + res.status + ")");
       // Dimensions mode removed the photo; the local copy must go too, or the

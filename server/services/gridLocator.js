@@ -141,8 +141,23 @@ const SCHEMA = {
   schema: {
     type: "object",
     additionalProperties: false,
-    required: ["items"],
+    required: ["floor", "items"],
     properties: {
+      // Where the back wall meets the floor, at its left and right ends. This
+      // is what lets a product's position in the picture be projected back
+      // onto the floor plan. Cells, like everything else on this grid.
+      floor: {
+        type: "object",
+        additionalProperties: false,
+        required: ["found", "leftCol", "leftRow", "rightCol", "rightRow"],
+        properties: {
+          found: { type: "boolean" },
+          leftCol: { type: "integer" },
+          leftRow: { type: "integer" },
+          rightCol: { type: "integer" },
+          rightRow: { type: "integer" },
+        },
+      },
       items: {
         type: "array",
         items: {
@@ -168,7 +183,23 @@ const SYSTEM_PROMPT = `You locate furniture in a photo of a room. The photo has 
 
 For each requested product you will be shown its product photo. Find that exact product in the room and report the smallest rectangle of grid cells that fully contains it: colStart/colEnd are column numbers (A=1, B=2, ...) and rowStart/rowEnd are row numbers, all inclusive. Read the labels off the cells the product actually occupies; do not estimate.
 
-Set found to false if the product is not visible in the room. Use the category key exactly as given. In "where", say in a few words where the product is (for example "left wall under the window").`;
+Set found to false if the product is not visible in the room. Use the category key exactly as given. In "where", say in a few words where the product is (for example "left wall under the window").
+
+Also report the floor line of the back wall: the wall the camera faces. Give the cell where that wall meets the floor at the far left of the room (leftCol/leftRow) and at the far right (rightCol/rightRow). If a corner is hidden behind furniture, give the cell where the line would meet the floor. Set floor.found to false only if no back wall is visible at all.`;
+
+/** The back wall's floor line as two points in image fractions, or null. */
+function floorFromCells(floor) {
+  if (!floor?.found) return null;
+  const lc = Number(floor.leftCol), lr = Number(floor.leftRow);
+  const rc = Number(floor.rightCol), rr = Number(floor.rightRow);
+  if (![lc, lr, rc, rr].every(Number.isInteger)) return null;
+  if (lc < 1 || rc > COLS || lr < 1 || lr > ROWS || rc < 1 || rr > ROWS || rc < lc) return null;
+  // Cell centres. A sixth of a column is as fine as this pass gets.
+  return {
+    backLeft: { x: (lc - 0.5) / COLS, y: (lr - 0.5) / ROWS },
+    backRight: { x: (rc - 0.5) / COLS, y: (rr - 0.5) / ROWS },
+  };
+}
 
 /**
  * Converts inclusive cell ranges into fractions of the image, dropping
@@ -329,23 +360,30 @@ async function locateOnGrid(renderPng, products) {
   const raw = response?.data?.choices?.[0]?.message?.content;
   const parsed = raw ? JSON.parse(raw) : null;
   const coarse = cellsToHotspots(parsed?.items, products);
+  const floor = floorFromCells(parsed?.floor);
   if (Array.isArray(parsed?.items)) {
     for (const it of parsed.items) {
       if (it?.found) console.log(`[render] ${it.category}: ${COL_LABELS[it.colStart - 1] || "?"}${it.rowStart}-${COL_LABELS[it.colEnd - 1] || "?"}${it.rowEnd} (${it.where})`);
     }
   }
-  if (coarse.length === 0) return coarse;
+  console.log(floor
+    ? `[render] back wall floor line: ${COL_LABELS[parsed.floor.leftCol - 1]}${parsed.floor.leftRow} to ${COL_LABELS[parsed.floor.rightCol - 1]}${parsed.floor.rightRow}`
+    : "[render] back wall floor line not found; plan projection will assume a typical camera");
+  if (coarse.length === 0) return { hotspots: coarse, floor };
 
   // Tighten each box on its own crop. Losing this pass costs precision, not
   // the hotspots, so it must never take the coarse result down with it.
   try {
     const refined = await refineHotspots(renderPng, width, height, coarse, products);
-    return coarse.map((box) => (refined.has(box.category) ? { ...box, ...refined.get(box.category) } : box));
+    return {
+      hotspots: coarse.map((box) => (refined.has(box.category) ? { ...box, ...refined.get(box.category) } : box)),
+      floor,
+    };
   } catch (error) {
     const detail = error?.response?.data?.error?.message || error?.message;
     console.error("[render] refine pass failed, keeping coarse boxes:", detail || "");
-    return coarse;
+    return { hotspots: coarse, floor };
   }
 }
 
-module.exports = { locateOnGrid, cellsToHotspots, gridSvg, drawGrid, cropRectFor, fineCellsToBox, drawFineCrop, COLS, ROWS, FINE_COLS, FINE_ROWS };
+module.exports = { locateOnGrid, cellsToHotspots, floorFromCells, gridSvg, drawGrid, cropRectFor, fineCellsToBox, drawFineCrop, COLS, ROWS, FINE_COLS, FINE_ROWS };

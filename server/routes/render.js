@@ -42,6 +42,7 @@ function validateBody(body) {
       throw new Error(`items[${i}] has an invalid imageUrl or buyUrl`);
     }
 
+    const dim = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : undefined);
     return {
       id,
       category,
@@ -50,6 +51,10 @@ function validateBody(body) {
       price: Number.isFinite(Number(raw.price)) ? Number(raw.price) : 0,
       imageUrl,
       buyUrl,
+      // Footprint in inches, used to size the plan position projected back
+      // from the picture. Optional; a 30 x 30 default applies without it.
+      widthIn: dim(raw.widthIn),
+      depthIn: dim(raw.depthIn),
     };
   });
 
@@ -88,6 +93,7 @@ router.post("/:roomId/render", requireRoomOwner, async (req, res) => {
       existingFurniture: Array.isArray(room.photoEstimate?.existingFurniture)
         ? room.photoEstimate.existingFurniture
         : [],
+      room: { widthFt: room.widthFt, lengthFt: room.lengthFt },
     });
     room.render = render;
     room.markModified("render");
@@ -110,8 +116,8 @@ router.post("/:roomId/render/hotspots", requireRoomOwner, async (req, res) => {
     return res.status(400).json({ error: "This room has no render to locate furniture in." });
   }
   try {
-    const hotspots = await relocateRender(room.render);
-    room.render = { ...room.render, hotspots };
+    const located = await relocateRender(room.render, { widthFt: room.widthFt, lengthFt: room.lengthFt });
+    room.render = { ...room.render, ...located };
     room.markModified("render");
     await room.save();
     res.json(room.render);
