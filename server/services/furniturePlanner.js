@@ -41,7 +41,7 @@ Rules:
 - Respect the room footprint: leave roughly 30in walkways and never fill more than about half the floor area. Prefer fewer, well-scaled pieces over clutter.
 - A small room gets fewer pieces. Never propose both a bathtub and a standing_shower unless the room is at least 60 sq ft.
 - Give realistic real-world dimensions in INCHES for each pick (width along wall, depth, height).
-- Split the budget sensibly; anchor pieces (bed/sofa/dining_table) take the larger share.
+- Split the budget across the pieces so est_price_usd adds up to about the whole budget: anchor pieces (bed/sofa/dining_table) take the largest share, but no single piece should take more than about half, and no piece should be token-cheap next to the others. A generous budget means higher-end pieces throughout, not one expensive piece and leftovers.
 - style_tags must reflect the requested style and mood so product search returns on-style items; use words a retailer would put in a product title (for example "walnut", "rattan", "linen", "matte black").
 - search_query is a concise shopping phrase combining style, one palette colour and the product.
 Return ONLY JSON matching the schema. No commentary.`;

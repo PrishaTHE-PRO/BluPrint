@@ -491,17 +491,102 @@ function parseProductDimensions(title) {
  * user's budget (closest from below). Only if nothing fits do we fall back to
  * the cheapest over-budget combo.
  */
+/**
+ * Relative spend per category when the planner gives no split. Anchors take
+ * the most; a lamp should never cost what the sofa costs. Anything not listed
+ * counts as medium.
+ */
+const CATEGORY_WEIGHTS = {
+  sofa: 5, bed: 5, dining_table: 5, desk: 5, island_cart: 5, vanity: 5, bathtub: 5, standing_shower: 5, crib: 5,
+  dresser: 3, wardrobe: 3, bookcase: 3, bookshelf: 3, sideboard: 3, storage_cabinet: 3, accent_chair: 3,
+  rug: 3, bedroom_rug: 3, dining_rug: 3, nursery_rug: 3, kitchen_rug: 3, office_chair: 3, rocking_chair: 3,
+  nursery_dresser: 3, kitchen_storage: 3, bar_cabinet: 3,
+  coffee_table: 2, nightstand: 2, side_table: 2, dining_chair: 2, bar_stool: 2, floor_lamp: 2, full_length_mirror: 2,
+  bath_mirror: 2, bath_storage: 2, kitchen_shelf: 2, nursery_shelf: 2, floating_shelves: 2, reading_nook: 2, monitor_stand: 2,
+  bedside_lamp: 1, desk_lamp: 1, pendant_light: 1, dining_light: 1, bath_light: 1, nursery_lamp: 1, smart_lighting: 1,
+  wall_art: 1, indoor_plants: 1, bath_mat: 1, shower_curtain: 1,
+};
+
+/**
+ * What each category should cost, as a Map of category to dollars. The
+ * planner's own split is used when it gave one, scaled so the pieces sum to
+ * the budget; otherwise the weight table is scaled the same way. Without a
+ * budget there are no targets and price plays no part in the pick.
+ */
+function targetPricesFor(categories, budgetTotal) {
+  const budget = Number(budgetTotal);
+  const targets = new Map();
+  if (!Number.isFinite(budget) || budget <= 0 || !categories.length) return targets;
+
+  const planned = categories.map((c) => Number(c.estPrice) || 0);
+  const usePlan = planned.filter((v) => v > 0).length >= Math.ceil(categories.length / 2);
+  const raw = categories.map((c, i) => (usePlan && planned[i] > 0)
+    ? planned[i]
+    : (CATEGORY_WEIGHTS[c.key] ?? 2));
+  const sum = raw.reduce((a, b) => a + b, 0) || 1;
+  categories.forEach((c, i) => targets.set(c.key, Math.round((raw[i] / sum) * budget)));
+  return targets;
+}
+
+/**
+ * A word for the shopping query so a generous budget actually meets
+ * higher-end listings. Without it a $20k room was searching the same shelf
+ * as a $2k one and could only ever pick from the cheap end.
+ */
+function priceTierWord(target) {
+  const t = Number(target) || 0;
+  if (t >= 1500) return "luxury designer";
+  if (t >= 600) return "premium";
+  if (t > 0 && t <= 120) return "affordable";
+  return "";
+}
+
+// Past this multiple of its target a product is the "one piece that eats the
+// budget" the user asked us to avoid. Kept only if nothing else came back.
+const MAX_PRICE_MULTIPLE = 2.5;
+
+/** 1 at the target, falling to 0 at twice the distance of the target away. */
+function priceFitFor(price, target) {
+  const p = Number(price), t = Number(target);
+  if (!Number.isFinite(p) || !Number.isFinite(t) || p <= 0 || t <= 0) return 0;
+  return Math.max(0, 1 - Math.abs(p - t) / t);
+}
+
+/** Stamps priceFit on every item and drops runaway prices where possible. */
+function annotatePriceFit(groups, targets) {
+  return groups.map((group) => {
+    const category = group[0]?.category;
+    const target = targets.get(category);
+    if (!target) return group.map((item) => ({ ...item, priceFit: 0 }));
+    const fitted = group.map((item) => ({ ...item, priceFit: priceFitFor(item.price, target) }));
+    const sane = fitted.filter((item) => !(Number(item.price) > target * MAX_PRICE_MULTIPLE));
+    return sane.length > 0 ? sane : fitted;
+  });
+}
+
+// Weights for the combined objective. Style words score 0 to 6 per item, so
+// a perfectly priced piece (4) is worth a little more than one style word
+// (3) and an on-style piece at its target price (7) beats either alone.
+// Budget use is a whole-set term so sets that spend the budget win ties.
+const PRICE_FIT_WEIGHT = 4;
+const BUDGET_USE_WEIGHT = 4;
+
 function compareBudgetCandidates(a, b, budgetTotal) {
   const aOk = a.total <= budgetTotal;
   const bOk = b.total <= budgetTotal;
   if (aOk !== bOk) return aOk ? -1 : 1;
   if (aOk) {
-    // Both fit. The best style and colour match wins; using more of the
-    // budget only breaks ties. The budget is a ceiling, not a target, and a
-    // set that matches the inspiration is worth more than one that spends.
-    const scoreDiff = (b.score || 0) - (a.score || 0);
-    if (scoreDiff !== 0) return scoreDiff;
-    return (budgetTotal - a.total) - (budgetTotal - b.total) || a.total - b.total;
+    // Both fit. Compare the combined objective: style and colour match plus
+    // how close each piece sits to its share of the budget (already in
+    // `score`), plus how much of the budget the set uses. Rewarding every
+    // piece being near its share is what keeps the spend balanced and close
+    // to the budget at the same time.
+    const use = Number.isFinite(budgetTotal) && budgetTotal > 0
+      ? (x) => BUDGET_USE_WEIGHT * (x.total / budgetTotal)
+      : () => 0;
+    const diff = ((b.score || 0) + use(b)) - ((a.score || 0) + use(a));
+    if (Math.abs(diff) > 1e-9) return diff;
+    return a.total - b.total;
   }
   // Both over: least overage first, then the better match.
   const overDiff = (a.total - budgetTotal) - (b.total - budgetTotal);
@@ -539,7 +624,9 @@ function bestComboForGroups(categoryGroups, budgetTotal, { prefer = "match" } = 
     states.forEach((state) => {
       sortedOptions.forEach((item) => {
         const total = state.total + Math.max(0, Number(item.price) || 0);
-        const score = state.score + (Number(item.matchScore) || 0);
+        const score = state.score
+          + (Number(item.matchScore) || 0)
+          + PRICE_FIT_WEIGHT * (Number(item.priceFit) || 0);
         const existing = byTotal.get(total);
         // Same total, different products: keep the better-matching path. The
         // old code kept whichever came first, which after the price sort was
@@ -627,18 +714,23 @@ function orderFurnitureForBudget(categoryGroups, budgetTotal, { strict = false }
   });
 }
 
-async function searchCategory(styleTag, roomType, cat, colors = [], moods = []) {
+async function searchCategory(styleTag, roomType, cat, colors = [], moods = [], target = 0) {
   const style = normalizeStyleTag(styleTag);
   const product = cat.product || cat.key;
+  const tier = priceTierWord(target);
   // Never search without the style — generic results are why rooms look off-style.
   // Colour-led query first, then the same search without it, so a palette that
   // happens to return nothing degrades to style-only rather than to empty.
   // Each attempt is a 10s network call made in sequence, so the list is kept
   // short on purpose: five attempts meant a slow Serper could hold one category
   // for the best part of a minute.
+  // The tier word leads each phrase so a high target searches the high end
+  // first; the plain phrases stay as fallbacks in case the tiered one is thin.
+  const withTier = (q) => (q && tier ? `${tier} ${q}` : q);
   const queries = [
+    withTier(cat.searchQuery || ""),
+    withTier(buildFurnitureQuery(style, roomType, product, { colors })),
     cat.searchQuery || "",
-    buildFurnitureQuery(style, roomType, product, { colors }),
     `${styleProfile(style).phrase} ${product}`,
   ].filter((q, i, arr) => q && arr.indexOf(q) === i);
 
@@ -647,7 +739,9 @@ async function searchCategory(styleTag, roomType, cat, colors = [], moods = []) 
     try {
       const response = await axios.post(
         "https://google.serper.dev/shopping",
-        { q, num: 12, gl: "us" },
+        // 20 rather than 12: price proximity is now part of the pick, and a
+        // wider pool is what makes a near-target product likely to be in it.
+        { q, num: 20, gl: "us" },
         {
           headers: {
             "X-API-KEY": process.env.SERPER_API_KEY,
@@ -665,7 +759,7 @@ async function searchCategory(styleTag, roomType, cat, colors = [], moods = []) 
           resolvedLink: item.link || item.productLink || "",
         }))
         .filter((item) => item.resolvedImageUrl && item.resolvedLink)
-        .slice(0, 10)
+        .slice(0, 16)
         .map((item, i) => {
           const dimensions = parseProductDimensions(item.title);
           return {
@@ -687,7 +781,7 @@ async function searchCategory(styleTag, roomType, cat, colors = [], moods = []) 
         });
 
       if (mapped.length > 0) {
-        return preferStyleMatched(mapped, style, colors, moods, cat.styleTags).slice(0, 6);
+        return preferStyleMatched(mapped, style, colors, moods, cat.styleTags).slice(0, 8);
       }
     } catch (error) {
       lastError = error;
@@ -1157,6 +1251,9 @@ router.get("/:roomId/furniture", async (req, res) => {
         product: pick.label,
         searchQuery: pick.searchQuery,
         styleTags: pick.styleTags,
+        // The planner's budget split. Was collected and dropped; it now sets
+        // each category's target price.
+        estPrice: pick.estPrice,
         plannedDims: {
           widthIn: pick.widthIn,
           depthIn: pick.depthIn,
@@ -1182,8 +1279,12 @@ router.get("/:roomId/furniture", async (req, res) => {
     categories.map((c) => c.key).join(",")
   );
 
+  const targets = targetPricesFor(categories, budgetTotal);
+  if (targets.size) {
+    console.log("[furniture] targets=", [...targets].map(([k, v]) => `${k}:$${v}`).join(" "));
+  }
   const results = await Promise.allSettled(
-    categories.map((cat) => searchCategory(styleTag, roomType, cat, colors, moods))
+    categories.map((cat) => searchCategory(styleTag, roomType, cat, colors, moods, targets.get(cat.key) || 0))
   );
   results.forEach((result, index) => {
     if (result.status === "rejected") {
@@ -1200,7 +1301,13 @@ router.get("/:roomId/furniture", async (req, res) => {
       return fallbackItemsForCategory(categories[index], styleTag);
     })
     .filter((group) => group.length > 0);
-  const furniture = orderFurnitureForBudget(categoryGroups, budgetTotal, { strict: strictBudget });
+  // Price fit is stamped here, after the fallback catalog has filled any
+  // gaps, so every candidate carries it whichever path produced it.
+  const furniture = orderFurnitureForBudget(
+    annotatePriceFit(categoryGroups, targets),
+    budgetTotal,
+    { strict: strictBudget },
+  );
 
   if (furniture.length === 0) {
     return res.status(502).json({ error: "Furniture search returned no results" });
@@ -1217,3 +1324,7 @@ module.exports.mergeStyleInputs = mergeStyleInputs;
 module.exports.orderFurnitureForBudget = orderFurnitureForBudget;
 module.exports.bestComboForGroups = bestComboForGroups;
 module.exports.paletteWords = paletteWords;
+module.exports.targetPricesFor = targetPricesFor;
+module.exports.priceTierWord = priceTierWord;
+module.exports.priceFitFor = priceFitFor;
+module.exports.annotatePriceFit = annotatePriceFit;
