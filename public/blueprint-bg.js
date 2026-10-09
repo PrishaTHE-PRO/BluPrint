@@ -18,8 +18,8 @@
     // buried under it. Instead sit the layer at z-index:0 (like design-system's
     // decorative page glows) and lift page content above it. design-system
     // already promotes the dimensions/inspo/result wrappers to z-index:1; do the
-    // same for the projects and login pages, which it doesn't cover.
-    '.page-projects > .min-h-screen, .page-login > .login-shell { position: relative; z-index: 1; }',
+    // same for the projects, dashboard and login pages, which it doesn't cover.
+    '.page-projects > .min-h-screen, .page-dashboard > .min-h-screen, .page-login > .login-shell { position: relative; z-index: 1; }',
     // Color is set via #id + !important so a page rule that forces a color on
     // every direct body <div> (e.g. .page-dimensions > div) can't re-tint the
     // ink and turn the plan dark instead of blueprint blue.
