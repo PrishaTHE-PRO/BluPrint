@@ -196,28 +196,9 @@
   /* The dock's centre "+" is the new-room affordance. */
   .page-dashboard .dashboard-new-room { display: none !important; }
 
-  /* Ghost floor plan. Its containing block is the hero row, which is only
-     ~116px tall here — and `position: static` can't detach it, because
-     .animate-reveal leaves a `transform: translateY(0)` behind (fill-mode:
-     both), and any transform makes an element a containing block. So
-     mobile-ui.js reparents it to <header>, which this makes positioned. */
-  body.page-dashboard .dashboard-hero { position: relative; }
-  .page-dashboard .dashboard-blueprint {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    /* The 900px rule's .14 was tuned for the old 344px hero; the greeting band
-       is roughly half that now, so lift it back to a readable density. */
-    opacity: .22;
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
-  }
-
   /* --- stat strip ---------------------------------------------------- */
   /* Sits below the hero row, inset to the same gutter as the deck.
-     position/z-index keep it above the ghost floor plan behind the hero. */
+     position/z-index keep it above the fixed ghost floor plan. */
   .m-stats {
     position: relative;
     z-index: 1;
