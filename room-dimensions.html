@@ -138,6 +138,24 @@
     /* The editor and the save code still read these; only the visuals go. */
     #dimension-fields.hidden { display: none; }
 
+    /* Detected furniture, with a per-piece "replace" toggle. */
+    .photo-existing {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(28, 23, 20, .04);
+      border: 1px solid var(--bp-border);
+    }
+    .photo-existing__title { margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--bp-muted); }
+    .photo-existing__note { margin: 0 0 10px; font-size: 12px; line-height: 1.5; color: var(--bp-muted); }
+    .photo-existing__note.is-warning { color: #b8453c; font-weight: 600; }
+    .photo-existing__note:empty { display: none; }
+    .photo-existing__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+    .photo-existing__list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--bp-ink); }
+    .photo-existing__list li.is-replacing span:first-child { text-decoration: line-through; color: var(--bp-muted); }
+    .photo-existing__list label { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--bp-muted); cursor: pointer; white-space: nowrap; }
+    .photo-existing__list input { accent-color: #D3968C; }
+    .photo-existing__hint { margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: var(--bp-muted); }
+
     /* The preview and empty-state rules above set display, which beats the
        browser's [hidden] rule, so toggling .hidden on them did nothing: the
        empty state stayed and the preview never appeared. Restore the
@@ -398,6 +416,12 @@
               <input type="text" id="room-name" value="My Room" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67">
             </div>
             <p id="photo-estimate-summary" class="photo-estimate-summary" hidden></p>
+            <div id="photo-existing" class="photo-existing" hidden>
+              <p class="photo-existing__title">Already in your photo</p>
+              <p id="photo-existing-note" class="photo-existing__note"></p>
+              <ul id="photo-existing-list" class="photo-existing__list"></ul>
+              <p class="photo-existing__hint">We keep these and only recommend what is missing. Tick a piece to have it replaced instead.</p>
+            </div>
             <div id="dimension-fields" class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
                 <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
@@ -2398,6 +2422,9 @@ const photoMode = (() => {
   const status = document.getElementById("photo-status");
   const replaceBtn = document.getElementById("photo-replace");
   const summary = document.getElementById("photo-estimate-summary");
+  const existingBox = document.getElementById("photo-existing");
+  const existingList = document.getElementById("photo-existing-list");
+  const existingNote = document.getElementById("photo-existing-note");
   const dimFields = document.getElementById("dimension-fields");
 
   const MAX_BYTES = 8 * 1024 * 1024;
@@ -2464,6 +2491,48 @@ const photoMode = (() => {
     }
   }
 
+  /**
+   * The furniture the analysis found, each with a "replace" toggle. Kept
+   * pieces are left out of the recommendations and preserved in the render;
+   * a ticked piece is recommended and swapped in the picture. Toggling marks
+   * the room dirty so the autosave writes the updated estimate.
+   */
+  function renderExisting() {
+    if (!existingBox || !existingList) return;
+    const list = (state.estimate && Array.isArray(state.estimate.existingFurniture)) ? state.estimate.existingFurniture : [];
+    if (!state.active || list.length === 0) { existingBox.hidden = true; return; }
+    existingBox.hidden = false;
+    if (existingNote) {
+      const full = Boolean(state.estimate.full);
+      existingNote.textContent = full
+        ? "This room already looks fully furnished. We will only suggest small accents unless you mark pieces to replace."
+        : "";
+      existingNote.classList.toggle("is-warning", full);
+    }
+    existingList.textContent = "";
+    list.forEach((piece) => {
+      const li = document.createElement("li");
+      li.classList.toggle("is-replacing", piece.keep === false);
+      const name = document.createElement("span");
+      name.textContent = piece.label;
+      const label = document.createElement("label");
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = piece.keep === false;
+      box.addEventListener("change", () => {
+        piece.keep = !box.checked;
+        li.classList.toggle("is-replacing", piece.keep === false);
+        // The server recomputes fullness from the keep flags on save.
+        if (typeof scheduleRoomAutosave === "function") scheduleRoomAutosave();
+      });
+      label.appendChild(box);
+      label.appendChild(document.createTextNode("Replace"));
+      li.appendChild(name);
+      li.appendChild(label);
+      existingList.appendChild(li);
+    });
+  }
+
   function setMode(mode) {
     state.active = mode === "photo";
     document.body.dataset.inputMode = mode;
@@ -2476,6 +2545,7 @@ const photoMode = (() => {
     panel.hidden = !state.active;
     if (dimFields) dimFields.classList.toggle("hidden", state.active);
     updateSummary();
+    renderExisting();
   }
 
   function showPreview(src) {
@@ -2514,11 +2584,15 @@ const photoMode = (() => {
     }
 
     if (estimate.fallback) {
-      setStatus("We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; switch to Dimensions to adjust.", true);
+      setStatus("We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; switch to Draw Room to adjust.", true);
+    } else if (estimate.full) {
+      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ". This room already looks fully furnished, so we will suggest accents only.", true);
     } else {
-      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling. Switch to Draw Room to adjust.");
+      const found = Array.isArray(estimate.existingFurniture) ? estimate.existingFurniture.length : 0;
+      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling." + (found ? " Found " + found + " piece" + (found === 1 ? "" : "s") + " of furniture already there." : "") + " Switch to Draw Room to adjust.");
     }
     updateSummary();
+    renderExisting();
   }
 
   // Phone photos are routinely 4 to 12 MB and 4000 px wide. The analyzer and

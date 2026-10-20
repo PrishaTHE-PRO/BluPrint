@@ -12,6 +12,7 @@
 // a 500 page.
 
 const axios = require("axios");
+const { ALLOWED_CATEGORIES, maxPiecesFor } = require("./furniturePlanner");
 
 const DEFAULT_MODEL = "gpt-4o";
 
@@ -32,15 +33,56 @@ const FALLBACK_ESTIMATE = Object.freeze({
   lengthFt: 12,
   heightFt: 9,
   existingFurniture: [],
+  crowded: false,
+  full: false,
   confidence: 0,
   fallback: true,
 });
+
+/**
+ * Existing furniture as { label, category, keep }. Accepts the old plain
+ * string form too, so a room saved before this change still reads. `keep`
+ * defaults to true; the dimensions page flips it when the user marks a
+ * piece for replacement.
+ */
+function normalizeExistingFurniture(list) {
+  if (!Array.isArray(list)) return [];
+  const valid = new Set([...ALLOWED_CATEGORIES, "other"]);
+  const out = [];
+  for (const entry of list.slice(0, 16)) {
+    const label = String((entry && typeof entry === "object" ? entry.label : entry) || "").trim().slice(0, 60);
+    if (!label) continue;
+    const rawCat = entry && typeof entry === "object" ? String(entry.category || "other").toLowerCase() : "other";
+    out.push({
+      label,
+      category: valid.has(rawCat) ? rawCat : "other",
+      keep: entry && typeof entry === "object" && entry.keep === false ? false : true,
+    });
+  }
+  return out;
+}
+
+/**
+ * Whether the room is at capacity for its size. Counts every kept piece,
+ * "other" included (a TV stand takes floor space whatever we call it), against
+ * the same per-area cap the planner uses, and also honours the model's own
+ * crowded call once the room is within one piece of that cap.
+ */
+function isRoomFull({ widthFt, lengthFt, existingFurniture = [], crowded = false }) {
+  const kept = existingFurniture.filter((f) => f && f.keep !== false).length;
+  const cap = maxPiecesFor(widthFt, lengthFt);
+  return kept >= cap || (Boolean(crowded) && kept >= cap - 1);
+}
 
 const SYSTEM_PROMPT = `You are an interior designer estimating a room from a single photograph.
 
 Use visible references to judge scale: an interior door is about 80 inches tall and 30 to 36 inches wide, ceilings in homes are usually 8 to 10 feet, a sofa seat is about 18 inches off the floor, a standard sofa is 80 to 90 inches wide, a dining chair is about 18 inches wide, a queen bed is 60 x 80 inches, and floor tiles or planks repeat at regular sizes.
 
-Report the room's floor dimensions in FEET as width (left to right from the camera) and length (near to far), the ceiling height in feet, the room type, and a short list of the furniture already in the room (for example "grey sofa", "wooden coffee table"). Give a confidence from 0 to 1 for the dimension estimate; be honest when the camera angle or a partial view makes it a guess.
+Report the room's floor dimensions in FEET as width (left to right from the camera) and length (near to far), the ceiling height in feet, and the room type.
+
+List every piece of furniture already in the room. For each give a short label (for example "grey sofa", "wooden coffee table") and the closest category from the allowed list; use "other" for anything that is not on the list (a TV, curtains, a radiator). Then say whether the room already looks fully furnished (crowded): true when there is little floor or wall space left for more pieces.
+
+Give a confidence from 0 to 1 for the dimension estimate; be honest when the camera angle or a partial view makes it a guess.
 
 Return ONLY JSON matching the schema.`;
 
@@ -50,13 +92,25 @@ const RESPONSE_SCHEMA = {
   schema: {
     type: "object",
     additionalProperties: false,
-    required: ["roomType", "widthFt", "lengthFt", "heightFt", "existingFurniture", "confidence"],
+    required: ["roomType", "widthFt", "lengthFt", "heightFt", "existingFurniture", "crowded", "confidence"],
     properties: {
       roomType: { type: "string", enum: ROOM_TYPES },
       widthFt: { type: "number" },
       lengthFt: { type: "number" },
       heightFt: { type: "number" },
-      existingFurniture: { type: "array", items: { type: "string" } },
+      existingFurniture: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["label", "category"],
+          properties: {
+            label: { type: "string" },
+            category: { type: "string", enum: [...ALLOWED_CATEGORIES, "other"] },
+          },
+        },
+      },
+      crowded: { type: "boolean" },
       confidence: { type: "number" },
     },
   },
@@ -74,15 +128,18 @@ function clamp(value, min, max, fallback) {
 /** Coerces a raw model reply into the shape the client relies on. */
 function normalizeEstimate(raw) {
   const roomType = ROOM_TYPES.includes(raw?.roomType) ? raw.roomType : FALLBACK_ESTIMATE.roomType;
-  const existingFurniture = Array.isArray(raw?.existingFurniture)
-    ? raw.existingFurniture.map((s) => String(s || "").trim()).filter(Boolean).slice(0, 12)
-    : [];
+  const existingFurniture = normalizeExistingFurniture(raw?.existingFurniture);
+  const widthFt = Math.round(clamp(raw?.widthFt, MIN_ROOM_FT, MAX_ROOM_FT, FALLBACK_ESTIMATE.widthFt) * 2) / 2;
+  const lengthFt = Math.round(clamp(raw?.lengthFt, MIN_ROOM_FT, MAX_ROOM_FT, FALLBACK_ESTIMATE.lengthFt) * 2) / 2;
+  const crowded = Boolean(raw?.crowded);
   return {
     roomType,
-    widthFt: Math.round(clamp(raw?.widthFt, MIN_ROOM_FT, MAX_ROOM_FT, FALLBACK_ESTIMATE.widthFt) * 2) / 2,
-    lengthFt: Math.round(clamp(raw?.lengthFt, MIN_ROOM_FT, MAX_ROOM_FT, FALLBACK_ESTIMATE.lengthFt) * 2) / 2,
+    widthFt,
+    lengthFt,
     heightFt: Math.round(clamp(raw?.heightFt, MIN_HEIGHT_FT, MAX_HEIGHT_FT, FALLBACK_ESTIMATE.heightFt) * 2) / 2,
     existingFurniture,
+    crowded,
+    full: isRoomFull({ widthFt, lengthFt, existingFurniture, crowded }),
     confidence: clamp(raw?.confidence, 0, 1, 0),
     fallback: false,
   };
@@ -130,7 +187,10 @@ async function estimateRoom(photoUrl) {
     console.log(
       "[photo-analyze] estimated", estimate.roomType,
       `${estimate.widthFt}x${estimate.lengthFt}x${estimate.heightFt} ft`,
-      "confidence", estimate.confidence, "in", Date.now() - startedAt, "ms",
+      "confidence", estimate.confidence,
+      "existing:", estimate.existingFurniture.map((f) => `${f.label} (${f.category})`).join(", ") || "none",
+      estimate.full ? "FULL" : "",
+      "in", Date.now() - startedAt, "ms",
     );
     return estimate;
   } catch (error) {
@@ -143,6 +203,8 @@ async function estimateRoom(photoUrl) {
 module.exports = {
   estimateRoom,
   normalizeEstimate,
+  normalizeExistingFurniture,
+  isRoomFull,
   FALLBACK_ESTIMATE,
   ROOM_TYPES,
   MIN_ROOM_FT,

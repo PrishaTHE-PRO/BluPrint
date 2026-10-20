@@ -5,7 +5,7 @@ const Style   = require('../models/Style');
 const { requireAuth, requireRoomOwner } = require('../middleware/auth');
 const multer  = require('multer');
 const { uploadToCloudinary } = require('../utils/cloudinary');
-const { estimateRoom } = require('../services/roomPhotoAnalyzer');
+const { estimateRoom, normalizeExistingFurniture, isRoomFull } = require('../services/roomPhotoAnalyzer');
 
 // Every room route is owner-only. Ownership comes from the verified token, not
 // from anything the client sends.
@@ -160,14 +160,22 @@ function readPhotoUrl(body) {
 
 function sanitizePhotoEstimate(value) {
     if (!value || typeof value !== 'object') return null;
+    // Existing furniture is kept as { label, category, keep }: the category
+    // drives what the furniture search leaves out, and keep is the user's
+    // "replace this" toggle from the dimensions page.
+    const existingFurniture = normalizeExistingFurniture(value.existingFurniture);
+    const widthFt = toNumber(value.widthFt);
+    const lengthFt = toNumber(value.lengthFt);
+    const crowded = Boolean(value.crowded);
     return {
         roomType: typeof value.roomType === 'string' ? value.roomType.slice(0, 32) : '',
-        widthFt: toNumber(value.widthFt),
-        lengthFt: toNumber(value.lengthFt),
+        widthFt,
+        lengthFt,
         heightFt: toNumber(value.heightFt),
-        existingFurniture: Array.isArray(value.existingFurniture)
-            ? value.existingFurniture.map((f) => String(f || '').trim()).filter(Boolean).slice(0, 12)
-            : [],
+        existingFurniture,
+        crowded,
+        // Recomputed here rather than trusted: it depends on the keep flags.
+        full: isRoomFull({ widthFt, lengthFt, existingFurniture, crowded }),
         confidence: Math.max(0, Math.min(1, toNumber(value.confidence))),
         fallback: Boolean(value.fallback),
     };

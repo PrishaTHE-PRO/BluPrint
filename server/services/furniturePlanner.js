@@ -98,6 +98,16 @@ const ROOM_CATEGORIES = {
 // piece cap below still applies to them.
 const UNIVERSAL_CATEGORIES = ["indoor_plants", "wall_art", "floating_shelves", "smart_lighting"];
 
+// What a room that is already fully furnished can still take: things that
+// sit on, hang from, or light what is there without crowding it. Rugs are
+// included only when the room has none (see categoriesForRoom).
+const ACCENT_CATEGORIES = new Set([
+  "floor_lamp", "bedside_lamp", "desk_lamp", "pendant_light", "dining_light", "bath_light", "nursery_lamp",
+  "smart_lighting", "indoor_plants", "wall_art", "floating_shelves", "side_table", "bath_mat", "shower_curtain",
+  "rug", "bedroom_rug", "dining_rug", "kitchen_rug", "nursery_rug",
+]);
+const RUG_CATEGORIES = new Set(["rug", "bedroom_rug", "dining_rug", "kitchen_rug", "nursery_rug"]);
+
 function roomKey(roomType) {
   const t = String(roomType || "").toLowerCase();
   if (t.includes("bath")) return "bathroom";
@@ -109,7 +119,15 @@ function roomKey(roomType) {
   return "living";
 }
 
-function categoriesForRoom(roomType) {
+/**
+ * Categories this room may be offered.
+ *
+ * `exclude` is what the photo already shows and the user is keeping: those
+ * categories are never proposed, so a room with a sofa is not sold a sofa.
+ * `accentsOnly` is the fully furnished case: only pieces that add to a room
+ * without crowding it, and a rug only if none of the kept pieces is one.
+ */
+function categoriesForRoom(roomType, { exclude = [], accentsOnly = false } = {}) {
   const key = roomKey(roomType);
   const base = ROOM_CATEGORIES[key] || ROOM_CATEGORIES.living;
   // A bathroom does not want a plant-and-wall-art package; everywhere else can.
@@ -117,7 +135,12 @@ function categoriesForRoom(roomType) {
   // it by one on every bedroom request for the life of the process.
   const extras = key === "bathroom" ? [] : [...UNIVERSAL_CATEGORIES];
   if (key === "bedroom") extras.push("full_length_mirror");
-  return [...new Set([...base, ...extras])].filter((c) => ALLOWED_CATEGORIES.includes(c));
+  const excluded = new Set(exclude.map((c) => String(c || "").toLowerCase()));
+  const hasRug = [...excluded].some((c) => RUG_CATEGORIES.has(c));
+  return [...new Set([...base, ...extras])]
+    .filter((c) => ALLOWED_CATEGORIES.includes(c))
+    .filter((c) => !excluded.has(c))
+    .filter((c) => !accentsOnly || (ACCENT_CATEGORIES.has(c) && !(hasRug && RUG_CATEGORIES.has(c))));
 }
 
 /**
@@ -130,11 +153,17 @@ function maxPiecesFor(widthFt, lengthFt) {
   return Math.max(3, Math.min(8, Math.round(area / 28)));
 }
 
-function buildUserPrompt({ roomType, widthFt, lengthFt, heightFt, style, budgetTotal, features = [], colors = [], moods = [] }) {
-  const allowed = categoriesForRoom(roomType);
-  const maxPieces = maxPiecesFor(widthFt, lengthFt);
+function buildUserPrompt({ roomType, widthFt, lengthFt, heightFt, style, budgetTotal, features = [], colors = [], moods = [], existing = [], exclude = [], accentsOnly = false, replace = [] }) {
+  const allowed = categoriesForRoom(roomType, { exclude, accentsOnly });
+  // A fully furnished room gets a few accents at most, whatever its size.
+  const maxPieces = accentsOnly ? Math.min(3, maxPiecesFor(widthFt, lengthFt)) : maxPiecesFor(widthFt, lengthFt);
   return [
     `Room type: ${roomType}`,
+    existing.length
+      ? `Already in the room and staying (do not propose these): ${existing.join(", ")}`
+      : "",
+    replace.length ? `The user wants these existing pieces replaced: ${replace.join(", ")}` : "",
+    accentsOnly ? "The room is already fully furnished. Propose only small accents that add to it without crowding it." : "",
     `Dimensions: ${widthFt} ft wide x ${lengthFt} ft long x ${heightFt} ft high (${Math.round(widthFt * lengthFt)} sq ft)`,
     `Style: ${style}`,
     colors.length ? `Colour palette: ${colors.join(", ")}` : "",
@@ -186,8 +215,9 @@ async function planFurniture(room) {
 
     // Trust nothing: the prompt asks for a scoped list and a piece cap, but a
     // model can ignore both. Enforce them here so a stray crib cannot reach a
-    // living room and a big budget cannot fill the floor.
-    const allowedHere = new Set(categoriesForRoom(room.roomType));
+    // living room, a big budget cannot fill the floor, and a piece the photo
+    // already shows cannot come back.
+    const allowedHere = new Set(categoriesForRoom(room.roomType, { exclude: room.exclude || [], accentsOnly: Boolean(room.accentsOnly) }));
     const seen = new Set();
     const clean = [];
     for (const pick of picks) {
@@ -220,7 +250,8 @@ async function planFurniture(room) {
     // Priority 1 is the anchor piece, so trimming from the end drops the most
     // optional things first.
     clean.sort((a, b) => a.priority - b.priority);
-    const capped = clean.slice(0, maxPiecesFor(room.widthFt, room.lengthFt));
+    const cap = room.accentsOnly ? Math.min(3, maxPiecesFor(room.widthFt, room.lengthFt)) : maxPiecesFor(room.widthFt, room.lengthFt);
+    const capped = clean.slice(0, cap);
     return { picks: capped, budgetUsed: Number(parsed?.budget_used_usd) || 0 };
   } catch (error) {
     const detail = error?.response?.data?.error?.message || error?.message;
@@ -229,4 +260,4 @@ async function planFurniture(room) {
   }
 }
 
-module.exports = { planFurniture, ALLOWED_CATEGORIES, buildUserPrompt, SYSTEM_PROMPT, RESPONSE_SCHEMA };
+module.exports = { planFurniture, ALLOWED_CATEGORIES, ACCENT_CATEGORIES, RUG_CATEGORIES, categoriesForRoom, maxPiecesFor, roomKey, buildUserPrompt, SYSTEM_PROMPT, RESPONSE_SCHEMA };

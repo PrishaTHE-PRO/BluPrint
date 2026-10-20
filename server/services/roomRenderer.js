@@ -119,23 +119,37 @@ function buildEditPrompt({ products, layoutHints, existingFurniture }) {
     if (category) hintFor.set(category.trim().toLowerCase(), String(hint).trim());
   }
 
+  // Existing pieces arrive as { label, category, keep } (older rooms: plain
+  // strings, treated as kept). Kept pieces stay exactly as they are; a piece
+  // the user marked for replacement is swapped for the product of the same
+  // category, and only that one.
+  const existing = (Array.isArray(existingFurniture) ? existingFurniture : [])
+    .map((f) => (f && typeof f === "object" ? f : { label: String(f || ""), category: "other", keep: true }))
+    .filter((f) => f.label);
+  const kept = existing.filter((f) => f.keep !== false);
+  const toReplace = existing.filter((f) => f.keep === false);
+  const replacementFor = new Map(toReplace.map((f) => [String(f.category).toLowerCase(), f.label]));
+
   const lines = products.map((p, i) => {
     const hint = hintFor.get(String(p.category).toLowerCase());
     const placement = hint ? ` Placement: ${hint.replace(/^[^:]+:\s*/, "")}.` : "";
-    return `${i + 1}. ${p.name}${p.brand ? ` by ${p.brand}` : ""} (reference image ${i + 2}).${placement}`;
+    const replaces = replacementFor.get(String(p.category).toLowerCase());
+    const swap = replaces ? ` This replaces the existing ${replaces}: remove that piece and put this one in its place.` : "";
+    return `${i + 1}. ${p.name}${p.brand ? ` by ${p.brand}` : ""} (reference image ${i + 2}).${placement}${swap}`;
   });
 
-  const removal = existingFurniture && existingFurniture.length
-    ? `Remove the existing furniture that these new pieces replace (currently in the room: ${existingFurniture.join(", ")}).`
-    : "Remove any existing furniture that the new pieces replace.";
+  const removal = kept.length
+    ? `The room already contains: ${kept.map((f) => f.label).join(", ")}. Keep every one of these exactly where it is, unchanged. Do not remove, move, restyle or recolour them. The new products are added alongside them.`
+    : (toReplace.length
+      ? "Apart from the pieces named below as replacements, do not remove or move anything already in the room."
+      : "Do not remove or move anything already in the room; the new products are added to it.");
 
   return [
     "The first image is a photograph of the user's actual room. This is an edit of that photograph, not a new picture inspired by it.",
     "Treat the camera as standing at the front of the room looking toward the back wall. Placement notes below are given from that viewpoint: left and right as seen in the photo, back meaning near the far wall, front meaning near the camera.",
     "Keep everything that is not furniture exactly as it is in the photo: the walls and their colour, the floor and its material, the ceiling, every window and door and what is visible through them, curtains and blinds, radiators, light fixtures, wall art, the time of day and the lighting, and the camera position, angle and framing. Do not repaint, restyle, brighten, crop, or reframe the room.",
     removal,
-    "Do not remove, move, or alter anything that is not furniture being replaced.",
-    "Place each of the following products in the room, matching its reference image as closely as possible in shape, colour, and material, at a realistic size for the room:",
+    "Place each of the following products in the room where there is space for it, matching its reference image as closely as possible in shape, colour, and material, at a realistic size for the room:",
     ...lines,
     "Photorealistic result with perspective, shadows and lighting consistent with the original photo. No text, labels, or watermarks.",
   ].join("\n");

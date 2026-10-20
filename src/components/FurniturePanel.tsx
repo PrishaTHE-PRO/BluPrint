@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from 'react';
-import type { FurnitureItem, Style } from '../types';
+import type { FurnitureItem, FurnitureNotice, Style } from '../types';
 import { orderedFurniture } from '../utils/furnitureLayout';
 import FurnitureCard from './FurnitureCard';
 
@@ -19,6 +19,8 @@ interface Props {
   onGenerateUnderBudget?: () => void;
   /** True once a trim-to-fit run has already been tried for this room. */
   underBudgetTried?: boolean;
+  /** Photo rooms: what the picture already holds, and what that changed. */
+  notice?: FurnitureNotice | null;
 }
 
 export default function FurniturePanel({
@@ -35,6 +37,7 @@ export default function FurniturePanel({
   onToggleInRoom,
   onGenerateUnderBudget,
   underBudgetTried = false,
+  notice = null,
 }: Props) {
   const stripRef = useRef<HTMLDivElement>(null);
   const displayed = orderedFurniture(slots, roomType);
@@ -95,6 +98,32 @@ export default function FurniturePanel({
 
   // Shown only when the real total genuinely exceeds the budget. Until now the
   // server quietly scaled prices down so this could almost never happen.
+  // For photo rooms. Amber when the room is full and only accents are
+  // offered; neutral when we simply skipped what the picture already has.
+  const photoNotice = notice && (
+    <div
+      role="status"
+      className={`animate-reveal mb-4 rounded-2xl border px-4 py-3 ${
+        notice.kind === 'full'
+          ? 'border-[#D3968C]/30 bg-[#D3968C]/10'
+          : 'border-[#839958]/30 bg-[#839958]/10'
+      }`}
+      style={{ animationDelay: '0.4s' }}
+    >
+      <div className="flex items-start gap-3">
+        <span className={`text-lg leading-none mt-0.5 shrink-0 ${notice.kind === 'full' ? 'text-[#D3968C]' : 'text-[#839958]'}`}>
+          <iconify-icon icon={notice.kind === 'full' ? 'ph:warning-circle-duotone' : 'ph:eye-duotone'} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-[#F7F4D5]">
+            {notice.kind === 'full' ? 'Your room is already well furnished' : 'We kept what is already in your photo'}
+          </p>
+          <p className="text-xs text-[#F7F4D5]/60 mt-1 leading-relaxed">{notice.message}</p>
+        </div>
+      </div>
+    </div>
+  );
+
   const budgetNotice = overBudget && (
     <div
       role="status"
@@ -169,9 +198,12 @@ export default function FurniturePanel({
     return (
       <section className="mb-10 result-furniture-section">
         {header}
+        {photoNotice}
         {budgetNotice}
         {views}
-        <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found. Try re-analyzing your room.</p>
+        <p className="text-[#F7F4D5]/40 text-center py-8">
+          {notice?.kind === 'full' ? 'Nothing more fits comfortably in this room.' : 'No furniture found. Try re-analyzing your room.'}
+        </p>
       </section>
     );
   }
@@ -179,6 +211,7 @@ export default function FurniturePanel({
   return (
     <section className="mb-10 result-furniture-section">
       {header}
+      {photoNotice}
       {budgetNotice}
       {views}
       <div className="furniture-h-strip mt-5 animate-reveal" style={{ animationDelay: '0.5s' }}>

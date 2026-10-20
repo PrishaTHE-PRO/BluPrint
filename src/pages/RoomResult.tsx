@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, RoomRender, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
+import type { Room, RoomRender, Style, FurnitureItem, FurnitureNotice, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
 import { defaultRotation } from '../components/RoomSVG';
 import FurnitureLoadingOverlay from '../components/FurnitureLoadingOverlay';
@@ -82,6 +82,9 @@ export default function RoomResult() {
   const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
+  // Set for photo rooms when the picture already holds furniture: explains
+  // why the list is shorter, or why a full room only gets accents.
+  const [furnitureNotice, setFurnitureNotice] = useState<FurnitureNotice | null>(null);
   // Whether a trim-to-fit run has already happened, so the over-budget notice
   // stops offering a button that has nothing further to trim.
   const [underBudgetTried, setUnderBudgetTried] = useState(false);
@@ -579,7 +582,10 @@ export default function RoomResult() {
     setFurnitureLoading(true);
     return authedFetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
-      .then((items: FurnitureItem[]) => {
+      .then((data: FurnitureItem[] | { items: FurnitureItem[]; notice?: FurnitureNotice | null }) => {
+        // The route answers { items, notice } now; a bare array is the older shape.
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
+        setFurnitureNotice(Array.isArray(data) ? null : (data?.notice ?? null));
         setFurniture(items);
         return items;
       })
@@ -945,6 +951,7 @@ export default function RoomResult() {
           onToggleInRoom={handleToggleInRoom}
           onGenerateUnderBudget={handleGenerateUnderBudget}
           underBudgetTried={underBudgetTried}
+          notice={furnitureNotice}
           centerContent={
             <RoomSVG
               room={layoutRoom}

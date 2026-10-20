@@ -2,7 +2,8 @@ const express = require("express");
 const axios   = require("axios");
 const Style   = require("../models/Style");
 const Room    = require("../models/Room");
-const { planFurniture } = require("../services/furniturePlanner");
+const { planFurniture, categoriesForRoom, maxPiecesFor } = require("../services/furniturePlanner");
+const { normalizeExistingFurniture, isRoomFull } = require("../services/roomPhotoAnalyzer");
 
 // A furniture fetch costs one GPT call plus a Serper search per category, so it
 // is slow by nature and the same request repeats every time the results page
@@ -1112,6 +1113,44 @@ function fallbackItemsForCategory(cat, styleTag) {
 }
 
 /**
+ * What a photo already shows, and what that means for the search.
+ *
+ * Kept pieces (keep !== false) take their category out of the running: a room
+ * with a sofa is not sold a sofa. Pieces the user marked "replace this" stay
+ * in the running. A room at capacity for its size switches to accents only.
+ * The notice is user-facing copy for the results page; null when there is no
+ * photo or nothing was detected.
+ */
+function scopeForPhoto({ roomType, widthFt, lengthFt, photoEstimate }) {
+  const existing = normalizeExistingFurniture(photoEstimate?.existingFurniture);
+  if (existing.length === 0) return { exclude: [], existing: [], replace: [], accentsOnly: false, full: false, notice: null };
+  const kept = existing.filter((f) => f.keep !== false);
+  const replace = existing.filter((f) => f.keep === false);
+  const exclude = [...new Set(kept.map((f) => f.category).filter((c) => c && c !== "other"))];
+  const full = isRoomFull({ widthFt, lengthFt, existingFurniture: existing, crowded: Boolean(photoEstimate?.crowded) });
+  const keptLabels = kept.map((f) => f.label);
+  const notice = full
+    ? {
+        kind: "full",
+        message: `Your photo already has a lot of furniture (${keptLabels.join(", ")}), so we are only suggesting small accents that fit around it. To replace a piece, mark it on the room page.`,
+        existing: keptLabels,
+      }
+    : {
+        kind: "existing",
+        message: `Your photo already has ${keptLabels.join(", ")}. We kept those and are only recommending what the room is missing.`,
+        existing: keptLabels,
+      };
+  return {
+    exclude,
+    existing: keptLabels,
+    replace: replace.map((f) => f.label),
+    accentsOnly: full,
+    full,
+    notice: kept.length ? notice : null,
+  };
+}
+
+/**
  * Colour words and mood tags from every source, user first. The user's own
  * palette leads, then whatever the request carried, then the palette GPT-4o
  * read off the inspiration images, so the vision result always contributes
@@ -1166,7 +1205,7 @@ router.get("/:roomId/furniture", async (req, res) => {
     const [userStyle, aiStyle, room] = await Promise.all([
       Style.findOne({ roomId: req.params.roomId, source: "user" }),
       Style.findOne({ roomId: req.params.roomId, source: "ai" }),
-      Room.findById(req.params.roomId).select("budgetTotal widthFt lengthFt heightFt"),
+      Room.findById(req.params.roomId).select("budgetTotal widthFt lengthFt heightFt photoUrl photoEstimate"),
     ]);
     roomDoc = room;
     if (!roomType) {
@@ -1196,6 +1235,20 @@ router.get("/:roomId/furniture", async (req, res) => {
 
   styleTag = normalizeStyleTag(styleTag || "modern");
 
+  // Photo rooms: leave out what the picture already shows, and go accents
+  // only when it is already full. Draw Room rooms have no photo and skip this.
+  const scope = roomDoc?.photoUrl
+    ? scopeForPhoto({
+        roomType,
+        widthFt: roomDoc.widthFt,
+        lengthFt: roomDoc.lengthFt,
+        photoEstimate: roomDoc.photoEstimate,
+      })
+    : { exclude: [], existing: [], replace: [], accentsOnly: false, full: false, notice: null };
+  if (scope.exclude.length || scope.accentsOnly) {
+    console.log("[furniture] photo scope: excluding", scope.exclude.join(",") || "none", scope.accentsOnly ? "(room full: accents only)" : "");
+  }
+
   const baseCategories = withBathroomFixture(
     categoriesForRoomType(roomType),
     roomType,
@@ -1212,6 +1265,7 @@ router.get("/:roomId/furniture", async (req, res) => {
     req.params.roomId, roomType, styleTag, budgetTotal,
     roomFeatures.join("|"), colors.join("|"), moods.join("|"),
     strictBudget ? "strict" : "any",
+    scope.exclude.join("|"), scope.accentsOnly ? "accents" : "all",
   ].join("::");
   // ?refresh=1 is the Regenerate button: skip the cached list and re-run the
   // pipeline, then overwrite the entry so the next visit is fast again.
@@ -1222,10 +1276,11 @@ router.get("/:roomId/furniture", async (req, res) => {
     return res.json(cached);
   }
 
+  const scopedAllowed = new Set(categoriesForRoom(roomType, { exclude: scope.exclude, accentsOnly: scope.accentsOnly }));
   const fixedCategories = [
     ...baseCategories,
     ...categoriesForFeatures(roomFeatures, baseCategories, roomType),
-  ];
+  ].filter((cat) => !roomDoc?.photoUrl || scopedAllowed.has(cat.key));
 
   // Ask the model what this specific room should hold. The fixed table above is
   // keyed only on room type, so it proposes the same set for a 6x8 bathroom as
@@ -1241,6 +1296,10 @@ router.get("/:roomId/furniture", async (req, res) => {
     features: roomFeatures,
     colors,
     moods,
+    existing: scope.existing,
+    exclude: scope.exclude,
+    replace: scope.replace,
+    accentsOnly: scope.accentsOnly,
   });
 
   // Planner picks carry their own search phrase and real dimensions; the fixed
@@ -1279,7 +1338,11 @@ router.get("/:roomId/furniture", async (req, res) => {
     categories.map((c) => c.key).join(",")
   );
 
-  const targets = targetPricesFor(categories, budgetTotal);
+  // Targets are worked out as if the whole room were being furnished, kept
+  // pieces included, so each missing piece gets its normal share and a big
+  // budget with two gaps to fill does not turn into a very expensive rug.
+  const fullSet = [...categories, ...scope.exclude.filter((k) => !categories.some((c) => c.key === k)).map((key) => ({ key }))];
+  const targets = targetPricesFor(fullSet, budgetTotal);
   if (targets.size) {
     console.log("[furniture] targets=", [...targets].map(([k, v]) => `${k}:$${v}`).join(" "));
   }
@@ -1313,8 +1376,10 @@ router.get("/:roomId/furniture", async (req, res) => {
     return res.status(502).json({ error: "Furniture search returned no results" });
   }
 
-  cacheSet(cacheKey, furniture);
-  res.json(furniture);
+  // The client accepts either a bare array (older shape) or this object.
+  const payload = { items: furniture, notice: scope.notice, excluded: scope.exclude };
+  cacheSet(cacheKey, payload);
+  res.json(payload);
 });
 
 module.exports = router;
@@ -1325,6 +1390,7 @@ module.exports.orderFurnitureForBudget = orderFurnitureForBudget;
 module.exports.bestComboForGroups = bestComboForGroups;
 module.exports.paletteWords = paletteWords;
 module.exports.targetPricesFor = targetPricesFor;
+module.exports.scopeForPhoto = scopeForPhoto;
 module.exports.priceTierWord = priceTierWord;
 module.exports.priceFitFor = priceFitFor;
 module.exports.annotatePriceFit = annotatePriceFit;

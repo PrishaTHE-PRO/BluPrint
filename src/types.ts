@@ -65,6 +65,13 @@ export interface Style {
   budgetTotal:  number;
 }
 
+/** Why the furniture list is shorter than usual for a photo room. */
+export interface FurnitureNotice {
+  kind:     'existing' | 'full';
+  message:  string;
+  existing: string[];
+}
+
 export interface FurnitureItem {
   id:       string;
   name:     string;
