@@ -338,6 +338,11 @@ const DEFAULT_FLOOR = { backLeft: { x: 0.15, y: 0.45 }, backRight: { x: 0.85, y:
 // Image rows near the bottom cover less floor than rows near the back wall;
 // a mild curve on the depth fraction corrects most of that without a camera.
 const DEPTH_GAMMA = 0.7;
+// The floor line is read off a 12 x 8 grid as a cell centre, while a box
+// ends at a cell edge, so a piece flush against the back wall shows half a
+// row (about 6% of the image) of depth that is not there. Within that band,
+// snap to the wall.
+const BACK_WALL_SNAP = 0.07;
 
 /**
  * Projects each located product from the picture onto the floor plan.
@@ -367,26 +372,79 @@ function projectToPlan({ hotspots, floor, products, room }) {
 
   return hotspots.map((h) => {
     const product = byCategory.get(h.category) || {};
+    // Existing pieces are located under a unique key (one per piece) and
+    // carry their real category as `kind`; products use their category.
+    const kind = String(product.kind || h.category).toLowerCase();
     const wFt = Math.max(0.5, (Number(product.widthIn) || 30) / 12);
     const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
     const px = h.x + h.w / 2;
-    const wall = WALL_MOUNTED.has(h.category);
+    const wall = WALL_MOUNTED.has(kind);
     // Floor contact: the bottom of the box, unless the piece hangs on a wall.
     const py = wall ? yBack : h.y + h.h;
-    const t = wall ? 0 : Math.pow(clamp01((py - yBack) / Math.max(0.05, 1 - yBack)), DEPTH_GAMMA);
+    const againstBackWall = wall || py - yBack <= BACK_WALL_SNAP;
+    const t = againstBackWall ? 0 : Math.pow(clamp01((py - yBack) / Math.max(0.05, 1 - yBack)), DEPTH_GAMMA);
     // The floor widens toward the camera: its edges run from the back
     // corners to the image's bottom corners.
     const xl = f.backLeft.x * (1 - t);
     const xr = f.backRight.x + (1 - f.backRight.x) * t;
     const xFrac = clamp01((px - xl) / Math.max(0.05, xr - xl));
-    const cx = xFrac * W;
-    const cy = wall ? dFt / 2 + 0.1 : t * L;
-    const x = Math.min(Math.max(0, cx - wFt / 2), Math.max(0, W - wFt));
-    const y = Math.min(Math.max(0, cy - dFt / 2), Math.max(0, L - dFt));
-    const placement = { category: h.category, itemId: h.itemId, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, approx };
-    if (FACING.has(h.category)) placement.rotation = cy > L / 2 ? 180 : 0;
+    // Centre, then clamped so the footprint stays inside the room; the corner
+    // is derived from the clamped centre so the two always agree.
+    const cx = Math.min(Math.max(wFt / 2, xFrac * W), Math.max(wFt / 2, W - wFt / 2));
+    const cy = Math.min(Math.max(dFt / 2, wall ? dFt / 2 + 0.1 : t * L), Math.max(dFt / 2, L - dFt / 2));
+    const x = Math.max(0, cx - wFt / 2);
+    const y = Math.max(0, cy - dFt / 2);
+    const placement = {
+      category: h.category,
+      itemId: h.itemId,
+      x: Math.round(x * 10) / 10,
+      y: Math.round(y * 10) / 10,
+      // Centre in feet as well, for callers that size the footprint themselves.
+      cx: Math.round(cx * 10) / 10,
+      cy: Math.round(cy * 10) / 10,
+      approx,
+    };
+    if (FACING.has(kind)) placement.rotation = cy > L / 2 ? 180 : 0;
     return placement;
   });
+}
+
+/**
+ * Where the furniture already in the room sits on the floor plan. Locates
+ * each kept piece in the ORIGINAL photo (the render keeps them where they
+ * are, so the two agree) and projects it the same way rendered products
+ * are. Pieces marked for replacement are skipped. Returns
+ * [{ label, category, cx, cy, rotation?, approx }] in feet, or [] when
+ * there is nothing to locate.
+ */
+async function locateExistingFurniture({ photoUrl, existingFurniture = [], room }) {
+  const kept = (Array.isArray(existingFurniture) ? existingFurniture : [])
+    .filter((f) => f && typeof f === "object" && f.label && f.keep !== false);
+  if (!photoUrl || kept.length === 0 || !room?.widthFt || !room?.lengthFt) return [];
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
+
+  const image = await downloadImage(photoUrl);
+  if (!image) throw new Error("Could not fetch the room photo");
+
+  // One locator key per piece, so two chairs do not collapse into one box.
+  const products = kept.map((f, i) => ({
+    id: `existing-${i}`,
+    category: `existing-${i}`,
+    kind: f.category || "other",
+    name: f.label,
+  }));
+  const startedAt = Date.now();
+  const { hotspots, floor } = await locateProducts(image.buffer, photoUrl, products);
+  const placements = projectToPlan({ hotspots, floor, products, room });
+  const byId = new Map(products.map((p) => [p.id, p]));
+  const out = placements.map((pl) => {
+    const p = byId.get(pl.itemId) || {};
+    const entry = { label: p.name, category: p.kind || "other", cx: pl.cx, cy: pl.cy, approx: pl.approx };
+    if (pl.rotation !== undefined) entry.rotation = pl.rotation;
+    return entry;
+  });
+  console.log("[existing] located", out.length, "of", kept.length, "existing piece(s) in", Date.now() - startedAt, "ms");
+  return out;
 }
 
 /** Drops missing or degenerate boxes and clamps the rest into the image. */
@@ -490,4 +548,4 @@ async function relocateRender(render, room = null) {
   return { hotspots, floor, placements };
 }
 
-module.exports = { renderRoom, relocateRender, projectToPlan, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES, DEFAULT_FLOOR };
+module.exports = { renderRoom, relocateRender, projectToPlan, locateExistingFurniture, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES, DEFAULT_FLOOR };

@@ -4,6 +4,7 @@ const Style   = require("../models/Style");
 const Room    = require("../models/Room");
 const { planFurniture, categoriesForRoom, maxPiecesFor } = require("../services/furniturePlanner");
 const { normalizeExistingFurniture, isRoomFull } = require("../services/roomPhotoAnalyzer");
+const { locateExistingFurniture } = require("../services/roomRenderer");
 
 // A furniture fetch costs one GPT call plus a Serper search per category, so it
 // is slow by nature and the same request repeats every time the results page
@@ -1249,6 +1250,29 @@ router.get("/:roomId/furniture", async (req, res) => {
     console.log("[furniture] photo scope: excluding", scope.exclude.join(",") || "none", scope.accentsOnly ? "(room full: accents only)" : "");
   }
 
+  // Where the kept pieces sit on the floor plan, so the results page can
+  // show them as fixed footprints. Worked out once per photo from the
+  // original picture and saved on the room; later requests read it back.
+  // Best effort: a failure here must not cost the furniture list.
+  let existingPlacements = Array.isArray(roomDoc?.photoEstimate?.existingPlacements)
+    ? roomDoc.photoEstimate.existingPlacements
+    : null;
+  if (roomDoc?.photoUrl && scope.existing.length && !existingPlacements) {
+    try {
+      existingPlacements = await locateExistingFurniture({
+        photoUrl: roomDoc.photoUrl,
+        existingFurniture: roomDoc.photoEstimate?.existingFurniture,
+        room: { widthFt: roomDoc.widthFt, lengthFt: roomDoc.lengthFt },
+      });
+      roomDoc.photoEstimate = { ...(roomDoc.photoEstimate || {}), existingPlacements };
+      roomDoc.markModified("photoEstimate");
+      await roomDoc.save();
+    } catch (error) {
+      console.error("[existing] could not locate existing furniture:", error?.message || error);
+      existingPlacements = null;
+    }
+  }
+
   const baseCategories = withBathroomFixture(
     categoriesForRoomType(roomType),
     roomType,
@@ -1377,7 +1401,7 @@ router.get("/:roomId/furniture", async (req, res) => {
   }
 
   // The client accepts either a bare array (older shape) or this object.
-  const payload = { items: furniture, notice: scope.notice, excluded: scope.exclude };
+  const payload = { items: furniture, notice: scope.notice, excluded: scope.exclude, existingPlacements: existingPlacements || [] };
   cacheSet(cacheKey, payload);
   res.json(payload);
 });

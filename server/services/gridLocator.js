@@ -181,7 +181,7 @@ const SCHEMA = {
 
 const SYSTEM_PROMPT = `You locate furniture in a photo of a room. The photo has a grid drawn over it: columns are lettered A to ${COL_LABELS[COLS - 1]} from left to right and rows are numbered 1 to ${ROWS} from top to bottom, and every cell shows its own label such as C4.
 
-For each requested product you will be shown its product photo. Find that exact product in the room and report the smallest rectangle of grid cells that fully contains it: colStart/colEnd are column numbers (A=1, B=2, ...) and rowStart/rowEnd are row numbers, all inclusive. Read the labels off the cells the product actually occupies; do not estimate.
+For each requested product you may be shown its product photo; otherwise go by its description. Find that exact product in the room and report the smallest rectangle of grid cells that fully contains it: colStart/colEnd are column numbers (A=1, B=2, ...) and rowStart/rowEnd are row numbers, all inclusive. Read the labels off the cells the product actually occupies; do not estimate.
 
 Set found to false if the product is not visible in the room. Use the category key exactly as given. In "where", say in a few words where the product is (for example "left wall under the window").
 
@@ -337,9 +337,12 @@ async function locateOnGrid(renderPng, products) {
     { type: "image_url", image_url: { url: dataUrl, detail: "high" } },
   ];
   products.forEach((p, i) => {
-    content.push({ type: "text", text: `Product ${i + 1}, category "${p.category}": ${p.name}${p.brand ? ` by ${p.brand}` : ""}. Its photo:` });
+    // A product photo helps but is optional: furniture already in the room
+    // is located from its label alone ("grey sofa"), there is no listing.
+    const hasPhoto = Boolean(p.imageUrl);
+    content.push({ type: "text", text: `Product ${i + 1}, category "${p.category}": ${p.name}${p.brand ? ` by ${p.brand}` : ""}.${hasPhoto ? " Its photo:" : ""}` });
     // Low detail is plenty to recognise a product; it keeps the call cheap.
-    content.push({ type: "image_url", image_url: { url: p.imageUrl, detail: "low" } });
+    if (hasPhoto) content.push({ type: "image_url", image_url: { url: p.imageUrl, detail: "low" } });
   });
   content.push({ type: "text", text: "Return the grid cells for every product listed above." });
 

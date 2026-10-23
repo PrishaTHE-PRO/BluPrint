@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import type { Room, Style, FurnitureItem, RoomLayout } from '../types';
+import type { Room, Style, FurnitureItem, RoomLayout , ExistingPlacement } from '../types';
 import {
   CATEGORY_LABELS,
   STACK_PARENT,
@@ -118,6 +118,12 @@ interface Props {
    * the seed is so nothing lands in a cutout or outside the room.
    */
   applyPlacement?: { key: number; positions: Record<string, PosFt>; rotations?: Record<string, number> } | null;
+  /**
+   * Furniture already in the user's photo. Drawn as translucent, fixed
+   * footprints that cannot be dragged, and treated as occupied floor so
+   * recommended pieces are placed around them.
+   */
+  ghostFurniture?: ExistingPlacement[];
   /** Fires whenever a piece is dragged or rotated, so the parent can save it. */
   onPlacementChange?: (placement: Placement) => void;
   /** Dominant / palette color per furniture category for 2D fills. */
@@ -987,7 +993,7 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 
 export default function RoomSVG({
   room, furniture, roomLayout, linkedCategory, onLinkCategory, onRemove,
-  initialPlacement, applyPlacement, onPlacementChange, colorByCategory,
+  initialPlacement, applyPlacement, ghostFurniture = [], onPlacementChange, colorByCategory,
 }: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{
@@ -1026,6 +1032,25 @@ export default function RoomSVG({
 
   const handleHitR = coarsePointer ? 16 : 9;
   const dragThresholdFt = coarsePointer ? 0.12 : 0.04;
+
+  // Footprints of the furniture already in the room, in feet. Centred on the
+  // position projected from the photo, sized from the category's defaults
+  // (the photo gives no measurements), kept inside the room.
+  const ghostRects = useMemo(() => {
+    const { widthFt, lengthFt } = canvasDimsFt(room, roomLayout);
+    return (ghostFurniture || []).map((g) => {
+      const { wFt, dFt } = pieceSizeFt({ category: g.category }, 1);
+      const w = Math.min(wFt, widthFt);
+      const d = Math.min(dFt, lengthFt);
+      const x = Math.min(Math.max(0, g.cx - w / 2), Math.max(0, widthFt - w));
+      const y = Math.min(Math.max(0, g.cy - d / 2), Math.max(0, lengthFt - d));
+      return { ...g, x, y, wFt: w, dFt: d };
+    });
+  }, [ghostFurniture, room, roomLayout]);
+  const ghostZones = useMemo<ForbiddenRect[]>(
+    () => ghostRects.map((g) => ({ minX: g.x, minY: g.y, maxX: g.x + g.wFt, maxY: g.y + g.dFt })),
+    [ghostRects],
+  );
 
   // Seed from a saved layout exactly once — re-validate against room/cutouts
   // so restored placements cannot sit in holes or outside the room.
@@ -1078,7 +1103,7 @@ export default function RoomSVG({
         rotation,
         widthFt,
         lengthFt,
-        [...archZones, ...occupied],
+        [...archZones, ...ghostZones, ...occupied],
         scale,
       );
       nextPositions[item.category] = resolved.position;
@@ -1088,7 +1113,7 @@ export default function RoomSVG({
     setPositions(nextPositions);
     setRotations(nextRotations);
     setScales(nextScales);
-  }, [initialPlacement, furniture, room, roomLayout]);
+  }, [initialPlacement, furniture, room, roomLayout, ghostZones]);
 
   // Apply positions pushed in from outside (the plan matching a render).
   // Unlike the seed this runs every time the key changes, and only for the
@@ -1115,7 +1140,7 @@ export default function RoomSVG({
           nextRotations[item.category] ?? defaultRotation(item.category),
           widthFt,
           lengthFt,
-          [...archZones, ...occupied],
+          [...archZones, ...ghostZones, ...occupied],
           1,
         );
         nextPositions[item.category] = resolved.position;
@@ -1123,7 +1148,7 @@ export default function RoomSVG({
       if (applyPlacement.rotations) setRotations(nextRotations);
       return nextPositions;
     });
-  }, [applyPlacement, furniture, room, roomLayout, rotations]);
+  }, [applyPlacement, furniture, room, roomLayout, rotations, ghostZones]);
 
   // Report placement upward so Save Layout can capture it.
   useEffect(() => {
@@ -1501,6 +1526,7 @@ export default function RoomSVG({
           2D Room Layout
         </h3>
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium text-right">
+          {ghostRects.length > 0 ? 'Dashed pieces are already in your room and stay put. ' : ''}
           {coarsePointer
             ? 'Tap to select · drag to move · tap/drag top handle to rotate'
             : 'Drag to move · top handle rotates'}
@@ -1622,6 +1648,48 @@ export default function RoomSVG({
         >
           {cL % 1 === 0 ? cL : cL.toFixed(1)} ft
         </text>
+
+        {/* ── Furniture already in the room: fixed, translucent, not draggable ── */}
+        {ghostRects.length > 0 && (
+          <g className="ghost-furniture" pointerEvents="none" aria-hidden="true">
+            {ghostRects.map((g, i) => {
+              const wPx = g.wFt * SCALE;
+              const dPx = g.dFt * SCALE;
+              const x = g.x * SCALE + MARGIN;
+              const y = g.y * SCALE + MARGIN;
+              const rot = g.rotation ?? 0;
+              return (
+                <g
+                  key={`ghost-${i}-${g.label}`}
+                  transform={`translate(${(x + wPx / 2).toFixed(1)},${(y + dPx / 2).toFixed(1)}) rotate(${rot}) translate(${(-wPx / 2).toFixed(1)},${(-dPx / 2).toFixed(1)})`}
+                  opacity={0.42}
+                >
+                  <rect
+                    width={wPx}
+                    height={dPx}
+                    rx={6}
+                    fill="rgba(122, 112, 96, 0.28)"
+                    stroke="rgba(122, 112, 96, 0.9)"
+                    strokeWidth={1.5}
+                    strokeDasharray="5 4"
+                  />
+                  <text
+                    x={wPx / 2}
+                    y={dPx / 2}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={Math.max(8, Math.min(11, wPx / 8))}
+                    fontWeight="700"
+                    fontFamily="Quicksand, sans-serif"
+                    fill="rgba(60, 52, 44, 0.95)"
+                  >
+                    {g.label}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        )}
 
         {/* ── Furniture pieces ── */}
         {sorted.map(item => {

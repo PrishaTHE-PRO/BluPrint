@@ -167,7 +167,23 @@ function sanitizePhotoEstimate(value) {
     const widthFt = toNumber(value.widthFt);
     const lengthFt = toNumber(value.lengthFt);
     const crowded = Boolean(value.crowded);
+    // Plan positions for the kept pieces, written by the furniture route
+    // after locating them in the photo. Carried through when present.
+    const existingPlacements = Array.isArray(value.existingPlacements)
+        ? value.existingPlacements
+            .filter((e) => e && typeof e === 'object' && e.label && Number.isFinite(Number(e.cx)) && Number.isFinite(Number(e.cy)))
+            .slice(0, 16)
+            .map((e) => ({
+                label: String(e.label).slice(0, 60),
+                category: typeof e.category === 'string' ? e.category.slice(0, 32) : 'other',
+                cx: Number(e.cx),
+                cy: Number(e.cy),
+                ...(Number.isFinite(Number(e.rotation)) ? { rotation: Number(e.rotation) } : {}),
+                approx: Boolean(e.approx),
+            }))
+        : undefined;
     return {
+        ...(existingPlacements ? { existingPlacements } : {}),
         roomType: typeof value.roomType === 'string' ? value.roomType.slice(0, 32) : '',
         widthFt,
         lengthFt,
@@ -331,10 +347,15 @@ router.patch('/:roomId', requireRoomOwner, async (req, res) => {
                 current.render = null;
                 current.markModified('render');
             }
+            const incoming = photo.value ? sanitizePhotoEstimate(req.body.photoEstimate) : null;
+            // The dimensions page re-sends the estimate without the plan
+            // positions the furniture route worked out. Same photo: keep them.
+            if (incoming && !incoming.existingPlacements && photo.value === current.photoUrl
+                && Array.isArray(current.photoEstimate?.existingPlacements)) {
+                incoming.existingPlacements = current.photoEstimate.existingPlacements;
+            }
             current.photoUrl = photo.value;
-            current.photoEstimate = photo.value
-                ? (sanitizePhotoEstimate(req.body.photoEstimate) || current.photoEstimate || null)
-                : null;
+            current.photoEstimate = photo.value ? (incoming || current.photoEstimate || null) : null;
             current.markModified('photoEstimate');
         }
 

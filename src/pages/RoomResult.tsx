@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, RoomRender, Style, FurnitureItem, FurnitureNotice, RoomArchitectureLayout } from '../types';
+import type { Room, RoomRender, Style, FurnitureItem, FurnitureNotice, ExistingPlacement, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
 import { defaultRotation } from '../components/RoomSVG';
 import FurnitureLoadingOverlay from '../components/FurnitureLoadingOverlay';
@@ -65,6 +65,29 @@ function readScopedSavedFurniturePlacement() {
   if (!placement) return null;
   if (placement.roomId && placement.roomId !== roomId) return null;
   return placement;
+}
+
+/**
+ * The kept pieces' plan positions off a room document. Positions are saved
+ * for every piece that was located; only those still marked keep are shown,
+ * so ticking "Replace" on the room page drops that ghost from the plan.
+ */
+function keptPlacements(estimate: any): ExistingPlacement[] {
+  const placements: any[] = Array.isArray(estimate?.existingPlacements) ? estimate.existingPlacements : [];
+  const pieces: any[] = Array.isArray(estimate?.existingFurniture) ? estimate.existingFurniture : [];
+  const keptLabels = new Set(
+    pieces.filter((f) => f && f.keep !== false).map((f) => String(typeof f === 'object' ? f.label : f)),
+  );
+  return placements
+    .filter((e) => e && keptLabels.has(String(e.label)) && Number.isFinite(e.cx) && Number.isFinite(e.cy))
+    .map((e) => ({
+      label: String(e.label),
+      category: String(e.category || 'other'),
+      cx: Number(e.cx),
+      cy: Number(e.cy),
+      ...(Number.isFinite(e.rotation) ? { rotation: Number(e.rotation) } : {}),
+      approx: Boolean(e.approx),
+    }));
 }
 
 function roomFeatureSignature(features: string[] = []) {
@@ -526,6 +549,7 @@ export default function RoomResult() {
               sqft:     match.sqft,
               photoUrl: typeof match.photoUrl === 'string' ? match.photoUrl : null,
               render:   match.render && typeof match.render.url === 'string' ? match.render : null,
+              existingFurniture: keptPlacements(match.photoEstimate),
             });
 
             if (isRoomArchitectureLayout(match.layout)) {
@@ -582,10 +606,16 @@ export default function RoomResult() {
     setFurnitureLoading(true);
     return authedFetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
-      .then((data: FurnitureItem[] | { items: FurnitureItem[]; notice?: FurnitureNotice | null }) => {
+      .then((data: FurnitureItem[] | { items: FurnitureItem[]; notice?: FurnitureNotice | null; existingPlacements?: ExistingPlacement[] }) => {
         // The route answers { items, notice } now; a bare array is the older shape.
         const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
         setFurnitureNotice(Array.isArray(data) ? null : (data?.notice ?? null));
+        // First visit to a photo room: the route has just located the kept
+        // pieces and the room state loaded before they existed.
+        if (!Array.isArray(data) && Array.isArray(data?.existingPlacements) && data.existingPlacements.length > 0) {
+          const fresh = data.existingPlacements;
+          setRoom((prev) => (prev && !(prev.existingFurniture && prev.existingFurniture.length) ? { ...prev, existingFurniture: fresh } : prev));
+        }
         setFurniture(items);
         return items;
       })
@@ -963,6 +993,7 @@ export default function RoomResult() {
               onRemove={handleRemoveFromRoom}
               initialPlacement={initialPlacement}
               applyPlacement={planOverride}
+              ghostFurniture={room?.existingFurniture ?? []}
               onPlacementChange={handlePlacementChange}
               colorByCategory={colorByCategory}
             />

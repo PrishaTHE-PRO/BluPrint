@@ -42,6 +42,17 @@ export interface RoomRender {
   placements?: RenderPlacement[];
 }
 
+/** A piece already in the user's photo, placed on the plan from the picture.
+ *  Centre in feet; the plan sizes the footprint from the category. */
+export interface ExistingPlacement {
+  label:     string;
+  category:  string;
+  cx:        number;
+  cy:        number;
+  rotation?: number;
+  approx?:   boolean;
+}
+
 export interface Room {
   roomId:   string;
   name:     string;
@@ -53,6 +64,8 @@ export interface Room {
   photoUrl?: string | null;
   /** The last generated render into that photo, if any. */
   render?:   RoomRender | null;
+  /** Kept furniture from the photo, shown on the plan as fixed footprints. */
+  existingFurniture?: ExistingPlacement[];
 }
 
 export interface Style {
