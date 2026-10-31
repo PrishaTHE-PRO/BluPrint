@@ -758,7 +758,7 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
     return { order: -480 + along, ops, foot: isoBoxFoot(along - hw, 0, along + hw, 0.05) };
 }
 
-function renderIsoRoom(room) {
+function renderIsoRoom(room, opts = {}) {
     const rough = window.rough;
     if (!rough) return null;
 
@@ -907,10 +907,28 @@ function renderIsoRoom(room) {
         isoProject(W, 0, WH), isoProject(0, 0, WH), isoProject(0, L, WH),
     ];
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    bounds.forEach((p) => {
+    const grow = (p) => {
         minX = Math.min(minX, p.px); maxX = Math.max(maxX, p.px);
         minY = Math.min(minY, p.py); maxY = Math.max(maxY, p.py);
-    });
+    };
+    bounds.forEach(grow);
+
+    // Optional small-print label laid along the front-left floor edge (y = L),
+    // just outside the floor and rotated to the edge's 30° slope. Sized off the
+    // room's projected width so it reads the same in every card, and the
+    // viewBox grows to keep it in frame.
+    let floorLabel = null;
+    if (opts.floorLabel) {
+        const fontSize = Math.max(10, (maxX - minX) * 0.045);
+        const dir = { x: Math.cos(ISO.angle), y: Math.sin(ISO.angle) };
+        const normal = { x: -dir.y, y: dir.x }; // points away from the floor
+        const mid = isoProject(W / 2, L, 0);
+        const gap = fontSize * 0.5;
+        const halfLen = String(opts.floorLabel).length * fontSize * 0.3;
+        const at = (along, out) => ({ px: mid.px + dir.x * along + normal.x * out, py: mid.py + dir.y * along + normal.y * out });
+        [at(-halfLen, gap + fontSize), at(halfLen, gap + fontSize)].forEach(grow);
+        floorLabel = { text: String(opts.floorLabel), fontSize, anchor: at(0, gap) };
+    }
     const pad = ISO.pad;
     const vbX = minX - pad, vbY = minY - pad;
     const vbW = maxX - minX + pad * 2, vbH = maxY - minY + pad * 2;
@@ -930,6 +948,7 @@ function renderIsoRoom(room) {
     panel.setAttribute('x', vbX.toFixed(1)); panel.setAttribute('y', vbY.toFixed(1));
     panel.setAttribute('width', vbW.toFixed(1)); panel.setAttribute('height', vbH.toFixed(1));
     panel.setAttribute('fill', ISO_COLORS.patch);
+    panel.setAttribute('class', 'iso-paper');
     const gridRect = panel.cloneNode();
     gridRect.setAttribute('fill', `url(#${gid})`);
     svg.appendChild(panel);
@@ -941,12 +960,27 @@ function renderIsoRoom(room) {
     rugs.sort((a, b) => a.order - b.order);
     [...shell, ...rugs, ...isoPaintOrder(pieces)].forEach((group) => group.ops.forEach(paint));
 
+    if (floorLabel) {
+        const text = document.createElementNS(svgNs, 'text');
+        const { px, py } = floorLabel.anchor;
+        text.setAttribute('class', 'iso-floor-label');
+        text.setAttribute('x', px.toFixed(1));
+        text.setAttribute('y', py.toFixed(1));
+        text.setAttribute('transform', `rotate(${(ISO.angle * 180 / Math.PI).toFixed(0)} ${px.toFixed(1)} ${py.toFixed(1)})`);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'hanging');
+        text.setAttribute('font-size', floorLabel.fontSize.toFixed(1));
+        text.setAttribute('fill', ISO_COLORS.ink);
+        text.textContent = floorLabel.text;
+        svg.appendChild(text);
+    }
+
     return svg.outerHTML;
 }
 
-function renderRoomPreview(room) {
+function renderRoomPreview(room, opts = {}) {
     try {
-        const iso = renderIsoRoom(room);
+        const iso = renderIsoRoom(room, opts);
         if (iso) return iso;
     } catch (err) {
         console.error('[iso preview] falling back to flat preview:', err);

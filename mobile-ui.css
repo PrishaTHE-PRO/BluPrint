@@ -383,15 +383,8 @@
     flex: 0 0 258px;
     scroll-snap-align: start;
   }
-  .page-dashboard #projects-grid .garden-card {
-    border: 1px solid var(--bp-border) !important;
-    border-radius: 22px !important;
-    background: var(--m-card) !important;
-    box-shadow: var(--m-sh2) !important;
-  }
   .page-dashboard #projects-grid .garden-card:hover { transform: none; }
-  .page-dashboard #projects-grid .garden-card > div:first-child { aspect-ratio: 3 / 2; }
-  .page-dashboard #projects-grid .garden-card > div:last-child { padding: 16px !important; }
+  .page-dashboard #projects-grid .room-float-preview { aspect-ratio: 3 / 2; }
   .page-dashboard #projects-grid h3 {
     font-family: "Fraunces", serif !important;
     font-size: 19px !important;
@@ -400,7 +393,7 @@
   }
   /* Rename is a hover affordance; on touch it just eats space. */
   .page-dashboard #projects-grid .rename-btn { display: none; }
-  .page-dashboard #projects-grid .delete-btn { opacity: 1; }
+  .page-dashboard #projects-grid .room-float .delete-btn { opacity: 1; }
 
 
   /* --- "pick up where you left off" (base styles above) -------------- */

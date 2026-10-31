@@ -1222,9 +1222,62 @@ button.theme-switch-btn {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 16px !important;
 }
-.page-dashboard #projects-grid .garden-card { padding: 0 !important; overflow: hidden; }
-.page-dashboard #projects-grid .garden-card > div:first-child { margin: 0 !important; border-radius: 0 !important; aspect-ratio: 4/3; background: #f4f1ec !important; }
-.page-dashboard #projects-grid .garden-card > div:last-child { padding: 14px !important; }
+.page-dashboard #projects-grid .garden-card { padding: 0 !important; }
+/* Floating rooms: the iso drawing floats on a soft shadow inside a sheer blue
+   card the blueprint grid shows through, with the room name centred underneath
+   and its square footage in small print along the front floor edge (drawn by
+   iso-preview.js). */
+/* No border: the tint is a radial wash, strongest behind the room and fading to
+   clear at the card's edges. --float-tint is the centre colour. */
+.page-dashboard #projects-grid .room-float {
+  --float-tint: color-mix(in srgb, var(--bp-primary) 15%, transparent);
+  padding: 0 0 14px !important;
+  background: radial-gradient(ellipse 72% 72% at 50% 45%, var(--float-tint) 0%, var(--float-tint) 45%, transparent 100%) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.page-dashboard #projects-grid .room-float:hover {
+  --float-tint: color-mix(in srgb, var(--bp-primary) 21%, transparent);
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+html.dark-mode .page-dashboard #projects-grid .room-float {
+  --float-tint: color-mix(in srgb, var(--bp-primary) 18%, transparent);
+}
+html.dark-mode .page-dashboard #projects-grid .room-float:hover {
+  --float-tint: color-mix(in srgb, var(--bp-primary) 26%, transparent);
+}
+.page-dashboard #projects-grid .room-float-preview { aspect-ratio: 4/3; }
+.page-dashboard #projects-grid .iso-paper { display: none; }
+.page-dashboard #projects-grid .room-float-preview > svg {
+  filter: drop-shadow(0 14px 16px rgba(28, 23, 20, .14));
+  transition: transform .35s cubic-bezier(.22, 1, .36, 1), filter .35s ease;
+}
+.page-dashboard #projects-grid .room-float:hover .room-float-preview > svg {
+  transform: translateY(-4px);
+  filter: drop-shadow(0 20px 20px rgba(28, 23, 20, .16));
+}
+.page-dashboard #projects-grid .iso-floor-label {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  letter-spacing: .06em;
+  opacity: .55;
+}
+.page-dashboard #projects-grid .room-float-label { padding: 6px 8px 0; text-align: center; }
+/* The name is the only text on the card, so it carries it: serif and larger. */
+.page-dashboard #projects-grid .room-float-label h3 {
+  color: var(--bp-ink) !important;
+  font-family: "Fraunces", serif !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.015em;
+  line-height: 1.2;
+}
+.page-dashboard #projects-grid .room-float .delete-btn { opacity: 0; transition: opacity .2s ease, background .2s ease; }
+.page-dashboard #projects-grid .room-float:hover .delete-btn,
+.page-dashboard #projects-grid .room-float .delete-btn:focus-visible { opacity: 1; }
 .page-dashboard #projects-grid h3 { color: var(--bp-ink) !important; font-family: "DM Sans", sans-serif !important; font-size: 14px !important; font-weight: 600 !important; }
 .page-dashboard #projects-grid p,
 .page-dashboard #projects-grid span { color: var(--bp-muted) !important; font-size: 11px !important; }
@@ -3505,7 +3558,6 @@ html.dark-mode .page-projects #all-projects-grid span {
 }
 
 /* Keep floor-plan / iso previews on warm paper so sketches stay legible */
-html.dark-mode .page-dashboard #projects-grid .garden-card > div:first-child,
 html.dark-mode .page-projects #all-projects-grid .garden-card > div:first-child,
 html.dark-mode .project-card-preview {
   background: #e8e2d6 !important;

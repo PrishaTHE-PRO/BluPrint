@@ -228,14 +228,12 @@
     function refresh() {
       var cards = readCards();
 
-      // Stats, read straight off the rendered cards so they always agree.
+      // Stats, read straight off the rendered cards (data-sqft / data-complete,
+      // set by dashboard.js) so they always agree.
       var sqft = 0, done = 0;
       cards.forEach(function (card) {
-        var meta = card.querySelector('div:last-child p');
-        var m = meta && /([\d,]+)\s*sq\s*ft/i.exec(meta.textContent);
-        if (m) sqft += Number(m[1].replace(/,/g, '')) || 0;
-        var badge = card.querySelector('div:first-child span');
-        if (badge && /complete/i.test(badge.textContent)) done++;
+        sqft += Number(card.dataset.sqft) || 0;
+        if (card.dataset.complete === 'true') done++;
       });
 
       var sqftEl = stats.querySelector('[data-m-sqft]');
@@ -291,8 +289,7 @@
       // clicks its card, so it opens THAT room on the step it's up to; a plain
       // link would reopen whichever room happens to be in localStorage.
       var pending = cards.filter(function (card) {
-        var badge = card.querySelector('div:first-child span');
-        return !(badge && /complete/i.test(badge.textContent));
+        return card.dataset.complete !== 'true';
       }).slice(0, 3);
       if (!pending.length) return;
 
