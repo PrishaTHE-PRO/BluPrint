@@ -4161,32 +4161,6 @@ body.page-about .app-nav {
   font-size: 30px;
 }
 
-.about-marquee {
-  display: flex;
-  overflow: hidden;
-  padding: 11px 0;
-  border-block: 1px solid var(--bp-border);
-  background: var(--bp-blue-soft);
-  color: var(--bp-primary);
-  font-family: "Fraunces", serif;
-  font-size: 15px;
-  font-style: italic;
-}
-
-.about-marquee-track {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 22px;
-  padding-right: 22px;
-  white-space: nowrap;
-  animation: about-marquee 36s linear infinite;
-}
-
-@keyframes about-marquee {
-  to { transform: translateX(-100%); }
-}
-
 .about-team-section {
   width: min(100% - 48px, 860px);
   margin-inline: auto;
@@ -4437,7 +4411,6 @@ html.dark-mode .about-band {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .about-marquee-track { animation: none; }
   .about-photo { transition: none; }
 }
 
