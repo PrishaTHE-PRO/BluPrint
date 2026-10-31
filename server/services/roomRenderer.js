@@ -37,7 +37,21 @@ const { locateOnGrid } = require("./gridLocator");
 const IMAGE_EDIT_URL = "https://api.openai.com/v1/images/edits";
 const CHAT_URL = "https://api.openai.com/v1/chat/completions";
 
-const DEFAULT_IMAGE_MODEL = "gpt-image-1";
+// Tried in order until the edits endpoint accepts one. gpt-image-1 was the
+// original default; it is still listed by the models endpoint but the edits
+// endpoint now answers "The model 'gpt-image-1' does not exist", which is what
+// a model looks like once it is retired. OPENAI_IMAGE_MODEL, when set, is
+// tried first. The first model that works is remembered for the process.
+const IMAGE_MODEL_CANDIDATES = [
+  "gpt-image-1.5",
+  "gpt-image-2.5-flare",
+  "gpt-image-2",
+  "gpt-image-2.5-sunburst",
+  "gpt-image-1",
+  "gpt-image-1-mini",
+];
+const DEFAULT_IMAGE_MODEL = IMAGE_MODEL_CANDIDATES[0];
+let workingImageModel = null;
 const DEFAULT_IMAGE_SIZE = "1536x1024";
 const DEFAULT_IMAGE_QUALITY = "medium";
 // On by default: the whole point is to keep the user's room recognisably
@@ -156,9 +170,9 @@ function buildEditPrompt({ products, layoutHints, existingFurniture }) {
 }
 
 /** Builds the multipart body. `inputFidelity` null leaves the field out. */
-function buildEditForm({ roomImage, references, prompt, size, inputFidelity }) {
+function buildEditForm({ roomImage, references, prompt, size, inputFidelity, model }) {
   const form = new FormData();
-  form.append("model", process.env.OPENAI_IMAGE_MODEL || DEFAULT_IMAGE_MODEL);
+  form.append("model", model || DEFAULT_IMAGE_MODEL);
   form.append("prompt", prompt);
   form.append("n", "1");
   form.append("size", size);
@@ -185,6 +199,23 @@ function rejectsInputFidelity(status, message) {
   return status === 400 && /input_fidelity/i.test(String(message || ""));
 }
 
+/** True when the endpoint says the model itself is unknown or unavailable. */
+function rejectsModel(status, message) {
+  return (status === 400 || status === 404) && /model .* does not exist|model_not_found|does not have access to model|is not supported for this endpoint/i.test(String(message || ""));
+}
+
+/** Models to try, in order: a pinned one first, then the candidates. */
+function imageModelsToTry() {
+  const pinned = String(process.env.OPENAI_IMAGE_MODEL || "").trim();
+  const list = pinned ? [pinned, ...IMAGE_MODEL_CANDIDATES.filter((m) => m !== pinned)] : [...IMAGE_MODEL_CANDIDATES];
+  // The model that worked last time goes first so a render does not pay
+  // for a failed attempt on every call.
+  if (workingImageModel && list.includes(workingImageModel)) {
+    return [workingImageModel, ...list.filter((m) => m !== workingImageModel)];
+  }
+  return list;
+}
+
 /**
  * One multipart call to the image edit endpoint. Returns a PNG buffer.
  *
@@ -196,12 +227,36 @@ function rejectsInputFidelity(status, message) {
 async function editImage({ roomImage, references, prompt, size }) {
   const wanted = process.env.OPENAI_IMAGE_INPUT_FIDELITY || DEFAULT_INPUT_FIDELITY;
   const fidelity = wanted === "off" ? null : wanted;
+  const models = imageModelsToTry();
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      const png = await postEditWithFidelityFallback({ roomImage, references, prompt, size, model, fidelity });
+      if (workingImageModel !== model) console.log(`[render] using image model ${model}`);
+      workingImageModel = model;
+      return png;
+    } catch (error) {
+      if (!rejectsModel(error?.status, error?.message)) throw error;
+      // This model is gone or not available to this key: on to the next.
+      console.warn(`[render] image model ${model} unavailable (${error.message}); trying the next`);
+      if (workingImageModel === model) workingImageModel = null;
+      lastError = error;
+    }
+  }
+  const err = new Error(`No usable image model. Tried ${models.join(", ")}. Last error: ${lastError?.message || "unknown"}`);
+  err.status = lastError?.status || 502;
+  throw err;
+}
+
+/** One model: with input_fidelity, then once without if the model refuses it. */
+async function postEditWithFidelityFallback({ roomImage, references, prompt, size, model, fidelity }) {
   try {
-    return await postEdit(buildEditForm({ roomImage, references, prompt, size, inputFidelity: fidelity }));
+    return await postEdit(buildEditForm({ roomImage, references, prompt, size, model, inputFidelity: fidelity }));
   } catch (error) {
     if (!fidelity || !rejectsInputFidelity(error?.status, error?.message)) throw error;
-    console.warn(`[render] ${process.env.OPENAI_IMAGE_MODEL || DEFAULT_IMAGE_MODEL} rejected input_fidelity, retrying without it. The room will be held less faithfully.`);
-    return postEdit(buildEditForm({ roomImage, references, prompt, size, inputFidelity: null }));
+    console.warn(`[render] ${model} rejected input_fidelity, retrying without it. The room will be held less faithfully.`);
+    return postEdit(buildEditForm({ roomImage, references, prompt, size, model, inputFidelity: null }));
   }
 }
 
@@ -548,4 +603,4 @@ async function relocateRender(render, room = null) {
   return { hotspots, floor, placements };
 }
 
-module.exports = { renderRoom, relocateRender, projectToPlan, locateExistingFurniture, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES, DEFAULT_FLOOR };
+module.exports = { renderRoom, relocateRender, projectToPlan, locateExistingFurniture, rejectsModel, imageModelsToTry, IMAGE_MODEL_CANDIDATES, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES, DEFAULT_FLOOR };

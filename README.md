@@ -75,7 +75,7 @@ SERPER_API_KEY=          # from serper.dev (shopping search)
 FIREBASE_PROJECT_ID=     # same value as VITE_FIREBASE_PROJECT_ID in the root .env
 CORS_ORIGINS=            # optional; only if a separate front-end origin calls this API
 
-OPENAI_IMAGE_MODEL=gpt-image-1     # room photo renders (optional, this is the default)
+OPENAI_IMAGE_MODEL=                # optional; unset tries current image models in order
 OPENAI_IMAGE_QUALITY=medium        # optional
 OPENAI_IMAGE_INPUT_FIDELITY=high   # optional; keeps the original room as it is
 # OPENAI_IMAGE_SIZE=1536x1024      # optional; otherwise the size follows the photo's shape
