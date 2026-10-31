@@ -158,13 +158,17 @@ server/
     cloudinary.js            shared upload helper
     safeRequest.js           outbound fetch guard (no private addresses)
 public/                      scripts served as-is (see below)
-  mobile-ui.js, new-room.js, theme-toggle.js, blueprint-bg.js
+  mobile-ui.js, new-room.js, theme-toggle.js
 design-system.css            shared styling for every page
 mobile-ui.css                phone layout, loaded on top of the design system
 firebase.mjs                 Firebase config, auth exports, authedFetch
 ```
 
 Each page is its own HTML file at the repo root, listed in `vite.config.ts`.
+
+The shared interactive background is mounted by `src/cursor-grid-background.jsx` on each page. It uses `src/components/CursorGrid.jsx`, adapted from the supplied React Bits CursorGrid component, with `patternUrl` pointing to `src/assets/architectural-blueprint-generated.png`. The blueprint's strokes use the reference's 60px interaction cells, 140px cursor radius, 400ms hold, and 800ms fade, with a ripple on click. The white-line mask preserves the strokes' edge coverage without overexposing them; their opacity ranges from 18% at rest to at most 85% during interaction. The shared background stylesheet hides the cloud overlays and stops the sky animation so the linework supplies the background motion.
+
+The generated architectural plan is a 1536 × 1024 PNG with larger, more separated white strokes on dark blue, replacing the 563 × 308 mechanical JPEG. Its generation prompts are saved in `src/assets/architectural-blueprint-generation.md`. The image stays in its original orientation, with `patternFit="cover"` preserving its aspect ratio. The background does not intercept page interactions; it pauses when idle or hidden, suppresses click ripples for reduced motion, and uses an SVG color filter as a static fallback if WebGL 2 is unavailable. Configure its appearance in the mount file; omitting `patternUrl` restores the original grid.
 
 ### Two things worth knowing
 

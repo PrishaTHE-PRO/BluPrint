@@ -43,9 +43,9 @@
       color: var(--ink);
       font-family: "DM Sans", sans-serif;
       background:
-        radial-gradient(circle at 92% 4%, rgba(184, 212, 232, .7), transparent 28rem),
+        radial-gradient(circle at 92% 4%, rgba(136, 178, 210, .7), transparent 28rem),
         radial-gradient(circle at 4% 42%, rgba(233, 223, 210, .75), transparent 30rem),
-        linear-gradient(145deg, #fbf8f3 0%, #f5f7f7 48%, #eaf4fa 100%);
+        linear-gradient(145deg, #f0ece6 0%, #e0e9ee 48%, #ccdfec 100%);
       background-size: 130% 130%, 145% 145%, 190% 190%;
       animation: landing-sky-shift 20s ease-in-out infinite alternate;
     }
@@ -59,7 +59,7 @@
       border-radius: 50%;
       content: "";
       pointer-events: none;
-      opacity: .62;
+      opacity: .4;
       filter: blur(22px);
       background:
         radial-gradient(ellipse 24% 35% at 24% 62%, rgba(255,255,255,.92) 0 96%, transparent 100%),
@@ -1150,6 +1150,7 @@
   </footer>
 <script src="./theme-toggle.js" defer></script>
 <script type="module" src="/src/theme-switch.tsx"></script>
+<script type="module" src="/src/cursor-grid-background.jsx"></script>
   <script>
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {

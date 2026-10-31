@@ -40,9 +40,9 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 92% 8%, rgba(143, 197, 231, .38), transparent 34rem),
-    radial-gradient(circle at 5% 88%, rgba(184, 212, 232, .3), transparent 30rem),
-    linear-gradient(135deg, #f8f5f0 0%, #f2f7fa 48%, #e7f2f9 100%) fixed !important;
+    radial-gradient(circle at 92% 8%, rgba(110, 165, 205, .46), transparent 34rem),
+    radial-gradient(circle at 5% 88%, rgba(145, 181, 210, .38), transparent 30rem),
+    linear-gradient(135deg, #eeeae5 0%, #dce7ef 48%, #c8ddeb 100%) fixed !important;
   color: var(--bp-ink) !important;
   font-family: "DM Sans", sans-serif !important;
   overflow-x: hidden;
@@ -1902,9 +1902,9 @@ a.workflow-step:focus-visible {
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(circle at 84% 8%, rgba(184, 212, 232, .62), transparent 29rem),
-    radial-gradient(circle at 8% 82%, rgba(226, 235, 240, .8), transparent 34rem),
-    linear-gradient(145deg, #faf7f2 0%, #edf4f8 48%, #dfeef6 100%) fixed !important;
+    radial-gradient(circle at 84% 8%, rgba(136, 178, 210, .68), transparent 29rem),
+    radial-gradient(circle at 8% 82%, rgba(174, 199, 218, .7), transparent 34rem),
+    linear-gradient(145deg, #ece8e2 0%, #d8e5ee 48%, #c1d8e8 100%) fixed !important;
   background-size: 125% 125%, 135% 135%, 180% 180% !important;
   animation: bp-sky-shift 18s ease-in-out infinite alternate;
 }
@@ -1934,7 +1934,7 @@ a.workflow-step:focus-visible {
   left: -16rem;
   width: min(78rem, 92vw);
   height: 25rem;
-  opacity: .72;
+  opacity: .42;
   background:
     radial-gradient(ellipse 25% 30% at 24% 63%, rgba(255,255,255,.9) 0 96%, transparent 100%),
     radial-gradient(ellipse 27% 43% at 43% 49%, rgba(255,255,255,.82) 0 96%, transparent 100%),
@@ -1949,7 +1949,7 @@ a.workflow-step:focus-visible {
   bottom: 3%;
   width: min(74rem, 88vw);
   height: 23rem;
-  opacity: .58;
+  opacity: .34;
   background:
     radial-gradient(ellipse 26% 38% at 28% 59%, rgba(255,255,255,.76) 0 96%, transparent 100%),
     radial-gradient(ellipse 30% 45% at 48% 45%, rgba(255,255,255,.84) 0 96%, transparent 100%),

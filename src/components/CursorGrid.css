@@ -1,0 +1,59 @@
+.cursor-grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Keep a quiet grid when WebGL is unavailable or its context is lost. */
+.cursor-grid:not(.cursor-grid--ready)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--cursor-grid-opacity, .08);
+  background-image:
+    linear-gradient(to right, var(--cursor-grid-color, #fff) var(--cursor-grid-line-width, 1px), transparent 0),
+    linear-gradient(to bottom, var(--cursor-grid-color, #fff) var(--cursor-grid-line-width, 1px), transparent 0);
+  background-size: var(--cursor-grid-size, 60px) var(--cursor-grid-size, 60px);
+  background-position: center;
+}
+
+.cursor-grid__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cursor-grid--pattern:not(.cursor-grid--ready)::before {
+  background-image: none;
+  background-color: var(--cursor-grid-color, #fff);
+  -webkit-mask: var(--cursor-grid-pattern) center / var(--cursor-grid-pattern-fit, cover) no-repeat;
+  mask: var(--cursor-grid-pattern) center / var(--cursor-grid-pattern-fit, cover) no-repeat;
+}
+
+.cursor-grid--image-ink::before {
+  display: none;
+}
+
+.cursor-grid__pattern-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: var(--cursor-grid-opacity, .08);
+}
+
+.cursor-grid--ready .cursor-grid__pattern-fallback {
+  display: none;
+}
+
+.cursor-grid__content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
