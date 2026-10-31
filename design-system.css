@@ -4135,14 +4135,6 @@ html.dark-mode input.room-name-input {
   text-decoration: none;
 }
 
-body.page-about {
-  --about-band: #294563;
-}
-
-html.dark-mode body.page-about {
-  --about-band: #1b2c3d;
-}
-
 body.page-about .app-nav {
   position: sticky;
 }
@@ -4150,63 +4142,73 @@ body.page-about .app-nav {
 .page-about h1 em,
 .page-about h2 em,
 .about-closing em {
+  color: var(--bp-primary);
   font-style: italic;
 }
 
 .about-eyebrow {
-  margin: 0 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 7px 14px;
+  border: 1px solid var(--bp-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bp-surface) 80%, transparent);
   color: var(--bp-primary);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: .1em;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
-/* Full-bleed hero: the floating nav sits on top of it. */
-.about-hero {
-  margin-top: -82px;
-  padding: 150px 24px 96px;
-  background:
-    linear-gradient(rgba(184, 212, 232, .08) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, rgba(184, 212, 232, .08) 1px, transparent 1px) 0 0 / 40px 40px,
-    var(--about-band);
-  color: #fff;
+.about-eyebrow::before {
+  width: 7px;
+  height: 7px;
+  content: "";
+  border-radius: 50%;
+  background: var(--bp-green);
 }
 
-.about-hero-inner {
+.about-hero {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  grid-template-columns: 1.1fr 1fr;
   align-items: center;
   gap: 56px;
-  width: min(100%, 1080px);
+  width: min(100% - 48px, 1120px);
   margin-inline: auto;
+  padding: 72px 0 88px;
 }
 
 .about-hero h1 {
   margin: 0 0 18px;
-  color: #fff !important;
-  font-size: clamp(44px, 6.4vw, 76px);
+  font-size: clamp(44px, 6.2vw, 76px);
   line-height: 1.02;
+  letter-spacing: -.04em;
 }
 
-.about-hero p {
+.about-hero-copy > p:not(.about-eyebrow) {
   max-width: 460px;
   margin: 0 0 28px;
-  color: rgba(255, 255, 255, .8);
+  color: var(--bp-muted);
   font-size: 18px;
   line-height: 1.55;
 }
 
-.about-hero-plan {
+.about-plan-card {
+  padding: 30px;
+  transform: rotate(2deg);
+  border: 1px solid var(--bp-border);
+  border-radius: 24px;
+  background: var(--bp-surface);
+  box-shadow: 0 28px 80px rgba(46, 58, 68, .14);
+  color: var(--bp-primary);
+}
+
+.about-plan-card svg {
   display: block;
   width: 100%;
   height: auto;
-  transform: rotate(3deg);
-  color: var(--bp-blue);
-}
-
-html.dark-mode .about-hero-plan {
-  color: #7ea8c9;
 }
 
 .about-actions {
@@ -4216,12 +4218,16 @@ html.dark-mode .about-hero-plan {
 }
 
 .page-about .about-btn {
-  padding: 12px 24px;
-  border: 1px solid rgba(255, 255, 255, .6);
-  border-radius: 999px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: 1px solid var(--bp-border);
+  border-radius: 14px;
+  background: var(--bp-surface);
+  color: var(--bp-ink);
+  font-size: 15px;
+  font-weight: 700;
   transition: transform .22s cubic-bezier(.2, .8, .2, 1);
 }
 
@@ -4230,96 +4236,76 @@ html.dark-mode .about-hero-plan {
 }
 
 .page-about .about-btn-primary {
-  border-color: #fff;
-  background: #fff;
-  color: #294563;
+  border-color: var(--bp-primary);
+  background: var(--bp-primary);
+  box-shadow: 0 12px 26px rgba(61, 90, 128, .24);
+  color: var(--bp-bg);
 }
 
-/* Team: the photos straddle the curved edge of the tinted band above them. */
 .about-team-section {
-  position: relative;
-  padding: 72px 24px 84px;
-  scroll-margin-top: 70px;
-  background: var(--bp-bg);
-}
-
-.about-team-section::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 344px;
-  content: "";
-  border-radius: 0 0 50% 50% / 0 0 56px 56px;
-  background: var(--bp-secondary);
+  width: min(100% - 48px, 1120px);
+  margin-inline: auto;
+  padding-bottom: 88px;
+  scroll-margin-top: 90px;
 }
 
 .about-team-section h2 {
-  position: relative;
   max-width: 760px;
-  margin: 0 auto 44px;
-  color: var(--bp-muted);
-  font-size: clamp(24px, 3vw, 30px);
-  line-height: 1.3;
+  margin: 0 auto 76px;
+  font-size: clamp(26px, 3.4vw, 36px);
+  line-height: 1.22;
   text-align: center;
 }
 
 .about-team-section h2 strong {
-  color: var(--bp-ink);
+  color: var(--bp-primary);
   font-weight: 500;
 }
 
 .about-team {
-  position: relative;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 28px;
-  width: min(100%, 1080px);
-  margin-inline: auto;
+  gap: 76px 18px;
 }
 
+/* The photo straddles the top edge of each card. */
 .about-member {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 0 20px 22px;
+  border: 1px solid var(--bp-border);
+  border-radius: 20px;
+  background: var(--bp-surface);
+  box-shadow: var(--bp-shadow);
   text-align: center;
 }
 
 .about-photo {
   display: block;
-  width: 132px;
-  height: 132px;
-  margin-bottom: 20px;
+  width: 116px;
+  height: 116px;
+  margin: -58px 0 16px;
   object-fit: cover;
-  border: 5px solid var(--bp-bg);
+  border: 5px solid var(--bp-surface);
   border-radius: 50%;
   box-shadow: var(--bp-shadow);
   transition: transform .3s cubic-bezier(.2, .8, .2, 1);
 }
 
 .about-member:hover .about-photo {
-  transform: translateY(-6px);
+  transform: translateY(-5px);
 }
 
 .about-member h3 {
-  margin: 0;
-  padding-bottom: 14px;
-  font-size: 22px;
-}
-
-.about-member h3::after {
-  display: block;
-  width: 36px;
-  height: 1px;
-  margin: 14px auto 0;
-  content: "";
-  background: var(--bp-primary);
+  margin: 0 0 12px;
+  font-size: 21px;
 }
 
 .about-member p {
   margin: 0 0 16px;
   color: var(--bp-muted);
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.6;
 }
 
@@ -4341,25 +4327,30 @@ html.dark-mode .about-hero-plan {
   font-size: 18px;
 }
 
-/* Venture Build: art on the left, text panel on the right. */
+/* Same rounded navy panel as the landing page's How it works section. */
 .about-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 48px;
+  width: min(100% - 48px, 1120px);
+  margin-inline: auto;
+  padding: 58px;
+  border-radius: 30px;
+  background: linear-gradient(145deg, rgba(61, 90, 128, .96), rgba(41, 69, 99, .98));
+  box-shadow: 0 30px 80px rgba(41, 69, 99, .2);
+  color: #fff;
 }
 
-.about-split-art {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 56px 40px;
-  background: var(--about-band);
+html.dark-mode .about-split {
+  background: linear-gradient(145deg, #223447, #1b2c3d);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .35);
 }
 
 .about-notes {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  width: min(100%, 420px);
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -4368,122 +4359,98 @@ html.dark-mode .about-hero-plan {
 .about-notes li {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 10px;
-  min-height: 148px;
-  padding: 18px 14px;
-  transform: rotate(-2deg);
-  background: var(--bp-surface);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, .22);
-  color: var(--bp-ink);
-  font-family: "Fraunces", serif;
-  font-size: 15px;
-  font-style: italic;
-  line-height: 1.35;
-  text-align: center;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .07);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
 }
-
-.about-notes li:nth-child(2) { transform: rotate(1.5deg); background: var(--bp-blue-soft); }
-.about-notes li:nth-child(3) { transform: rotate(1deg); background: var(--bp-secondary); }
-.about-notes li:nth-child(4) { transform: rotate(-1.5deg); background: var(--bp-rose-soft); }
-html.dark-mode .about-notes li:nth-child(4) { background: #2f3f52; }
 
 .about-notes iconify-icon {
-  color: var(--bp-primary);
-  font-size: 30px;
+  color: var(--bp-blue);
+  font-size: 26px;
 }
 
-.about-split-panel {
-  padding: 64px 56px;
-  background: var(--bp-surface);
+.about-split .about-eyebrow {
+  border-color: rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
 }
 
-.about-split-panel h2 {
-  margin: 0 0 18px;
+.about-split h2 {
+  margin: 0 0 16px;
+  color: #fff !important;
   font-size: clamp(32px, 3.6vw, 42px);
   line-height: 1.12;
 }
 
+.about-split h2 em {
+  color: var(--bp-blue);
+}
+
 .about-split-panel p:not(.about-eyebrow) {
-  max-width: 480px;
-  margin: 0 0 14px;
-  color: var(--bp-muted);
-  font-size: 16px;
+  margin: 0 0 12px;
+  color: rgba(255, 255, 255, .76);
+  font-size: 15px;
   line-height: 1.65;
 }
 
 .about-closing {
-  position: relative;
-  padding: 72px 24px 76px;
-  background: var(--bp-bg);
+  padding: 96px 24px 104px;
   text-align: center;
 }
 
-.about-closing-badge {
-  position: absolute;
-  top: -32px;
-  left: 50%;
-  display: grid;
-  width: 64px;
-  height: 64px;
-  place-items: center;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: var(--bp-bg);
-  color: var(--bp-primary);
-  font-size: 30px;
-}
-
 .about-closing p {
-  margin: 0 0 16px;
+  margin: 0 0 26px;
   color: var(--bp-ink);
   font-family: "Fraunces", serif;
-  font-size: clamp(26px, 3.4vw, 34px);
+  font-size: clamp(36px, 5vw, 60px);
+  letter-spacing: -.03em;
+  line-height: 1.05;
 }
 
-.page-about .about-closing-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--bp-primary);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+.about-closing .about-actions {
+  justify-content: center;
 }
 
-.page-about .about-closing-link:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 960px) {
+@media (max-width: 1000px) {
   .about-team { grid-template-columns: repeat(2, 1fr); }
-  .about-team-section::before { height: 372px; }
 }
 
 @media (max-width: 860px) {
-  .about-hero { padding: 124px 20px 64px; }
-  .about-hero-inner {
+  .about-hero {
     grid-template-columns: 1fr;
     gap: 36px;
+    padding: 44px 0 64px;
   }
-  .about-hero-plan { max-width: 380px; }
-  .about-split { grid-template-columns: 1fr; }
-  .about-split-art { order: 1; }
-  .about-split-panel { padding: 48px 24px; }
+  .about-plan-card { max-width: 420px; }
+  .about-split {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 36px 24px;
+  }
+  .about-split-panel { order: -1; }
 }
 
-@media (max-width: 560px) {
-  .about-hero { margin-top: -62px; }
-  .about-team { grid-template-columns: 1fr; gap: 40px; }
-  .about-team-section { padding: 52px 20px 64px; }
-  .about-team-section::before { height: 356px; }
-  .about-split-art { padding: 44px 20px; }
+@media (max-width: 600px) {
+  .about-hero,
+  .about-team-section,
+  .about-split { width: min(100% - 32px, 1120px); }
+  .about-team { grid-template-columns: 1fr; }
+  .about-closing { padding: 72px 16px 80px; }
+}
+
+@media (max-width: 420px) {
+  .about-notes { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .about-photo { transition: none; }
+}
 
 /* ---------------------------------------------------------------------------
    Photo render pane (results page). Sits in the same dual-pane slot the 3D
