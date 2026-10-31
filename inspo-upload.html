@@ -269,8 +269,8 @@
 
         <!-- Room Features -->
         <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
-          <h3 class="text-2xl font-bold">Room Features <span style="color:#ef4444;">*</span></h3>
-          <p class="text-[#F7F4D5]/60">Select up to 3 essential features. <span class="text-[#D3968C]" id="feature-limit-note"></span></p>
+          <h3 class="text-2xl font-bold">Room Features <span class="text-base font-medium text-[#F7F4D5]/60">(optional)</span></h3>
+          <p class="text-[#F7F4D5]/60">Add as many as you like, or skip this. <span class="text-[#D3968C]" id="feature-count-note"></span></p>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="feature-grid"></div>
         </div>
 
@@ -547,7 +547,7 @@
       if (Array.isArray(saved.selectedColors))
         state.selectedColors = saved.selectedColors.filter(c => c && typeof c.hex === 'string').slice(0, 3);
       if (Array.isArray(saved.selectedFeatures))
-        state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string').slice(0, 3);
+        state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string');
       if (typeof saved.selectedBathFixture === 'string') state.selectedBathFixture = saved.selectedBathFixture;
     }
     // Restore the "Other" room-type field into the DOM. Local image files
@@ -903,31 +903,27 @@
             state.selectedFeatures.splice(idx, 1);
             btn.classList.remove('selected');
           } else {
-            if (state.selectedFeatures.length >= 3) return;
             state.selectedFeatures.push(f);
             btn.classList.add('selected');
           }
-          updateFeatureLimit();
+          updateFeatureCount();
           checkStep2Valid();
         });
         grid.appendChild(btn);
       });
-      updateFeatureLimit();
+      updateFeatureCount();
     }
 
-    function updateFeatureLimit() {
-      const rem = 3 - state.selectedFeatures.length;
-      document.getElementById('feature-limit-note').textContent =
-        rem > 0 ? `(${rem} remaining)` : '(maximum reached)';
-      document.querySelectorAll('#feature-grid .option-btn:not(.selected)').forEach(b =>
-        b.classList.toggle('disabled', state.selectedFeatures.length >= 3));
+    function updateFeatureCount() {
+      const count = state.selectedFeatures.length;
+      document.getElementById('feature-count-note').textContent = count > 0 ? `(${count} selected)` : '';
     }
 
     function checkStep2Valid() {
       const bathOk = !isBathroomRoomType() || !!state.selectedBathFixture;
       document.getElementById('step2-analyze').disabled =
         !state.selectedRoomType || !state.selectedStyle || !state.selectedMood ||
-        state.selectedColors.length === 0 || state.selectedFeatures.length === 0 || !bathOk;
+        state.selectedColors.length === 0 || !bathOk;
     }
 
     document.getElementById('step2-back').addEventListener('click', () => showStep(1));

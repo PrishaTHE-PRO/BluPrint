@@ -725,7 +725,8 @@
     }
 
     @media (max-width: 900px) {
-      .nav-links { display: none; }
+      .nav-links { margin-right: 0; }
+      .nav-links a:not(.nav-about) { display: none; }
       .site-nav {
         width: calc(100% - 24px);
         padding: 8px 10px 8px 14px;
@@ -768,8 +769,9 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      .nav-links { margin-left: auto; font-size: 13px; white-space: nowrap; }
       .nav-signin { display: none; }
-      .nav-actions { gap: 6px; }
+      .nav-actions { gap: 6px; margin-left: 0; }
       .nav-theme-btn,
       .nav-theme-switch {
         flex-shrink: 0;
@@ -805,6 +807,10 @@
       footer { gap: 28px; }
       .footer-bar { align-items: flex-start; flex-direction: column; gap: 16px; }
     }
+    @media (max-width: 340px) {
+      .nav-links { font-size: 12px; }
+      .site-nav .nav-cta > [aria-hidden="true"] { display: none; }
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
@@ -823,6 +829,7 @@
       <a href="#features">What it does</a>
       <a href="#how-it-works">How it works</a>
       <a href="#start">Why BluPrint</a>
+      <a class="nav-about" href="about.html">About us</a>
     </div>
     <div class="nav-actions">
       <div data-theme-switch class="nav-theme-btn nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>

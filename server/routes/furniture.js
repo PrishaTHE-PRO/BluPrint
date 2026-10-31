@@ -253,43 +253,15 @@ function withBathroomFixture(baseCategories, roomType, features = []) {
   ];
 }
 
-function categoriesForFeatures(features, baseCategories, roomType = "") {
+function categoriesForFeatures(features, baseCategories) {
   const existing = new Set(baseCategories.map((category) => category.key));
   // Bath fixtures are handled by withBathroomFixture — don't double-add.
   const skip = new Set(["bathtub", "bath tub", "standing shower", "walk-in shower", "walk in shower"]);
-  const extras = features
+  return features
     .map((feature) => String(feature || "").trim().toLowerCase())
     .filter((feature) => !skip.has(feature))
     .map((feature) => FEATURE_CATEGORIES[feature])
     .filter((category) => category && !existing.has(category.key));
-
-  // Bedrooms get overcrowded fast — keep at most two accents, prefer small
-  // pieces, and never ship a cluster of chairs.
-  if (String(roomType || "").toLowerCase().includes("bed")) {
-    const seating = new Set(["reading_nook", "accent_chair", "rocking_chair"]);
-    const large = new Set(["wardrobe", "workspace_desk", "vanity_station", "bookcase"]);
-    const smallOrder = [
-      "indoor_plants",
-      "wall_art",
-      "full_length_mirror",
-      "floating_shelves",
-      "smart_lighting",
-    ];
-    const picked = [];
-    const seat = extras.find((c) => seating.has(c.key));
-    if (seat) picked.push(seat);
-    const big = extras.find((c) => large.has(c.key));
-    // Prefer a chair corner over another bulky cabinet when we already have a dresser.
-    if (big && picked.length < 2 && !seat) picked.push(big);
-    for (const key of smallOrder) {
-      if (picked.length >= 2) break;
-      const match = extras.find((c) => c.key === key);
-      if (match) picked.push(match);
-    }
-    return picked;
-  }
-
-  return extras;
 }
 
 function parsePrice(raw) {
@@ -873,7 +845,7 @@ router.get("/:roomId/furniture", async (req, res) => {
   );
   const categories = [
     ...baseCategories,
-    ...categoriesForFeatures(roomFeatures, baseCategories, roomType),
+    ...categoriesForFeatures(roomFeatures, baseCategories),
   ];
   console.log(
     "[furniture] roomType=",

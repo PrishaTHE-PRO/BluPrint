@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('blueprintTheme') === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Meet the team behind BluPrint.">
+  <title>BluPrint | About Us</title>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="./design-system.css">
+</head>
+<body class="page-about">
+  <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
+
+  <nav class="app-nav" aria-label="Main navigation">
+    <a href="index.html" class="app-brand" aria-label="BluPrint home"><span>BluPrint</span></a>
+    <div class="app-nav-links">
+      <a href="index.html" aria-label="Home"><iconify-icon icon="ph:house-duotone"></iconify-icon><span class="app-nav-label">Home</span></a>
+      <a href="about.html" class="active" aria-label="About us" aria-current="page"><iconify-icon icon="ph:users-three-duotone"></iconify-icon><span class="app-nav-label">About us</span></a>
+    </div>
+    <div class="app-nav-actions">
+      <div data-theme-switch class="nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
+    </div>
+  </nav>
+
+  <main>
+    <header class="about-hero animate-reveal">
+      <div class="about-hero-copy">
+        <p class="about-eyebrow">About BluPrint</p>
+        <h1>Four students, one <em>better way</em> to plan a <em>room</em>.</h1>
+        <p class="about-lede">BluPrint turns your room dimensions, inspiration, and budget into a shoppable 2D interior plan.</p>
+        <div class="about-actions">
+          <a class="about-btn" href="#team">Meet the team</a>
+          <a class="about-btn about-btn-primary" href="login.html">Start designing</a>
+        </div>
+      </div>
+
+      <div class="about-plan" aria-hidden="true">
+        <div class="about-plan-sheet">
+          <svg viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke-width="4" d="M20 20H180M216 20H300V220H130M94 220H20V20"/>
+            <path d="M180 20a36 36 0 0 1-36 36M144 20v36M94 220a36 36 0 0 1 36-36M130 220v-36"/>
+            <path d="M190 20v80h110M20 130h90v90"/>
+            <rect x="214" y="124" width="66" height="76" rx="6"/>
+            <path d="M214 148h66"/>
+            <rect x="38" y="38" width="84" height="56" rx="6"/>
+            <circle cx="66" cy="175" r="24"/>
+            <rect x="214" y="40" width="66" height="26" rx="4"/>
+            <circle cx="150" cy="130" r="8"/>
+          </svg>
+        </div>
+        <div class="about-stamp-wrap">
+          <div class="about-stamp">
+            <span>BP</span>
+            <iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+            <span>&rsquo;26</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="about-marquee" aria-hidden="true">
+      <div class="about-marquee-track">
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+      </div>
+      <div class="about-marquee-track">
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+        <span>Your room, thoughtfully planned</span><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
+      </div>
+    </div>
+
+    <section class="about-team-section" id="team" aria-labelledby="about-team-heading">
+      <h2 id="about-team-heading">Meet the <em>team</em></h2>
+      <div class="about-team">
+        <article class="about-member about-member-sand">
+          <div class="about-photo" aria-hidden="true">PA</div>
+          <div class="about-folder">
+            <span class="about-folder-tab">No. 01</span>
+            <iconify-icon class="about-doodle" icon="ph:paperclip-duotone" aria-hidden="true"></iconify-icon>
+            <h3>Prisha Agarwalla</h3>
+            <p class="about-role">[Placeholder: role at BluPrint]</p>
+            <p>Prisha studies Computer Science and Data Science at UW&ndash;Madison and is an AI/Technical Builder at the Tech Exploration Lab. A YC Startup School 2026 participant, Prisha also won the Notability Track at Cal Hacks 13.0.</p>
+            <a class="about-link" href="https://www.linkedin.com/in/prisha-agarwalla-126a15285/" target="_blank" rel="noopener noreferrer" aria-label="Prisha Agarwalla on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+          </div>
+        </article>
+
+        <article class="about-member about-member-rose">
+          <div class="about-photo" aria-hidden="true">AA</div>
+          <div class="about-folder">
+            <span class="about-folder-tab">No. 02</span>
+            <iconify-icon class="about-doodle" icon="ph:ruler-duotone" aria-hidden="true"></iconify-icon>
+            <h3>Aditi Amarnath</h3>
+            <p class="about-role">[Placeholder: role at BluPrint]</p>
+            <p>Aditi studies Computer Science and Statistics at UW&ndash;Madison and is an undergraduate researcher in Industrial and Systems Engineering, working on optimization and probabilistic models. Aditi was previously a Cloud Analytics Intern at HGS.</p>
+            <a class="about-link" href="https://www.linkedin.com/in/aditi-amarnath/" target="_blank" rel="noopener noreferrer" aria-label="Aditi Amarnath on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+          </div>
+        </article>
+
+        <article class="about-member about-member-blue">
+          <div class="about-photo" aria-hidden="true">NG</div>
+          <div class="about-folder">
+            <span class="about-folder-tab">No. 03</span>
+            <iconify-icon class="about-doodle" icon="ph:push-pin-duotone" aria-hidden="true"></iconify-icon>
+            <h3>Nidhi Gandhi</h3>
+            <p class="about-role">[Placeholder: role at BluPrint]</p>
+            <p>Nidhi studies Computer Science at UW&ndash;Madison, with a background in data science volunteering and university research. Nidhi is part of Design Interactive and the Product Management Club, and won 1st place at the Badgers for Good Design-a-thon.</p>
+            <a class="about-link" href="https://www.linkedin.com/in/nidhi-gandhi1/" target="_blank" rel="noopener noreferrer" aria-label="Nidhi Gandhi on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+          </div>
+        </article>
+
+        <article class="about-member about-member-sky">
+          <div class="about-photo" aria-hidden="true">SG</div>
+          <div class="about-folder">
+            <span class="about-folder-tab">No. 04</span>
+            <iconify-icon class="about-doodle" icon="ph:compass-tool-duotone" aria-hidden="true"></iconify-icon>
+            <h3>Saanvi Gandhari</h3>
+            <p class="about-role">[Placeholder: role at BluPrint]</p>
+            <p>Saanvi studies Computer Science and Data Science at UW&ndash;Madison and is a Lab Associate and AI/Tech Builder at the Tech Exploration Lab. Saanvi is also a Project Manager at Design Interactive and won 1st place at the Badgers for Good Design-a-thon.</p>
+            <a class="about-link" href="https://www.linkedin.com/in/saanvi-gandhari/" target="_blank" rel="noopener noreferrer" aria-label="Saanvi Gandhari on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="about-band" aria-labelledby="about-stage-heading">
+      <p class="about-eyebrow">Where we are now</p>
+      <h2 id="about-stage-heading">Stage 2: <em>Venture Build</em></h2>
+      <p class="about-band-copy">We&rsquo;re currently in the Venture Build stage at the UW&ndash;Madison Tech Exploration Lab, where we&rsquo;re working to make BluPrint better. This semester, we&rsquo;re collaborating with MBA students in the Wisconsin School of Business&rsquo;s New Product Innovation course, alongside industry mentors and alumni advisors.</p>
+      <ul class="about-notes">
+        <li><iconify-icon icon="ph:map-trifold-duotone" aria-hidden="true"></iconify-icon>Sharpening our market</li>
+        <li><iconify-icon icon="ph:diamond-duotone" aria-hidden="true"></iconify-icon>Strengthening our value proposition</li>
+        <li><iconify-icon icon="ph:path-duotone" aria-hidden="true"></iconify-icon>Shaping our go-to-market strategy</li>
+        <li><iconify-icon icon="ph:handshake-duotone" aria-hidden="true"></iconify-icon>Preparing for early customers</li>
+      </ul>
+    </section>
+
+    <section class="about-story" aria-labelledby="about-story-heading">
+      <div class="about-story-wrap">
+        <div class="about-story-card">
+          <h2 id="about-story-heading">Why we <em>started</em></h2>
+          <p>[Placeholder: why your team started BluPrint]</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./theme-toggle.js" defer></script>
+  <script type="module" src="/src/theme-switch.tsx"></script>
+</body>
+</html>

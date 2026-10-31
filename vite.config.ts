@@ -15,6 +15,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main:           'index.html',
+        about:          'about.html',
         login:          'login.html',
         dashboard:      'dashboard.html',
         roomResult:     'room-result.html',
