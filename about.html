@@ -32,113 +32,84 @@
   </nav>
 
   <main>
-    <header class="about-hero animate-reveal">
-      <div class="about-hero-copy">
-        <p class="about-eyebrow">About BluPrint</p>
-        <h1>Four students, one <em>better way</em> to plan a <em>room</em>.</h1>
-        <p class="about-lede">BluPrint turns your room dimensions, inspiration, and budget into a shoppable 2D interior plan.</p>
-        <div class="about-actions">
-          <a class="about-btn" href="#team">Meet the team</a>
-          <a class="about-btn about-btn-primary" href="login.html">Start designing</a>
-        </div>
-      </div>
-
-      <div class="about-plan" aria-hidden="true">
-        <div class="about-plan-sheet">
-          <svg viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path stroke-width="4" d="M20 20H180M216 20H300V220H130M94 220H20V20"/>
-            <path d="M180 20a36 36 0 0 1-36 36M144 20v36M94 220a36 36 0 0 1 36-36M130 220v-36"/>
-            <path d="M190 20v80h110M20 130h90v90"/>
-            <rect x="214" y="124" width="66" height="76" rx="6"/>
-            <path d="M214 148h66"/>
-            <rect x="38" y="38" width="84" height="56" rx="6"/>
-            <circle cx="66" cy="175" r="24"/>
-            <rect x="214" y="40" width="66" height="26" rx="4"/>
-            <circle cx="150" cy="130" r="8"/>
-          </svg>
-        </div>
-        <div class="about-stamp-wrap">
-          <div class="about-stamp">
-            <span>BP</span>
-            <iconify-icon icon="ph:compass-tool-duotone"></iconify-icon>
-            <span>&rsquo;26</span>
+    <header class="about-hero">
+      <div class="about-hero-inner animate-reveal">
+        <div class="about-hero-copy">
+          <h1>Four students, one <em>better way</em> to plan a <em>room</em>.</h1>
+          <p>BluPrint turns your room dimensions, inspiration, and budget into a shoppable 2D interior plan.</p>
+          <div class="about-actions">
+            <a class="about-btn about-btn-primary" href="login.html">Start designing</a>
+            <a class="about-btn" href="#team">Meet the team</a>
           </div>
         </div>
+        <svg class="about-hero-plan" viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path stroke-width="4" d="M20 20H180M216 20H300V220H130M94 220H20V20"/>
+          <path d="M180 20a36 36 0 0 1-36 36M144 20v36M94 220a36 36 0 0 1 36-36M130 220v-36"/>
+          <path d="M190 20v80h110M20 130h90v90"/>
+          <rect x="214" y="124" width="66" height="76" rx="6"/>
+          <path d="M214 148h66"/>
+          <rect x="38" y="38" width="84" height="56" rx="6"/>
+          <circle cx="66" cy="175" r="24"/>
+          <rect x="214" y="40" width="66" height="26" rx="4"/>
+          <circle cx="150" cy="130" r="8"/>
+        </svg>
       </div>
     </header>
 
     <section class="about-team-section" id="team" aria-labelledby="about-team-heading">
-      <h2 id="about-team-heading">Meet the <em>team</em></h2>
+      <h2 id="about-team-heading">We&rsquo;re building <strong>beautiful</strong> &amp; <strong>functional</strong> room plans that fit your space, style, and budget. Meet the team:</h2>
       <div class="about-team">
-        <article class="about-member about-member-sand">
-          <div class="about-photo" aria-hidden="true">PA</div>
-          <div class="about-folder">
-            <span class="about-folder-tab">No. 01</span>
-            <iconify-icon class="about-doodle" icon="ph:paperclip-duotone" aria-hidden="true"></iconify-icon>
-            <h3>Prisha Agarwalla</h3>
-            <p class="about-role">[Placeholder: role at BluPrint]</p>
-            <p>Prisha studies Computer Science and Data Science at UW&ndash;Madison and is an AI/Technical Builder at the Tech Exploration Lab. A YC Startup School 2026 participant, Prisha also won the Notability Track at Cal Hacks 13.0.</p>
-            <a class="about-link" href="https://www.linkedin.com/in/prisha-agarwalla-126a15285/" target="_blank" rel="noopener noreferrer" aria-label="Prisha Agarwalla on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
-          </div>
+        <article class="about-member">
+          <img class="about-photo" src="/team/prisha.jpg" alt="Prisha Agarwalla" width="208" height="208">
+          <h3>Prisha Agarwalla</h3>
+          <p>Prisha studies Computer Science and Data Science at UW&ndash;Madison and is an AI/Technical Builder at the Tech Exploration Lab. A YC Startup School 2026 participant, Prisha also won the Notability Track at Cal Hacks 13.0.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/prisha-agarwalla-126a15285/" target="_blank" rel="noopener noreferrer" aria-label="Prisha Agarwalla on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
         </article>
 
-        <article class="about-member about-member-rose">
-          <div class="about-photo" aria-hidden="true">AA</div>
-          <div class="about-folder">
-            <span class="about-folder-tab">No. 02</span>
-            <iconify-icon class="about-doodle" icon="ph:ruler-duotone" aria-hidden="true"></iconify-icon>
-            <h3>Aditi Amarnath</h3>
-            <p class="about-role">[Placeholder: role at BluPrint]</p>
-            <p>Aditi studies Computer Science and Statistics at UW&ndash;Madison and is an undergraduate researcher in Industrial and Systems Engineering, working on optimization and probabilistic models. Aditi was previously a Cloud Analytics Intern at HGS.</p>
-            <a class="about-link" href="https://www.linkedin.com/in/aditi-amarnath/" target="_blank" rel="noopener noreferrer" aria-label="Aditi Amarnath on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
-          </div>
+        <article class="about-member">
+          <img class="about-photo" src="/team/aditi.jpg" alt="Aditi Amarnath" width="208" height="208">
+          <h3>Aditi Amarnath</h3>
+          <p>Aditi studies Computer Science and Statistics at UW&ndash;Madison and is an undergraduate researcher in Industrial and Systems Engineering, working on optimization and probabilistic models. Aditi was previously a Cloud Analytics Intern at HGS.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/aditi-amarnath/" target="_blank" rel="noopener noreferrer" aria-label="Aditi Amarnath on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
         </article>
 
-        <article class="about-member about-member-blue">
-          <div class="about-photo" aria-hidden="true">NG</div>
-          <div class="about-folder">
-            <span class="about-folder-tab">No. 03</span>
-            <iconify-icon class="about-doodle" icon="ph:push-pin-duotone" aria-hidden="true"></iconify-icon>
-            <h3>Nidhi Gandhi</h3>
-            <p class="about-role">[Placeholder: role at BluPrint]</p>
-            <p>Nidhi studies Computer Science at UW&ndash;Madison, with a background in data science volunteering and university research. Nidhi is part of Design Interactive and the Product Management Club, and won 1st place at the Badgers for Good Design-a-thon.</p>
-            <a class="about-link" href="https://www.linkedin.com/in/nidhi-gandhi1/" target="_blank" rel="noopener noreferrer" aria-label="Nidhi Gandhi on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
-          </div>
+        <article class="about-member">
+          <img class="about-photo" src="/team/nidhi.jpg" alt="Nidhi Gandhi" width="208" height="208">
+          <h3>Nidhi Gandhi</h3>
+          <p>Nidhi studies Computer Science at UW&ndash;Madison, with a background in data science volunteering and university research. Nidhi is part of Design Interactive and the Product Management Club, and won 1st place at the Badgers for Good Design-a-thon.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/nidhi-gandhi1/" target="_blank" rel="noopener noreferrer" aria-label="Nidhi Gandhi on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
         </article>
 
-        <article class="about-member about-member-sky">
-          <div class="about-photo" aria-hidden="true">SG</div>
-          <div class="about-folder">
-            <span class="about-folder-tab">No. 04</span>
-            <iconify-icon class="about-doodle" icon="ph:compass-tool-duotone" aria-hidden="true"></iconify-icon>
-            <h3>Saanvi Gandhari</h3>
-            <p class="about-role">[Placeholder: role at BluPrint]</p>
-            <p>Saanvi studies Computer Science and Data Science at UW&ndash;Madison and is a Lab Associate and AI/Tech Builder at the Tech Exploration Lab. Saanvi is also a Project Manager at Design Interactive and won 1st place at the Badgers for Good Design-a-thon.</p>
-            <a class="about-link" href="https://www.linkedin.com/in/saanvi-gandhari/" target="_blank" rel="noopener noreferrer" aria-label="Saanvi Gandhari on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
-          </div>
+        <article class="about-member">
+          <img class="about-photo" src="/team/saanvi.jpg" alt="Saanvi Gandhari" width="208" height="208">
+          <h3>Saanvi Gandhari</h3>
+          <p>Saanvi studies Computer Science and Data Science at UW&ndash;Madison and is a Lab Associate and AI/Tech Builder at the Tech Exploration Lab. Saanvi is also a Project Manager at Design Interactive and won 1st place at the Badgers for Good Design-a-thon.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/saanvi-gandhari/" target="_blank" rel="noopener noreferrer" aria-label="Saanvi Gandhari on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
         </article>
       </div>
     </section>
 
-    <section class="about-band" aria-labelledby="about-stage-heading">
-      <p class="about-eyebrow">Where we are now</p>
-      <h2 id="about-stage-heading">Stage 2: <em>Venture Build</em></h2>
-      <p class="about-band-copy">We&rsquo;re currently in the Venture Build stage at the UW&ndash;Madison Tech Exploration Lab, where we&rsquo;re working to make BluPrint better. This semester, we&rsquo;re collaborating with MBA students in the Wisconsin School of Business&rsquo;s New Product Innovation course, alongside industry mentors and alumni advisors.</p>
-      <ul class="about-notes">
-        <li><iconify-icon icon="ph:map-trifold-duotone" aria-hidden="true"></iconify-icon>Sharpening our market</li>
-        <li><iconify-icon icon="ph:diamond-duotone" aria-hidden="true"></iconify-icon>Strengthening our value proposition</li>
-        <li><iconify-icon icon="ph:path-duotone" aria-hidden="true"></iconify-icon>Shaping our go-to-market strategy</li>
-        <li><iconify-icon icon="ph:handshake-duotone" aria-hidden="true"></iconify-icon>Preparing for early customers</li>
-      </ul>
+    <section class="about-split" aria-labelledby="about-stage-heading">
+      <div class="about-split-art" aria-hidden="true">
+        <ul class="about-notes">
+          <li><iconify-icon icon="ph:map-trifold-duotone"></iconify-icon>Sharpening our market</li>
+          <li><iconify-icon icon="ph:diamond-duotone"></iconify-icon>Strengthening our value proposition</li>
+          <li><iconify-icon icon="ph:path-duotone"></iconify-icon>Shaping our go-to-market strategy</li>
+          <li><iconify-icon icon="ph:handshake-duotone"></iconify-icon>Preparing for early customers</li>
+        </ul>
+      </div>
+      <div class="about-split-panel">
+        <p class="about-eyebrow">Where we are now</p>
+        <h2 id="about-stage-heading">Stage 2: <em>Venture Build</em></h2>
+        <p>We&rsquo;re currently in the Venture Build stage at the UW&ndash;Madison Tech Exploration Lab, where we&rsquo;re working to make BluPrint better.</p>
+        <p>This semester, we&rsquo;re collaborating with MBA students in the Wisconsin School of Business&rsquo;s New Product Innovation course, alongside industry mentors and alumni advisors. Together, we&rsquo;re sharpening our market and value proposition, shaping our go-to-market strategy, and preparing for early customers.</p>
+      </div>
     </section>
 
-    <section class="about-story" aria-labelledby="about-story-heading">
-      <div class="about-story-wrap">
-        <div class="about-story-card">
-          <h2 id="about-story-heading">Why we <em>started</em></h2>
-          <p>[Placeholder: why your team started BluPrint]</p>
-        </div>
-      </div>
+    <section class="about-closing">
+      <div class="about-closing-badge" aria-hidden="true"><iconify-icon icon="ph:compass-tool-duotone"></iconify-icon></div>
+      <p>Your room, <em>thoughtfully</em> planned.</p>
+      <a class="about-closing-link" href="login.html">Start designing <iconify-icon icon="ph:arrow-up-right-bold" aria-hidden="true"></iconify-icon></a>
     </section>
   </main>
 
