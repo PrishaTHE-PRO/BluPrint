@@ -58,7 +58,9 @@
     // and every frame of the 3D canvas. At opacity .10 the wobble was invisible
     // anyway, so the cost bought nothing.
     '  <g>',
-    '    <rect x="18" y="18" width="646" height="476" fill="url(#bp-grid)" opacity=".55"/>',
+    // The grid covers the whole viewBox (10,10 → 670,550). It used to stop at
+    // y=494, which left a bare strip along the bottom of the screen.
+    '    <rect x="10" y="10" width="660" height="540" fill="url(#bp-grid)" opacity=".55"/>',
     '    <rect class="bp-fill" x="40" y="40" width="210" height="210"/>',
     '    <rect class="bp-fill" x="250" y="40" width="200" height="210"/>',
     '    <rect class="bp-fill" x="450" y="40" width="200" height="210"/>',
