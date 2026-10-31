@@ -2085,11 +2085,22 @@ a.workflow-step:focus-visible {
   margin: 0 0 18px;
   text-align: center;
 }
-.how-it-works-panel .inspo-character svg {
+.how-it-works-panel .inspo-character img {
   display: block;
-  width: min(100%, 220px);
-  height: auto;
+  width: auto;
+  height: 190px;
   margin: 0 auto;
+  object-fit: contain;
+  transform-origin: center bottom;
+  filter: drop-shadow(0 14px 18px rgba(61, 90, 128, .18));
+  animation: inspo-character-float 6s ease-in-out infinite;
+}
+@keyframes inspo-character-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .how-it-works-panel .inspo-character img { animation: none; }
 }
 .how-it-works-step {
   display: flex;
