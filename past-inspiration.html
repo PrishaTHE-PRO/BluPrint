@@ -172,7 +172,7 @@
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
-    import { renderProjectRoomPreview, getRoomPreviewLayout } from "./iso-preview.js";
+    import { renderRoomPreview as renderIsoPreview, getRoomPreviewLayout, escapeHtml } from "./iso-preview.js";
 
     const ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
     const FURNITURE_PLACEMENT_STORAGE_KEY = 'blueprintFurniturePlacement';
@@ -287,9 +287,9 @@
     const grid = document.getElementById('all-projects-grid');
     const projectCount = document.getElementById('project-count');
 
-    function renderRoomPreview(room) {
+    function renderRoomPreview(room, opts) {
         try {
-            return renderProjectRoomPreview(room);
+            return renderIsoPreview(room, opts);
         } catch (err) {
             console.error('[past projects preview]', err);
             return `<div class="text-sm text-[#F7F4D5]/50 p-6 text-center">Preview unavailable</div>`;
@@ -382,31 +382,22 @@
                 grid.innerHTML = '';
                 const cards = document.createDocumentFragment();
                 visibleRooms.forEach((room, index) => {
-                const hasDesign = !!(room.style || room.furnitureLayout);
-                const statusLabel = hasDesign ? 'Style Analyzed ✨' : 'Dimensions Set';
-                const statusColor = hasDesign ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
-                const tag = room.style?.styleTag || '';
-                const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                // Same floating-room card as the dashboard: the drawing with its
+                // square footage along the floor edge, and the name underneath.
+                const roomSqft = Math.round(Number(room.sqft) || 0);
+                const roomName = escapeHtml(room.name || 'Untitled Room');
                 const card = document.createElement('div');
-                card.className = 'garden-card ghibli-border p-6 group cursor-pointer project-card-enter';
+                card.className = 'garden-card room-float group cursor-pointer project-card-enter';
                 card.style.setProperty('--card-delay', `${Math.min(index * 55, 330)}ms`);
                 card.innerHTML = `
-                    <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner bg-[#F7F4D5] flex items-center justify-center project-card-preview">
-                        ${renderRoomPreview(room)}
-                        <button class="delete-btn absolute top-5 left-5 w-9 h-9 rounded-full bg-[#0A3323]/70 hover:bg-[#D3968C] text-[#F7F4D5] flex items-center justify-center transition-all backdrop-blur z-10" title="Delete room">
-                            <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
+                    <div class="room-float-preview relative aspect-[16/10] flex items-center justify-center">
+                        ${renderRoomPreview(room, { floorLabel: roomSqft ? `${roomSqft} sq ft` : '' })}
+                        <button class="delete-btn absolute top-2 left-2 w-8 h-8 rounded-full bg-[#0A3323]/70 hover:bg-[#D3968C] text-[#F7F4D5] flex items-center justify-center transition-all backdrop-blur z-10" title="Delete room">
+                            <iconify-icon icon="ph:x-bold" class="text-base"></iconify-icon>
                         </button>
-                        <div class="absolute top-5 right-5">
-                            <span class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[#0A3323] text-sm font-bold shadow-lg">${hasDesign ? 'Complete' : 'In Progress'}</span>
-                        </div>
                     </div>
-                    <div class="px-2 space-y-2">
-                        <h3 class="room-name-display text-3xl font-bold text-[#F7F4D5]">${room.name}</h3>
-                        <p class="text-lg text-[#F7F4D5]/60">${room.sqft} sq ft${tag ? ' · ' + tag : ''}</p>
-                        <div class="pt-6 flex items-center justify-between border-t border-[#F7F4D5]/10 mt-6">
-                            <span class="text-sm ${statusColor}">${statusLabel}</span>
-                            <span class="text-xs text-[#F7F4D5]/30">${date}</span>
-                        </div>
+                    <div class="room-float-label flex items-center justify-center gap-2">
+                        <h3 class="room-name-display text-3xl font-bold text-[#F7F4D5]">${roomName}</h3>
                     </div>`;
                 cards.appendChild(card);
 

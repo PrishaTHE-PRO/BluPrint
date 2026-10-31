@@ -1229,7 +1229,8 @@ button.theme-switch-btn {
    iso-preview.js). */
 /* No border: the tint is a white radial wash, strongest behind the room and
    fading to clear at the card's edges. --float-tint is the centre colour. */
-.page-dashboard #projects-grid .room-float {
+.page-dashboard #projects-grid .room-float,
+.page-projects #all-projects-grid .room-float {
   --float-tint: color-mix(in srgb, #fff 55%, transparent);
   padding: 0 0 14px !important;
   /* .garden-card frosts what's behind it; keep the blueprint crisp here. */
@@ -1240,37 +1241,47 @@ button.theme-switch-btn {
   box-shadow: none !important;
   transform: none !important;
 }
-.page-dashboard #projects-grid .room-float:hover {
+.page-dashboard #projects-grid .room-float:hover,
+.page-projects #all-projects-grid .room-float:hover {
   --float-tint: color-mix(in srgb, #fff 70%, transparent);
   border-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
 }
-html.dark-mode .page-dashboard #projects-grid .room-float {
+html.dark-mode .page-dashboard #projects-grid .room-float,
+html.dark-mode .page-projects #all-projects-grid .room-float {
   --float-tint: color-mix(in srgb, #fff 7%, transparent);
 }
-html.dark-mode .page-dashboard #projects-grid .room-float:hover {
+html.dark-mode .page-dashboard #projects-grid .room-float:hover,
+html.dark-mode .page-projects #all-projects-grid .room-float:hover {
   --float-tint: color-mix(in srgb, #fff 10%, transparent);
 }
-.page-dashboard #projects-grid .room-float-preview { aspect-ratio: 4/3; }
-.page-dashboard #projects-grid .iso-paper { display: none; }
-.page-dashboard #projects-grid .room-float-preview > svg {
+.page-dashboard #projects-grid .room-float-preview,
+.page-projects #all-projects-grid .room-float-preview { aspect-ratio: 4/3; }
+.page-dashboard #projects-grid .iso-paper,
+.page-projects #all-projects-grid .iso-paper { display: none; }
+.page-dashboard #projects-grid .room-float-preview > svg,
+.page-projects #all-projects-grid .room-float-preview > svg {
   filter: drop-shadow(0 14px 16px rgba(28, 23, 20, .14));
   transition: transform .35s cubic-bezier(.22, 1, .36, 1), filter .35s ease;
 }
-.page-dashboard #projects-grid .room-float:hover .room-float-preview > svg {
+.page-dashboard #projects-grid .room-float:hover .room-float-preview > svg,
+.page-projects #all-projects-grid .room-float:hover .room-float-preview > svg {
   transform: translateY(-4px);
   filter: drop-shadow(0 20px 20px rgba(28, 23, 20, .16));
 }
-.page-dashboard #projects-grid .iso-floor-label {
+.page-dashboard #projects-grid .iso-floor-label,
+.page-projects #all-projects-grid .iso-floor-label {
   font-family: "DM Sans", sans-serif;
   font-weight: 500;
   letter-spacing: .06em;
   opacity: .55;
 }
-.page-dashboard #projects-grid .room-float-label { padding: 6px 8px 0; text-align: center; }
+.page-dashboard #projects-grid .room-float-label,
+.page-projects #all-projects-grid .room-float-label { padding: 6px 8px 0; text-align: center; }
 /* The name is the only text on the card, so it carries it: serif and larger. */
-.page-dashboard #projects-grid .room-float-label h3 {
+.page-dashboard #projects-grid .room-float-label h3,
+.page-projects #all-projects-grid .room-float-label h3 {
   color: var(--bp-ink) !important;
   font-family: "Fraunces", serif !important;
   font-size: 20px !important;
@@ -1278,9 +1289,12 @@ html.dark-mode .page-dashboard #projects-grid .room-float:hover {
   letter-spacing: -.015em;
   line-height: 1.2;
 }
-.page-dashboard #projects-grid .room-float .delete-btn { opacity: 0; transition: opacity .2s ease, background .2s ease; }
+.page-dashboard #projects-grid .room-float .delete-btn,
+.page-projects #all-projects-grid .room-float .delete-btn { opacity: 0; transition: opacity .2s ease, background .2s ease; }
 .page-dashboard #projects-grid .room-float:hover .delete-btn,
-.page-dashboard #projects-grid .room-float .delete-btn:focus-visible { opacity: 1; }
+.page-projects #all-projects-grid .room-float:hover .delete-btn,
+.page-dashboard #projects-grid .room-float .delete-btn:focus-visible,
+.page-projects #all-projects-grid .room-float .delete-btn:focus-visible { opacity: 1; }
 .page-dashboard #projects-grid h3 { color: var(--bp-ink) !important; font-family: "DM Sans", sans-serif !important; font-size: 14px !important; font-weight: 600 !important; }
 .page-dashboard #projects-grid p,
 .page-dashboard #projects-grid span { color: var(--bp-muted) !important; font-size: 11px !important; }
@@ -2289,13 +2303,6 @@ a.workflow-step:focus-visible {
   margin: 0;
   overflow: hidden;
   break-inside: avoid;
-  padding: 0 !important;
-}
-.page-projects #all-projects-grid .garden-card > div:first-child {
-  margin: 0 !important;
-  border-radius: 0 !important;
-  aspect-ratio: 16/10;
-  background: #f4f1ec !important;
 }
 .page-projects #all-projects-grid .project-card-skeleton {
   display: block;
@@ -2317,7 +2324,6 @@ a.workflow-step:focus-visible {
     transform: translateY(0) scale(1);
   }
 }
-.page-projects #all-projects-grid .garden-card > div:last-child { padding: 16px 18px 18px !important; }
 .page-projects #all-projects-grid h3 { color: var(--bp-ink) !important; font-family: "DM Sans", sans-serif !important; font-size: 16px !important; font-weight: 600 !important; }
 .page-projects #all-projects-grid p,
 .page-projects #all-projects-grid span { color: var(--bp-muted) !important; font-size: 12px !important; }
@@ -3572,7 +3578,6 @@ html.dark-mode .page-projects #all-projects-grid span {
 }
 
 /* Keep floor-plan / iso previews on warm paper so sketches stay legible */
-html.dark-mode .page-projects #all-projects-grid .garden-card > div:first-child,
 html.dark-mode .project-card-preview {
   background: #e8e2d6 !important;
 }
