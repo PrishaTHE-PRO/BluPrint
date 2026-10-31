@@ -36,7 +36,7 @@ This builds `dist/` and serves it from the API on port 3001, which is exactly wh
 
 ## How a room becomes a design
 
-1. **Define the room.** Image Upload sends the photo to Cloudinary and asks GPT-4o Vision for the room type, size, ceiling height and the furniture already in it. The estimate fills the same width and length fields the editor uses, so you can switch to Draw Room and adjust it. Draw Room is the drawing editor.
+1. **Define the room.** Image Upload sends the photo to Cloudinary and asks GPT-4o Vision for the room type, size, ceiling height and the furniture already in it. Select **Enter room dimensions (optional)** to supply your own width and length in feet or meters instead of using the photo estimate. These measurements are shared with the Draw Room editor.
 2. **Inspiration.** Upload up to three images or a Pinterest board and pick a style, colours and mood. GPT-4o Vision analyses the images for a style, a palette and mood tags. Your own picks always win where they overlap.
 3. **Results.** GPT-4o plans what the room should hold (categories, real sizes, a search phrase each, capped by floor area). Each category is searched on Serper Shopping, every product is scored against the style, palette and mood, and the best-matching set that fits the budget is chosen. The plan is interactive; with a photo, **Render my room** places the chosen products into it.
 

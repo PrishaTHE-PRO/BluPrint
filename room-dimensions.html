@@ -135,8 +135,19 @@
       color: var(--bp-muted);
     }
     .photo-estimate-summary strong { color: var(--bp-ink); }
-    /* The editor and the save code still read these; only the visuals go. */
-    #dimension-fields.hidden { display: none; }
+    .page-dimensions #dimension-fields.hidden { display: none !important; }
+    .photo-dimensions-option { display: none; }
+    body[data-input-mode="photo"] .photo-dimensions-option { display: block; }
+    .photo-dimensions-option label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .photo-dimensions-option input { accent-color: var(--bp-primary); }
+    .photo-dimensions-option p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--bp-muted); }
 
     /* Detected furniture, with a per-piece "replace" toggle. */
     .photo-existing {
@@ -353,7 +364,7 @@
           <div class="photo-blurb__card">
             <p><strong>Upload one photo of the room</strong> and we take it from there.</p>
             <ul class="photo-blurb__steps">
-              <li><iconify-icon icon="ph:ruler-duotone"></iconify-icon><span>We estimate the room's size and type from the photo. You can adjust the numbers in the Draw Room tab.</span></li>
+              <li><iconify-icon icon="ph:ruler-duotone"></iconify-icon><span>We estimate the room's size and type from the photo. If you know the measurements, you can enter them below.</span></li>
               <li><iconify-icon icon="ph:armchair-duotone"></iconify-icon><span>On the results page, the furniture we recommend is placed right into your photo, so you see the real pieces in your real room.</span></li>
               <li><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon><span>Prefer to draw the room and place doors and windows yourself? Switch to Draw Room above.</span></li>
             </ul>
@@ -422,16 +433,23 @@
               <ul id="photo-existing-list" class="photo-existing__list"></ul>
               <p class="photo-existing__hint">We keep these and only recommend what is missing. Tick a piece to have it replaced instead.</p>
             </div>
+            <div class="photo-dimensions-option">
+              <label for="photo-manual-dimensions">
+                <input type="checkbox" id="photo-manual-dimensions" aria-controls="dimension-fields" aria-describedby="photo-dimensions-hint">
+                Enter room dimensions (optional)
+              </label>
+              <p id="photo-dimensions-hint">Use your own width and length, or leave this unchecked to estimate them from your photo.</p>
+            </div>
             <div id="dimension-fields" class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
-                <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
+                <label for="room-width" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
                 <div class="relative" data-sd-id="71">
                   <input type="text" id="room-width" value="15" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="73">ft</span>
                 </div>
               </div>
               <div class="space-y-3" data-sd-id="74">
-                <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="75">LENGTH</label>
+                <label for="room-length" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="75">LENGTH</label>
                 <div class="relative" data-sd-id="76">
                   <input type="text" id="room-length" value="12" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="78">ft</span>
@@ -2426,6 +2444,7 @@ const photoMode = (() => {
   const existingList = document.getElementById("photo-existing-list");
   const existingNote = document.getElementById("photo-existing-note");
   const dimFields = document.getElementById("dimension-fields");
+  const manualDimensions = document.getElementById("photo-manual-dimensions");
 
   const MAX_BYTES = 8 * 1024 * 1024;
   const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
@@ -2448,7 +2467,7 @@ const photoMode = (() => {
   } catch {}
 
   if (!btnPhoto || !btnDims || !canvasEl || !panel) {
-    return { get active() { return false; }, get photoUrl() { return null; }, savePayload() { return {}; } };
+    return { get active() { return false; }, get photoUrl() { return null; }, getDimensionError() { return ""; }, savePayload() { return {}; } };
   }
 
   function setStatus(text, isError) {
@@ -2457,11 +2476,7 @@ const photoMode = (() => {
     status.classList.toggle("is-error", Boolean(isError));
   }
 
-  /**
-   * In Image Upload mode the dimension error element lives inside
-   * #dimension-fields, which is hidden, so a blocked Save & Continue was
-   * announced only by a toast that faded in seconds. Mirror it here.
-   */
+  // Keep upload errors visible beside the photo as well as in the sidebar.
   function showBlockingError(message) {
     setDimensionError(message);
     if (state.active) setStatus(message, true);
@@ -2476,16 +2491,18 @@ const photoMode = (() => {
     if (!summary) return;
     if (!state.active) { summary.hidden = true; return; }
     summary.hidden = false;
-    if (state.estimate && !state.estimate.fallback) {
+    if (manualDimensions.checked) {
+      summary.textContent = "Your width and length will be used instead of the photo estimate.";
+    } else if (state.estimate && !state.estimate.fallback) {
       summary.innerHTML =
         "Estimated <strong>" + fmt(state.estimate.widthFt) + " x " + fmt(state.estimate.lengthFt) +
-        "</strong> from your photo. Switch to Draw Room to adjust.";
+        "</strong> from your photo. Enter your own dimensions below to adjust.";
     } else if (state.estimate && state.estimate.fallback) {
       summary.innerHTML =
         "We could not estimate this room, so it is set to <strong>" + fmt(state.estimate.widthFt) + " x " +
-        fmt(state.estimate.lengthFt) + "</strong>. Switch to Draw Room to adjust.";
+        fmt(state.estimate.lengthFt) + "</strong>. Enter your own dimensions below to adjust.";
     } else if (state.photoUrl) {
-      summary.textContent = "Using the size saved with your photo. Switch to Draw Room to adjust.";
+      summary.textContent = "Using the size saved with your photo. Enter your own dimensions below to adjust.";
     } else {
       summary.textContent = "Upload a photo and we will estimate the room size for you.";
     }
@@ -2543,7 +2560,7 @@ const photoMode = (() => {
     canvasEl.classList.toggle("hidden", state.active);
     panel.classList.toggle("hidden", !state.active);
     panel.hidden = !state.active;
-    if (dimFields) dimFields.classList.toggle("hidden", state.active);
+    if (dimFields) dimFields.classList.toggle("hidden", state.active && !manualDimensions.checked);
     updateSummary();
     renderExisting();
   }
@@ -2554,6 +2571,16 @@ const photoMode = (() => {
     preview.hidden = false;
     if (empty) empty.hidden = true;
     if (replaceBtn) replaceBtn.hidden = false;
+  }
+
+  function applyEstimatedDimensions() {
+    const w = Number(state.estimate?.widthFt), l = Number(state.estimate?.lengthFt);
+    if (!Number.isFinite(w) || !Number.isFinite(l) || w <= 0 || l <= 0) return;
+    const toUnit = (ft) => currentUnit === "m" ? (ft * FT_TO_M).toFixed(2) : String(ft);
+    widthInput.value = toUnit(w);
+    lengthInput.value = toUnit(l);
+    // Reuse the editor's scaling and saving so both tabs share one layout.
+    if (typeof widthInput.oninput === "function") widthInput.oninput();
   }
 
   function applyEstimate(payload) {
@@ -2574,22 +2601,20 @@ const photoMode = (() => {
     roomDirty = true;
 
     const w = Number(estimate.widthFt), l = Number(estimate.lengthFt), h = Number(estimate.heightFt);
-    if (Number.isFinite(w) && Number.isFinite(l) && w > 0 && l > 0) {
-      const toUnit = (ft) => currentUnit === "m" ? (ft * FT_TO_M).toFixed(2) : String(ft);
-      widthInput.value = toUnit(w);
-      lengthInput.value = toUnit(l);
-      if (Number.isFinite(h) && h > 0) heightInput.value = String(h);
-      // Redraws the room at the estimated size through the editor's own path.
-      if (typeof widthInput.oninput === "function") widthInput.oninput();
-    }
+    if (Number.isFinite(h) && h > 0) heightInput.value = String(h);
+    // A photo can finish analyzing while the user is entering measurements.
+    if (!manualDimensions.checked) applyEstimatedDimensions();
+    scheduleRoomAutosave();
 
     if (estimate.fallback) {
-      setStatus("We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; switch to Draw Room to adjust.", true);
+      setStatus(manualDimensions.checked
+        ? "We could not estimate this room from the photo. Using your room dimensions."
+        : "We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; enter your own dimensions below to adjust.", true);
     } else if (estimate.full) {
       setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ". This room already looks fully furnished, so we will suggest accents only.", true);
     } else {
       const found = Array.isArray(estimate.existingFurniture) ? estimate.existingFurniture.length : 0;
-      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling." + (found ? " Found " + found + " piece" + (found === 1 ? "" : "s") + " of furniture already there." : "") + " Switch to Draw Room to adjust.");
+      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling." + (found ? " Found " + found + " piece" + (found === 1 ? "" : "s") + " of furniture already there." : "") + (manualDimensions.checked ? " Using your width and length." : " Enter your own dimensions below to adjust."));
     }
     updateSummary();
     renderExisting();
@@ -2657,6 +2682,17 @@ const photoMode = (() => {
 
   btnPhoto.addEventListener("click", () => setMode("photo"));
   btnDims.addEventListener("click", () => setMode("dimensions"));
+  manualDimensions.addEventListener("change", () => {
+    if (!manualDimensions.checked) {
+      if (state.estimate) applyEstimatedDimensions();
+      else renderAll();
+      const dims = readTypedDimensionsFt();
+      setDimensionError(getDimensionRangeMessage(dims?.widthFt, dims?.lengthFt));
+    }
+    setMode(state.active ? "photo" : "dimensions");
+  });
+  toggleFt.addEventListener("click", updateSummary);
+  toggleM.addEventListener("click", updateSummary);
 
   if (dropzone) {
     dropzone.addEventListener("click", pick);
@@ -2694,6 +2730,11 @@ const photoMode = (() => {
     get active() { return state.active; },
     get photoUrl() { return state.photoUrl; },
     get analyzing() { return state.analyzing; },
+    getDimensionError() {
+      if (!state.active || !manualDimensions.checked) return "";
+      const dims = readTypedDimensionsFt();
+      return getDimensionRangeMessage(dims?.widthFt, dims?.lengthFt);
+    },
     showBlockingError,
     /**
      * What to merge into the room save body. Dimensions mode sends null so the
@@ -2762,6 +2803,7 @@ function scheduleRoomAutosave() {
 
 async function flushRoomAutosave() {
   if (roomAutosaving) return;
+  if (photoMode.getDimensionError()) return;
   // Nothing changed, nothing to save. This is the whole fix for phantom
   // rooms: a leave-page flush on an untouched page must not create one.
   if (!roomDirty) return;
@@ -2909,7 +2951,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
       return;
     }
 
-    const rangeMessage = getDimensionRangeMessage(widthFt, lengthFt);
+    const rangeMessage = photoMode.getDimensionError() || getDimensionRangeMessage(widthFt, lengthFt);
     if (rangeMessage) {
       setDimensionError(rangeMessage);
       showToast(rangeMessage);
