@@ -1,10 +1,9 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-import type { FurnitureItem, Style } from '../types';
+import { useRef, type ReactNode } from 'react';
+import type { FurnitureItem, FurnitureNotice, Style } from '../types';
 import { orderedFurniture } from '../utils/furnitureLayout';
 import FurnitureCard from './FurnitureCard';
 
 interface Props {
-  items:            FurnitureItem[];
   slots:            Record<string, FurnitureItem>;
   onSwap:           (category: string) => void;
   style:            Style;
@@ -16,10 +15,15 @@ interface Props {
   onLinkCategory?:  (category: string | null) => void;
   hiddenCategories: Set<string>;
   onToggleInRoom:   (category: string) => void;
+  /** Re-runs the search, trimming pieces until the set actually fits. */
+  onGenerateUnderBudget?: () => void;
+  /** True once a trim-to-fit run has already been tried for this room. */
+  underBudgetTried?: boolean;
+  /** Photo rooms: what the picture already holds, and what that changed. */
+  notice?: FurnitureNotice | null;
 }
 
 export default function FurniturePanel({
-  items,
   slots,
   onSwap,
   style,
@@ -31,6 +35,9 @@ export default function FurniturePanel({
   onLinkCategory,
   hiddenCategories,
   onToggleInRoom,
+  onGenerateUnderBudget,
+  underBudgetTried = false,
+  notice = null,
 }: Props) {
   const stripRef = useRef<HTMLDivElement>(null);
   const displayed = orderedFurniture(slots, roomType);
@@ -38,14 +45,14 @@ export default function FurniturePanel({
     .filter((item) => !hiddenCategories.has(item.category))
     .reduce((sum, item) => sum + item.price, 0);
 
-  // Keep the shop photo for the selected floor-plan piece in view (critical on mobile).
-  useEffect(() => {
-    if (!linkedCategory || !stripRef.current) return;
-    const card = stripRef.current.querySelector<HTMLElement>(
-      `[data-furniture-card="${CSS.escape(linkedCategory)}"]`,
-    );
-    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [linkedCategory]);
+  const budget = style.budgetTotal > 0 ? style.budgetTotal : 0;
+  const overBudget = budget > 0 && total > budget;
+  const overBy = overBudget ? total - budget : 0;
+
+  // Selecting a piece on the floor plan deliberately does NOT scroll the strip.
+  // scrollIntoView walks up every scrollable ancestor, so it moved the page as
+  // well as the strip and yanked the view out from under you. The selected card
+  // is still highlighted via `linkedCategory` — it just stays where it is.
 
   const cards = displayed.map((item, i) => (
     <div key={item.id} className="furniture-strip-card shrink-0" data-furniture-card={item.category}>
@@ -89,6 +96,69 @@ export default function FurniturePanel({
     </div>
   );
 
+  // Shown only when the real total genuinely exceeds the budget. Until now the
+  // server quietly scaled prices down so this could almost never happen.
+  // For photo rooms. Amber when the room is full and only accents are
+  // offered; neutral when we simply skipped what the picture already has.
+  const photoNotice = notice && (
+    <div
+      role="status"
+      className={`animate-reveal mb-4 rounded-2xl border px-4 py-3 ${
+        notice.kind === 'full'
+          ? 'border-[#D3968C]/30 bg-[#D3968C]/10'
+          : 'border-[#839958]/30 bg-[#839958]/10'
+      }`}
+      style={{ animationDelay: '0.4s' }}
+    >
+      <div className="flex items-start gap-3">
+        <span className={`text-lg leading-none mt-0.5 shrink-0 ${notice.kind === 'full' ? 'text-[#D3968C]' : 'text-[#839958]'}`}>
+          <iconify-icon icon={notice.kind === 'full' ? 'ph:warning-circle-duotone' : 'ph:eye-duotone'} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-[#F7F4D5]">
+            {notice.kind === 'full' ? 'Your room is already well furnished' : 'We kept what is already in your photo'}
+          </p>
+          <p className="text-xs text-[#F7F4D5]/60 mt-1 leading-relaxed">{notice.message}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const budgetNotice = overBudget && (
+    <div
+      role="status"
+      className="animate-reveal mb-4 rounded-2xl border border-[#D3968C]/30 bg-[#D3968C]/10 px-4 py-3"
+      style={{ animationDelay: '0.42s' }}
+    >
+      <div className="flex items-start gap-3">
+        <span className="text-[#D3968C] text-lg leading-none mt-0.5 shrink-0">
+          <iconify-icon icon="ph:hand-heart-duotone" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-[#F7F4D5]">
+            Sorry, we went over budget.
+          </p>
+          <p className="text-xs text-[#F7F4D5]/60 mt-1 leading-relaxed">
+            {underBudgetTried
+              ? `We trimmed this room as far as we could without leaving it empty, but the pieces that fit your room still come to $${total.toLocaleString()}, which is $${overBy.toLocaleString()} over your $${budget.toLocaleString()} budget.`
+              : `We tried to stay as close to your original $${budget.toLocaleString()} as we could, but this set comes to $${total.toLocaleString()}, which is $${overBy.toLocaleString()} over. You can swap or remove any piece, or let us rebuild the room to fit.`}
+          </p>
+          {onGenerateUnderBudget && !underBudgetTried && (
+            <button
+              type="button"
+              onClick={onGenerateUnderBudget}
+              disabled={loading}
+              className="mt-3 px-4 py-2 rounded-xl bg-[#839958] hover:bg-[#93aa63] disabled:opacity-50 disabled:cursor-wait text-white text-xs font-bold inline-flex items-center gap-2 transition-all"
+            >
+              <iconify-icon icon="ph:scissors-duotone" />
+              Generate under budget
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const views = (
     <div className="result-dual-pane">
       <div className="result-dual-pane__view result-dual-pane__view--iso">
@@ -128,8 +198,12 @@ export default function FurniturePanel({
     return (
       <section className="mb-10 result-furniture-section">
         {header}
+        {photoNotice}
+        {budgetNotice}
         {views}
-        <p className="text-[#F7F4D5]/40 text-center py-8">No furniture found — try re-analyzing your room.</p>
+        <p className="text-[#F7F4D5]/40 text-center py-8">
+          {notice?.kind === 'full' ? 'Nothing more fits comfortably in this room.' : 'No furniture found. Try re-analyzing your room.'}
+        </p>
       </section>
     );
   }
@@ -137,6 +211,8 @@ export default function FurniturePanel({
   return (
     <section className="mb-10 result-furniture-section">
       {header}
+      {photoNotice}
+      {budgetNotice}
       {views}
       <div className="furniture-h-strip mt-5 animate-reveal" style={{ animationDelay: '0.5s' }}>
         <div className="furniture-h-strip__label">Shop pieces</div>

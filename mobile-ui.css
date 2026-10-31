@@ -2,9 +2,11 @@
    BluPrint — mobile UI (direction "1b": same palette, rebuilt for a thumb)
    Ported from "Mobile UI modernization exploration/BluPrint Mobile.dc.html".
 
-   Everything in this file lives inside `@media (max-width: 600px)` so the
-   desktop layout in design-system.css is untouched. Load it AFTER
-   design-system.css so it wins on equal specificity.
+   Almost everything here lives inside `@media (max-width: 600px)`. The
+   exceptions are the few pieces the desktop site uses too (home stat strip,
+   room deck, resume list, budget readout): their base styles sit just above
+   the media query and their desktop placement at the end of the file. Load
+   it AFTER design-system.css so it wins on equal specificity.
    ========================================================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap");
@@ -15,17 +17,167 @@
 .m-only { display: none; }
 .m-dock { display: none; }
 
-@media (max-width: 600px) {
+/* ==========================================================================
+   Shared with desktop: the home stat strip, room deck nav, "pick up where
+   you left off" list and the live budget readout show at every width.
+   Phone-only spacing for them lives in the media query below; desktop
+   placement is in the min-width block at the end of the file.
+   ========================================================================== */
 
-  /* ---- tokens ------------------------------------------------------- */
-  :root {
-    --m-card: var(--bp-surface);
-    --m-sh: 0 1px 2px rgba(28, 23, 20, .04);
-    --m-sh2: 0 10px 30px rgba(61, 90, 128, .07);
-    --m-sheet-sh: 0 -14px 44px rgba(28, 23, 20, .16);
-    --m-dock-h: 66px;
-    --m-mono: "DM Mono", ui-monospace, SFMono-Regular, monospace;
-  }
+/* ---- tokens ------------------------------------------------------- */
+:root {
+  --m-card: var(--bp-surface);
+  --m-sh: 0 1px 2px rgba(28, 23, 20, .04);
+  --m-sh2: 0 10px 30px rgba(61, 90, 128, .07);
+  --m-sheet-sh: 0 -14px 44px rgba(28, 23, 20, .16);
+  --m-dock-h: 66px;
+  --m-mono: "DM Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* !important: design-system.css forces Fraunces on every h1–h4. */
+.m-section-label {
+  margin: 0;
+  color: var(--bp-muted) !important;
+  font: 600 12px var(--m-mono) !important;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+/* position/z-index keep it above the fixed ghost floor plan. */
+.m-stats {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 12px;
+}
+.m-stat {
+  flex: 1;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--bp-border);
+  border-radius: 18px;
+  background: var(--m-card);
+  box-shadow: var(--m-sh);
+}
+.m-stat-value {
+  margin: 0;
+  color: var(--bp-ink);
+  font: 600 26px "DM Sans", sans-serif;
+  letter-spacing: -.02em;
+}
+.m-stat-label {
+  margin: 2px 0 0;
+  color: var(--bp-muted);
+  font: 600 10px var(--m-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.m-stat-bar {
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: var(--bp-soft);
+  background: color-mix(in srgb, var(--bp-muted) 30%, transparent);
+  overflow: hidden;
+}
+.m-stat-bar > i {
+  display: block;
+  height: 100%;
+  background: var(--bp-primary);
+  transform-origin: left;
+  animation: m-width .9s .3s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes m-width { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* deck position dots */
+.m-dots { display: flex; gap: 5px; }
+.m-dots > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bp-soft);
+  background: color-mix(in srgb, var(--bp-muted) 38%, transparent);
+  transition: background .25s ease, transform .25s ease;
+}
+.m-dots > i.is-active { background: var(--bp-primary); transform: scale(1.25); }
+
+/* Prev/next buttons for the deck: a mouse can't swipe. Desktop only. */
+.m-deck-nav { display: flex; align-items: center; gap: 8px; }
+.m-deck-btn { display: none; }
+
+.m-resume-list {
+  margin-top: 12px;
+  border: 1px solid var(--bp-border);
+  border-radius: 20px;
+  background: var(--m-card);
+  box-shadow: var(--m-sh);
+  overflow: hidden;
+}
+.m-resume-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.m-resume-row + .m-resume-row { border-top: 1px solid var(--bp-border); }
+.m-resume-row:hover,
+.m-resume-row:active { background: var(--bp-soft); }
+.m-resume-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: var(--bp-blue-soft);
+  color: var(--bp-primary);
+  font-size: 19px;
+}
+.m-resume-copy { flex: 1; min-width: 0; }
+.m-resume-copy strong {
+  display: block;
+  color: var(--bp-ink);
+  font: 600 14px "DM Sans", sans-serif;
+}
+.m-resume-copy small {
+  display: block;
+  margin-top: 2px;
+  color: var(--bp-muted);
+  font-size: 12px;
+}
+.m-resume-row > .m-chev { color: var(--bp-muted); }
+
+/* Live budget readout, mirroring the slider. */
+.m-budget-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.m-budget-head strong {
+  color: var(--bp-primary);
+  font: 600 22px "DM Sans", sans-serif;
+  letter-spacing: -.02em;
+}
+
+.m-budget-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--bp-muted);
+  font: 600 10px var(--m-mono);
+  letter-spacing: .1em;
+}
+
+.m-budget-head strong.is-empty { color: var(--bp-muted); }
+
+@media (max-width: 600px) {
 
   .m-only { display: block; }
   .m-hi { display: inline; }
@@ -42,14 +194,6 @@
     color: var(--bp-muted);
     font: 600 11px var(--m-mono);
     letter-spacing: .2em;
-    text-transform: uppercase;
-  }
-  /* !important: design-system.css forces Fraunces on every h1–h4. */
-  .m-section-label {
-    margin: 0;
-    color: var(--bp-muted) !important;
-    font: 600 12px var(--m-mono) !important;
-    letter-spacing: .18em;
     text-transform: uppercase;
   }
   .m-quip {
@@ -196,73 +340,9 @@
   /* The dock's centre "+" is the new-room affordance. */
   .page-dashboard .dashboard-new-room { display: none !important; }
 
-  /* Ghost floor plan. Its containing block is the hero row, which is only
-     ~116px tall here — and `position: static` can't detach it, because
-     .animate-reveal leaves a `transform: translateY(0)` behind (fill-mode:
-     both), and any transform makes an element a containing block. So
-     mobile-ui.js reparents it to <header>, which this makes positioned. */
-  body.page-dashboard .dashboard-hero { position: relative; }
-  .page-dashboard .dashboard-blueprint {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    /* The 900px rule's .14 was tuned for the old 344px hero; the greeting band
-       is roughly half that now, so lift it back to a readable density. */
-    opacity: .22;
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
-  }
-
-  /* --- stat strip ---------------------------------------------------- */
-  /* Sits below the hero row, inset to the same gutter as the deck.
-     position/z-index keep it above the ghost floor plan behind the hero. */
-  .m-stats {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    gap: 10px;
-    margin: 22px 24px 0;
-  }
-  .m-stat {
-    flex: 1;
-    min-width: 0;
-    padding: 14px;
-    border: 1px solid var(--bp-border);
-    border-radius: 18px;
-    background: var(--m-card);
-    box-shadow: var(--m-sh);
-  }
-  .m-stat-value {
-    margin: 0;
-    color: var(--bp-ink);
-    font: 600 26px "DM Sans", sans-serif;
-    letter-spacing: -.02em;
-  }
-  .m-stat-label {
-    margin: 2px 0 0;
-    color: var(--bp-muted);
-    font: 600 10px var(--m-mono);
-    letter-spacing: .14em;
-    text-transform: uppercase;
-  }
-  .m-stat-bar {
-    height: 3px;
-    margin-top: 8px;
-    border-radius: 2px;
-    background: var(--bp-soft);
-    background: color-mix(in srgb, var(--bp-muted) 30%, transparent);
-    overflow: hidden;
-  }
-  .m-stat-bar > i {
-    display: block;
-    height: 100%;
-    background: var(--bp-primary);
-    transform-origin: left;
-    animation: m-width .9s .3s cubic-bezier(.22, 1, .36, 1) both;
-  }
-  @keyframes m-width { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  /* --- stat strip (base styles above the media query) --------------- */
+  /* Sits below the hero row, inset to the same gutter as the deck. */
+  .m-stats { gap: 10px; margin: 22px 24px 0; }
 
   /* --- room deck: horizontal snap scroller ---------------------------- */
   /* <main> is itself the .dashboard-container — go full-bleed so the deck can
@@ -303,15 +383,8 @@
     flex: 0 0 258px;
     scroll-snap-align: start;
   }
-  .page-dashboard #projects-grid .garden-card {
-    border: 1px solid var(--bp-border) !important;
-    border-radius: 22px !important;
-    background: var(--m-card) !important;
-    box-shadow: var(--m-sh2) !important;
-  }
   .page-dashboard #projects-grid .garden-card:hover { transform: none; }
-  .page-dashboard #projects-grid .garden-card > div:first-child { aspect-ratio: 3 / 2; }
-  .page-dashboard #projects-grid .garden-card > div:last-child { padding: 16px !important; }
+  .page-dashboard #projects-grid .room-float-preview { aspect-ratio: 3 / 2; }
   .page-dashboard #projects-grid h3 {
     font-family: "Fraunces", serif !important;
     font-size: 19px !important;
@@ -320,63 +393,11 @@
   }
   /* Rename is a hover affordance; on touch it just eats space. */
   .page-dashboard #projects-grid .rename-btn { display: none; }
-  .page-dashboard #projects-grid .delete-btn { opacity: 1; }
+  .page-dashboard #projects-grid .room-float .delete-btn { opacity: 1; }
 
-  /* deck position dots */
-  .m-dots { display: flex; gap: 5px; }
-  .m-dots > i {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--bp-soft);
-    background: color-mix(in srgb, var(--bp-muted) 38%, transparent);
-    transition: background .25s ease, transform .25s ease;
-  }
-  .m-dots > i.is-active { background: var(--bp-primary); transform: scale(1.25); }
 
-  /* --- "pick up where you left off" ----------------------------------- */
+  /* --- "pick up where you left off" (base styles above) -------------- */
   .m-resume { padding: 30px 24px 0; }
-  .m-resume-list {
-    margin-top: 12px;
-    border: 1px solid var(--bp-border);
-    border-radius: 20px;
-    background: var(--m-card);
-    box-shadow: var(--m-sh);
-    overflow: hidden;
-  }
-  .m-resume-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px;
-    color: inherit;
-    text-decoration: none;
-  }
-  .m-resume-row + .m-resume-row { border-top: 1px solid var(--bp-border); }
-  .m-resume-row:active { background: var(--bp-soft); }
-  .m-resume-icon {
-    display: grid;
-    place-items: center;
-    flex: 0 0 42px;
-    height: 42px;
-    border-radius: 13px;
-    background: var(--bp-blue-soft);
-    color: var(--bp-primary);
-    font-size: 19px;
-  }
-  .m-resume-copy { flex: 1; min-width: 0; }
-  .m-resume-copy strong {
-    display: block;
-    color: var(--bp-ink);
-    font: 600 14px "DM Sans", sans-serif;
-  }
-  .m-resume-copy small {
-    display: block;
-    margin-top: 2px;
-    color: var(--bp-muted);
-    font-size: 12px;
-  }
-  .m-resume-row > .m-chev { color: var(--bp-muted); }
 
   /* ==================================================================
      Compact step header — plan + style + result
@@ -478,6 +499,32 @@
     background-size: 22px 22px !important;
   }
   .page-dimensions #svg-bg { display: none; }
+
+  /* Image Upload / Draw Room pill and the photo panel take the canvas's slot.
+     On a phone the app nav and the stepper are gone, so the desktop trick of
+     floating the pill down over the top of main has nothing to float over. */
+  .page-dimensions .define-room-subtabs {
+    width: auto !important;
+    margin: 14px 16px 0 !important;
+    transform: none !important;
+  }
+  .page-dimensions .define-room-subtab { flex: 1 1 0; min-width: 0; }
+  .page-dimensions #photo-panel {
+    width: auto !important;
+    height: 430px !important;
+    min-height: 430px !important;
+    margin: 14px 16px 0 !important;
+    border: 1px solid var(--bp-border) !important;
+    border-radius: 24px !important;
+    background: var(--m-card) !important;
+    box-shadow: var(--m-sh) !important;
+  }
+  .page-dimensions #photo-panel.hidden { display: none !important; }
+  /* No canvas in photo mode means nothing to drag doors onto. The library
+     half of the element sheet goes; the sheet itself stays so Room name and
+     Save & Continue remain reachable on a phone. */
+  body[data-input-mode="photo"].page-dimensions .element-library-panel { display: none !important; }
+  body[data-input-mode="photo"].page-dimensions .m-canvas-hint { display: none !important; }
   /* !important throughout: design-system.css pins this bottom-right at 600px. */
   .page-dimensions #area-badge {
     position: absolute !important;
@@ -782,26 +829,8 @@
     border-radius: 16px !important;
   }
 
-  /* Live budget readout, mirroring the slider. */
-  .m-budget-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-  .m-budget-head strong {
-    color: var(--bp-primary);
-    font: 600 22px "DM Sans", sans-serif;
-    letter-spacing: -.02em;
-  }
+  /* Live budget readout: base styles above the media query. */
   .page-inspo #budget-slider { height: 28px; accent-color: var(--bp-primary); }
-  .m-budget-scale {
-    display: flex;
-    justify-content: space-between;
-    color: var(--bp-muted);
-    font: 600 10px var(--m-mono);
-    letter-spacing: .1em;
-  }
 
   .page-inspo .how-it-works-panel,
   .page-inspo .ai-analysis-panel { margin: 22px 24px 0 !important; width: auto !important; }
@@ -1004,6 +1033,78 @@
 }
 
 @media (max-width: 600px) and (prefers-reduced-motion: reduce) {
-  .m-stat-bar > i { animation: none; transform: none; }
   .page-dimensions main > section:last-child { transition: none; }
+}
+
+/* ==========================================================================
+   Desktop (601px and up): placement for the shared pieces at the top of the
+   file — the home stat strip, room deck, resume list and budget readout.
+   ========================================================================== */
+@media (min-width: 601px) {
+  /* Stat strip: its own row under the welcome hero, on the deck's left edge. */
+  .page-dashboard .m-stats {
+    width: min(100% - 48px, 1320px);
+    margin: 0 auto 8px;
+  }
+  .page-dashboard .m-stat { flex: 0 1 240px; padding: 16px 18px; }
+
+  /* Room deck: one row that scrolls sideways, three cards per view (two at
+     900px and below), replacing the wrapping grid. */
+  .page-dashboard #projects-grid {
+    --deck-gap: 16px;
+    --deck-per-view: 3;
+    display: flex !important;
+    grid-template-columns: none !important;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    /* overflow-x also clips vertically: leave room for the hover lift and
+       shadow, then pull the space back out of the layout. */
+    padding: 6px 0 40px;
+    margin: -6px 0 -32px;
+  }
+  .page-dashboard #projects-grid::-webkit-scrollbar { display: none; }
+  .page-dashboard #projects-grid > * {
+    flex: 0 0 calc((100% - (var(--deck-per-view) - 1) * var(--deck-gap)) / var(--deck-per-view));
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+  .page-dashboard #projects-grid > p { flex-basis: 100%; }
+
+  .page-dashboard .dashboard-section-heading h2 { margin-right: auto; }
+  .page-dashboard .dashboard-section-heading .m-deck-nav { margin-left: 18px; }
+  .page-dashboard .m-deck-nav.is-idle { display: none; }
+  .m-deck-btn {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--bp-border);
+    border-radius: 10px;
+    background: var(--bp-surface);
+    color: var(--bp-ink);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .2s ease, opacity .2s ease;
+  }
+  .m-deck-btn:hover:not(:disabled) { background: var(--bp-blue-soft); color: var(--bp-primary); }
+  .m-deck-btn:disabled { opacity: .35; cursor: default; }
+
+  /* Resume list: under the deck (inside <main>, so already on the deck's
+     gutter), at a readable width rather than full-bleed. */
+  .page-dashboard .m-resume { padding: 28px 0 8px; }
+  .page-dashboard .m-resume-list { max-width: 560px; }
+
+  /* Budget: the readout sits over the slider in the left grid cell. */
+  .page-inspo .m-budget-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .page-inspo .m-budget-head strong { font-size: 24px; }
+}
+@media (min-width: 601px) and (max-width: 900px) {
+  .page-dashboard #projects-grid { --deck-per-view: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-stat-bar > i { animation: none; transform: none; }
 }

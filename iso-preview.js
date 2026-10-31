@@ -319,30 +319,37 @@ function isoCutoutFeet(cutout, minX, minY, editorScale = 20) {
         .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
 }
 
-function isoCutoutGroup(cutout, minX, minY, WH) {
+// A cutout's full-height interior walls (one group per segment, so each can be
+// depth-sorted against the furniture) plus the floor-level ticks marking its
+// open outside edge (p0→p1), which belong with the floor.
+function isoCutoutParts(cutout, minX, minY, WH) {
     const pts = isoCutoutFeet(cutout, minX, minY);
     if (pts.length < 3) return null;
 
     const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
-    const ops = [];
+    const walls = [];
 
-    const wallH = Math.min(WH * 0.55, 2.4);
+    const wallH = WH;
     for (let i = 1; i < pts.length; i++) {
         const a = pts[i];
         const b = pts[(i + 1) % pts.length];
-        ops.push({
-            kind: 'poly',
-            pts: [P(a.x, a.y, 0), P(b.x, b.y, 0), P(b.x, b.y, wallH), P(a.x, a.y, wallH)],
-            fill: ISO_COLORS.wallSide,
+        walls.push({
+            order: (a.x + b.x) / 2 + (a.y + b.y) / 2,
+            wall: { a, b },
+            foot: [a, b],
+            ops: [
+                { kind: 'poly', pts: [P(a.x, a.y, 0), P(b.x, b.y, 0), P(b.x, b.y, wallH), P(a.x, a.y, wallH)], fill: ISO_COLORS.wallSide },
+                { kind: 'line', a: P(a.x, a.y, wallH), b: P(b.x, b.y, wallH) },
+            ],
         });
-        ops.push({ kind: 'line', a: P(a.x, a.y, wallH), b: P(b.x, b.y, wallH) });
     }
 
+    const floorOps = [];
     const o0 = pts[0], o1 = pts[1];
     const steps = 6;
     for (let s = 0; s < steps; s += 2) {
         const t0 = s / steps, t1 = Math.min(1, (s + 1) / steps);
-        ops.push({
+        floorOps.push({
             kind: 'line',
             a: P(o0.x + (o1.x - o0.x) * t0, o0.y + (o1.y - o0.y) * t0, 0.02),
             b: P(o0.x + (o1.x - o0.x) * t1, o0.y + (o1.y - o0.y) * t1, 0.02),
@@ -351,7 +358,86 @@ function isoCutoutGroup(cutout, minX, minY, WH) {
 
     const cx = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
     const cy = pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
-    return { order: -1e6 + 3 + cx + cy * 0.01, ops };
+    return { walls, floor: { order: -1e6 + 3 + cx + cy * 0.01, ops: floorOps } };
+}
+
+// Corners of an axis-aligned footprint box, for the wall side tests below.
+function isoBoxFoot(minX, minY, maxX, maxY) {
+    return [{ x: minX, y: minY }, { x: maxX, y: minY }, { x: maxX, y: maxY }, { x: minX, y: maxY }];
+}
+
+// Which side of the wall a→b a footprint is on, as seen by the camera (which
+// looks from +x,+y): -1 behind (paint first), 1 in front, 0 can't tell (the
+// piece runs into the wall). Tries the wall's own line, then the lines through
+// each end perpendicular to it, as separating lines.
+function isoSideOfWall(a, b, foot) {
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const tx = (b.x - a.x) / len, ty = (b.y - a.y) / len, eps = 1e-3;
+    const lines = [[ty, -tx, a], [-ty, tx, a], [tx, ty, b], [-tx, -ty, a]];
+    for (const [nx, ny, o] of lines) {
+        if (foot.every((p) => nx * (p.x - o.x) + ny * (p.y - o.y) >= -eps)) {
+            const toward = nx + ny; // normal · camera direction (1,1)
+            if (Math.abs(toward) > eps) return toward > 0 ? 1 : -1;
+        }
+    }
+    // The footprint crosses the wall line (a piece pushed against the wall, or
+    // a rotated piece's padded bounding box): go by which side its centre is on.
+    const cx = foot.reduce((sum, p) => sum + p.x, 0) / foot.length;
+    const cy = foot.reduce((sum, p) => sum + p.y, 0) / foot.length;
+    const side = ty * (cx - a.x) - tx * (cy - a.y);
+    const toward = ty - tx;
+    if (Math.abs(side) > eps && Math.abs(toward) > eps) return side * toward > 0 ? 1 : -1;
+    return 0;
+}
+
+// -1 if u must paint before v, 1 if after, 0 if they never overlap on screen.
+function isoPaintConstraint(u, v) {
+    if (u.foot && v.foot) {
+        const span = (foot) => {
+            const s = foot.map((p) => p.x - p.y); // screen x is proportional to x - y
+            return [Math.min(...s), Math.max(...s)];
+        };
+        const [u0, u1] = span(u.foot), [v0, v1] = span(v.foot);
+        if (u1 <= v0 + 1e-6 || v1 <= u0 + 1e-6) return 0;
+        const s = u.wall ? isoSideOfWall(u.wall.a, u.wall.b, v.foot) : 0;
+        if (s) return -s;
+        const t = v.wall ? isoSideOfWall(v.wall.a, v.wall.b, u.foot) : 0;
+        if (t) return t;
+    }
+    return u.order < v.order ? -1 : u.order > v.order ? 1 : 0;
+}
+
+// Back-to-front paint order for furniture and cutout walls. A single depth key
+// can't order a long wall against the pieces around it, so this is a
+// topological sort over pairwise constraints, taking the shallowest ready node
+// first (and breaking any cycle the same way).
+function isoPaintOrder(nodes) {
+    const n = nodes.length;
+    const next = nodes.map(() => []);
+    const indeg = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+            const c = isoPaintConstraint(nodes[i], nodes[j]);
+            if (c < 0) { next[i].push(j); indeg[j]++; }
+            else if (c > 0) { next[j].push(i); indeg[i]++; }
+        }
+    }
+    const done = new Array(n).fill(false), out = [];
+    while (out.length < n) {
+        let pick = -1;
+        for (let k = 0; k < n; k++) {
+            if (!done[k] && indeg[k] <= 0 && (pick < 0 || nodes[k].order < nodes[pick].order)) pick = k;
+        }
+        if (pick < 0) {
+            for (let k = 0; k < n; k++) {
+                if (!done[k] && (pick < 0 || nodes[k].order < nodes[pick].order)) pick = k;
+            }
+        }
+        done[pick] = true;
+        out.push(nodes[pick]);
+        next[pick].forEach((m) => { indeg[m]--; });
+    }
+    return out;
 }
 
 function isoFloorWithHoles(W, L, cutoutPolysFt) {
@@ -662,17 +748,17 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
         const hz = onBack ? [P(along - hw, off + 0.01, midZ), P(along + hw, off + 0.01, midZ)] : [P(off + 0.01, along - hw, midZ), P(off + 0.01, along + hw, midZ)];
         ops.push({ kind: 'line', a: vt[0], b: vt[1] });                                 // mullion cross
         ops.push({ kind: 'line', a: hz[0], b: hz[1] });
-        return { order: -470 + along, ops };
+        return { order: -470 + along, ops, foot: isoBoxFoot(along - hw, 0, along + hw, 0.05) };
     }
     // door — light-blue leaf panel + inner panel + knob
     const hw = 1.35, z1 = 0.02, z2 = WH * 0.92, off = 0.03, knobZ = (z1 + z2) / 2, ka = along + hw * 0.7;
     ops.push({ kind: 'poly', pts: rectAt(hw, z1, z2, off, 0), fill: '#a7bdd6' });
     ops.push({ kind: 'poly', pts: rectAt(hw, z1, z2, off + 0.005, 0.12), fill: '#c2d3e4' });
     ops.push({ kind: 'knob', c: onBack ? P(ka, off + 0.02, knobZ) : P(off + 0.02, ka, knobZ) });
-    return { order: -480 + along, ops };
+    return { order: -480 + along, ops, foot: isoBoxFoot(along - hw, 0, along + hw, 0.05) };
 }
 
-function renderIsoRoom(room) {
+function renderIsoRoom(room, opts = {}) {
     const rough = window.rough;
     if (!rough) return null;
 
@@ -742,13 +828,14 @@ function renderIsoRoom(room) {
 
         if (isoIsWallMounted(cat)) {
             const mounted = isoWallMounted(cat, x + w / 2, y + d / 2, w, d, hex, WH);
-            if (mounted) pieces.push(mounted);
+            if (mounted) pieces.push({ ...mounted, foot: isoBoxFoot(x, 0, x + w, 0.1) });
             return;
         }
         if (cat === 'indoor_plants') {
             pieces.push({
                 order: (x + w / 2) + (y + d / 2) + elev * 0.01,
                 ops: isoPlantOps(x + w / 2, y + d / 2, w, d, elev),
+                foot: isoBoxFoot(x, y, x + w, y + d),
             });
             return;
         }
@@ -784,7 +871,8 @@ function renderIsoRoom(room) {
         parts.forEach((p) => {
             ops = ops.concat(isoPartOps(x, y, cxR, cyR, rot, p.lx, p.ly, p.lw, p.ld, p.z0 + elev, p.h, p.color, p.seam));
         });
-        pieces.push({ order: cxR + cyR + elev * 0.01, ops });
+        const fp = isoFootprint(x, y, w, d, rot);
+        pieces.push({ order: cxR + cyR + elev * 0.01, ops, foot: isoBoxFoot(fp.minX, fp.minY, fp.maxX, fp.maxY) });
     });
 
     // Doors, windows, and cutouts from the room layout.
@@ -798,8 +886,11 @@ function renderIsoRoom(room) {
         cutouts.forEach((cutout) => {
             const feet = isoCutoutFeet(cutout, eMinX, eMinY);
             if (feet.length >= 3) cutoutFeetList.push(feet);
-            const g = isoCutoutGroup(cutout, eMinX, eMinY, WH);
-            if (g) shell.push(g);
+            const parts = isoCutoutParts(cutout, eMinX, eMinY, WH);
+            if (parts) {
+                shell.push(parts.floor);
+                pieces.push(...parts.walls);
+            }
         });
         if (cutoutFeetList.length) {
             shell[2] = { order: -1e6 + 2, ops: [isoFloorWithHoles(W, L, cutoutFeetList)] };
@@ -816,46 +907,80 @@ function renderIsoRoom(room) {
         isoProject(W, 0, WH), isoProject(0, 0, WH), isoProject(0, L, WH),
     ];
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    bounds.forEach((p) => {
+    const grow = (p) => {
         minX = Math.min(minX, p.px); maxX = Math.max(maxX, p.px);
         minY = Math.min(minY, p.py); maxY = Math.max(maxY, p.py);
-    });
+    };
+    bounds.forEach(grow);
+
+    // Optional small-print label laid along the front-left floor edge (y = L),
+    // just outside the floor and rotated to the edge's 30° slope. Sized off the
+    // room's projected width so it reads the same in every card, and the
+    // viewBox grows to keep it in frame.
+    let floorLabel = null;
+    if (opts.floorLabel) {
+        const fontSize = Math.max(10, (maxX - minX) * 0.045);
+        const dir = { x: Math.cos(ISO.angle), y: Math.sin(ISO.angle) };
+        const normal = { x: -dir.y, y: dir.x }; // points away from the floor
+        const mid = isoProject(W / 2, L, 0);
+        const gap = fontSize * 0.5;
+        const halfLen = String(opts.floorLabel).length * fontSize * 0.3;
+        const at = (along, out) => ({ px: mid.px + dir.x * along + normal.x * out, py: mid.py + dir.y * along + normal.y * out });
+        [at(-halfLen, gap + fontSize), at(halfLen, gap + fontSize)].forEach(grow);
+        floorLabel = { text: String(opts.floorLabel), fontSize, anchor: at(0, gap) };
+    }
     const pad = ISO.pad;
     const vbX = minX - pad, vbY = minY - pad;
     const vbW = maxX - minX + pad * 2, vbH = maxY - minY + pad * 2;
     svg.setAttribute('viewBox', `${vbX.toFixed(0)} ${vbY.toFixed(0)} ${vbW.toFixed(0)} ${vbH.toFixed(0)}`);
 
-    // Paper-grid patch background — a faint blueprint grid on a rounded cream
-    // panel behind the room, on the card's white. Unique pattern id per card.
-    const center = isoProject(W / 2, L / 2, 0);
+    // Paper-grid background — a faint blueprint grid on cream, filling the whole
+    // card behind the room. Unique pattern id per card.
     const gid = 'iso-grid-' + String(room._id || room.name || 'room').replace(/[^a-zA-Z0-9_-]/g, '');
     const defs = document.createElementNS(svgNs, 'defs');
     defs.innerHTML =
         `<pattern id="${gid}" width="16" height="16" patternUnits="userSpaceOnUse">` +
         `<path d="M16 0 L0 0 0 16" fill="none" stroke="${ISO_COLORS.grid}" stroke-width="1"></path></pattern>`;
     svg.appendChild(defs);
-    const px = center.px - vbW * 0.42, py = center.py - vbH * 0.42, pw = vbW * 0.84, ph = vbH * 0.84;
+    // Full-bleed: the paper and its grid fill the whole viewBox instead of a
+    // rounded patch floating at 84% in the middle of the card.
     const panel = document.createElementNS(svgNs, 'rect');
-    panel.setAttribute('x', px.toFixed(1)); panel.setAttribute('y', py.toFixed(1));
-    panel.setAttribute('width', pw.toFixed(1)); panel.setAttribute('height', ph.toFixed(1));
-    panel.setAttribute('rx', '18'); panel.setAttribute('fill', ISO_COLORS.patch);
+    panel.setAttribute('x', vbX.toFixed(1)); panel.setAttribute('y', vbY.toFixed(1));
+    panel.setAttribute('width', vbW.toFixed(1)); panel.setAttribute('height', vbH.toFixed(1));
+    panel.setAttribute('fill', ISO_COLORS.patch);
+    panel.setAttribute('class', 'iso-paper');
     const gridRect = panel.cloneNode();
     gridRect.setAttribute('fill', `url(#${gid})`);
     svg.appendChild(panel);
     svg.appendChild(gridRect);
 
-    // Paint back-to-front: shell, then rugs, then furniture by piece depth.
+    // Paint back-to-front: shell, then rugs (flat on the floor, so always under
+    // cutout walls), then furniture and cutout walls by depth.
     shell.sort((a, b) => a.order - b.order);
     rugs.sort((a, b) => a.order - b.order);
-    pieces.sort((a, b) => a.order - b.order);
-    [...shell, ...rugs, ...pieces].forEach((group) => group.ops.forEach(paint));
+    [...shell, ...rugs, ...isoPaintOrder(pieces)].forEach((group) => group.ops.forEach(paint));
+
+    if (floorLabel) {
+        const text = document.createElementNS(svgNs, 'text');
+        const { px, py } = floorLabel.anchor;
+        text.setAttribute('class', 'iso-floor-label');
+        text.setAttribute('x', px.toFixed(1));
+        text.setAttribute('y', py.toFixed(1));
+        text.setAttribute('transform', `rotate(${(ISO.angle * 180 / Math.PI).toFixed(0)} ${px.toFixed(1)} ${py.toFixed(1)})`);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'hanging');
+        text.setAttribute('font-size', floorLabel.fontSize.toFixed(1));
+        text.setAttribute('fill', ISO_COLORS.ink);
+        text.textContent = floorLabel.text;
+        svg.appendChild(text);
+    }
 
     return svg.outerHTML;
 }
 
-function renderRoomPreview(room) {
+function renderRoomPreview(room, opts = {}) {
     try {
-        const iso = renderIsoRoom(room);
+        const iso = renderIsoRoom(room, opts);
         if (iso) return iso;
     } catch (err) {
         console.error('[iso preview] falling back to flat preview:', err);

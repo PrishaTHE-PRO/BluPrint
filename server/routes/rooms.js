@@ -2,6 +2,14 @@ const express = require('express');
 const router  = express.Router();
 const Room    = require('../models/Room');
 const Style   = require('../models/Style');
+const { requireAuth, requireRoomOwner } = require('../middleware/auth');
+const multer  = require('multer');
+const { uploadToCloudinary } = require('../utils/cloudinary');
+const { estimateRoom, normalizeExistingFurniture, isRoomFull } = require('../services/roomPhotoAnalyzer');
+
+// Every room route is owner-only. Ownership comes from the verified token, not
+// from anything the client sends.
+router.use(requireAuth);
 
 function toNumber(value, fallback = 0) {
     const parsed = Number(value);
@@ -133,10 +141,115 @@ function sanitizeFurnitureLayout(layout) {
     };
 }
 
+// Only our own Cloudinary account is an acceptable photo source. Anything
+// else in this field would be a stored URL we later fetch server-side, which
+// is the SSRF the image proxy already had to close.
+const PHOTO_URL_PREFIX = 'https://res.cloudinary.com/';
+
+/**
+ * Reads body.photoUrl. Absent means "leave it alone"; null means "remove";
+ * a Cloudinary https URL means "set". Anything else is rejected by the caller.
+ */
+function readPhotoUrl(body) {
+    if (!body || !Object.prototype.hasOwnProperty.call(body, 'photoUrl')) return { provided: false };
+    const value = body.photoUrl;
+    if (value === null) return { provided: true, value: null };
+    if (typeof value === 'string' && value.startsWith(PHOTO_URL_PREFIX)) return { provided: true, value };
+    return { provided: true, invalid: true };
+}
+
+function sanitizePhotoEstimate(value) {
+    if (!value || typeof value !== 'object') return null;
+    // Existing furniture is kept as { label, category, keep }: the category
+    // drives what the furniture search leaves out, and keep is the user's
+    // "replace this" toggle from the dimensions page.
+    const existingFurniture = normalizeExistingFurniture(value.existingFurniture);
+    const widthFt = toNumber(value.widthFt);
+    const lengthFt = toNumber(value.lengthFt);
+    const crowded = Boolean(value.crowded);
+    // Plan positions for the kept pieces, written by the furniture route
+    // after locating them in the photo. Carried through when present.
+    const existingPlacements = Array.isArray(value.existingPlacements)
+        ? value.existingPlacements
+            .filter((e) => e && typeof e === 'object' && e.label && Number.isFinite(Number(e.cx)) && Number.isFinite(Number(e.cy)))
+            .slice(0, 16)
+            .map((e) => ({
+                label: String(e.label).slice(0, 60),
+                category: typeof e.category === 'string' ? e.category.slice(0, 32) : 'other',
+                cx: Number(e.cx),
+                cy: Number(e.cy),
+                ...(Number.isFinite(Number(e.rotation)) ? { rotation: Number(e.rotation) } : {}),
+                approx: Boolean(e.approx),
+            }))
+        : undefined;
+    return {
+        ...(existingPlacements ? { existingPlacements } : {}),
+        roomType: typeof value.roomType === 'string' ? value.roomType.slice(0, 32) : '',
+        widthFt,
+        lengthFt,
+        heightFt: toNumber(value.heightFt),
+        existingFurniture,
+        crowded,
+        // Recomputed here rather than trusted: it depends on the keep flags.
+        full: isRoomFull({ widthFt, lengthFt, existingFurniture, crowded }),
+        confidence: Math.max(0, Math.min(1, toNumber(value.confidence))),
+        fallback: Boolean(value.fallback),
+    };
+}
+
+const photoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+    fileFilter(req, file, cb) {
+        cb(null, /^image\/(jpeg|png|webp)$/.test(file.mimetype));
+    },
+});
+
+// POST /photo-analyze: upload a room photo and estimate the room from it.
+// Declared before the /:roomId routes; this router is also mounted ahead of
+// the others in server/index.js, whose "/:roomId" owner check would otherwise
+// read "photo-analyze" as a room id. Needs auth but no room yet: the room is
+// created afterwards with the returned photoUrl.
+router.post('/photo-analyze', (req, res, next) => {
+    photoUpload.single('photo')(req, res, (err) => {
+        if (err) {
+            const message = err.code === 'LIMIT_FILE_SIZE'
+                ? 'Photo must be 8 MB or smaller.'
+                : 'Could not read that photo.';
+            // Rejections used to leave no trace, so a failed upload looked
+            // like a request that never arrived.
+            console.warn('[photo-analyze] rejected upload:', err.code || err.message);
+            return res.status(400).json({ error: message });
+        }
+        next();
+    });
+}, async (req, res) => {
+    if (!req.file) {
+        console.warn('[photo-analyze] rejected upload: no accepted image in the "photo" field');
+        return res.status(400).json({ error: 'Attach a JPEG, PNG or WebP photo in the "photo" field.' });
+    }
+    console.log('[photo-analyze] received', req.file.mimetype, Math.round(req.file.size / 1024), 'KB');
+    try {
+        const photoUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'bluprint/rooms');
+        const estimate = await estimateRoom(photoUrl);
+        res.json({ photoUrl, estimate });
+    } catch (error) {
+        console.error('Photo upload error:', error.message);
+        res.status(502).json({ error: 'Could not upload the photo. Please try again.' });
+    }
+});
+
 // POST / — save a new room
 router.post('/', async (req, res) => {
     try {
-        const { userId, name, layout } = req.body;
+        // userId comes from the verified token. It used to be read from the
+        // body, which let anyone create rooms under another person's id.
+        const userId = req.uid;
+        const { name, layout } = req.body;
+        const photo = readPhotoUrl(req.body);
+        if (photo.invalid) {
+            return res.status(400).json({ error: 'photoUrl must be a Cloudinary https URL or null.' });
+        }
         const widthFt  = toNumber(req.body.widthFt);
         const lengthFt = toNumber(req.body.lengthFt);
         const heightFt = toNumber(req.body.heightFt, 8);
@@ -150,6 +263,8 @@ router.post('/', async (req, res) => {
             heightFt,
             sqft,
             layout: sanitizeLayout(layout, roomFields),
+            photoUrl: photo.provided ? photo.value : null,
+            photoEstimate: photo.provided && photo.value ? sanitizePhotoEstimate(req.body.photoEstimate) : null,
         });
         const saved   = await newRoom.save();
         if (saved.layout && !saved.layout.roomId) {
@@ -166,7 +281,9 @@ router.post('/', async (req, res) => {
 // GET / — fetch all rooms for a user
 router.get('/', async (req, res) => {
     try {
-        const rooms = await Room.find({ userId: req.query.userId })
+        // Scoped to the caller. ?userId= is ignored — honouring it was how any
+        // user's room list could be read by asking for it.
+        const rooms = await Room.find({ userId: req.uid })
             .sort({ createdAt: -1 })
             .lean();
         const roomIds = rooms.map((room) => room._id);
@@ -194,10 +311,9 @@ router.get('/', async (req, res) => {
 });
 
 // PATCH /:roomId — update room dimensions/layout
-router.patch('/:roomId', async (req, res) => {
+router.patch('/:roomId', requireRoomOwner, async (req, res) => {
     try {
-        const current = await Room.findById(req.params.roomId);
-        if (!current) return res.status(404).json({ error: 'Room not found.' });
+        const current = req.room;
 
         const name     = typeof req.body.name === 'string' && req.body.name.trim() ? req.body.name.trim() : current.name;
         const widthFt  = req.body.widthFt  !== undefined ? toNumber(req.body.widthFt, current.widthFt)   : current.widthFt;
@@ -220,6 +336,29 @@ router.patch('/:roomId', async (req, res) => {
             current.furnitureLayout = sanitizeFurnitureLayout(req.body.furnitureLayout);
         }
 
+        const photo = readPhotoUrl(req.body);
+        if (photo.invalid) {
+            return res.status(400).json({ error: 'photoUrl must be a Cloudinary https URL or null.' });
+        }
+        if (photo.provided) {
+            // A render belongs to one specific photo. Removing or swapping the
+            // photo leaves a picture of a room that no longer exists.
+            if (photo.value !== current.photoUrl) {
+                current.render = null;
+                current.markModified('render');
+            }
+            const incoming = photo.value ? sanitizePhotoEstimate(req.body.photoEstimate) : null;
+            // The dimensions page re-sends the estimate without the plan
+            // positions the furniture route worked out. Same photo: keep them.
+            if (incoming && !incoming.existingPlacements && photo.value === current.photoUrl
+                && Array.isArray(current.photoEstimate?.existingPlacements)) {
+                incoming.existingPlacements = current.photoEstimate.existingPlacements;
+            }
+            current.photoUrl = photo.value;
+            current.photoEstimate = photo.value ? (incoming || current.photoEstimate || null) : null;
+            current.markModified('photoEstimate');
+        }
+
         const saved = await current.save();
         res.status(200).json(saved);
     } catch (error) {
@@ -229,7 +368,7 @@ router.patch('/:roomId', async (req, res) => {
 });
 
 // DELETE /:roomId — remove a room
-router.delete('/:roomId', async (req, res) => {
+router.delete('/:roomId', requireRoomOwner, async (req, res) => {
     try {
         await Room.findByIdAndDelete(req.params.roomId);
         res.status(200).json({ ok: true });

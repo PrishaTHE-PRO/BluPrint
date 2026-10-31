@@ -264,24 +264,14 @@ export function resolveFurniturePlacement(
   zones: ForbiddenRect[],
   scale = 1,
 ): { position: PosFt; scale: number } {
-  let tryScale = Math.max(0.5, Math.min(2, scale));
-  for (let attempt = 0; attempt < 14; attempt += 1) {
-    const position = findValidFurniturePosition(
-      desired,
-      item,
-      rotation,
-      roomWidthFt,
-      roomLengthFt,
-      zones,
-      tryScale,
-    );
-    if (!overlapsForbiddenZone(position, item, rotation, zones, tryScale)) {
-      return { position, scale: tryScale };
-    }
-    tryScale = Math.max(0.4, tryScale * 0.82);
-  }
-
-  // Last resort: smallest scale, nudged as far from keep-outs as the search allows.
+  // Never shrink. Furniture is drawn at the real product dimensions, so making a
+  // piece smaller to squeeze it past a cutout made the plan lie about whether it
+  // actually fits — and it read as the piece randomly "glitching" smaller. A
+  // piece that cannot fit is placed at the best position the search can find and
+  // left at full size; the overlap is the honest answer.
+  //
+  // This also removes a hidden cost: the old loop ran the placement search up to
+  // 15 times per call, and that search is the expensive one on a blocked drag.
   const position = findValidFurniturePosition(
     desired,
     item,
@@ -289,9 +279,9 @@ export function resolveFurniturePlacement(
     roomWidthFt,
     roomLengthFt,
     zones,
-    tryScale,
+    scale,
   );
-  return { position, scale: tryScale };
+  return { position, scale };
 }
 
 /** Cutout + door AABBs in feet (same basis as RoomSVG / iso preview). */

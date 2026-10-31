@@ -13,7 +13,16 @@ const RoomSchema = new mongoose.Schema({
     // Where the user placed each furniture piece, which ones they removed, and
     // which product they swapped in. Stores full items, not search ids — those
     // are positional and change between searches.
-    furnitureLayout: { type: mongoose.Schema.Types.Mixed, default: null }
+    furnitureLayout: { type: mongoose.Schema.Types.Mixed, default: null },
+    // Photo mode on the dimensions page. A Cloudinary URL of the user's own
+    // room; null when they drew it instead. The results page branches on this.
+    photoUrl: { type: String, default: null },
+    // What GPT-4o read off that photo (size, type, furniture already there).
+    // Kept so the renderer can name the pieces it should replace.
+    photoEstimate: { type: mongoose.Schema.Types.Mixed, default: null },
+    // The last generated render for this photo: { url, createdAt, itemIds,
+    // hotspots, items }. Cleared whenever photoUrl changes.
+    render: { type: mongoose.Schema.Types.Mixed, default: null }
 }, { timestamps: true }); // This automatically adds the date it was made!
 
 module.exports = mongoose.model('Room', RoomSchema);

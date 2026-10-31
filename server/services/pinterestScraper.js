@@ -14,11 +14,45 @@
  */
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { httpAgent, httpsAgent } = require("../utils/safeRequest");
 
-const BOARD_URL_RE = /^https?:\/\/(www\.)?pinterest\.[a-z.]+\/[^/]+\/[^/]+\/?/i;
+// Explicit host allowlist. The previous check was a regex — /pinterest\.[a-z.]+/
+// — which matched the *string* "pinterest." anywhere in the host position, so
+// https://pinterest.attacker.io/a/b sailed through. Registering a domain and
+// pointing a `pinterest` subdomain at anything (or 302-ing to the cloud metadata
+// endpoint) was all it took to make this server fetch on your behalf.
+//
+// Host equality against a fixed set is the only version of this that holds up;
+// there is no pattern for "is really Pinterest" that a lookalike domain cannot
+// satisfy.
+const PINTEREST_HOSTS = new Set([
+  "pinterest.com", "pinterest.ca", "pinterest.co.uk", "pinterest.com.au",
+  "pinterest.co.kr", "pinterest.com.mx", "pinterest.de", "pinterest.fr",
+  "pinterest.es", "pinterest.it", "pinterest.jp", "pinterest.nz",
+  "pinterest.ie", "pinterest.ph", "pinterest.at", "pinterest.ch",
+  "pinterest.se", "pinterest.dk", "pinterest.pt", "pinterest.cl",
+  "pinterest.in", "pinterest.ru", "pinterest.info", "pin.it",
+]);
 
 function isValidBoardUrl(url) {
-  return typeof url === "string" && BOARD_URL_RE.test(url.trim());
+  if (typeof url !== "string") return false;
+
+  let parsed;
+  try {
+    parsed = new URL(url.trim());
+  } catch {
+    return false;
+  }
+
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+
+  // Strip a single leading "www." — every other subdomain is rejected, since
+  // an open subdomain redirect on a Pinterest host would otherwise be a bypass.
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  if (!PINTEREST_HOSTS.has(host)) return false;
+
+  // A board is /<user>/<board>; keep requiring that shape.
+  return parsed.pathname.split("/").filter(Boolean).length >= 2;
 }
 
 // Swap Pinterest's small thumbnail size segment for a larger usable one.
@@ -37,6 +71,12 @@ async function scrapePinterestBoard(boardUrl, { limit = 8 } = {}) {
   try {
     const resp = await axios.get(boardUrl.trim(), {
       timeout: 15000,
+      // Defence in depth: even on an allowlisted host, a redirect must not be
+      // able to walk us into the private network.
+      httpAgent,
+      httpsAgent,
+      maxRedirects: 3,
+      maxContentLength: 5 * 1024 * 1024,
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +

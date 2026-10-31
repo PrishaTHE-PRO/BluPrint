@@ -61,6 +61,140 @@
   </style>
   <link rel="stylesheet" href="./design-system.css">
   <link rel="stylesheet" href="./mobile-ui.css">
+  <style id="photo-mode-styles">
+    /* The Image Upload / Draw Room pill is Aditi's .define-room-subtabs in
+       design-system.css. Only the panel styles live here. */
+
+    #photo-panel { flex-direction: column; gap: 0; }
+    #photo-panel.hidden { display: none; }
+    .photo-dropzone {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      transition: background .2s ease;
+    }
+    .photo-dropzone:focus-visible { box-shadow: inset 0 0 0 3px rgba(211, 150, 140, .6); }
+    .photo-dropzone.is-over { background: rgba(211, 150, 140, .1); }
+    .photo-dropzone__empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 32px;
+      border: 2px dashed var(--bp-border);
+      border-radius: 24px;
+      text-align: center;
+    }
+    .photo-dropzone__empty p { margin: 0; }
+    .photo-dropzone__preview {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .photo-panel__bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 16px;
+      border-top: 1px solid var(--bp-border);
+      background: rgba(28, 23, 20, .03);
+    }
+    .photo-panel__status { margin: 0; font-size: 12px; color: var(--bp-muted); }
+    .photo-panel__status.is-error { color: #b8453c; }
+    .photo-panel__replace {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      border: 1px solid var(--bp-border);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--bp-ink);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .photo-panel__replace:hover { background: rgba(28, 23, 20, .05); }
+    .photo-estimate-summary {
+      margin: 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(28, 23, 20, .04);
+      border: 1px solid var(--bp-border);
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--bp-muted);
+    }
+    .photo-estimate-summary strong { color: var(--bp-ink); }
+    .page-dimensions #dimension-fields.hidden { display: none !important; }
+    .photo-dimensions-option { display: none; }
+    body[data-input-mode="photo"] .photo-dimensions-option { display: block; }
+    .photo-dimensions-option label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .photo-dimensions-option input { accent-color: var(--bp-primary); }
+    .photo-dimensions-option p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--bp-muted); }
+
+    /* Detected furniture, with a per-piece "replace" toggle. */
+    .photo-existing {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(28, 23, 20, .04);
+      border: 1px solid var(--bp-border);
+    }
+    .photo-existing__title { margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--bp-muted); }
+    .photo-existing__note { margin: 0 0 10px; font-size: 12px; line-height: 1.5; color: var(--bp-muted); }
+    .photo-existing__note.is-warning { color: #b8453c; font-weight: 600; }
+    .photo-existing__note:empty { display: none; }
+    .photo-existing__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+    .photo-existing__list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--bp-ink); }
+    .photo-existing__list li.is-replacing span:first-child { text-decoration: line-through; color: var(--bp-muted); }
+    .photo-existing__list label { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--bp-muted); cursor: pointer; white-space: nowrap; }
+    .photo-existing__list input { accent-color: #D3968C; }
+    .photo-existing__hint { margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: var(--bp-muted); }
+
+    /* The preview and empty-state rules above set display, which beats the
+       browser's [hidden] rule, so toggling .hidden on them did nothing: the
+       empty state stayed and the preview never appeared. Restore the
+       attribute's meaning inside the panel. */
+    #photo-panel [hidden] { display: none !important; }
+    .page-dimensions #photo-panel { cursor: default !important; }
+
+    /* Photo mode has no plan to drag doors onto, so the Element Library gives
+       way to a short explanation of what the photo does. */
+    .photo-blurb { display: none; }
+    body[data-input-mode="photo"] .photo-blurb { display: block; }
+    body[data-input-mode="photo"] .element-library-panel { display: none; }
+    .photo-blurb__card {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(211, 150, 140, .08);
+      border: 1px solid rgba(211, 150, 140, .18);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--bp-muted);
+    }
+    .photo-blurb__card p { margin: 0; }
+    .photo-blurb__card p + p { margin-top: 10px; }
+    .photo-blurb__card strong { color: var(--bp-ink); }
+    .photo-blurb__steps { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .photo-blurb__steps li { display: flex; gap: 10px; align-items: flex-start; }
+    .photo-blurb__steps iconify-icon { flex-shrink: 0; margin-top: 2px; font-size: 18px; color: #D3968C; }
+  </style>
 </head>
 <body class="page-dimensions">
 <div class="min-h-screen relative flex flex-col grid-background bg-[#0A3323] font-['Quicksand',sans-serif] text-[#F7F4D5] overflow-hidden" data-sd-id="1">
@@ -128,6 +262,13 @@
     <div class="workflow-connector" data-sd-id="22"></div>
     <a class="workflow-step" href="room-result.html" aria-label="Go to View Design" data-sd-id="23"><span data-sd-id="24">3</span><strong>View Design</strong><iconify-icon class="workflow-arrow" icon="ph:arrow-right-bold"></iconify-icon></a>
   </nav>
+  <!-- Image Upload / Draw Room. Aditi's subtab design (define-room-image-tab
+       branch): a centred pill above the whole page, not inside the canvas
+       column. Same class names and ids as hers so the branches line up. -->
+  <div class="define-room-subtabs" role="tablist" aria-label="Define room options">
+    <button id="tab-image-upload" class="define-room-subtab is-active" type="button" role="tab" aria-selected="true" aria-controls="photo-panel" data-room-tab="image-upload">Image Upload</button>
+    <button id="tab-draw-room" class="define-room-subtab" type="button" role="tab" aria-selected="false" aria-controls="canvas-container" data-room-tab="draw-room">Draw Room</button>
+  </div>
   <main class="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1600px] mx-auto w-full" data-sd-id="25">
     <section class="w-[70%] relative flex flex-col gap-4 overflow-hidden h-full" data-sd-id="26">
       <header class="animate-slide-right flex-shrink-0" data-sd-id="27">
@@ -198,9 +339,42 @@
           <div id="area-badge" class="px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-xs font-bold text-white/60 uppercase tracking-widest" data-sd-id="36">Total Area: 180 SQ FT</div>
         </div>
       </div>
+      <!-- Photo mode replaces the canvas with this. Same card styling, same slot. -->
+      <div id="photo-panel" class="flex-1 relative flex items-center justify-center overflow-hidden garden-card ghibli-border hidden" hidden>
+        <div id="photo-dropzone" class="photo-dropzone" role="button" tabindex="0" aria-label="Upload a photo of your room">
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" class="sr-only" tabindex="-1">
+          <div id="photo-empty" class="photo-dropzone__empty">
+            <iconify-icon icon="ph:camera-plus-duotone" class="text-5xl text-[#D3968C]"></iconify-icon>
+            <p class="text-lg font-bold text-[#F7F4D5]">Drop a photo of your room</p>
+            <p class="text-sm text-[#F7F4D5]/50">or click to choose one. JPEG, PNG or WebP, up to 8 MB.</p>
+          </div>
+          <img id="photo-preview" alt="Your room" class="photo-dropzone__preview" hidden>
+        </div>
+        <div class="photo-panel__bar">
+          <p id="photo-status" class="photo-panel__status" aria-live="polite">We will estimate the room size from your photo.</p>
+          <button type="button" id="photo-replace" class="photo-panel__replace" hidden>Replace photo</button>
+        </div>
+      </div>
     </section>
     <section class="w-[30%] animate-slide-right flex flex-col h-full" style="animation-delay: 0.3s" data-sd-id="37">
       <div class="garden-card ghibli-border p-6 flex-1 overflow-y-auto flex flex-col gap-6 custom-scrollbar" data-sd-id="38">
+        <!-- Shown in Photo mode in place of the Element Library. -->
+        <div class="photo-blurb space-y-4" id="photo-blurb">
+          <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]">
+            <iconify-icon icon="ph:camera-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>
+            Image Upload
+          </h2>
+          <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-[0.15em]">YOUR ROOM, FURNISHED IN YOUR OWN PHOTO</p>
+          <div class="photo-blurb__card">
+            <p><strong>Upload one photo of the room</strong> and we take it from there.</p>
+            <ul class="photo-blurb__steps">
+              <li><iconify-icon icon="ph:ruler-duotone"></iconify-icon><span>We estimate the room's size and type from the photo. If you know the measurements, you can enter them below.</span></li>
+              <li><iconify-icon icon="ph:armchair-duotone"></iconify-icon><span>On the results page, the furniture we recommend is placed right into your photo, so you see the real pieces in your real room.</span></li>
+              <li><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon><span>Prefer to draw the room and place doors and windows yourself? Switch to Draw Room above.</span></li>
+            </ul>
+            <p>A clear, well-lit shot taken from a doorway or corner works best.</p>
+          </div>
+        </div>
         <div class="element-library-panel space-y-4" data-sd-id="39">
           <h2 class="text-2xl font-bold flex items-center gap-3 text-[#F7F4D5]" data-sd-id="40">
             <iconify-icon icon="ph:shapes-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>
@@ -256,16 +430,30 @@
               <label for="room-name" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="66">ROOM NAME</label>
               <input type="text" id="room-name" value="My Room" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67">
             </div>
-            <div class="grid grid-cols-2 gap-5" data-sd-id="68">
+            <p id="photo-estimate-summary" class="photo-estimate-summary" hidden></p>
+            <div id="photo-existing" class="photo-existing" hidden>
+              <p class="photo-existing__title">Already in your photo</p>
+              <p id="photo-existing-note" class="photo-existing__note"></p>
+              <ul id="photo-existing-list" class="photo-existing__list"></ul>
+              <p class="photo-existing__hint">We keep these and only recommend what is missing. Tick a piece to have it replaced instead.</p>
+            </div>
+            <div class="photo-dimensions-option">
+              <label for="photo-manual-dimensions">
+                <input type="checkbox" id="photo-manual-dimensions" aria-controls="dimension-fields" aria-describedby="photo-dimensions-hint">
+                Enter room dimensions (optional)
+              </label>
+              <p id="photo-dimensions-hint">Use your own width and length, or leave this unchecked to estimate them from your photo.</p>
+            </div>
+            <div id="dimension-fields" class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
-                <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
+                <label for="room-width" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
                 <div class="relative" data-sd-id="71">
                   <input type="text" id="room-width" value="15" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="73">ft</span>
                 </div>
               </div>
               <div class="space-y-3" data-sd-id="74">
-                <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="75">LENGTH</label>
+                <label for="room-length" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="75">LENGTH</label>
                 <div class="relative" data-sd-id="76">
                   <input type="text" id="room-length" value="12" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="78">ft</span>
@@ -1413,6 +1601,73 @@ function renderCutouts() {
     }
     const d = pointsToPath(c.points);
 
+    // Drag state lives out here so the same handlers can be bound whether or not
+    // the cutout is currently selected. Previously only the selected variant was
+    // draggable, so the first press on an unselected cutout merely selected it —
+    // you had to press a second time to actually move it.
+    let hasMoved = false;
+    let startSvgP = null;
+    let originalPoints = null;
+    let originalEdge = 0;
+    let metrics = null;
+    let activeEdge = 0;
+    // Look the hit path up by id rather than capturing it: selecting re-renders
+    // the group, so the node captured at bind time may already be detached.
+    const setGrabCursor = (value) => {
+      const live = placedGroup.querySelector(`[data-cutout-id="${c.id}"] path.cutout-move-hit`);
+      if (live) live.setAttribute("style", `cursor: ${value}; touch-action: none`);
+    };
+
+    const cutoutMove = {
+      onStart: (e) => {
+        hasMoved = false;
+        cutoutInteractionActive = true;
+        setGrabCursor("grabbing");
+        startSvgP = getSVGPoint(e);
+        originalPoints = c.points.map((p) => ({ ...p }));
+        originalEdge = Number.isInteger(c.edgeIndex)
+          ? c.edgeIndex
+          : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
+        metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
+        activeEdge = originalEdge;
+      },
+      onMove: (mv) => {
+        hasMoved = true;
+        const currentSvgP = getSVGPoint(mv);
+        if (c.source === "drawn") {
+          const dx = currentSvgP.x - startSvgP.x;
+          const dy = currentSvgP.y - startSvgP.y;
+          const testPoints = originalPoints.map((p) => ({ x: p.x + dx, y: p.y + dy }));
+          if (!isCutoutValid(testPoints)) return;
+          c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
+          syncCutoutDom(c);
+          return;
+        }
+        const snap = pickStickyEdge(currentSvgP.x, currentSvgP.y, activeEdge);
+        const frame = getEdgeFrame(snap.edgeIndex);
+        const centerAlong =
+          (snap.point.x - frame.p1.x) * frame.tx +
+          (snap.point.y - frame.p1.y) * frame.ty;
+        const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, metrics.width, metrics.depth);
+        if (!isCutoutValid(placed.points)) return;
+        const testCutout = { ...c, ...placed };
+        if (checkCollision(testCutout, c.id)) return;
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
+        if (edgeEl) edgeEl.classList.add("active");
+        c.points = placed.points;
+        c.edgeIndex = placed.edgeIndex;
+        activeEdge = placed.edgeIndex;
+        syncCutoutDom(c);
+      },
+      onEnd: () => {
+        cutoutInteractionActive = false;
+        document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
+        setGrabCursor("grab");
+        if (hasMoved) { saveState(); renderAll(); showToast("Cutout repositioned"); }
+      },
+    };
+
     if (selectedCutoutId !== c.id) {
       const visibleOutline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       visibleOutline.setAttribute("d", d);
@@ -1422,13 +1677,17 @@ function renderCutouts() {
       visibleOutline.setAttribute("class", "cutout-preview-outline cursor-pointer element-hoverable");
       visibleOutline.setAttribute("vector-effect", "non-scaling-stroke");
       visibleOutline.style.touchAction = "none";
-      visibleOutline.onpointerdown = (e) => {
-        if (e.button !== undefined && e.button !== 0) return;
-        e.stopPropagation();
-        e.preventDefault();
-        selectedCutoutId = c.id;
-        renderAll();
-      };
+      // Select and start dragging in one gesture. renderAll() below swaps this
+      // node out, but bindPointerDrag listens on window and syncCutoutDom looks
+      // the group up by id, so the drag carries on across the re-render.
+      bindPointerDrag(visibleOutline, {
+        ...cutoutMove,
+        onStart: (e) => {
+          selectedCutoutId = c.id;
+          renderAll();
+          cutoutMove.onStart(e);
+        },
+      });
       g.appendChild(visibleOutline);
     } else {
       const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -1448,61 +1707,7 @@ function renderCutouts() {
       visualOutline.setAttribute("class", "cutout-active-outline");
       visualOutline.setAttribute("vector-effect", "non-scaling-stroke");
       visualOutline.setAttribute("pointer-events", "none");
-      let hasMoved = false;
-      let startSvgP = null;
-      let originalPoints = null;
-      let originalEdge = 0;
-      let metrics = null;
-      let activeEdge = 0;
-      bindPointerDrag(outline, {
-        onStart: (e) => {
-          hasMoved = false;
-          cutoutInteractionActive = true;
-          outline.setAttribute("style", "cursor: grabbing; touch-action: none");
-          startSvgP = getSVGPoint(e);
-          originalPoints = c.points.map((p) => ({ ...p }));
-          originalEdge = Number.isInteger(c.edgeIndex)
-            ? c.edgeIndex
-            : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
-          metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
-          activeEdge = originalEdge;
-        },
-        onMove: (mv) => {
-          hasMoved = true;
-          const currentSvgP = getSVGPoint(mv);
-          if (c.source === "drawn") {
-            const dx = currentSvgP.x - startSvgP.x;
-            const dy = currentSvgP.y - startSvgP.y;
-            const testPoints = originalPoints.map((p) => ({ x: p.x + dx, y: p.y + dy }));
-            if (!isCutoutValid(testPoints)) return;
-            c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
-            syncCutoutDom(c);
-            return;
-          }
-          const snap = pickStickyEdge(currentSvgP.x, currentSvgP.y, activeEdge);
-          const frame = getEdgeFrame(snap.edgeIndex);
-          const centerAlong =
-            (snap.point.x - frame.p1.x) * frame.tx +
-            (snap.point.y - frame.p1.y) * frame.ty;
-          const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, metrics.width, metrics.depth);
-          if (!isCutoutValid(placed.points)) return;
-          const testCutout = { ...c, ...placed };
-          if (checkCollision(testCutout, c.id)) return;
-          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
-          if (edgeEl) edgeEl.classList.add("active");
-          c.points = placed.points;
-          c.edgeIndex = placed.edgeIndex;
-          activeEdge = placed.edgeIndex;
-          syncCutoutDom(c);
-        },
-        onEnd: () => {
-          cutoutInteractionActive = false;
-          document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
-          outline.setAttribute("style", "cursor: grab; touch-action: none");
-          if (hasMoved) { saveState(); renderAll(); showToast("Cutout repositioned"); }
-        },
-      });
+      bindPointerDrag(outline, cutoutMove);
       g.appendChild(outline);
       g.appendChild(visualOutline);
 
@@ -1990,7 +2195,7 @@ svg.addEventListener("drop", (e) => {
         selectedCutoutId = newCutout.id;
         saveState();
         renderAll();
-        showToast("Wall cutout added — drag the green handles to adjust");
+        showToast("Wall cutout added. Drag the green handles to adjust");
       } else {
         showToast("Drop the cutout onto a wall");
         ghost.classList.add("hidden");
@@ -2207,6 +2412,372 @@ let roomAutosaveTimer = null;
 let roomAutosaving = false;
 let lastRoomAutosaveSig = '';
 let roomAutosaveArmed = false;
+// True once the user has actually changed something on this visit. Autosave
+// never writes without it: opening the page and leaving used to create a
+// default "My Room" on the dashboard every time, because the leave-page
+// flush had no idea whether anything had been touched.
+let roomDirty = false;
+
+/**
+ * Saves the room, creating it when the stored id no longer resolves.
+ *
+ * PATCH /api/rooms/:id 404s for an id that points at a deleted room — or at a
+ * room belonging to a different account — and the caller swallowed that as
+ * "Saved locally", so the room silently never reached the database. Falling
+ * back to POST turns a stale id into a new room instead of a lost one.
+ */
+// ---------------------------------------------------------------------------
+// Photo mode. The Photo tab lets someone skip drawing: they upload a photo of
+// the room, the server estimates its size and type, and the estimate is
+// written into the same width/length/height inputs the editor and the save
+// code already read. Dimensions mode is the page exactly as it was.
+// ---------------------------------------------------------------------------
+const photoMode = (() => {
+  const btnPhoto = document.getElementById("tab-image-upload");
+  const btnDims = document.getElementById("tab-draw-room");
+  const canvasEl = document.getElementById("canvas-container");
+  const panel = document.getElementById("photo-panel");
+  const dropzone = document.getElementById("photo-dropzone");
+  const input = document.getElementById("photo-input");
+  const empty = document.getElementById("photo-empty");
+  const preview = document.getElementById("photo-preview");
+  const status = document.getElementById("photo-status");
+  const replaceBtn = document.getElementById("photo-replace");
+  const summary = document.getElementById("photo-estimate-summary");
+  const existingBox = document.getElementById("photo-existing");
+  const existingList = document.getElementById("photo-existing-list");
+  const existingNote = document.getElementById("photo-existing-note");
+  const dimFields = document.getElementById("dimension-fields");
+  const manualDimensions = document.getElementById("photo-manual-dimensions");
+
+  const MAX_BYTES = 8 * 1024 * 1024;
+  const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+
+  const state = {
+    active: true,
+    photoUrl: null,
+    estimate: null,
+    analyzing: false,
+  };
+  // A saved photo is only meaningful for a saved room. If there is no room id
+  // this is a fresh room, and any photo left in storage belongs to an old one.
+  try {
+    const stored = localStorage.getItem("blueprintCurrentRoomPhotoUrl") || null;
+    if (stored && localStorage.getItem("blueprintCurrentRoomId")) {
+      state.photoUrl = stored;
+    } else if (stored) {
+      localStorage.removeItem("blueprintCurrentRoomPhotoUrl");
+    }
+  } catch {}
+
+  if (!btnPhoto || !btnDims || !canvasEl || !panel) {
+    return { get active() { return false; }, get photoUrl() { return null; }, getDimensionError() { return ""; }, savePayload() { return {}; } };
+  }
+
+  function setStatus(text, isError) {
+    if (!status) return;
+    status.textContent = text || "";
+    status.classList.toggle("is-error", Boolean(isError));
+  }
+
+  // Keep upload errors visible beside the photo as well as in the sidebar.
+  function showBlockingError(message) {
+    setDimensionError(message);
+    if (state.active) setStatus(message, true);
+    showToast(message);
+  }
+
+  function fmt(ft) {
+    return currentUnit === "m" ? (ft * FT_TO_M).toFixed(1) + " m" : ft + " ft";
+  }
+
+  function updateSummary() {
+    if (!summary) return;
+    if (!state.active) { summary.hidden = true; return; }
+    summary.hidden = false;
+    if (manualDimensions.checked) {
+      summary.textContent = "Your width and length will be used instead of the photo estimate.";
+    } else if (state.estimate && !state.estimate.fallback) {
+      summary.innerHTML =
+        "Estimated <strong>" + fmt(state.estimate.widthFt) + " x " + fmt(state.estimate.lengthFt) +
+        "</strong> from your photo. Enter your own dimensions below to adjust.";
+    } else if (state.estimate && state.estimate.fallback) {
+      summary.innerHTML =
+        "We could not estimate this room, so it is set to <strong>" + fmt(state.estimate.widthFt) + " x " +
+        fmt(state.estimate.lengthFt) + "</strong>. Enter your own dimensions below to adjust.";
+    } else if (state.photoUrl) {
+      summary.textContent = "Using the size saved with your photo. Enter your own dimensions below to adjust.";
+    } else {
+      summary.textContent = "Upload a photo and we will estimate the room size for you.";
+    }
+  }
+
+  /**
+   * The furniture the analysis found, each with a "replace" toggle. Kept
+   * pieces are left out of the recommendations and preserved in the render;
+   * a ticked piece is recommended and swapped in the picture. Toggling marks
+   * the room dirty so the autosave writes the updated estimate.
+   */
+  function renderExisting() {
+    if (!existingBox || !existingList) return;
+    const list = (state.estimate && Array.isArray(state.estimate.existingFurniture)) ? state.estimate.existingFurniture : [];
+    if (!state.active || list.length === 0) { existingBox.hidden = true; return; }
+    existingBox.hidden = false;
+    if (existingNote) {
+      const full = Boolean(state.estimate.full);
+      existingNote.textContent = full
+        ? "This room already looks fully furnished. We will only suggest small accents unless you mark pieces to replace."
+        : "";
+      existingNote.classList.toggle("is-warning", full);
+    }
+    existingList.textContent = "";
+    list.forEach((piece) => {
+      const li = document.createElement("li");
+      li.classList.toggle("is-replacing", piece.keep === false);
+      const name = document.createElement("span");
+      name.textContent = piece.label;
+      const label = document.createElement("label");
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = piece.keep === false;
+      box.addEventListener("change", () => {
+        piece.keep = !box.checked;
+        li.classList.toggle("is-replacing", piece.keep === false);
+        // The server recomputes fullness from the keep flags on save.
+        if (typeof scheduleRoomAutosave === "function") scheduleRoomAutosave();
+      });
+      label.appendChild(box);
+      label.appendChild(document.createTextNode("Replace"));
+      li.appendChild(name);
+      li.appendChild(label);
+      existingList.appendChild(li);
+    });
+  }
+
+  function setMode(mode) {
+    state.active = mode === "photo";
+    document.body.dataset.inputMode = mode;
+    btnPhoto.classList.toggle("is-active", state.active);
+    btnDims.classList.toggle("is-active", !state.active);
+    btnPhoto.setAttribute("aria-selected", state.active ? "true" : "false");
+    btnDims.setAttribute("aria-selected", state.active ? "false" : "true");
+    canvasEl.classList.toggle("hidden", state.active);
+    panel.classList.toggle("hidden", !state.active);
+    panel.hidden = !state.active;
+    if (dimFields) dimFields.classList.toggle("hidden", state.active && !manualDimensions.checked);
+    updateSummary();
+    renderExisting();
+  }
+
+  function showPreview(src) {
+    if (!preview) return;
+    preview.src = src;
+    preview.hidden = false;
+    if (empty) empty.hidden = true;
+    if (replaceBtn) replaceBtn.hidden = false;
+  }
+
+  function applyEstimatedDimensions() {
+    const w = Number(state.estimate?.widthFt), l = Number(state.estimate?.lengthFt);
+    if (!Number.isFinite(w) || !Number.isFinite(l) || w <= 0 || l <= 0) return;
+    const toUnit = (ft) => currentUnit === "m" ? (ft * FT_TO_M).toFixed(2) : String(ft);
+    widthInput.value = toUnit(w);
+    lengthInput.value = toUnit(l);
+    // Reuse the editor's scaling and saving so both tabs share one layout.
+    if (typeof widthInput.oninput === "function") widthInput.oninput();
+  }
+
+  function applyEstimate(payload) {
+    const estimate = payload.estimate || {};
+    state.photoUrl = payload.photoUrl;
+    state.estimate = estimate;
+    try {
+      localStorage.setItem("blueprintCurrentRoomPhotoUrl", payload.photoUrl);
+      // The inspo page owns the room type once the user picks one there;
+      // only seed it when nothing has been chosen yet.
+      if (estimate.roomType && !localStorage.getItem("blueprintCurrentRoomType")) {
+        localStorage.setItem("blueprintCurrentRoomType", estimate.roomType);
+      }
+    } catch {}
+
+    // Uploading a photo is deliberate, so the room may be created from here
+    // even if the user never touches a dimension field.
+    roomDirty = true;
+
+    const w = Number(estimate.widthFt), l = Number(estimate.lengthFt), h = Number(estimate.heightFt);
+    if (Number.isFinite(h) && h > 0) heightInput.value = String(h);
+    // A photo can finish analyzing while the user is entering measurements.
+    if (!manualDimensions.checked) applyEstimatedDimensions();
+    scheduleRoomAutosave();
+
+    if (estimate.fallback) {
+      setStatus(manualDimensions.checked
+        ? "We could not estimate this room from the photo. Using your room dimensions."
+        : "We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; enter your own dimensions below to adjust.", true);
+    } else if (estimate.full) {
+      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ". This room already looks fully furnished, so we will suggest accents only.", true);
+    } else {
+      const found = Array.isArray(estimate.existingFurniture) ? estimate.existingFurniture.length : 0;
+      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling." + (found ? " Found " + found + " piece" + (found === 1 ? "" : "s") + " of furniture already there." : "") + (manualDimensions.checked ? " Using your width and length." : " Enter your own dimensions below to adjust."));
+    }
+    updateSummary();
+    renderExisting();
+  }
+
+  // Phone photos are routinely 4 to 12 MB and 4000 px wide. The analyzer and
+  // the renderer never need more than about 2000 px, and an upload over the
+  // 8 MB limit was being rejected before the server logged anything, which
+  // left the user with a preview and no estimate. Resize on a canvas first;
+  // if anything about that fails, the original goes up as before.
+  const MAX_EDGE = 2048;
+  async function shrinkForUpload(file) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+      if (scale === 1 && file.size <= MAX_BYTES) { bitmap.close(); return file; }
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.86));
+      if (!blob) return file;
+      return new File([blob], (file.name || "room").replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+    } catch (err) {
+      console.warn("[photo] could not resize, uploading the original", err);
+      return file;
+    }
+  }
+
+  async function handleFile(file) {
+    if (!file) return;
+    if (!ACCEPTED.includes(file.type)) {
+      setStatus("Please choose a JPEG, PNG or WebP photo.", true);
+      showToast("Please choose a JPEG, PNG or WebP photo");
+      return;
+    }
+
+    showPreview(URL.createObjectURL(file));
+    setStatus("Preparing your photo...");
+    state.analyzing = true;
+    try {
+      const upload = await shrinkForUpload(file);
+      if (upload.size > MAX_BYTES) {
+        throw new Error("That photo is over 8 MB even after resizing. Please choose a smaller one.");
+      }
+      setStatus("Estimating the room size from your photo...");
+      const form = new FormData();
+      form.append("photo", upload, upload.name || "room.jpg");
+      const res = await authedFetch("/api/rooms/photo-analyze", { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not analyze that photo.");
+      applyEstimate(data);
+    } catch (err) {
+      const message = (err && err.message) || "Could not analyze that photo.";
+      // The preview stays so they can retry; Dimensions is always available.
+      setStatus(message + " Try another photo, or switch to Draw Room.", true);
+      showToast(message);
+    } finally {
+      state.analyzing = false;
+    }
+  }
+
+  function pick() { if (input) input.click(); }
+
+  btnPhoto.addEventListener("click", () => setMode("photo"));
+  btnDims.addEventListener("click", () => setMode("dimensions"));
+  manualDimensions.addEventListener("change", () => {
+    if (!manualDimensions.checked) {
+      if (state.estimate) applyEstimatedDimensions();
+      else renderAll();
+      const dims = readTypedDimensionsFt();
+      setDimensionError(getDimensionRangeMessage(dims?.widthFt, dims?.lengthFt));
+    }
+    setMode(state.active ? "photo" : "dimensions");
+  });
+  toggleFt.addEventListener("click", updateSummary);
+  toggleM.addEventListener("click", updateSummary);
+
+  if (dropzone) {
+    dropzone.addEventListener("click", pick);
+    dropzone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); }
+    });
+    dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("is-over"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("is-over"));
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("is-over");
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      void handleFile(file);
+    });
+  }
+  if (input) {
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      input.value = "";
+      void handleFile(file);
+    });
+  }
+  if (replaceBtn) {
+    replaceBtn.addEventListener("click", (e) => { e.stopPropagation(); pick(); });
+  }
+
+  // A returning room with a photo reopens on it; otherwise an empty drop zone.
+  if (state.photoUrl) {
+    showPreview(state.photoUrl);
+    setStatus("Photo saved with this room. Replace it to estimate again.");
+  }
+  setMode("photo");
+
+  return {
+    get active() { return state.active; },
+    get photoUrl() { return state.photoUrl; },
+    get analyzing() { return state.analyzing; },
+    getDimensionError() {
+      if (!state.active || !manualDimensions.checked) return "";
+      const dims = readTypedDimensionsFt();
+      return getDimensionRangeMessage(dims?.widthFt, dims?.lengthFt);
+    },
+    showBlockingError,
+    /**
+     * What to merge into the room save body. Dimensions mode sends null so the
+     * server drops the photo (and any render made from it). Photo mode with no
+     * analyzed photo sends nothing, so an existing photo is not wiped by an
+     * autosave that fires before the upload finishes.
+     */
+    savePayload({ explicit = false } = {}) {
+      // Draw Room drops the photo (and the render made from it) only on a
+      // deliberate Save & Continue. An autosave that fired while the user was
+      // just looking at the Draw Room tab must not wipe either.
+      if (!state.active) return explicit ? { photoUrl: null } : {};
+      if (state.photoUrl) return { photoUrl: state.photoUrl, photoEstimate: state.estimate || undefined };
+      return {};
+    },
+  };
+})();
+
+async function saveRoomToServer(body) {
+  const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
+
+  if (existingRoomId) {
+    const patched = await authedFetch(`/api/rooms/${existingRoomId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (patched.ok) return patched;
+    if (patched.status !== 404) return patched;   // 401/500 are real failures
+    // Stale id: drop it so the POST below is treated as a fresh room.
+    localStorage.removeItem("blueprintCurrentRoomId");
+  }
+
+  return authedFetch("/api/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
 
 function snapshotLocalRoomMeta(layout) {
   localStorage.setItem("blueprintCurrentRoomName", layout.roomName);
@@ -2225,6 +2796,7 @@ function scheduleRoomAutosave() {
   snapshotLocalRoomMeta(layoutSnapshot);
 
   if (!roomAutosaveArmed) return;
+  roomDirty = true;
 
   if (roomAutosaveTimer) clearTimeout(roomAutosaveTimer);
   roomAutosaveTimer = setTimeout(() => {
@@ -2235,7 +2807,15 @@ function scheduleRoomAutosave() {
 
 async function flushRoomAutosave() {
   if (roomAutosaving) return;
-  const userId = localStorage.getItem("blueprintUserId");
+  if (photoMode.getDimensionError()) return;
+  // Nothing changed, nothing to save. This is the whole fix for phantom
+  // rooms: a leave-page flush on an untouched page must not create one.
+  if (!roomDirty) return;
+  // Ask Firebase, not a localStorage breadcrumb. blueprintUserId is only ever
+  // written by dashboard.js, so a signed-in user who reached this page without
+  // passing through the dashboard had every autosave bail here in silence.
+  // The server derives the owner from the token regardless.
+  const userId = await currentUid();
   if (!userId) return;
 
   const existingRoomId = localStorage.getItem("blueprintCurrentRoomId");
@@ -2264,22 +2844,16 @@ async function flushRoomAutosave() {
   snapshotLocalRoomMeta(layoutSnapshot);
 
   try {
-    const res = await fetch(
-      existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-      {
-        method: existingRoomId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          name: roomName,
-          widthFt,
-          lengthFt,
-          heightFt,
-          sqft: layoutSnapshot.sqft,
-          layout: layoutSnapshot,
-        }),
-      },
-    );
+    const res = await saveRoomToServer({
+      userId,
+      name: roomName,
+      widthFt,
+      lengthFt,
+      heightFt,
+      sqft: layoutSnapshot.sqft,
+      layout: layoutSnapshot,
+      ...photoMode.savePayload(),
+    });
     if (!res.ok) throw new Error("autosave failed (" + res.status + ")");
     const room = await res.json();
     if (room && room._id) {
@@ -2355,7 +2929,9 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
   btn.addEventListener("click", async () => {
     if (saving) return;
 
-    const userId = localStorage.getItem("blueprintUserId");
+    // Same as the autosave: a missing breadcrumb was bouncing genuinely
+    // signed-in people to the login page.
+    const userId = await currentUid();
     if (!userId) {
       window.location.href = "login.html";
       return;
@@ -2379,7 +2955,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
       return;
     }
 
-    const rangeMessage = getDimensionRangeMessage(widthFt, lengthFt);
+    const rangeMessage = photoMode.getDimensionError() || getDimensionRangeMessage(widthFt, lengthFt);
     if (rangeMessage) {
       setDimensionError(rangeMessage);
       showToast(rangeMessage);
@@ -2387,6 +2963,15 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
       return;
     }
     setDimensionError("");
+
+    // Photo mode has nothing to hand the results page without a photo.
+    if (photoMode.active && !photoMode.photoUrl) {
+      const message = photoMode.analyzing
+        ? "Still estimating your room from the photo. One moment."
+        : "Upload a photo of your room, or switch to Draw Room.";
+      photoMode.showBlockingError(message);
+      return;
+    }
 
     snapshotLocalRoomMeta(layoutSnapshot);
     persistRoomLayout(layoutSnapshot);
@@ -2397,23 +2982,22 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
     btn.innerHTML = "Saving...";
 
     try {
-      const res = await fetch(
-        existingRoomId ? `/api/rooms/${existingRoomId}` : "/api/rooms",
-        {
-          method: existingRoomId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            name: roomName,
-            widthFt,
-            lengthFt,
-            heightFt,
-            sqft: layoutSnapshot.sqft,
-            layout: layoutSnapshot,
-          }),
-        },
-      );
+      const res = await saveRoomToServer({
+        userId,
+        name: roomName,
+        widthFt,
+        lengthFt,
+        heightFt,
+        sqft: layoutSnapshot.sqft,
+        layout: layoutSnapshot,
+        ...photoMode.savePayload({ explicit: true }),
+      });
       if (!res.ok) throw new Error("save failed (" + res.status + ")");
+      // Dimensions mode removed the photo; the local copy must go too, or the
+      // next visit would reopen on a photo the server no longer has.
+      if (!photoMode.active) {
+        try { localStorage.removeItem("blueprintCurrentRoomPhotoUrl"); } catch {}
+      }
       const room = await res.json();
       localStorage.setItem("blueprintCurrentRoomId", room._id);
       persistRoomLayout(room.layout || { ...layoutSnapshot, roomId: room._id });
@@ -2429,7 +3013,7 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
       });
     } catch (err) {
       console.warn("[save room]", err);
-      showToast("Saved locally — continuing");
+      showToast("Saved locally, continuing");
     }
 
     window.location.href = "inspo-upload.html";
@@ -2463,11 +3047,17 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
 </div>
 <script src="./mobile-ui.js" defer></script>
 <script src="./theme-toggle.js" defer></script>
-<script src="./blueprint-bg.js" defer></script>
 <script type="module" src="/src/theme-switch.tsx"></script>
+<script type="module" src="/src/cursor-grid-background.jsx"></script>
 <script type="module">
   import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { auth, isFirebaseConfigured } from "./firebase.mjs";
+  import { auth, isFirebaseConfigured, authedFetch, currentUid } from "./firebase.mjs";
+  // The editor above is a classic <script>, not a module, yet its save code
+  // calls authedFetch and currentUid. Module imports are scoped to this block,
+  // so without these two lines every save threw ReferenceError, which the
+  // catch reported as "Saved locally, continuing" while nothing was saved.
+  window.authedFetch = authedFetch;
+  window.currentUid = currentUid;
   const profileBtn = document.getElementById('profile-btn');
   const profilePopup = document.getElementById('profile-popup');
   const settingsBtn = document.getElementById('settings-btn');

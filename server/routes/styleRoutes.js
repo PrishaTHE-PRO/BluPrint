@@ -3,8 +3,14 @@ const InspirationImage = require("../models/InspirationImage");
 const Style = require("../models/Style");
 const StyleAnalysis = require("../models/StyleAnalysis");
 const { analyzeImages, normalizeHex } = require("../services/styleAnalyzer");
+const { requireAuth, requireRoomOwner } = require("../middleware/auth");
 
 const router = express.Router();
+
+// Style analysis runs GPT-4o Vision on the caller's dime — it must never be
+// reachable without a verified owner behind it.
+router.use(requireAuth);
+router.use("/:roomId", requireRoomOwner);
 
 function imageToVisionSource(image) {
   if (image.url) return image.url;

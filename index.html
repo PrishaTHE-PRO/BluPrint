@@ -43,9 +43,9 @@
       color: var(--ink);
       font-family: "DM Sans", sans-serif;
       background:
-        radial-gradient(circle at 92% 4%, rgba(184, 212, 232, .7), transparent 28rem),
+        radial-gradient(circle at 92% 4%, rgba(136, 178, 210, .7), transparent 28rem),
         radial-gradient(circle at 4% 42%, rgba(233, 223, 210, .75), transparent 30rem),
-        linear-gradient(145deg, #fbf8f3 0%, #f5f7f7 48%, #eaf4fa 100%);
+        linear-gradient(145deg, #f0ece6 0%, #e0e9ee 48%, #ccdfec 100%);
       background-size: 130% 130%, 145% 145%, 190% 190%;
       animation: landing-sky-shift 20s ease-in-out infinite alternate;
     }
@@ -59,7 +59,7 @@
       border-radius: 50%;
       content: "";
       pointer-events: none;
-      opacity: .62;
+      opacity: .4;
       filter: blur(22px);
       background:
         radial-gradient(ellipse 24% 35% at 24% 62%, rgba(255,255,255,.92) 0 96%, transparent 100%),
@@ -199,6 +199,20 @@
        dark palette. Light mode is untouched.
        ------------------------------------------------------------------ */
 
+    /* "See how it works". Restored after the dark-token pass dropped it:
+       .button-secondary hardcodes `background: rgba(255,255,255,.66)` (and #fff
+       on hover), so without an override it renders as a near-white button on
+       the dark page. */
+    html.dark-mode .button-secondary {
+      border-color: rgba(232, 238, 244, .16);
+      color: var(--ink);
+      background: rgba(232, 238, 244, .06);
+    }
+    html.dark-mode .button-secondary:hover {
+      background: rgba(232, 238, 244, .12);
+      box-shadow: none;
+    }
+
     /* Pills: a grey wash on dark, and the label was barely legible. */
     html.dark-mode .eyebrow {
       border-color: rgba(126, 168, 201, .26);
@@ -227,6 +241,19 @@
       border-color: rgba(126, 168, 201, .16);
       background: #131b24;
     }
+    /* Hero 3D controls: the light versions are near-white glass, which on the
+       dark canvas (#131b24) would glare. Mirror them as dark glass instead. */
+    html.dark-mode .hero-3d-hint,
+    html.dark-mode .hero-styles {
+      border-color: rgba(126, 168, 201, .18);
+      background: rgba(19, 27, 36, .82);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .38);
+      color: var(--muted);
+    }
+    html.dark-mode .hero-chip { color: var(--muted); }
+    html.dark-mode .hero-chip:hover { background: rgba(126, 168, 201, .16); color: var(--ink); }
+    html.dark-mode .hero-chip.is-active { background: var(--blue-dark); color: #0f1720; }
+
     html.dark-mode .side-heading { color: var(--ink); }
     html.dark-mode .mini-card {
       border-color: rgba(232, 238, 244, .1);
@@ -360,7 +387,9 @@
 
     .hero {
       display: grid;
-      grid-template-columns: .88fr 1.12fr;
+      /* The stage carries a live 3D room and a five-way style switcher now, so
+         it gets more of the row than the copy does. */
+      grid-template-columns: .78fr 1.22fr;
       gap: clamp(42px, 6vw, 86px);
       align-items: center;
       min-height: 100vh;
@@ -409,7 +438,7 @@
     .product-stage { position: relative; min-height: 610px; perspective: 1200px; }
     .app-window {
       position: absolute;
-      inset: 30px 0 40px 24px;
+      inset: 30px 0 40px 0;
       overflow: hidden;
       border: 1px solid rgba(255,255,255,.8);
       border-radius: 28px;
@@ -424,7 +453,7 @@
     .window-dot:nth-child(2) { background: #c4d5df; }
     .window-dot:nth-child(3) { background: #bacdbd; }
     .window-title { margin-left: auto; color: #8c857d; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    .planner { display: grid; grid-template-columns: 1fr 160px; height: calc(100% - 48px); padding: 22px; gap: 17px; }
+    .planner { display: grid; grid-template-columns: 1fr 148px; height: calc(100% - 48px); padding: 22px; gap: 17px; }
     .canvas {
       position: relative;
       display: grid;
@@ -440,11 +469,73 @@
       background-image: linear-gradient(rgba(61,90,128,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(61,90,128,.08) 1px, transparent 1px);
       background-size: 22px 22px;
     }
-    .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); }
+    .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); transition: opacity .5s ease; }
+    .floor-plan.is-faded { opacity: 0; }
+
+    /* Live 3D room, layered over the SVG plan. Stays invisible (and zero-cost)
+       until the viewer actually mounts and JS adds .is-live. */
+    .hero-3d { position: absolute; inset: 0; z-index: 1; opacity: 0; border-radius: 20px; transition: opacity .6s ease; }
+    .hero-3d.is-live { opacity: 1; }
+    .hero-3d canvas { width: 100% !important; height: 100% !important; border-radius: 20px; cursor: grab; }
+    .hero-3d canvas:active { cursor: grabbing; }
+
+    .hero-3d-hint, .hero-styles { opacity: 0; transition: opacity .45s ease .2s; pointer-events: none; }
+    .hero-3d.is-live ~ .hero-3d-hint, .hero-3d.is-live ~ .hero-styles { opacity: 1; }
+    .hero-3d.is-live ~ .hero-styles { pointer-events: auto; }
+    /* Once they have grabbed the room, the instruction has done its job. */
+    .hero-3d.has-interacted ~ .hero-3d-hint { opacity: 0; }
+
+    .hero-3d-hint {
+      position: absolute; top: 12px; left: 50%; z-index: 2;
+      display: flex; align-items: center; gap: 6px;
+      margin: 0; padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 6px 16px rgba(46,58,68,.1);
+      color: #6f675e; font-size: 11px; font-weight: 700; white-space: nowrap;
+      transform: translateX(-50%);
+      backdrop-filter: blur(6px);
+    }
+    /* Stretched across the card rather than centred in a pill: five equal
+       chips spread the full width, so the switcher reads as a toolbar instead
+       of a bubble crowded with labels. */
+    .hero-styles {
+      position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 2;
+      display: flex; align-items: center; gap: 4px;
+      padding: 5px;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 15px;
+      background: rgba(255,255,255,.78);
+      box-shadow: 0 8px 22px rgba(46,58,68,.12);
+      backdrop-filter: blur(10px);
+    }
+    .hero-chip {
+      flex: 1 1 0;              /* equal widths — the "paced out" part */
+      padding: 7px 4px;
+      border: 0; border-radius: 11px;
+      background: transparent;
+      color: #6f675e; font-family: inherit; font-size: 11px; font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease;
+    }
+    .hero-chip:hover { background: rgba(61,90,128,.09); color: var(--blue-dark); }
+    .hero-chip.is-active { background: var(--blue-dark); color: #fff; }
+    .hero-chip:focus-visible { outline: 2px solid var(--blue-dark); outline-offset: 2px; }
+
+    /* Compositing a blurred, animated, 3D-transformed panel on top of a live
+       WebGL canvas is a real cost for no visual gain — settle the window once
+       the room is doing the moving. */
+    .app-window.is-live { animation: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-3d, .floor-plan, .hero-3d-hint, .hero-styles { transition: none; }
+    }
     .side-list { display: flex; flex-direction: column; gap: 11px; }
     .side-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; font-size: 11px; font-weight: 800; }
     .mini-card { padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.86); box-shadow: 0 7px 16px rgba(46,58,68,.05); }
-    .mini-image { height: 55px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(145deg, #d8e8f1, #e8ded2); }
+    .mini-image { display: grid; place-items: center; height: 55px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(145deg, #d8e8f1, #e8ded2); }
+    .mini-image iconify-icon { color: var(--blue-dark); font-size: 26px; opacity: .78; }
     .mini-line { width: 74%; height: 5px; margin-bottom: 5px; border-radius: 999px; background: #cfc8bf; }
     .mini-line.short { width: 42%; background: #97acbe; }
     .floating-note {
@@ -706,6 +797,18 @@
     }
     .footer-links { display: flex; gap: 24px; }
 
+    .footer-legal {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      width: 100%;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      gap: 28px;
+    }
+    .footer-copy { flex-shrink: 0; margin: 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .footer-fineprint { max-width: 680px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; opacity: .82; }
+
     .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1); }
     .reveal.visible { opacity: 1; transform: translateY(0); }
     @keyframes app-float { 0%,100% { transform: rotateY(-4deg) rotateX(2deg) translateY(0); } 50% { transform: rotateY(-2deg) rotateX(1deg) translateY(-8px); } }
@@ -795,9 +898,17 @@
       .app-window { inset: 20px 0; transform: none; animation: none; }
       .planner { grid-template-columns: 1fr; padding: 14px; }
       .side-list { display: none; }
+      /* "Industrial" is the long one — it stops fitting five-across once the
+         canvas is only a phone wide. */
+      .hero-styles { bottom: 8px; left: 8px; right: 8px; gap: 2px; padding: 4px; }
+      .hero-chip { padding: 7px 2px; font-size: 10px; letter-spacing: -.01em; }
       .floating-note { font-size: 10px; }
       .note-one { right: -8px; }
-      .note-two { left: -8px; }
+      /* The style switcher now occupies the bottom of the card, and this note
+         sits above it in z-order — left at bottom:8px it would cover the chips
+         and swallow their clicks. Anchor it to the top instead, below the
+         drag hint. */
+      .note-two { top: 96px; bottom: auto; left: -8px; }
       .stats { grid-template-columns: 1fr; margin-bottom: 84px; }
       .stat + .stat { border-top: 1px solid var(--line); border-left: 0; }
       .section { padding-bottom: 84px; }
@@ -806,6 +917,7 @@
       .final-cta { padding: 96px 0; }
       footer { gap: 28px; }
       .footer-bar { align-items: flex-start; flex-direction: column; gap: 16px; }
+      .footer-legal { align-items: flex-start; flex-direction: column; gap: 12px; }
     }
     @media (max-width: 340px) {
       .nav-links { font-size: 12px; }
@@ -883,12 +995,29 @@
                 <path d="M145 28h105" stroke="#8FC5E7" stroke-width="9" stroke-linecap="round"/>
                 <text x="210" y="350" text-anchor="middle" fill="#756D63" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
       </svg>
+
+              <!-- Live 3D room. Empty until src/landing-hero3d.js lazily mounts
+                   the viewer; the SVG plan above is what shows until then, and
+                   permanently on reduced-motion or no-WebGL. -->
+              <div class="hero-3d" data-hero-3d></div>
+              <p class="hero-3d-hint" aria-hidden="true">
+                <iconify-icon icon="ph:hand-grabbing-duotone"></iconify-icon> Drag to look around
+              </p>
+              <div class="hero-styles" data-hero-styles role="group" aria-label="Preview room style">
+                <button type="button" class="hero-chip is-active" data-style="modern" aria-pressed="true">Modern</button>
+                <button type="button" class="hero-chip" data-style="scandinavian" aria-pressed="false">Scandi</button>
+                <button type="button" class="hero-chip" data-style="bohemian" aria-pressed="false">Boho</button>
+                <button type="button" class="hero-chip" data-style="industrial" aria-pressed="false">Industrial</button>
+                <button type="button" class="hero-chip" data-style="minimalist" aria-pressed="false">Minimal</button>
+              </div>
             </div>
             <aside class="side-list" aria-hidden="true">
               <div class="side-heading"><span>Furniture</span><span>$4,920</span></div>
-              <div class="mini-card"><div class="mini-image"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
-              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#e6dbce,#dce8ed)"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
-              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#dce7dc,#e8ded2)"></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <!-- Icons match the pieces actually standing in the 3D room, so
+                   the list reads as that room's furniture rather than stock art. -->
+              <div class="mini-card"><div class="mini-image"><iconify-icon icon="ph:armchair-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#e6dbce,#dce8ed)"><iconify-icon icon="ph:lamp-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#dce7dc,#e8ded2)"><iconify-icon icon="ph:plant-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
             </aside>
           </div>
         </div>
@@ -1006,10 +1135,10 @@
       <h2>Have more questions?</h2>
       <p class="contact-label">Contact</p>
       <ul>
-        <li><strong>Prisha Agarwalla</strong> — <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
-        <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
-        <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-        <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
+        <li><strong>Prisha Agarwalla</strong>: <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
+        <li><strong>Aditi Amarnath</strong>: <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
+        <li><strong>Nidhi Gandhi</strong>: <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
+        <li><strong>Saanvi Gandhari</strong>: <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
       </ul>
     </div>
     <div class="footer-bar">
@@ -1017,9 +1146,18 @@
       <span>Rooms that work beautifully.</span>
       <div class="footer-links"><a href="#features">Features</a><a href="login.html">Sign in</a></div>
     </div>
+    <div class="footer-legal">
+      <p class="footer-copy">&copy; <span data-year>2026</span> BluPrint. All rights reserved.</p>
+      <p class="footer-fineprint">
+        Furniture suggestions, prices and availability come from third-party retailers and can
+        change at any time. BluPrint is not affiliated with, and does not endorse, any retailer or
+        brand shown. Room plans are design suggestions, so measure your own space before buying.
+      </p>
+    </div>
   </footer>
 <script src="./theme-toggle.js" defer></script>
 <script type="module" src="/src/theme-switch.tsx"></script>
+<script type="module" src="/src/cursor-grid-background.jsx"></script>
   <script>
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -1030,6 +1168,12 @@
       });
     }, { threshold: 0.14 });
     document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
+
+    // Keeps the copyright year current. The markup carries a real year as a
+    // fallback, so this going missing degrades to a stale year, not a blank.
+    document.querySelectorAll('[data-year]').forEach((el) => {
+      el.textContent = String(new Date().getFullYear());
+    });
   </script>
   <script type="module" src="/src/landing.jsx"></script>
 </body>

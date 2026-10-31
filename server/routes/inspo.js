@@ -1,31 +1,21 @@
 const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
-const cloudinary = require("cloudinary").v2;
+const { uploadToCloudinary } = require("../utils/cloudinary");
 const InspirationImage = require("../models/InspirationImage");
 const Style = require("../models/Style");
 const { scrapePinterestBoard } = require("../services/pinterestScraper");
+const { requireAuth, requireRoomOwner } = require("../middleware/auth");
 
 const router = express.Router();
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Every route here is /:roomId/... — inspiration images, style picks and the
+// budget all belong to a room, so they inherit that room's ownership.
+router.use(requireAuth);
+router.use("/:roomId", requireRoomOwner);
 
-function uploadToCloudinary(buffer, mimetype) {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { resource_type: "image", folder: "bluprint" },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result.secure_url);
-      }
-    );
-    stream.end(buffer);
-  });
-}
+// Cloudinary config and the upload helper live in utils/cloudinary.js now,
+// shared with the room photo and render routes.
 
 function normalizeColorPalette(palette) {
   if (!Array.isArray(palette)) return [];

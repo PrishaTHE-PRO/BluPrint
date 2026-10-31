@@ -1,0 +1,19 @@
+body.has-cursor-grid {
+  isolation: isolate;
+  animation: none;
+}
+
+/* Let the linework provide the motion, without clouds washing over it. */
+body.has-cursor-grid::before,
+body.has-cursor-grid::after,
+body.has-cursor-grid > .ambient-orb {
+  display: none;
+}
+
+#cursor-grid-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}

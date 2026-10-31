@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import type { Room, Style, FurnitureItem, RoomLayout } from '../types';
+import type { Room, Style, FurnitureItem, RoomLayout , ExistingPlacement } from '../types';
 import {
   CATEGORY_LABELS,
   STACK_PARENT,
@@ -112,6 +112,18 @@ interface Props {
   onRemove?:        (cat: string) => void;
   /** Restored placement from a saved layout; applied once when it arrives. */
   initialPlacement?: Placement | null;
+  /**
+   * Positions pushed in after seeding, e.g. the plan being matched to a
+   * rendered picture. Applied whenever `key` changes; validated the same way
+   * the seed is so nothing lands in a cutout or outside the room.
+   */
+  applyPlacement?: { key: number; positions: Record<string, PosFt>; rotations?: Record<string, number> } | null;
+  /**
+   * Furniture already in the user's photo. Drawn as translucent, fixed
+   * footprints that cannot be dragged, and treated as occupied floor so
+   * recommended pieces are placed around them.
+   */
+  ghostFurniture?: ExistingPlacement[];
   /** Fires whenever a piece is dragged or rotated, so the parent can save it. */
   onPlacementChange?: (placement: Placement) => void;
   /** Dominant / palette color per furniture category for 2D fills. */
@@ -136,7 +148,10 @@ function defaultPos(category: string, room: Room): PosFt {
   };
 }
 
-function defaultRotation(category: string) {
+/** Exported so the result page falls back to the SAME default the plan uses.
+ *  It defaulted to 0 while the plan defaulted to this table, so a sofa (180)
+ *  faced backwards in the 3D room and the iso sketch. */
+export function defaultRotation(category: string) {
   return DEFAULT_ROTATION[category] ?? 0;
 }
 
@@ -356,9 +371,24 @@ function preferredFurniturePosition(
     case 'dining_rug':
     case 'island_cart':
     case 'kitchen_rug':
-    case 'bath_mat':
     case 'nursery_rug':
       return centered;
+    case 'bath_mat': {
+      // A bath mat belongs on the floor you step onto, not floating mid-room.
+      // Sit it just inside whichever fixture is actually present.
+      const fixture = anchor('bathtub') || anchor('standing_shower') || anchor('vanity');
+      if (!fixture) return centered;
+      // Step off toward the middle of the room, so a fixture on the bottom wall
+      // gets its mat above it rather than pushed outside the room.
+      const fixtureMidY = fixture.position.y + fixture.size.dFt / 2;
+      const y = fixtureMidY < roomLengthFt / 2
+        ? fixture.position.y + fixture.size.dFt + 0.25
+        : fixture.position.y - dFt - 0.25;
+      return {
+        x: fixture.position.x + (fixture.size.wFt - wFt) / 2,
+        y: Math.max(inset, Math.min(y, roomLengthFt - dFt - inset)),
+      };
+    }
     case 'dining_chair': {
       const table = anchor('dining_table');
       return table
@@ -372,19 +402,29 @@ function preferredFurniturePosition(
         : centered;
     }
     case 'pendant_light': {
+      // Hangs above the island, so in plan it sits over the island's centre. It
+      // used to be pushed a full depth clear, reading as a second object parked
+      // beside the island rather than lighting it.
       const island = anchor('island_cart');
       return island
-        ? { x: island.position.x + (island.size.wFt - wFt) / 2, y: island.position.y - dFt - gap }
+        ? {
+            x: island.position.x + (island.size.wFt - wFt) / 2,
+            y: island.position.y + (island.size.dFt - dFt) / 2,
+          }
         : centered;
     }
 
     // Large storage and plumbing pieces stay against room edges.
     case 'bookshelf':
     case 'kitchen_storage':
-    case 'bath_storage':
     case 'nursery_dresser':
     case 'bar_cabinet':
       return { x: roomWidthFt - wFt - inset, y: inset };
+    // Bath storage used to share the top-right corner with both the tub and the
+    // shower — three fixtures on one spot, which the resolver then scattered.
+    case 'bath_storage':
+      // Right wall, mid-height — clear of the shower above and the tub below.
+      return { x: roomWidthFt - wFt - inset, y: (roomLengthFt - dFt) / 2 };
     case 'kitchen_shelf':
     case 'vanity':
       return { x: inset, y: inset };
@@ -437,9 +477,15 @@ function preferredFurniturePosition(
       }
       return { x: centered.x, y: inset };
     }
+    // The bathroom set offers vanity, tub, shower and storage at once, and a
+    // small bathroom cannot fit a vanity and a tub on the same wall. Give each
+    // large fixture its own wall so the collision resolver is not left to
+    // scatter three overlapping pieces.
     case 'bathtub':
-      return { x: roomWidthFt - wFt - inset, y: inset };
+      // Long fixture: run it along the bottom wall.
+      return { x: inset, y: roomLengthFt - dFt - inset };
     case 'standing_shower':
+      // Opposite corner from the vanity, on the top wall.
       return { x: roomWidthFt - wFt - inset, y: inset };
     case 'dining_light': {
       const table = anchor('dining_table');
@@ -791,6 +837,18 @@ function DiningTableIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorT
   );
 }
 
+/** Framed art seen from above: a frame band with the picture face inside. */
+function WallArtIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
+  const frame = Math.min(d * 0.35, 0.9);
+  return (
+    <g>
+      <rect width={w} height={d} rx={1.5} fill={t.dark} stroke="#0A3323" strokeWidth={1.5} />
+      <rect x={frame} y={frame * 0.6} width={Math.max(0, w - frame * 2)} height={Math.max(0, d - frame * 1.2)}
+            fill={t.base} stroke="#0A3323" strokeWidth={0.7} opacity={0.75} />
+    </g>
+  );
+}
+
 function ShelfIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
   return (
     <g>
@@ -890,6 +948,7 @@ function FurnitureIcon({ item, wPx, dPx, color }: { item: FurnitureItem; wPx: nu
       return <LoungeChairIcon {...p} />;
     case 'smart_lighting':     return <LampIcon {...p} />;
     case 'floating_shelves':   return <ShelfIcon {...p} />;
+    case 'wall_art':           return <WallArtIcon {...p} />;
     case 'indoor_plants':      return <FloorLampIcon {...p} />;
     case 'full_length_mirror': return <CoffeeTableIcon {...p} />;
     case 'workspace_desk':     return <DeskIcon {...p} />;
@@ -934,7 +993,7 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 
 export default function RoomSVG({
   room, furniture, roomLayout, linkedCategory, onLinkCategory, onRemove,
-  initialPlacement, onPlacementChange, colorByCategory,
+  initialPlacement, applyPlacement, ghostFurniture = [], onPlacementChange, colorByCategory,
 }: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{
@@ -952,12 +1011,6 @@ export default function RoomSVG({
     rotationStart: number;
     moved: boolean;
   } | null>(null);
-  const resizeRef = useRef<{
-    category: string;
-    center: PosFt;
-    pointerStartDistance: number;
-    scaleStart: number;
-  } | null>(null);
   const seededRef = useRef(false);
 
   const [positions,  setPositions]  = useState<Record<string, PosFt>>({});
@@ -965,7 +1018,6 @@ export default function RoomSVG({
   const [scales,     setScales]     = useState<Record<string, number>>({});
   const [dragging,   setDragging]   = useState<string | null>(null);
   const [rotating,   setRotating]   = useState<string | null>(null);
-  const [resizing,   setResizing]   = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
 
@@ -981,6 +1033,25 @@ export default function RoomSVG({
   const handleHitR = coarsePointer ? 16 : 9;
   const dragThresholdFt = coarsePointer ? 0.12 : 0.04;
 
+  // Footprints of the furniture already in the room, in feet. Centred on the
+  // position projected from the photo, sized from the category's defaults
+  // (the photo gives no measurements), kept inside the room.
+  const ghostRects = useMemo(() => {
+    const { widthFt, lengthFt } = canvasDimsFt(room, roomLayout);
+    return (ghostFurniture || []).map((g) => {
+      const { wFt, dFt } = pieceSizeFt({ category: g.category }, 1);
+      const w = Math.min(wFt, widthFt);
+      const d = Math.min(dFt, lengthFt);
+      const x = Math.min(Math.max(0, g.cx - w / 2), Math.max(0, widthFt - w));
+      const y = Math.min(Math.max(0, g.cy - d / 2), Math.max(0, lengthFt - d));
+      return { ...g, x, y, wFt: w, dFt: d };
+    });
+  }, [ghostFurniture, room, roomLayout]);
+  const ghostZones = useMemo<ForbiddenRect[]>(
+    () => ghostRects.map((g) => ({ minX: g.x, minY: g.y, maxX: g.x + g.wFt, maxY: g.y + g.dFt })),
+    [ghostRects],
+  );
+
   // Seed from a saved layout exactly once — re-validate against room/cutouts
   // so restored placements cannot sit in holes or outside the room.
   useEffect(() => {
@@ -991,7 +1062,8 @@ export default function RoomSVG({
     const bedZones = bedArchitectureZones(roomLayout);
     const nextPositions: Record<string, PosFt> = { ...initialPlacement.positions };
     const nextRotations = { ...initialPlacement.rotations };
-    const nextScales = { ...initialPlacement.scales };
+    // Everything renders at true product scale; saved per-piece scales are dropped.
+    const nextScales: Record<string, number> = {};
 
     furniture.forEach((item) => {
       const scale = nextScales[item.category] ?? 1;
@@ -1031,17 +1103,52 @@ export default function RoomSVG({
         rotation,
         widthFt,
         lengthFt,
-        [...archZones, ...occupied],
+        [...archZones, ...ghostZones, ...occupied],
         scale,
       );
       nextPositions[item.category] = resolved.position;
-      nextScales[item.category] = resolved.scale;
+      nextScales[item.category] = 1;
     });
 
     setPositions(nextPositions);
     setRotations(nextRotations);
     setScales(nextScales);
-  }, [initialPlacement, furniture, room, roomLayout]);
+  }, [initialPlacement, furniture, room, roomLayout, ghostZones]);
+
+  // Apply positions pushed in from outside (the plan matching a render).
+  // Unlike the seed this runs every time the key changes, and only for the
+  // categories it names, so pieces the render did not locate stay put.
+  const appliedKeyRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!applyPlacement || applyPlacement.key === appliedKeyRef.current) return;
+    appliedKeyRef.current = applyPlacement.key;
+    const { widthFt, lengthFt } = canvasDimsFt(room, roomLayout);
+    const zones = architectureForbiddenZonesFromLayout(roomLayout);
+    const bedZones = bedArchitectureZones(roomLayout);
+    setPositions((prevPositions) => {
+      const nextPositions: Record<string, PosFt> = { ...prevPositions };
+      const nextRotations = { ...rotations, ...(applyPlacement.rotations || {}) };
+      // Pushed pieces go first so they claim their spot; the rest are only
+      // re-validated against them.
+      const pushed = furniture.filter((item) => applyPlacement.positions[item.category]);
+      for (const item of pushed) {
+        const occupied = placedFurnitureZones(nextPositions, furniture, nextRotations, {}, item.category);
+        const archZones = isBedLikeCategory(item.category) ? bedZones : zones;
+        const resolved = resolveFurniturePlacement(
+          applyPlacement.positions[item.category],
+          item,
+          nextRotations[item.category] ?? defaultRotation(item.category),
+          widthFt,
+          lengthFt,
+          [...archZones, ...ghostZones, ...occupied],
+          1,
+        );
+        nextPositions[item.category] = resolved.position;
+      }
+      if (applyPlacement.rotations) setRotations(nextRotations);
+      return nextPositions;
+    });
+  }, [applyPlacement, furniture, room, roomLayout, rotations, ghostZones]);
 
   // Report placement upward so Save Layout can capture it.
   useEffect(() => {
@@ -1064,7 +1171,6 @@ export default function RoomSVG({
       const next = { ...prev };
       const workingScales = { ...scales };
       const workingRotations = { ...rotations };
-      const scaleUpdates: Record<string, number> = {};
 
       furniture.forEach((item) => {
         const occupiedZones = placedFurnitureZones(
@@ -1117,15 +1223,11 @@ export default function RoomSVG({
           scale,
         );
         next[item.category] = resolved.position;
+        // resolveFurniturePlacement no longer rescales, so this always matches
+        // the scale we passed in — pieces keep their real size.
         workingScales[item.category] = resolved.scale;
-        if (Math.abs(resolved.scale - scale) > 0.001) {
-          scaleUpdates[item.category] = resolved.scale;
-        }
       });
 
-      if (Object.keys(scaleUpdates).length > 0) {
-        setScales((prevScales) => ({ ...prevScales, ...scaleUpdates }));
-      }
       return next;
     });
 
@@ -1217,68 +1319,10 @@ export default function RoomSVG({
     onLinkCategory?.(category);
   }, [furniture, positions, room, rotations, scales, clientToFt, onLinkCategory]);
 
-  const handleResizePointerDown = useCallback((category: string, e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const item = furniture.find(candidate => candidate.category === category);
-    if (!item) return;
-    const scale = scales[category] ?? 1;
-    const position = positions[category] ?? defaultPos(category, room);
-    const { wFt, dFt } = pieceSizeFt(item, scale);
-    const center = { x: position.x + wFt / 2, y: position.y + dFt / 2 };
-    const pointer = clientToFt(e);
-    resizeRef.current = {
-      category,
-      center,
-      pointerStartDistance: Math.max(0.1, Math.hypot(pointer.x - center.x, pointer.y - center.y)),
-      scaleStart: scale,
-    };
-    svgRef.current?.setPointerCapture(e.pointerId);
-    setResizing(category);
-    setSelectedCategory(category);
-    onLinkCategory?.(category);
-  }, [furniture, positions, room, scales, clientToFt, onLinkCategory]);
-
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const resizingPiece = resizeRef.current;
-    if (resizingPiece || rotateRef.current || dragRef.current) {
+    if (rotateRef.current || dragRef.current) {
       e.preventDefault();
       e.stopPropagation();
-    }
-    if (resizingPiece) {
-      e.preventDefault();
-      const pointer = clientToFt(e);
-      const distance = Math.hypot(
-        pointer.x - resizingPiece.center.x,
-        pointer.y - resizingPiece.center.y,
-      );
-      const nextScale = Math.max(
-        0.5,
-        Math.min(2, resizingPiece.scaleStart * distance / resizingPiece.pointerStartDistance),
-      );
-      const item = furniture.find(candidate => candidate.category === resizingPiece.category);
-      if (!item) return;
-      const rotation = rotations[resizingPiece.category] ?? defaultRotation(resizingPiece.category);
-      const { wFt, dFt } = pieceSizeFt(item, nextScale);
-      const occupiedZones = placedFurnitureZones(positions, furniture, rotations, scales, resizingPiece.category);
-      setScales(prev => ({ ...prev, [resizingPiece.category]: nextScale }));
-      setPositions(prev => ({
-        ...prev,
-        [resizingPiece.category]: findValidFurniturePosition(
-          {
-            x: resizingPiece.center.x - wFt / 2,
-            y: resizingPiece.center.y - dFt / 2,
-          },
-          item,
-          rotation,
-          cW,
-          cL,
-          [...forbiddenZones, ...occupiedZones],
-          nextScale,
-        ),
-      }));
-      return;
     }
 
     const rotatingPiece = rotateRef.current;
@@ -1368,10 +1412,8 @@ export default function RoomSVG({
     }
     dragRef.current = null;
     rotateRef.current = null;
-    resizeRef.current = null;
     setDragging(null);
     setRotating(null);
-    setResizing(null);
   }, [applyRotation]);
 
   const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
@@ -1472,7 +1514,7 @@ export default function RoomSVG({
       onMouseLeave={() => {
         // Desktop hover clear only — touch selection must stick until tap-away
         if (coarsePointer) return;
-        if (dragging || rotating || resizing) return;
+        if (dragging || rotating) return;
         setSelectedCategory(null);
         onLinkCategory?.(null);
       }}
@@ -1484,9 +1526,10 @@ export default function RoomSVG({
           2D Room Layout
         </h3>
         <span className="text-[10px] text-[#F7F4D5]/40 font-medium text-right">
+          {ghostRects.length > 0 ? 'Dashed pieces are already in your room and stay put. ' : ''}
           {coarsePointer
             ? 'Tap to select · drag to move · tap/drag top handle to rotate'
-            : 'Drag to move · top handle rotates · corner handle resizes'}
+            : 'Drag to move · top handle rotates'}
         </span>
       </div>
 
@@ -1606,6 +1649,48 @@ export default function RoomSVG({
           {cL % 1 === 0 ? cL : cL.toFixed(1)} ft
         </text>
 
+        {/* ── Furniture already in the room: fixed, translucent, not draggable ── */}
+        {ghostRects.length > 0 && (
+          <g className="ghost-furniture" pointerEvents="none" aria-hidden="true">
+            {ghostRects.map((g, i) => {
+              const wPx = g.wFt * SCALE;
+              const dPx = g.dFt * SCALE;
+              const x = g.x * SCALE + MARGIN;
+              const y = g.y * SCALE + MARGIN;
+              const rot = g.rotation ?? 0;
+              return (
+                <g
+                  key={`ghost-${i}-${g.label}`}
+                  transform={`translate(${(x + wPx / 2).toFixed(1)},${(y + dPx / 2).toFixed(1)}) rotate(${rot}) translate(${(-wPx / 2).toFixed(1)},${(-dPx / 2).toFixed(1)})`}
+                  opacity={0.42}
+                >
+                  <rect
+                    width={wPx}
+                    height={dPx}
+                    rx={6}
+                    fill="rgba(122, 112, 96, 0.28)"
+                    stroke="rgba(122, 112, 96, 0.9)"
+                    strokeWidth={1.5}
+                    strokeDasharray="5 4"
+                  />
+                  <text
+                    x={wPx / 2}
+                    y={dPx / 2}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={Math.max(8, Math.min(11, wPx / 8))}
+                    fontWeight="700"
+                    fontFamily="Quicksand, sans-serif"
+                    fill="rgba(60, 52, 44, 0.95)"
+                  >
+                    {g.label}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        )}
+
         {/* ── Furniture pieces ── */}
         {sorted.map(item => {
           const pos    = positions[item.category] ?? defaultPos(item.category, room);
@@ -1620,10 +1705,9 @@ export default function RoomSVG({
           const isLinked = activeCategory === item.category;
           const showControls = isLinked
             || rotating === item.category
-            || resizing === item.category
             || dragging === item.category;
           const isDimmed = Boolean(activeCategory && activeCategory !== item.category
-            && rotating !== item.category && resizing !== item.category && dragging !== item.category);
+            && rotating !== item.category && dragging !== item.category);
           const isRug    = item.category === 'rug';
 
           return (
@@ -1761,27 +1845,6 @@ export default function RoomSVG({
                 </g>
               )}
 
-              {/* Bottom-right resize handle. Its distance from the piece center
-                  determines scale, preserving the product's aspect ratio. */}
-              {showControls && (
-                <g
-                  role="button"
-                  aria-label={`Resize ${CATEGORY_LABELS[item.category] ?? item.category}`}
-                  transform={`translate(${wPx.toFixed(1)},${dPx.toFixed(1)})`}
-                  style={{ cursor: resizing === item.category ? 'grabbing' : 'nwse-resize', touchAction: 'none' }}
-                  onPointerDown={e => handleResizePointerDown(item.category, e)}
-                >
-                  <circle r={handleHitR + 6} fill="transparent" />
-                  <circle r={handleHitR} fill="#839958" stroke="#F7F4D5" strokeWidth={2} />
-                  <path
-                    d="M -4 2 L 2 -4 M -1 4 L 4 -1"
-                    fill="none"
-                    stroke="#F7F4D5"
-                    strokeWidth={1.8}
-                    strokeLinecap="round"
-                  />
-                </g>
-              )}
             </g>
           );
         })}

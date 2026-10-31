@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import type { CSSProperties } from 'react';
-import type { Room, Style, FurnitureItem, RoomArchitectureLayout } from '../types';
+import type { Room, RoomRender, Style, FurnitureItem, FurnitureNotice, ExistingPlacement, RoomArchitectureLayout } from '../types';
 import RoomSVG from '../components/RoomSVG';
+import { defaultRotation } from '../components/RoomSVG';
+import FurnitureLoadingOverlay from '../components/FurnitureLoadingOverlay';
 import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
-import IsoRoomPreview from '../components/IsoRoomPreview';
+import RoomRenderView from '../components/RoomRenderView';
 import type { IsoFurnitureEntry, IsoRoomInput } from '../utils/isoRoomRender';
 import { Link000 } from '@/components/ui/skiper-ui/skiper40';
 import SwitchMode from '../components/SwitchMode';
@@ -21,6 +23,10 @@ import {
 import type { FurniturePlacement } from '../utils/furniturePlacement';
 import { resolveFurnitureColors, paletteFallback, colorFromName } from '../utils/furnitureColor';
 import { roomDimsFromPoints } from '../utils/furnitureConstraints';
+import { authedFetch } from '../../firebase.mjs';
+
+// Lazy so Three.js only loads when the user opens the 3D view.
+const Room3DView = lazy(() => import('../components/Room3DView'));
 
 const EMPTY_PLACEMENT: Placement = { positions: {}, rotations: {}, scales: {} };
 const ISO_THROTTLE_MS = 70;
@@ -61,6 +67,29 @@ function readScopedSavedFurniturePlacement() {
   return placement;
 }
 
+/**
+ * The kept pieces' plan positions off a room document. Positions are saved
+ * for every piece that was located; only those still marked keep are shown,
+ * so ticking "Replace" on the room page drops that ghost from the plan.
+ */
+function keptPlacements(estimate: any): ExistingPlacement[] {
+  const placements: any[] = Array.isArray(estimate?.existingPlacements) ? estimate.existingPlacements : [];
+  const pieces: any[] = Array.isArray(estimate?.existingFurniture) ? estimate.existingFurniture : [];
+  const keptLabels = new Set(
+    pieces.filter((f) => f && f.keep !== false).map((f) => String(typeof f === 'object' ? f.label : f)),
+  );
+  return placements
+    .filter((e) => e && keptLabels.has(String(e.label)) && Number.isFinite(e.cx) && Number.isFinite(e.cy))
+    .map((e) => ({
+      label: String(e.label),
+      category: String(e.category || 'other'),
+      cx: Number(e.cx),
+      cy: Number(e.cy),
+      ...(Number.isFinite(e.rotation) ? { rotation: Number(e.rotation) } : {}),
+      approx: Boolean(e.approx),
+    }));
+}
+
 function roomFeatureSignature(features: string[] = []) {
   return [...features]
     .map((feature) => feature.trim().toLowerCase())
@@ -76,6 +105,12 @@ export default function RoomResult() {
   const [furniture,        setFurniture]        = useState<FurnitureItem[]>([]);
   const [furnitureSlots,   setFurnitureSlots]   = useState<Record<string, FurnitureItem>>({});
   const [furnitureLoading, setFurnitureLoading] = useState(false);
+  // Set for photo rooms when the picture already holds furniture: explains
+  // why the list is shorter, or why a full room only gets accents.
+  const [furnitureNotice, setFurnitureNotice] = useState<FurnitureNotice | null>(null);
+  // Whether a trim-to-fit run has already happened, so the over-budget notice
+  // stops offering a button that has nothing further to trim.
+  const [underBudgetTried, setUnderBudgetTried] = useState(false);
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
   const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const [loading,          setLoading]          = useState(true);
@@ -162,7 +197,7 @@ export default function RoomResult() {
     if (opts?.showStatus !== false) setSaveStatus('saving');
     persistInFlightRef.current = true;
     try {
-      const res = await fetch(`/api/rooms/${roomId}`, {
+      const res = await authedFetch(`/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ furnitureLayout: placement }),
@@ -279,7 +314,19 @@ export default function RoomResult() {
         slotsInitializedRef.current = true;
         return init;
       }
-      return { ...init, ...prev };
+      const merged = { ...init, ...prev };
+      // Bail out when nothing actually changed. This effect also runs on
+      // `activePlacement`, so saving used to hand back a fresh object with
+      // identical contents — and that identity change cascades: new slots ->
+      // new furniture array -> the plan re-resolves every piece against every
+      // other piece -> anything sitting close together gets shoved apart. That
+      // is why furniture jumped around when you hit Save. Returning `prev`
+      // makes React skip the update entirely.
+      const prevKeys = Object.keys(prev);
+      const mergedKeys = Object.keys(merged);
+      const unchanged = prevKeys.length === mergedKeys.length
+        && mergedKeys.every((key) => merged[key] === prev[key]);
+      return unchanged ? prev : merged;
     });
   }, [furniture, activePlacement]);
 
@@ -300,6 +347,7 @@ export default function RoomResult() {
         style.roomType,
         style.roomFeatures,
         style.budgetTotal,
+        style.colorPalette,
       ).then((freshItems) => {
         const freshInCategory = freshItems.filter((i) => i.category === category);
         if (freshInCategory.length < 2) return;
@@ -356,7 +404,7 @@ export default function RoomResult() {
 
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
     if (!roomId) return;
-    fetch(`/api/rooms/${roomId}`, {
+    authedFetch(`/api/rooms/${roomId}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(nextLayout ? { name: next, layout: nextLayout } : { name: next }),
@@ -364,6 +412,52 @@ export default function RoomResult() {
       .then((res) => { if (!res.ok) throw new Error(`rename failed (${res.status})`); })
       .catch((err) => console.error('[rename]', err));
   }, [nameDraft, savedLayout]);
+
+  // Regenerate: re-run the search for this room, bypassing the server cache.
+  // Placement is reseeded from the new set, so it is a genuinely fresh design
+  // rather than the same products shuffled.
+  const handleRegenerate = useCallback(() => {
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    const raw = localStorage.getItem('blueprintStyleResult');
+    if (!roomId || !raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      slotsInitializedRef.current = false;   // let the new items seed fresh slots
+      setUnderBudgetTried(false);            // a fresh set deserves a fresh offer
+      fetchFurniture(
+        roomId,
+        parsed.styleTag,
+        parsed.roomType || localStorage.getItem('blueprintCurrentRoomType') || '',
+        parsed.roomFeatures || [],
+        parsed.budgetTotal || 0,
+        parsed.colorPalette || [],
+        true,
+      );
+    } catch { /* a malformed style blob just means no regenerate */ }
+  }, []);
+
+  // "Generate under budget" on the over-budget notice. Same pipeline as
+  // Regenerate, but the server trims pieces until the total fits.
+  const handleGenerateUnderBudget = useCallback(() => {
+    const roomId = localStorage.getItem('blueprintCurrentRoomId');
+    const raw = localStorage.getItem('blueprintStyleResult');
+    if (!roomId || !raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      slotsInitializedRef.current = false;
+      setUnderBudgetTried(true);
+      fetchFurniture(
+        roomId,
+        parsed.styleTag,
+        parsed.roomType || localStorage.getItem('blueprintCurrentRoomType') || '',
+        parsed.roomFeatures || [],
+        parsed.budgetTotal || 0,
+        parsed.colorPalette || [],
+        true,
+        true,
+      );
+    } catch { /* a malformed style blob just means no trim */ }
+  }, []);
 
   const handleSaveLayout = useCallback(async () => {
     setSaveStatus('saving');
@@ -385,7 +479,6 @@ export default function RoomResult() {
 
   useEffect(() => {
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
-    const userId = localStorage.getItem('blueprintUserId');
     const raw    = localStorage.getItem('blueprintStyleResult');
 
     if (!raw) {
@@ -422,7 +515,12 @@ export default function RoomResult() {
       return;
     }
 
-    if (!roomId || !userId) {
+    // Only the room id gates the fetch. This used to also require the
+    // blueprintUserId breadcrumb, which only dashboard.js writes; without it
+    // the room was never loaded, so photoUrl was never seen and the page fell
+    // back to the 3D view for a room that had a photo. The server takes the
+    // owner from the token, so the breadcrumb was never doing anything here.
+    if (!roomId) {
       setLoading(false);
       fetchFurniture(
         roomId ?? 'unknown',
@@ -430,12 +528,14 @@ export default function RoomResult() {
         roomType,
         parsedStyle.roomFeatures,
         parsedStyle.budgetTotal,
+        parsedStyle.colorPalette,
       );
       return;
     }
 
     Promise.all([
-      fetch(`/api/rooms?userId=${userId}`)
+      // The server scopes this to the verified token; userId is no longer sent.
+      authedFetch('/api/rooms')
         .then(r => r.json())
         .then((rooms: any[]) => {
           const match = rooms.find(r => r._id === roomId);
@@ -447,6 +547,9 @@ export default function RoomResult() {
               lengthFt: match.lengthFt,
               heightFt: match.heightFt,
               sqft:     match.sqft,
+              photoUrl: typeof match.photoUrl === 'string' ? match.photoUrl : null,
+              render:   match.render && typeof match.render.url === 'string' ? match.render : null,
+              existingFurniture: keptPlacements(match.photoEstimate),
             });
 
             if (isRoomArchitectureLayout(match.layout)) {
@@ -471,6 +574,7 @@ export default function RoomResult() {
       roomType,
       parsedStyle.roomFeatures,
       parsedStyle.budgetTotal,
+      parsedStyle.colorPalette,
     );
   }, []);
 
@@ -480,6 +584,9 @@ export default function RoomResult() {
     roomType = '',
     roomFeatures: string[] = [],
     budgetTotal = 0,
+    colorPalette: string[] = [],
+    refresh = false,
+    strictBudget = false,
   ): Promise<FurnitureItem[]> {
     const params = new URLSearchParams({
       styleTag,
@@ -487,11 +594,28 @@ export default function RoomResult() {
       budgetTotal: String(Math.max(0, budgetTotal)),
     });
     roomFeatures.forEach((feature) => params.append('roomFeature', feature));
+    // The palette drives both the shopping query and the ranking server-side.
+    // Without it the colours the user picked had no bearing on what came back.
+    colorPalette.forEach((hex) => params.append('color', hex));
+    // Regenerate: tell the server to skip its cached list for this room.
+    if (refresh) params.set('refresh', '1');
+    // Trim-to-fit: the server drops the most optional pieces until the set is
+    // actually within budget, instead of overshooting.
+    if (strictBudget) params.set('strictBudget', '1');
     const url = `/api/rooms/${roomId}/furniture?${params.toString()}`;
     setFurnitureLoading(true);
-    return fetch(url)
+    return authedFetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
-      .then((items: FurnitureItem[]) => {
+      .then((data: FurnitureItem[] | { items: FurnitureItem[]; notice?: FurnitureNotice | null; existingPlacements?: ExistingPlacement[] }) => {
+        // The route answers { items, notice } now; a bare array is the older shape.
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
+        setFurnitureNotice(Array.isArray(data) ? null : (data?.notice ?? null));
+        // First visit to a photo room: the route has just located the kept
+        // pieces and the room state loaded before they existed.
+        if (!Array.isArray(data) && Array.isArray(data?.existingPlacements) && data.existingPlacements.length > 0) {
+          const fresh = data.existingPlacements;
+          setRoom((prev) => (prev && !(prev.existingFurniture && prev.existingFurniture.length) ? { ...prev, existingFurniture: fresh } : prev));
+        }
         setFurniture(items);
         return items;
       })
@@ -502,6 +626,32 @@ export default function RoomResult() {
       })
       .finally(() => setFurnitureLoading(false));
   }
+
+  // The render pane reports a finished render here so the badge and hotspots
+  // refresh without a reload. Only the render field changes; nothing else on
+  // the room is touched.
+  // Positions projected from the picture, pushed into the plan with a fresh
+  // key each time so RoomSVG applies them even if the values repeat. The
+  // autosave on livePlacement then persists the matched plan.
+  const [planOverride, setPlanOverride] = useState<{
+    key: number;
+    positions: Record<string, { x: number; y: number }>;
+    rotations: Record<string, number>;
+  } | null>(null);
+
+  const handleRenderSaved = useCallback((render: RoomRender) => {
+    setRoom((prev) => (prev ? { ...prev, render } : prev));
+    const placements = Array.isArray(render.placements) ? render.placements : [];
+    if (placements.length === 0) return;
+    const positions: Record<string, { x: number; y: number }> = {};
+    const rotations: Record<string, number> = {};
+    for (const p of placements) {
+      if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+      positions[p.category] = { x: p.x, y: p.y };
+      if (Number.isFinite(p.rotation)) rotations[p.category] = p.rotation as number;
+    }
+    setPlanOverride({ key: Date.now(), positions, rotations });
+  }, []);
 
   // Hooks must stay above any conditional returns.
   const layoutRoomPreview = useMemo(
@@ -598,8 +748,8 @@ export default function RoomResult() {
         category: item.category,
         x: pos?.x ?? 0,
         y: pos?.y ?? 0,
-        rotation: livePlacement.rotations[item.category] ?? 0,
-        scale: livePlacement.scales[item.category] ?? 1,
+        rotation: livePlacement.rotations[item.category] ?? defaultRotation(item.category),
+        scale: 1,   // furniture is always to scale with the room
         hidden: false,
         color,
         item: {
@@ -662,9 +812,17 @@ export default function RoomResult() {
   const layoutRoom = layoutRoomPreview;
   const roomName = renamedName ?? layoutRoom.name;
   const layoutFurniture = layoutFurniturePreview;
+  // Feet, from the drawn polygon when there is one so hints share the plan's
+  // coordinate space; otherwise the saved room dimensions.
+  const renderRoomDims = roomDimsFromPoints(savedLayout?.roomPoints)
+    ?? { widthFt: layoutRoom.widthFt, lengthFt: layoutRoom.lengthFt };
 
   return (
     <div className="relative min-h-screen grid-background">
+      <FurnitureLoadingOverlay
+        open={furnitureLoading}
+        label={furniture.length ? 'Rebuilding your room' : 'Furnishing your room'}
+      />
       <div className="noise-texture" />
 
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -774,6 +932,15 @@ export default function RoomResult() {
               </p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={handleRegenerate}
+                disabled={furnitureLoading}
+                title="Pick a fresh set of furniture for this room"
+                className="px-6 py-3 bg-[#839958] hover:bg-[#93aa63] disabled:opacity-50 disabled:cursor-wait text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm"
+              >
+                <iconify-icon icon="ph:arrows-clockwise-bold" />
+                {furnitureLoading ? 'Regenerating…' : 'Regenerate'}
+              </button>
               <a
                 href="/dashboard.html"
                 className="px-6 py-3 bg-[#105666] hover:bg-[#156a7d] text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm no-underline"
@@ -808,7 +975,6 @@ export default function RoomResult() {
         </header>
 
         <FurniturePanel
-          items={furniture}
           slots={furnitureSlots}
           onSwap={handleSwap}
           style={s}
@@ -818,6 +984,9 @@ export default function RoomResult() {
           onLinkCategory={setLinkedCategory}
           hiddenCategories={hiddenCategories}
           onToggleInRoom={handleToggleInRoom}
+          onGenerateUnderBudget={handleGenerateUnderBudget}
+          underBudgetTried={underBudgetTried}
+          notice={furnitureNotice}
           centerContent={
             <RoomSVG
               room={layoutRoom}
@@ -828,12 +997,34 @@ export default function RoomResult() {
               onLinkCategory={setLinkedCategory}
               onRemove={handleRemoveFromRoom}
               initialPlacement={initialPlacement}
+              applyPlacement={planOverride}
+              ghostFurniture={room?.existingFurniture ?? []}
               onPlacementChange={handlePlacementChange}
               colorByCategory={colorByCategory}
             />
           }
           isoContent={
-            <IsoRoomPreview room={isoRoom} label="3D preview · follows 2D" />
+            room?.photoUrl ? (
+              // A photo means the real products get composited into the
+              // user's own room. The 3D stand-ins only appear without one.
+              <RoomRenderView
+                room={room}
+                items={layoutFurniture}
+                placement={livePlacement}
+                roomDims={renderRoomDims}
+                linkedCategory={linkedCategory}
+                onLinkCategory={setLinkedCategory}
+                onRenderSaved={handleRenderSaved}
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, minHeight: 320 }}>
+                  <Suspense fallback={<div style={{ padding: 16, color: '#888', font: '14px system-ui' }}>Loading 3D…</div>}>
+                    <Room3DView isoRoom={isoRoom} heightFt={layoutRoomPreview.heightFt} styleTag={s?.styleTag} />
+                  </Suspense>
+                </div>
+              </div>
+            )
           }
         />
 

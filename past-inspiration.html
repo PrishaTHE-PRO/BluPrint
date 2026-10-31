@@ -70,9 +70,6 @@
             <a href="about.html" aria-label="About us"><iconify-icon icon="ph:users-three-duotone"></iconify-icon><span class="app-nav-label">About us</span></a>
         </div>
         <div class="app-nav-actions">
-            <button type="button" title="Notifications" aria-label="Notifications">
-                <iconify-icon icon="ph:bell-duotone"></iconify-icon>
-            </button>
             <div data-theme-switch class="nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
             <div class="profile-menu-wrap">
                 <button id="profile-btn" type="button" class="profile-btn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
@@ -118,7 +115,7 @@
                 <h1>Past Projects</h1>
                 <p id="project-count">Loading your rooms…</p>
             </div>
-            <a href="room-dimensions.html" class="dashboard-new-room">
+            <a href="room-dimensions.html" class="dashboard-new-room" data-new-room>
                 <iconify-icon icon="ph:plus-bold"></iconify-icon>
                 New Room
             </a>
@@ -160,21 +157,22 @@
         <div class="settings-contact">
             <h3>Need help?</h3>
             <ul>
-                <li><strong>Aditi Amarnath</strong> — <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
-                <li><strong>Nidhi Gandhi</strong> — <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-                <li><strong>Prisha Agarwalla</strong> — <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
-                <li><strong>Saanvi Gandhari</strong> — <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
+                <li><strong>Aditi Amarnath</strong>: <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
+                <li><strong>Nidhi Gandhi</strong>: <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
+                <li><strong>Prisha Agarwalla</strong>: <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
+                <li><strong>Saanvi Gandhari</strong>: <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
             </ul>
         </div>
     </div>
 </div>
+<script src="./new-room.js" defer></script>
 <script src="./mobile-ui.js" defer></script>
 <script src="./theme-toggle.js" defer></script>
-<script src="./blueprint-bg.js" defer></script>
 <script type="module" src="/src/theme-switch.tsx"></script>
+<script type="module" src="/src/cursor-grid-background.jsx"></script>
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { auth, isFirebaseConfigured } from "./firebase.mjs";
+    import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
     import { renderProjectRoomPreview, getRoomPreviewLayout } from "./iso-preview.js";
 
     const ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
@@ -200,7 +198,7 @@
         let style = room.style;
         if (!style && (room.furnitureLayout || room.layout)) {
             try {
-                const docs = await fetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
+                const docs = await authedFetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
                 style = (Array.isArray(docs) && (docs.find((s) => s.source === 'user') || docs[0])) || null;
             } catch (_) { /* ignore */ }
         }
@@ -299,17 +297,11 @@
         }
     }
 
-    document.querySelectorAll('a[href="room-dimensions.html"]').forEach(link => {
-        link.addEventListener('click', () => {
-            [
-                'blueprintCurrentRoomId', 'blueprintCurrentRoomName',
-                'blueprintCurrentRoomWidth', 'blueprintCurrentRoomLength',
-                'blueprintCurrentRoomHeight', 'blueprintStyleResult',
-                'blueprintRoomLayout', 'blueprintCurrentRoomType',
-                'blueprintBudgetTotal',
-            ].forEach(key => localStorage.removeItem(key));
-        });
-    });
+    // Clearing now lives in public/new-room.js, driven by [data-new-room], so
+    // the dashboard button and the mobile dock FAB get the same treatment.
+    // Matching every room-dimensions.html link here also caught the mobile
+    // "pick up where you left off" rows, which are meant to resume.
+
 
     if (!isFirebaseConfigured() || !auth) {
         window.location.href = 'login.html';
@@ -323,7 +315,8 @@
 
     async function loadAllProjects(userId) {
         try {
-            const res = await fetch('/api/rooms?userId=' + encodeURIComponent(userId));
+            // userId is ignored by the API now — the server scopes to the verified token.
+            const res = await authedFetch('/api/rooms');
             if (!res.ok) throw new Error();
             const rooms = await res.json();
 
@@ -331,7 +324,7 @@
             if (rooms.some(room => !Object.prototype.hasOwnProperty.call(room, 'style'))) {
                 await Promise.all(rooms.map(async room => {
                     try {
-                        const styleRes = await fetch('/api/rooms/' + room._id + '/style');
+                        const styleRes = await authedFetch('/api/rooms/' + room._id + '/style');
                         const styles = styleRes.ok ? await styleRes.json() : [];
                         room.style = styles.find(style => style.source === 'user') || null;
                     } catch {
@@ -345,7 +338,7 @@
             if (!rooms.length) {
                 styleFilters.innerHTML = '';
                 styleFilterRow.classList.add('hidden');
-                grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-3 py-12">No projects yet — create your first room.</p>';
+                grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-3 py-12">No projects yet. Create your first room.</p>';
                 grid.setAttribute('aria-busy', 'false');
                 return;
             }
@@ -429,7 +422,7 @@
                     if (deleteBtn.dataset.confirming) {
                         deleteBtn.disabled = true;
                         try {
-                            const res = await fetch('/api/rooms/' + room._id, { method: 'DELETE' });
+                            const res = await authedFetch('/api/rooms/' + room._id, { method: 'DELETE' });
                             if (res.ok) {
                                 card.style.transition = 'opacity 0.3s';
                                 card.style.opacity = '0';
@@ -486,7 +479,7 @@
             projectCount.textContent = 'Projects unavailable';
             styleFilters.innerHTML = '';
             styleFilterRow.classList.add('hidden');
-            grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-3 py-12">Could not load projects — is the server running?</p>';
+            grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-3 py-12">Could not load projects. Is the server running?</p>';
             grid.setAttribute('aria-busy', 'false');
         }
     }

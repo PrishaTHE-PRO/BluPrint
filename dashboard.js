@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
-import { auth, isFirebaseConfigured } from "./firebase.mjs";
+import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
 import { renderRoomPreview, getRoomPreviewLayout, escapeHtml } from "./iso-preview.js";
 
 var logoutBtn = document.getElementById('logout-btn');
@@ -108,7 +108,7 @@ async function openSavedProject(room) {
     let style = room.style;
     if (!style && (room.furnitureLayout || room.layout)) {
         try {
-            const docs = await fetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
+            const docs = await authedFetch('/api/rooms/' + room._id + '/style').then((r) => (r.ok ? r.json() : []));
             style = (Array.isArray(docs) && (docs.find((s) => s.source === 'user') || docs[0])) || null;
         } catch (_) { /* ignore */ }
     }
@@ -169,12 +169,13 @@ async function loadProjects(userId) {
 
     try {
         // no-store so a freshly-saved layout is always reflected (never a cached GET).
-        const res = await fetch('/api/rooms?userId=' + encodeURIComponent(userId), { cache: 'no-store' });
+        // The API scopes to the verified token now; userId is no longer sent.
+        const res = await authedFetch('/api/rooms', { cache: 'no-store' });
         if (!res.ok) throw new Error();
         const rooms = await res.json();
 
         if (!rooms.length) {
-            grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-2 py-12">No projects yet — click "Get Started" to create your first room!</p>';
+            grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-2 py-12">No projects yet. Click "Get Started" to create your first room!</p>';
             grid.setAttribute('aria-busy', 'false');
             return;
         }
@@ -186,41 +187,28 @@ async function loadProjects(userId) {
         grid.innerHTML = '';
         const cards = document.createDocumentFragment();
         recent.forEach((room, index) => {
-            const hasDesign = !!(room.style || room.furnitureLayout);
-            const statusLabel = hasDesign ? 'Style Analyzed ✨' : 'Dimensions Set';
-            const statusColor = hasDesign ? 'text-[#839958] font-bold' : 'text-[#F7F4D5]/40';
-            const tag = room.style?.styleTag || '';
-            const date = new Date(room.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const roomPreview = renderRoomPreview(room);
+            const roomSqft = Math.round(Number(room.sqft) || 0);
+            const roomPreview = renderRoomPreview(room, { floorLabel: roomSqft ? `${roomSqft} sq ft` : '' });
             const roomName = escapeHtml(room.name || 'Untitled Room');
-            const roomSqft = escapeHtml(Math.round(Number(room.sqft) || 0));
-            const styleTag = escapeHtml(tag);
 
             const card = document.createElement('div');
-            card.className = 'garden-card ghibli-border p-6 group cursor-pointer project-card-enter';
+            card.className = 'garden-card room-float group cursor-pointer project-card-enter';
             card.style.setProperty('--card-delay', `${index * 55}ms`);
+            // mobile-ui.js reads these for the stat strip and the resume list.
+            card.dataset.sqft = String(roomSqft);
+            card.dataset.complete = String(!!(room.style || room.furnitureLayout));
             card.innerHTML = `
-                <div class="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-8 shadow-inner bg-[#F7F4D5] flex items-center justify-center">
+                <div class="room-float-preview relative aspect-[16/10] flex items-center justify-center">
                     ${roomPreview}
-                    <button class="delete-btn absolute top-5 left-5 w-9 h-9 rounded-full bg-[#0A3323]/70 hover:bg-[#D3968C] text-[#F7F4D5] flex items-center justify-center transition-all backdrop-blur z-10" title="Delete room">
-                        <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
+                    <button class="delete-btn absolute top-2 left-2 w-8 h-8 rounded-full bg-[#0A3323]/70 hover:bg-[#D3968C] text-[#F7F4D5] flex items-center justify-center transition-all backdrop-blur z-10" title="Delete room">
+                        <iconify-icon icon="ph:x-bold" class="text-base"></iconify-icon>
                     </button>
-                    <div class="absolute top-5 right-5">
-                        <span class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[#0A3323] text-sm font-bold shadow-lg">${hasDesign ? 'Complete' : 'In Progress'}</span>
-                    </div>
                 </div>
-                <div class="px-2 space-y-2">
-                    <div class="flex items-center gap-2">
-                        <h3 class="room-name-display text-3xl font-bold text-[#F7F4D5]">${roomName}</h3>
-                        <button class="rename-btn opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-[#F7F4D5] shrink-0" title="Rename room" aria-label="Rename room">
-                            <iconify-icon icon="ph:pencil-simple-duotone" class="text-xl"></iconify-icon>
-                        </button>
-                    </div>
-                    <p class="text-lg text-[#F7F4D5]/60">${roomSqft} sq ft${styleTag ? ' · ' + styleTag : ''}</p>
-                    <div class="pt-6 flex items-center justify-between border-t border-[#F7F4D5]/10 mt-6">
-                        <span class="text-sm ${statusColor}">${statusLabel}</span>
-                        <span class="text-xs text-[#F7F4D5]/30">${date}</span>
-                    </div>
+                <div class="room-float-label flex items-center justify-center gap-2">
+                    <h3 class="room-name-display text-3xl font-bold text-[#F7F4D5]">${roomName}</h3>
+                    <button class="rename-btn opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-[#F7F4D5] shrink-0" title="Rename room" aria-label="Rename room">
+                        <iconify-icon icon="ph:pencil-simple-duotone" class="text-xl"></iconify-icon>
+                    </button>
                 </div>`;
             cards.appendChild(card);
 
@@ -246,7 +234,7 @@ async function loadProjects(userId) {
                     deleteBtn.textContent = '...';
                     deleteBtn.disabled = true;
                     try {
-                        const res = await fetch('/api/rooms/' + room._id, { method: 'DELETE' });
+                        const res = await authedFetch('/api/rooms/' + room._id, { method: 'DELETE' });
                         if (res.ok) {
                             card.style.transition = 'opacity 0.3s';
                             card.style.opacity = '0';
@@ -280,7 +268,7 @@ async function loadProjects(userId) {
         grid.appendChild(cards);
         grid.setAttribute('aria-busy', 'false');
     } catch {
-        grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-2 py-12">Could not load projects — is the server running?</p>';
+        grid.innerHTML = '<p class="text-[#D3968C]/60 text-center col-span-2 py-12">Could not load projects. Is the server running?</p>';
         grid.setAttribute('aria-busy', 'false');
     }
 }
@@ -314,7 +302,7 @@ function startRename(card, room) {
             h3.textContent = next;
             input.replaceWith(h3);
             try {
-                const res = await fetch('/api/rooms/' + room._id, {
+                const res = await authedFetch('/api/rooms/' + room._id, {
                     method:  'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ name: next }),
@@ -322,7 +310,7 @@ function startRename(card, room) {
                 if (!res.ok) throw new Error('rename failed (' + res.status + ')');
             } catch (err) {
                 console.error('[rename]', err);
-                alert('Rename failed — is the server running? Try again.');
+                alert('Rename failed. Is the server running? Try again.');
             }
         } else {
             h3.textContent = room.name || 'Untitled Room';
