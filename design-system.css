@@ -1227,18 +1227,21 @@ button.theme-switch-btn {
    card the blueprint grid shows through, with the room name centred underneath
    and its square footage in small print along the front floor edge (drawn by
    iso-preview.js). */
-/* No border: the tint is a radial wash, strongest behind the room and fading to
-   clear at the card's edges. --float-tint is the centre colour. */
+/* No border: the tint is a white radial wash, strongest behind the room and
+   fading to clear at the card's edges. --float-tint is the centre colour. */
 .page-dashboard #projects-grid .room-float {
-  --float-tint: color-mix(in srgb, #fff 70%, transparent);
+  --float-tint: color-mix(in srgb, #fff 55%, transparent);
   padding: 0 0 14px !important;
-  background: radial-gradient(ellipse 72% 72% at 50% 45%, var(--float-tint) 0%, var(--float-tint) 45%, transparent 100%) !important;
+  /* .garden-card frosts what's behind it; keep the blueprint crisp here. */
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: radial-gradient(ellipse 80% 80% at 50% 45%, var(--float-tint) 0%, var(--float-tint) 50%, transparent 100%) !important;
   border-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
 }
 .page-dashboard #projects-grid .room-float:hover {
-  --float-tint: color-mix(in srgb, #fff 90%, transparent);
+  --float-tint: color-mix(in srgb, #fff 70%, transparent);
   border-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
@@ -1247,7 +1250,7 @@ html.dark-mode .page-dashboard #projects-grid .room-float {
   --float-tint: color-mix(in srgb, #fff 7%, transparent);
 }
 html.dark-mode .page-dashboard #projects-grid .room-float:hover {
-  --float-tint: color-mix(in srgb, #fff 11%, transparent);
+  --float-tint: color-mix(in srgb, #fff 10%, transparent);
 }
 .page-dashboard #projects-grid .room-float-preview { aspect-ratio: 4/3; }
 .page-dashboard #projects-grid .iso-paper { display: none; }
