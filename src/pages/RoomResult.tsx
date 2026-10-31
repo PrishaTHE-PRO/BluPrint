@@ -695,6 +695,11 @@ export default function RoomResult() {
             <span className="app-nav-label">Home</span>
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full" />
           </Link000>
+          <Link000 href="about.html" className="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all order-1" aria-label="About us">
+            <iconify-icon icon="ph:users-three-duotone" />
+            <span className="app-nav-label">About us</span>
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0A3323] transition-all group-hover:w-full" />
+          </Link000>
           <Link000 href="past-inspiration.html" className="group relative font-bold text-lg hover:text-[#0A3323]/80 transition-all" aria-label="Projects">
             <iconify-icon icon="ph:squares-four-duotone" />
             <span className="app-nav-label">Projects</span>
