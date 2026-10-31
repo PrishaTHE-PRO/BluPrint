@@ -201,7 +201,10 @@ function rejectsInputFidelity(status, message) {
 
 /** True when the endpoint says the model itself is unknown or unavailable. */
 function rejectsModel(status, message) {
-  return (status === 400 || status === 404) && /model .* does not exist|model_not_found|does not have access to model|is not supported for this endpoint/i.test(String(message || ""));
+  // Loose on purpose: "The model 'x' does not exist", "The model does not
+  // exist", and the access variants all count. Only the status narrows it.
+  return (status === 400 || status === 404)
+    && /\bmodel\b[^.]*\bdoes not exist|model_not_found|does not have access to (the )?model|not supported for this endpoint/i.test(String(message || ""));
 }
 
 /** Models to try, in order: a pinned one first, then the candidates. */
