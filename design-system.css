@@ -1223,14 +1223,14 @@ button.theme-switch-btn {
   gap: 16px !important;
 }
 .page-dashboard #projects-grid .garden-card { padding: 0 !important; }
-/* Floating rooms: the iso drawing floats on a soft shadow inside a sheer blue
+/* Floating rooms: the iso drawing floats on a soft shadow inside a soft white
    card the blueprint grid shows through, with the room name centred underneath
    and its square footage in small print along the front floor edge (drawn by
    iso-preview.js). */
 /* No border: the tint is a radial wash, strongest behind the room and fading to
    clear at the card's edges. --float-tint is the centre colour. */
 .page-dashboard #projects-grid .room-float {
-  --float-tint: color-mix(in srgb, var(--bp-primary) 15%, transparent);
+  --float-tint: color-mix(in srgb, #fff 70%, transparent);
   padding: 0 0 14px !important;
   background: radial-gradient(ellipse 72% 72% at 50% 45%, var(--float-tint) 0%, var(--float-tint) 45%, transparent 100%) !important;
   border-color: transparent !important;
@@ -1238,16 +1238,16 @@ button.theme-switch-btn {
   transform: none !important;
 }
 .page-dashboard #projects-grid .room-float:hover {
-  --float-tint: color-mix(in srgb, var(--bp-primary) 21%, transparent);
+  --float-tint: color-mix(in srgb, #fff 90%, transparent);
   border-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
 }
 html.dark-mode .page-dashboard #projects-grid .room-float {
-  --float-tint: color-mix(in srgb, var(--bp-primary) 18%, transparent);
+  --float-tint: color-mix(in srgb, #fff 7%, transparent);
 }
 html.dark-mode .page-dashboard #projects-grid .room-float:hover {
-  --float-tint: color-mix(in srgb, var(--bp-primary) 26%, transparent);
+  --float-tint: color-mix(in srgb, #fff 11%, transparent);
 }
 .page-dashboard #projects-grid .room-float-preview { aspect-ratio: 4/3; }
 .page-dashboard #projects-grid .iso-paper { display: none; }
