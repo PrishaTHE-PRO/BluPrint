@@ -12,7 +12,7 @@
   var css = [
     '.blueprint-bg {',
     '  position: fixed; inset: 0; z-index: 0; pointer-events: none;',
-    '  overflow: hidden; opacity: .10;',
+    '  overflow: hidden; opacity: .20;',
     '}',
     // The page <body> paints an opaque gradient, so a negative z-index would be
     // buried under it. Instead sit the layer at z-index:0 (like design-system's
@@ -33,7 +33,7 @@
     '.blueprint-bg .bp-lbl { font-family: ui-monospace, "SF Mono", "Courier New", monospace; font-size: 8.5px; letter-spacing: .18em; fill: currentColor; opacity: .72; }',
     '.blueprint-bg .bp-dimtext { font-family: ui-monospace, "SF Mono", "Courier New", monospace; font-size: 7.5px; letter-spacing: .06em; fill: currentColor; opacity: .6; }',
     // Dark mode inverts the ink to a light blueprint blue; opacity stays at the
-    // light-mode value (.10 base) so only the line color changes, not the fade.
+    // light-mode value (.20 base) so only the line color changes, not the fade.
     'html.dark-mode #blueprint-bg-layer { color: #a6c8e6 !important; }'
   ].join('\n');
 
