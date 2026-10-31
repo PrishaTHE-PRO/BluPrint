@@ -251,14 +251,13 @@
         <!-- The Mood -->
         <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
           <h3 class="text-2xl font-bold">The Mood <span style="color:#ef4444;">*</span></h3>
-          <p class="text-[#F7F4D5]/60">Choose as many as you like. <span class="text-[#D3968C]" id="mood-count-note"></span></p>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="mood-grid"></div>
         </div>
 
         <!-- Color Palette -->
         <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
           <h3 class="text-2xl font-bold">Color Palette <span style="color:#ef4444;">*</span></h3>
-          <p class="text-[#F7F4D5]/60">Choose as many tones as you like. <span class="text-[#D3968C]" id="color-count-note"></span></p>
+          <p class="text-[#F7F4D5]/60">Choose up to 3 tones. <span class="text-[#D3968C]" id="color-limit-note"></span></p>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" id="color-grid"></div>
         </div>
 
@@ -494,7 +493,7 @@
       selectedRoomType: null,
       roomTypeIsOther:  false,
       selectedStyle:    null,
-      selectedMoods:    [],
+      selectedMood:     null,
       selectedColors:   [],
       selectedFeatures: [],
       selectedBathFixture: null,
@@ -515,7 +514,7 @@
           selectedRoomType: state.selectedRoomType,
           roomTypeIsOther:  state.roomTypeIsOther,
           selectedStyle:    state.selectedStyle,
-          selectedMoods:    state.selectedMoods,
+          selectedMood:     state.selectedMood,
           selectedColors:   state.selectedColors,
           selectedFeatures: state.selectedFeatures,
           selectedBathFixture: state.selectedBathFixture,
@@ -533,11 +532,9 @@
       if (typeof saved.selectedRoomType === 'string') state.selectedRoomType = saved.selectedRoomType;
       state.roomTypeIsOther = !!saved.roomTypeIsOther;
       if (typeof saved.selectedStyle === 'string') state.selectedStyle = saved.selectedStyle;
-      if (Array.isArray(saved.selectedMoods))
-        state.selectedMoods = saved.selectedMoods.filter(m => typeof m === 'string');
-      else if (typeof saved.selectedMood === 'string') state.selectedMoods = [saved.selectedMood];
+      if (typeof saved.selectedMood === 'string')  state.selectedMood  = saved.selectedMood;
       if (Array.isArray(saved.selectedColors))
-        state.selectedColors = saved.selectedColors.filter(c => c && typeof c.hex === 'string');
+        state.selectedColors = saved.selectedColors.filter(c => c && typeof c.hex === 'string').slice(0, 3);
       if (Array.isArray(saved.selectedFeatures))
         state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string');
       if (typeof saved.selectedBathFixture === 'string') state.selectedBathFixture = saved.selectedBathFixture;
@@ -795,28 +792,16 @@
       grid.innerHTML = '';
       MOODS.forEach(m => {
         const btn = document.createElement('button');
-        btn.className = 'option-btn text-center' + (state.selectedMoods.includes(m) ? ' selected' : '');
+        btn.className = 'option-btn text-center' + (state.selectedMood === m ? ' selected' : '');
         btn.innerHTML = `<p class="font-bold">${m}</p>`;
         btn.addEventListener('click', () => {
-          const idx = state.selectedMoods.indexOf(m);
-          if (idx > -1) {
-            state.selectedMoods.splice(idx, 1);
-            btn.classList.remove('selected');
-          } else {
-            state.selectedMoods.push(m);
-            btn.classList.add('selected');
-          }
-          updateMoodCount();
+          grid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.selectedMood = m;
           checkStep2Valid();
         });
         grid.appendChild(btn);
       });
-      updateMoodCount();
-    }
-
-    function updateMoodCount() {
-      const count = state.selectedMoods.length;
-      document.getElementById('mood-count-note').textContent = count > 0 ? `(${count} selected)` : '';
     }
 
     function buildColorGrid() {
@@ -833,20 +818,24 @@
             state.selectedColors.splice(idx, 1);
             btn.classList.remove('selected');
           } else {
+            if (state.selectedColors.length >= 3) return;
             state.selectedColors.push({ name: c.name, hex: c.hex });
             btn.classList.add('selected');
           }
-          updateColorCount();
+          updateColorLimit();
           checkStep2Valid();
         });
         grid.appendChild(btn);
       });
-      updateColorCount();
+      updateColorLimit();
     }
 
-    function updateColorCount() {
-      const count = state.selectedColors.length;
-      document.getElementById('color-count-note').textContent = count > 0 ? `(${count} selected)` : '';
+    function updateColorLimit() {
+      const rem = 3 - state.selectedColors.length;
+      document.getElementById('color-limit-note').textContent =
+        rem > 0 ? `(${rem} remaining)` : '(maximum reached)';
+      document.querySelectorAll('#color-grid .option-btn:not(.selected)').forEach(b =>
+        b.classList.toggle('disabled', state.selectedColors.length >= 3));
     }
 
     function isBathroomRoomType(roomType = state.selectedRoomType) {
@@ -922,7 +911,7 @@
     function checkStep2Valid() {
       const bathOk = !isBathroomRoomType() || !!state.selectedBathFixture;
       document.getElementById('step2-analyze').disabled =
-        !state.selectedRoomType || !state.selectedStyle || state.selectedMoods.length === 0 ||
+        !state.selectedRoomType || !state.selectedStyle || !state.selectedMood ||
         state.selectedColors.length === 0 || !bathOk;
     }
 
@@ -959,7 +948,7 @@
           body:    JSON.stringify({
             userPicks: {
               styleTag: state.selectedStyle,
-              moodTag: state.selectedMoods.join(', '),
+              moodTag: state.selectedMood,
               colorPalette: state.selectedColors.map(c => c.hex || c),
               roomFeatures: featuresWithBathFixture(),
             },
@@ -984,7 +973,7 @@
           styleTag:     fromImages
             ? (ai.styleTag || state.selectedStyle || 'Modern')
             : (state.selectedStyle || ai.styleTag || 'Modern'),
-          moodTags:     ai.moodTags?.length ? ai.moodTags : state.selectedMoods,
+          moodTags:     ai.moodTags?.length ? ai.moodTags : (state.selectedMood ? [state.selectedMood] : []),
           colorPalette: ai.colorPalette?.length ? ai.colorPalette : state.selectedColors.map(c => c.hex || c),
           // User picks are requirements, not suggestions. Preserve every
           // selected feature even when AI returns a different feature list.
@@ -1083,7 +1072,7 @@
             roomType:     state.selectedRoomType,
             styleTag:     state.selectedStyle,
             colorPalette: state.selectedColors,
-            moodTags:     state.selectedMoods,
+            moodTags:     [state.selectedMood],
             roomFeatures: featuresWithBathFixture(),
           }),
         }).then(async (r) => {
@@ -1127,7 +1116,7 @@
       if (!state.selectedRoomType) return;
       const ROOM_ID = localStorage.getItem('blueprintCurrentRoomId');
       state.selectedStyle    = STYLES[Math.floor(Math.random() * STYLES.length)].label;
-      state.selectedMoods    = [MOODS[Math.floor(Math.random() * MOODS.length)]];
+      state.selectedMood     = MOODS[Math.floor(Math.random() * MOODS.length)];
       state.selectedColors   = [COLORS[Math.floor(Math.random() * COLORS.length)]];
       state.selectedFeatures = [FEATURES[Math.floor(Math.random() * FEATURES.length)]];
       if (isBathroomRoomType()) {
@@ -1140,7 +1129,7 @@
       const wildResult = {
         roomType:     state.selectedRoomType,
         styleTag:     state.selectedStyle,
-        moodTags:     state.selectedMoods,
+        moodTags:     [state.selectedMood],
         colorPalette: state.selectedColors.map(c => c.hex || c),
         roomFeatures: featuresWithBathFixture(),
         confidence:   1,
