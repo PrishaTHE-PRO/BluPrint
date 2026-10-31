@@ -4,8 +4,9 @@
 
    Injects the bottom dock, the home stat strip / room deck dots / resume list,
    the compact step headers, and the draggable element sheet on the plan step.
-   Every DOM addition is inert above 600px (see .m-only / .m-dock in
-   mobile-ui.css), so desktop is unaffected. Load with `defer`, before the
+   Most DOM additions are inert above 600px (see .m-only / .m-dock in
+   mobile-ui.css). The home stat strip, room deck nav, resume list and budget
+   readout show on desktop too. Load with `defer`, before the
    page's own module scripts, so their querySelectorAll calls see the dock.
    ========================================================================== */
 (function () {
@@ -173,7 +174,9 @@
     }
 
     var quip = el('p', 'm-quip m-only', '');
-    var stats = el('div', 'm-stats m-only');
+    // The stat strip, room deck and resume list show on desktop too; only the
+    // phone-specific bits stay .m-only.
+    var stats = el('div', 'm-stats');
     stats.innerHTML =
       '<div class="m-stat"><p class="m-stat-value" data-m-sqft>-</p>' +
         '<p class="m-stat-label">sq ft drawn</p></div>' +
@@ -192,10 +195,29 @@
     var grid = document.getElementById('projects-grid');
     if (!grid) return;
 
-    // Position dots for the snapping deck.
+    // Position dots for the snapping deck, between prev/next buttons that only
+    // show on desktop (a mouse can't swipe).
     var heading = document.querySelector('.dashboard-section-heading');
-    var dots = el('div', 'm-dots m-only');
-    if (heading) heading.appendChild(dots);
+    var deckNav = el('div', 'm-deck-nav');
+    var prev = el('button', 'm-deck-btn', '<iconify-icon icon="ph:caret-left-bold"></iconify-icon>');
+    var next = el('button', 'm-deck-btn', '<iconify-icon icon="ph:caret-right-bold"></iconify-icon>');
+    var dots = el('div', 'm-dots');
+    prev.type = next.type = 'button';
+    prev.setAttribute('aria-label', 'Previous rooms');
+    next.setAttribute('aria-label', 'More rooms');
+    deckNav.appendChild(prev);
+    deckNav.appendChild(dots);
+    deckNav.appendChild(next);
+    if (heading) heading.appendChild(deckNav);
+
+    function step(dir) {
+      var first = readCards()[0];
+      var gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+      var by = first ? first.getBoundingClientRect().width + gap : grid.clientWidth;
+      grid.scrollBy({ left: dir * by, behavior: 'smooth' });
+    }
+    prev.addEventListener('click', function () { step(-1); });
+    next.addEventListener('click', function () { step(1); });
 
     function readCards() {
       return Array.prototype.filter.call(grid.children, function (c) {
@@ -241,12 +263,20 @@
 
     function syncDots() {
       var cards = readCards();
+      var max = grid.scrollWidth - grid.clientWidth;
+      // Nothing to scroll (every card fits): the nav has nothing to say.
+      deckNav.classList.toggle('is-idle', max <= 1);
+      prev.disabled = grid.scrollLeft <= 1;
+      next.disabled = grid.scrollLeft >= max - 1;
       if (!cards.length) return;
+      var left = grid.getBoundingClientRect().left + (parseFloat(getComputedStyle(grid).paddingLeft) || 0);
       var index = 0, best = Infinity;
       cards.forEach(function (card, i) {
-        var delta = Math.abs(card.offsetLeft - grid.scrollLeft - 24);
+        var delta = Math.abs(card.getBoundingClientRect().left - left);
         if (delta < best) { best = delta; index = i; }
       });
+      // At the far end the last cards can't reach the left edge; light the last dot.
+      if (max > 1 && grid.scrollLeft >= max - 1) index = cards.length - 1;
       Array.prototype.forEach.call(dots.children, function (d, i) {
         d.classList.toggle('is-active', i === index);
       });
@@ -257,34 +287,36 @@
       if (resume) resume.remove();
       if (!cards.length) return;
 
+      // One row per unfinished room (newest first, at most three). Each row
+      // clicks its card, so it opens THAT room on the step it's up to; a plain
+      // link would reopen whichever room happens to be in localStorage.
       var pending = cards.filter(function (card) {
         var badge = card.querySelector('div:first-child span');
         return !(badge && /complete/i.test(badge.textContent));
-      });
-      var next = pending[0];
-      var nextName = next && next.querySelector('.room-name-display');
-      var label = nextName ? nextName.textContent.trim() : null;
+      }).slice(0, 3);
+      if (!pending.length) return;
 
-      resume = el('section', 'm-resume m-only');
-      resume.innerHTML =
-        '<h2 class="m-section-label">Pick up where you left off</h2>' +
-        '<div class="m-resume-list">' +
-          '<a class="m-resume-row" href="room-dimensions.html">' +
-            '<span class="m-resume-icon"><iconify-icon icon="ph:frame-corners-duotone"></iconify-icon></span>' +
-            '<span class="m-resume-copy"><strong>' +
-              (label ? 'Finish the ' + esc(label) + ' walls' : 'Draw your first set of walls') +
-            '</strong><small>You stopped mid-wall. Bold choice.</small></span>' +
-            '<span class="m-chev">›</span></a>' +
-          '<a class="m-resume-row" href="inspo-upload.html">' +
-            '<span class="m-resume-icon"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon></span>' +
-            '<span class="m-resume-copy"><strong>Saved photos, no style</strong>' +
-            '<small>Let\'s turn the mood board into a plan.</small></span>' +
-            '<span class="m-chev">›</span></a>' +
-        '</div>';
+      resume = el('section', 'm-resume');
+      resume.appendChild(elText('h2', 'm-section-label', 'Pick up where you left off'));
+      var list = el('div', 'm-resume-list');
+      pending.forEach(function (card, i) {
+        var nameEl = card.querySelector('.room-name-display');
+        var name = nameEl ? nameEl.textContent.trim() : 'room';
+        var row = el('button', 'm-resume-row',
+          '<span class="m-resume-icon"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon></span>' +
+          '<span class="m-resume-copy"><strong>Finish the ' + esc(name) + '</strong>' +
+          '<small>' + (i === 0 ? 'Walls are up. Bold of you to stop there.' : 'Walls are up. Style is next.') + '</small></span>' +
+          '<span class="m-chev">›</span>');
+        row.type = 'button';
+        row.addEventListener('click', function () { card.click(); });
+        list.appendChild(row);
+      });
+      resume.appendChild(list);
       grid.parentNode.parentNode.appendChild(resume);
     }
 
     grid.addEventListener('scroll', syncDots, { passive: true });
+    window.addEventListener('resize', syncDots);
     new MutationObserver(refresh).observe(grid, { childList: true });
     refresh();
   }
@@ -430,24 +462,38 @@
       '<p>Up to three. We\'ll read the palette and pretend it was intentional.</p>');
     main.insertBefore(hero, main.firstChild);
 
-    // Live budget value above the slider, mirroring 1b.
+    // Live budget value above the slider, mirroring 1b. Shown on desktop too;
+    // only the "Budget" title is phone-only (desktop already has "Your Budget").
     var slider = document.getElementById('budget-slider');
     if (slider) {
-      var head = el('div', 'm-budget-head m-only',
-        '<h2 style="margin:0;font:500 20px Fraunces,serif;letter-spacing:-.02em">Budget</h2>' +
+      var head = el('div', 'm-budget-head',
+        '<h2 class="m-only" style="margin:0;font:500 20px Fraunces,serif;letter-spacing:-.02em">Budget</h2>' +
         '<strong data-m-budget>-</strong>');
-      var scale = el('div', 'm-budget-scale m-only',
+      var scale = el('div', 'm-budget-scale',
         '<span>$' + Number(slider.min || 500).toLocaleString() + '</span>' +
         '<span>$' + Number(slider.max || 25000).toLocaleString() + '</span>');
-      slider.parentNode.insertBefore(head, slider);
-      slider.insertAdjacentElement('afterend', scale);
+      // Wrap head + slider + scale in one column so they take the slider's
+      // single cell in the desktop two-column (slider | $ input) grid.
+      var col = el('div', 'm-budget-col');
+      slider.parentNode.insertBefore(col, slider);
+      col.appendChild(head);
+      col.appendChild(slider);
+      col.appendChild(scale);
 
+      // The number box holds the real budget (empty = no budget). Clearing,
+      // typing and the saved-budget restore all set it without firing events
+      // on the slider, but every path rewrites #budget-status, so watch that.
       var out = head.querySelector('[data-m-budget]');
+      var input = document.getElementById('budget-input');
+      var status = document.getElementById('budget-status');
       var sync = function () {
-        out.textContent = '$' + Number(slider.value || 0).toLocaleString();
+        var value = input ? input.value : slider.value;
+        out.textContent = value ? '$' + Number(value).toLocaleString() : 'No budget';
+        out.classList.toggle('is-empty', !value);
       };
       slider.addEventListener('input', sync);
       slider.addEventListener('change', sync);
+      if (status) new MutationObserver(sync).observe(status, { childList: true, characterData: true, subtree: true });
       sync();
     }
   }
