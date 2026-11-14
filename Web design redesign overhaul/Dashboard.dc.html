@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<style>
+body{margin:0;background:#dce7ef;color:#14202e;font-family:'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#294f7d;text-decoration:none}a:hover{color:#1f4069}
+button,input{font:inherit;color:inherit}
+@keyframes bpUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes bpFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+</style>
+</helmet>
+<div style="position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 92% 8%, rgba(110,165,205,.46), transparent 34rem), radial-gradient(circle at 5% 88%, rgba(145,181,210,.38), transparent 30rem), linear-gradient(135deg,#eeeae5 0%,#dce7ef 48%,#c8ddeb 100%)"></div>
+<div style="position:fixed;inset:0;z-index:0;pointer-events:none;background:#fff;opacity:.3;mask:url(assets/blueprint.png) center/cover no-repeat;mask-mode:luminance"></div>
+<div style="position:fixed;inset:0;z-index:0;pointer-events:none;-webkit-mask-image:radial-gradient(circle 180px at var(--mx,-999px) var(--my,-999px),#000 0%,transparent 100%);mask-image:radial-gradient(circle 180px at var(--mx,-999px) var(--my,-999px),#000 0%,transparent 100%)"><div style="position:absolute;inset:0;background:#fff;opacity:.95;mask:url(assets/blueprint.png) center/cover no-repeat;mask-mode:luminance"></div></div>
+
+<div style="position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column">
+  <nav style="position:sticky;top:16px;z-index:50;margin:16px auto 0;width:min(calc(100% - 32px),1240px);box-sizing:border-box;display:flex;align-items:center;gap:20px;padding:8px 8px 8px 22px;border-radius:999px;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:0 10px 30px rgba(41,79,125,.12),0 1px 2px rgba(20,32,46,.06)">
+    <a href="Dashboard.dc.html" style="display:flex;align-items:baseline;gap:3px"><span style="font-family:'Instrument Serif',serif;font-style:italic;font-size:27px;line-height:1;color:#294f7d">Blu</span><span style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#14202e">PRINT</span></a>
+    <div style="display:flex;gap:2px">
+      <a href="Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-size:14px;color:#294f7d;background:rgba(41,79,125,.1)"><iconify-icon icon="ph:house-duotone"></iconify-icon>Home</a>
+      <a href="Projects.dc.html" style="display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-size:14px;color:#5d6b7b" style-hover="background:rgba(41,79,125,.08);color:#294f7d"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon>Projects</a>
+    </div>
+    <div style="margin-left:auto"><button style="width:38px;height:38px;border-radius:50%;border:0;background:#294f7d;color:#fff;display:grid;place-items:center;cursor:pointer;font-size:17px"><iconify-icon icon="ph:user"></iconify-icon></button></div>
+  </nav>
+
+  <main style="width:min(calc(100% - 48px),1240px);margin:0 auto;padding:40px 0 64px;box-sizing:border-box;flex:1">
+    <section style="display:flex;flex-wrap:wrap;align-items:center;gap:24px 48px;margin-bottom:48px">
+      <div style="flex:0 0 auto;width:220px;height:250px;animation:bpUp .7s cubic-bezier(.2,.8,.2,1) both"><img src="assets/dashboard-avatar.png" alt="" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 20px 24px rgba(41,79,125,.22));animation:bpFloat 6s ease-in-out infinite"></div>
+      <div style="flex:1 1 360px;animation:bpUp .7s .08s cubic-bezier(.2,.8,.2,1) both">
+        <p style="margin:0 0 6px;font-size:17px;color:#5d6b7b">Welcome back,</p>
+        <h1 style="margin:0 0 26px;font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:clamp(60px,8vw,96px);line-height:.95;letter-spacing:-.01em">Prisha</h1>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <a href="Define Room.dc.html" style="display:flex;align-items:center;gap:8px;height:50px;padding:0 22px;border-radius:16px;background:#294f7d;color:#fff;font-size:15px;font-weight:500;box-shadow:0 12px 28px rgba(41,79,125,.3);transition:transform .2s" style-hover="transform:translateY(-2px);color:#fff;background:#1f4069"><iconify-icon icon="ph:plus-bold"></iconify-icon>New room</a>
+          <a href="Results.dc.html" style="display:flex;align-items:center;gap:12px;height:50px;padding:0 8px 0 18px;border-radius:16px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);color:#14202e;font-size:14px;transition:transform .2s" style-hover="transform:translateY(-2px);background:#fff">Continue <b style="font-weight:500">Sunlit Living Room</b><span style="width:34px;height:34px;border-radius:11px;background:#d4e4f0;color:#294f7d;display:grid;place-items:center"><iconify-icon icon="ph:arrow-right"></iconify-icon></span></a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px">
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:34px">Recent rooms</h2>
+        <a href="Projects.dc.html" style="display:flex;align-items:center;gap:4px;font-size:14px">View all<iconify-icon icon="ph:caret-right-bold"></iconify-icon></a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px">
+        <sc-for list="{{ rooms }}" as="r" hint-placeholder-count="4">
+          <a href="Results.dc.html" onMouseEnter="{{ r.enter }}" onMouseLeave="{{ r.leave }}" style="display:flex;flex-direction:column;border-radius:24px;padding:8px;color:#14202e;background:rgba(255,255,255,{{ r.alpha }});border:1px solid rgba(255,255,255,.9);box-shadow:{{ r.shadow }};transition:background .3s,box-shadow .3s;animation:bpUp .5s {{ r.delay }} cubic-bezier(.2,.8,.2,1) both">
+            <div style="position:relative;aspect-ratio:4 / 3;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#f2f6f9,#e3ecf3);display:grid;place-items:center;perspective:900px">
+              <div style="position:relative;width:{{ r.pw }};aspect-ratio:{{ r.ratio }};background:#fefcfa;box-shadow:0 0 0 4px #14202e,{{ r.drop }};transform:{{ r.tf }};transition:transform .6s cubic-bezier(.2,.8,.2,1),box-shadow .6s;background-image:linear-gradient(rgba(41,79,125,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(41,79,125,.06) 1px,transparent 1px);background-size:12px 12px">
+                <sc-for list="{{ r.pieces }}" as="p" hint-placeholder-count="3"><span style="position:absolute;left:{{ p.x }};top:{{ p.y }};width:{{ p.w }};height:{{ p.h }};border-radius:{{ p.r }};background:{{ p.c }};border:1px solid rgba(20,32,46,.3);box-shadow:{{ r.pieceShadow }};transition:box-shadow .6s"></span></sc-for>
+              </div>
+              <span style="position:absolute;left:10px;bottom:10px;font-family:'Geist Mono',monospace;font-size:10.5px;color:#5d6b7b;background:rgba(255,255,255,.85);padding:3px 8px;border-radius:6px">{{ r.dims }}</span>
+              <span style="position:absolute;right:10px;top:10px;font-size:11px;padding:4px 10px;border-radius:999px;background:{{ r.statusBg }};color:{{ r.statusFg }}">{{ r.status }}</span>
+            </div>
+            <div style="padding:12px 8px 6px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+              <div style="min-width:0"><div style="font-family:'Instrument Serif',serif;font-size:24px;line-height:1.1">{{ r.name }}</div><div style="font-size:12.5px;color:#5d6b7b;margin-top:3px">{{ r.type }} · {{ r.style }}</div></div>
+              <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#8a97a6;white-space:nowrap">{{ r.when }}</span>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const L = {
+  living: [{ x: 12, y: 30, w: 66, h: 46, r: '4px', c: 'rgba(184,212,232,.4)' }, { x: 22, y: 70, w: 50, h: 20, r: '6px', c: '#d9d2c4' }, { x: 36, y: 46, w: 24, h: 13, r: '999px', c: '#d6b98f' }, { x: 74, y: 30, w: 18, h: 20, r: '6px', c: '#ece7de' }],
+  bed: [{ x: 26, y: 8, w: 48, h: 56, r: '6px', c: '#e3ddd2' }, { x: 12, y: 10, w: 12, h: 12, r: '3px', c: '#c79e6e' }, { x: 76, y: 10, w: 12, h: 12, r: '3px', c: '#c79e6e' }, { x: 70, y: 74, w: 24, h: 18, r: '3px', c: '#b8d4e8' }],
+  office: [{ x: 8, y: 8, w: 50, h: 18, r: '4px', c: '#d6b98f' }, { x: 26, y: 30, w: 16, h: 16, r: '50%', c: '#5f8fb8' }, { x: 74, y: 10, w: 16, h: 60, r: '3px', c: '#e3ddd2' }, { x: 30, y: 64, w: 30, h: 26, r: '4px', c: 'rgba(211,150,140,.35)' }],
+  kitchen: [{ x: 4, y: 4, w: 92, h: 16, r: '2px', c: '#e3ddd2' }, { x: 30, y: 42, w: 40, h: 22, r: '4px', c: '#c79e6e' }, { x: 32, y: 70, w: 9, h: 9, r: '50%', c: '#294f7d' }, { x: 46, y: 70, w: 9, h: 9, r: '50%', c: '#294f7d' }, { x: 60, y: 70, w: 9, h: 9, r: '50%', c: '#294f7d' }],
+};
+const ROOMS = [
+  { name: 'Sunlit Living Room', type: 'Living room', style: 'Scandinavian', w: 14, l: 12, when: '2h ago', status: 'Designed', l2: 'living' },
+  { name: 'Calm Bedroom', type: 'Bedroom', style: 'Coastal', w: 12, l: 11, when: 'Yesterday', status: 'Designed', l2: 'bed' },
+  { name: 'Home Office', type: 'Home office', style: 'Mid-Century', w: 10, l: 9, when: 'Mon', status: 'Inspiration', l2: 'office' },
+  { name: 'Breakfast Kitchen', type: 'Kitchen', style: 'Farmhouse', w: 13, l: 10, when: 'Oct 28', status: 'Designed', l2: 'kitchen' },
+];
+class Component extends DCLogic {
+  state = { hover: null };
+  componentDidMount() { this._mv = (e) => { const r = document.documentElement.style; r.setProperty('--mx', e.clientX + 'px'); r.setProperty('--my', e.clientY + 'px'); }; window.addEventListener('pointermove', this._mv); }
+  componentWillUnmount() { window.removeEventListener('pointermove', this._mv); }
+  renderVals() {
+    return {
+      rooms: ROOMS.map((r, i) => {
+        const h = this.state.hover === i, done = r.status === 'Designed';
+        return {
+          ...r, dims: `${r.w}′ × ${r.l}′ · ${r.w * r.l} ft²`, delay: (0.1 + i * 0.06) + 's', ratio: `${r.w} / ${r.l}`, pw: r.w >= r.l ? '58%' : '50%',
+          tf: h ? 'rotateX(52deg) rotateZ(-38deg) translateZ(18px)' : 'rotateX(0deg) rotateZ(0deg)',
+          drop: h ? '-14px 22px 24px rgba(20,32,46,.22)' : '0 10px 20px rgba(20,32,46,.12)',
+          pieceShadow: h ? '-3px 5px 0 rgba(20,32,46,.25)' : 'none',
+          alpha: h ? '.85' : '.6', shadow: h ? '0 24px 50px rgba(41,79,125,.18)' : '0 10px 26px rgba(41,79,125,.08)',
+          statusBg: done ? 'rgba(58,112,80,.12)' : '#f5e5e2', statusFg: done ? '#3a7050' : '#8a4e45',
+          pieces: L[r.l2].map((p) => ({ x: p.x + '%', y: p.y + '%', w: p.w + '%', h: p.h + '%', r: p.r, c: p.c })),
+          enter: () => this.setState({ hover: i }), leave: () => this.setState({ hover: null }),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>
