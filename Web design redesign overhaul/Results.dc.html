@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<style>
+body{margin:0;background:#dce7ef;color:#14202e;font-family:'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#294f7d;text-decoration:none}a:hover{color:#1f4069}
+button,input{font:inherit;color:inherit}
+@keyframes bpUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes bpSpin{to{transform:rotate(360deg)}}
+@keyframes bpPulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes bpShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+</style>
+</helmet>
+<div style="position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 92% 8%, rgba(110,165,205,.46), transparent 34rem), radial-gradient(circle at 5% 88%, rgba(145,181,210,.38), transparent 30rem), linear-gradient(135deg,#eeeae5 0%,#dce7ef 48%,#c8ddeb 100%)"></div>
+<div style="position:fixed;inset:0;z-index:0;pointer-events:none;background:#fff;opacity:.3;mask:url(assets/blueprint.png) center/cover no-repeat;mask-mode:luminance"></div>
+<div style="position:fixed;inset:0;z-index:0;pointer-events:none;-webkit-mask-image:radial-gradient(circle 180px at var(--mx,-999px) var(--my,-999px),#000 0%,transparent 100%);mask-image:radial-gradient(circle 180px at var(--mx,-999px) var(--my,-999px),#000 0%,transparent 100%)"><div style="position:absolute;inset:0;background:#fff;opacity:.95;mask:url(assets/blueprint.png) center/cover no-repeat;mask-mode:luminance"></div></div>
+
+<div style="position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column">
+  <nav style="position:sticky;top:16px;z-index:50;margin:16px auto 0;width:min(calc(100% - 32px),1240px);box-sizing:border-box;display:flex;align-items:center;gap:20px;padding:8px 8px 8px 22px;border-radius:999px;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:0 10px 30px rgba(41,79,125,.12),0 1px 2px rgba(20,32,46,.06)">
+    <a href="Dashboard.dc.html" style="display:flex;align-items:baseline;gap:3px"><span style="font-family:'Instrument Serif',serif;font-style:italic;font-size:27px;line-height:1;color:#294f7d">Blu</span><span style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#14202e">PRINT</span></a>
+    <div style="display:flex;gap:2px">
+      <a href="Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-size:14px;color:#5d6b7b" style-hover="background:rgba(41,79,125,.08);color:#294f7d"><iconify-icon icon="ph:house-duotone"></iconify-icon>Home</a>
+      <a href="Projects.dc.html" style="display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-size:14px;color:#5d6b7b" style-hover="background:rgba(41,79,125,.08);color:#294f7d"><iconify-icon icon="ph:squares-four-duotone"></iconify-icon>Projects</a>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;font-family:'Geist Mono',monospace;font-size:11px;color:#5d6b7b"><span style="width:7px;height:7px;border-radius:50%;background:{{ saveDot }}"></span>{{ saveLabel }}</div>
+      <button style="width:38px;height:38px;border-radius:50%;border:0;background:#294f7d;color:#fff;display:grid;place-items:center;cursor:pointer;font-size:17px"><iconify-icon icon="ph:user"></iconify-icon></button>
+    </div>
+  </nav>
+
+  <div style="display:flex;justify-content:center;margin-top:22px">
+    <div style="display:flex;align-items:center;gap:4px;padding:5px;border-radius:999px;background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.8);backdrop-filter:blur(16px)">
+      <a href="Define Room.dc.html" style="display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;font-size:13px;color:#14202e" style-hover="background:rgba(41,79,125,.08)"><span style="width:24px;height:24px;border-radius:50%;background:#294f7d;color:#fff;display:grid;place-items:center;font-size:12px"><iconify-icon icon="ph:check-bold"></iconify-icon></span>Define room</a>
+      <span style="width:28px;height:2px;border-radius:2px;background:#294f7d"></span>
+      <a href="Inspiration.dc.html" style="display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;font-size:13px;color:#14202e" style-hover="background:rgba(41,79,125,.08)"><span style="width:24px;height:24px;border-radius:50%;background:#294f7d;color:#fff;display:grid;place-items:center;font-size:12px"><iconify-icon icon="ph:check-bold"></iconify-icon></span>Inspiration</a>
+      <span style="width:28px;height:2px;border-radius:2px;background:#294f7d"></span>
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;box-shadow:0 2px 10px rgba(41,79,125,.12)"><span style="width:24px;height:24px;border-radius:50%;background:#14202e;color:#fff;display:grid;place-items:center;font-family:'Geist Mono',monospace;font-size:11px">3</span>Your design</div>
+    </div>
+  </div>
+
+  <main style="width:min(calc(100% - 48px),1240px);margin:0 auto;padding:40px 0 64px;box-sizing:border-box;flex:1">
+    <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:28px;animation:bpUp .6s cubic-bezier(.2,.8,.2,1) both">
+      <div style="min-width:0">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <span style="display:flex;align-items:center;gap:7px;padding:5px 12px 5px 9px;border-radius:999px;background:#f5e5e2;color:#8a4e45;font-size:12px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:#d3968c"></span>Scandinavian</span>
+          <span style="padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.6);border:1px solid rgba(20,32,46,.06);font-size:12px;color:#5d6b7b">Living room</span>
+        </div>
+        <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+          <input value="{{ nameDraft }}" onChange="{{ onNameInput }}" onBlur="{{ commitName }}" onKeyDown="{{ onNameKey }}" autoFocus="{{ true }}" style="font-family:'Instrument Serif',serif;font-size:clamp(44px,6vw,68px);line-height:1;letter-spacing:-.01em;background:transparent;border:0;border-bottom:2px solid #d3968c;outline:none;width:min(640px,90vw);padding:0 0 4px">
+        </sc-if>
+        <sc-if value="{{ notEditing }}" hint-placeholder-val="{{ true }}">
+          <h1 onClick="{{ startEdit }}" title="Rename room" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(44px,6vw,68px);line-height:1;letter-spacing:-.01em;cursor:text;display:flex;align-items:center;gap:14px">{{ name }}<iconify-icon icon="ph:pencil-simple-line" style="font-size:22px;color:#8a97a6"></iconify-icon></h1>
+        </sc-if>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;font-family:'Geist Mono',monospace;font-size:12px;color:#33475e">
+          <span style="padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.55)">14′ × 12′</span>
+          <span style="padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.55)">168 sq ft</span>
+          <span style="padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.55)">8′ ceiling</span>
+          <span style="padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.55)">{{ pieceCount }} pieces</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button onClick="{{ regenerate }}" style="display:flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:14px;border:1px solid rgba(41,79,125,.16);background:rgba(255,255,255,.7);font-size:14px;font-weight:500;cursor:pointer" style-hover="background:#fff;transform:translateY(-1px)"><span style="display:flex;animation:{{ regenAnim }}"><iconify-icon icon="ph:arrows-clockwise-bold"></iconify-icon></span>{{ regenLabel }}</button>
+        <button style="width:44px;height:44px;border-radius:14px;border:1px solid rgba(41,79,125,.16);background:rgba(255,255,255,.7);display:grid;place-items:center;font-size:18px;cursor:pointer" title="Export" style-hover="background:#fff"><iconify-icon icon="ph:export"></iconify-icon></button>
+        <button onClick="{{ saveNow }}" style="display:flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:14px;border:0;background:#294f7d;color:#fff;font-size:14px;font-weight:500;cursor:pointer;box-shadow:0 8px 22px rgba(41,79,125,.28)" style-hover="background:#1f4069;transform:translateY(-1px)"><iconify-icon icon="ph:floppy-disk"></iconify-icon>Save layout</button>
+      </div>
+    </header>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px;align-items:start">
+      <section style="grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+        <div style="flex:1 1 560px;position:relative;border-radius:28px;padding:12px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.85);backdrop-filter:blur(22px);box-shadow:0 24px 60px rgba(41,79,125,.14);animation:bpUp .6s .08s cubic-bezier(.2,.8,.2,1) both;min-width:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 4px 12px">
+            <div style="position:relative;display:flex;padding:4px;border-radius:999px;background:rgba(41,79,125,.08)">
+              <span style="position:absolute;top:4px;bottom:4px;left:{{ segLeft }};width:calc(50% - 4px);border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(41,79,125,.16);transition:left .35s cubic-bezier(.2,.8,.2,1)"></span>
+              <button onClick="{{ showPlan }}" style="position:relative;width:128px;height:34px;border:0;background:transparent;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><iconify-icon icon="ph:blueprint"></iconify-icon>Floor plan</button>
+              <button onClick="{{ showRender }}" style="position:relative;width:128px;height:34px;border:0;background:transparent;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><iconify-icon icon="ph:image"></iconify-icon>Your photo</button>
+            </div>
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#5d6b7b;display:flex;align-items:center;gap:6px"><iconify-icon icon="ph:hand-grabbing"></iconify-icon>{{ stageHint }}</span>
+          </div>
+
+          <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ true }}">
+            <div style="position:relative;border-radius:20px;overflow:hidden;height:min(560px,62vw);min-height:360px;display:grid;place-items:center;padding:48px 36px 36px 60px;box-sizing:border-box;background:#f7f9fb;border:1px solid rgba(41,79,125,.08)">
+              <sc-if value="{{ blueprint }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:#163a63;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:24px 24px"></div></sc-if>
+              <sc-if value="{{ paper }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;background:#f7f9fb;background-image:linear-gradient(rgba(41,79,125,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(41,79,125,.05) 1px,transparent 1px);background-size:24px 24px"></div></sc-if>
+              <div ref="{{ planRef }}" style="position:relative;height:100%;aspect-ratio:14 / 12;max-width:100%;background:{{ floorBg }};background-image:linear-gradient({{ floorGrid }} 1px,transparent 1px),linear-gradient(90deg,{{ floorGrid }} 1px,transparent 1px);background-size:calc(100% / 14) calc(100% / 12);box-shadow:0 0 0 7px {{ wallColor }},0 18px 40px rgba(20,32,46,.18);border-radius:2px;touch-action:none">
+                <div style="position:absolute;left:0;right:0;top:-38px;display:flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:11px;color:{{ dimColor }}"><span style="flex:1;height:1px;background:currentColor;opacity:.4"></span>14′ 0″<span style="flex:1;height:1px;background:currentColor;opacity:.4"></span></div>
+                <div style="position:absolute;top:0;bottom:0;left:-46px;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:11px;color:{{ dimColor }}"><span style="flex:1;width:1px;background:currentColor;opacity:.4"></span><span style="writing-mode:vertical-rl;transform:rotate(180deg)">12′ 0″</span><span style="flex:1;width:1px;background:currentColor;opacity:.4"></span></div>
+                <div style="position:absolute;top:-7px;height:7px;left:32.14%;width:35.71%;background:#f5e5e2;box-shadow:inset 0 0 0 1.5px #d3968c"><span style="position:absolute;left:0;right:0;top:3px;height:1px;background:#d3968c"></span></div>
+                <div style="position:absolute;left:-7px;width:7px;top:10%;height:25%;background:{{ floorBg }}"></div>
+                <div style="position:absolute;left:0;top:10%;width:21.43%;height:25%;border-top:3px solid #d3968c;border-right:1.5px dashed #d3968c;border-bottom:1.5px dashed #d3968c;border-bottom-right-radius:100%;box-sizing:border-box;opacity:.85"></div>
+                <sc-for list="{{ pieces }}" as="p" hint-placeholder-count="6">
+                  <div onPointerDown="{{ p.onDown }}" onMouseEnter="{{ p.onEnter }}" onMouseLeave="{{ p.onLeave }}" title="{{ p.name }}" style="position:absolute;left:{{ p.left }};top:{{ p.top }};width:{{ p.width }};height:{{ p.height }};z-index:{{ p.z }};border-radius:{{ p.radius }};background:{{ p.bg }};border:{{ p.border }};box-sizing:border-box;cursor:grab;display:grid;place-items:center;opacity:{{ p.opacity }};box-shadow:{{ p.shadow }};transition:{{ p.transition }};user-select:none">
+                    <span style="font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#14202e;opacity:.7;pointer-events:none;text-align:center;line-height:1.2;padding:0 4px">{{ p.short }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="position:absolute;left:16px;bottom:14px;display:flex;gap:12px;font-family:'Geist Mono',monospace;font-size:10.5px;color:{{ dimColor }}">
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:3px;background:#d3968c"></span>Door</span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:6px;background:#f5e5e2;box-shadow:inset 0 0 0 1.5px #d3968c"></span>Window</span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid currentColor"></span>1 sq = 1 ft</span>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isRender }}" hint-placeholder-val="{{ false }}">
+            <div style="position:relative;border-radius:20px;overflow:hidden;height:min(560px,62vw);min-height:360px;background:#eef3f7;background-image:repeating-linear-gradient(135deg,rgba(41,79,125,.07) 0 10px,transparent 10px 20px);border:1px solid rgba(41,79,125,.08)">
+              <span style="position:absolute;left:18px;top:16px;font-family:'Geist Mono',monospace;font-size:11px;color:#5d6b7b;background:rgba(255,255,255,.8);padding:5px 10px;border-radius:8px">{{ photoLabel }}</span>
+              <sc-if value="{{ renderDone }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;right:16px;top:14px;display:flex;gap:8px">
+                  <span style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff;font-size:12px;color:#3a7050"><iconify-icon icon="ph:check-circle-fill"></iconify-icon>Rendered just now</span>
+                  <button onClick="{{ startRender }}" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:0;background:#14202e;color:#fff;font-size:12px;cursor:pointer"><iconify-icon icon="ph:arrows-clockwise"></iconify-icon>Re-render</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ renderIdle }}" hint-placeholder-val="{{ true }}">
+                <div style="position:absolute;inset:0;display:grid;place-items:center;padding:24px">
+                  <div style="max-width:360px;text-align:center;padding:28px;border-radius:24px;background:rgba(255,255,255,.82);backdrop-filter:blur(16px);box-shadow:0 20px 50px rgba(41,79,125,.16)">
+                    <div style="width:52px;height:52px;margin:0 auto 14px;border-radius:16px;background:#d4e4f0;color:#294f7d;display:grid;place-items:center;font-size:26px"><iconify-icon icon="ph:magic-wand-duotone"></iconify-icon></div>
+                    <h3 style="margin:0 0 8px;font-family:'Instrument Serif',serif;font-weight:400;font-size:30px;line-height:1.05">See it in your room</h3>
+                    <p style="margin:0 0 20px;font-size:14px;line-height:1.5;color:#5d6b7b;text-wrap:pretty">We place these {{ pieceCount }} pieces into your photo. Walls, floor and light stay exactly as they are.</p>
+                    <button onClick="{{ startRender }}" style="height:46px;padding:0 22px;border-radius:14px;border:0;background:#294f7d;color:#fff;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 22px rgba(41,79,125,.28)" style-hover="background:#1f4069">Render my room<iconify-icon icon="ph:arrow-right"></iconify-icon></button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ renderRunning }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(238,243,247,.5);backdrop-filter:blur(3px)">
+                  <div style="width:min(340px,80%);text-align:center">
+                    <p style="margin:0 0 4px;font-family:'Instrument Serif',serif;font-size:30px">{{ renderStep }}</p>
+                    <p style="margin:0 0 16px;font-family:'Geist Mono',monospace;font-size:12px;color:#5d6b7b">{{ renderPct }}</p>
+                    <div style="height:6px;border-radius:99px;background:rgba(41,79,125,.12);overflow:hidden"><div style="height:100%;width:{{ renderPct }};border-radius:99px;background:linear-gradient(90deg,#8fc5e7,#294f7d);transition:width .2s linear"></div></div>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+
+        <aside style="flex:1 1 300px;max-width:100%;display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="border-radius:24px;padding:22px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.85);backdrop-filter:blur(22px);box-shadow:0 16px 40px rgba(41,79,125,.1);animation:bpUp .6s .16s cubic-bezier(.2,.8,.2,1) both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5d6b7b">Budget</span>
+              <span style="padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;background:{{ budgetChipBg }};color:{{ budgetChipFg }}">{{ budgetChip }}</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px"><span style="font-family:'Instrument Serif',serif;font-size:54px;line-height:1;letter-spacing:-.01em">{{ totalFmt }}</span><span style="font-size:14px;color:#5d6b7b">of {{ budgetFmt }}</span></div>
+            <div style="display:flex;gap:3px;height:12px;margin-bottom:18px">
+              <sc-for list="{{ segs }}" as="s" hint-placeholder-count="6"><div onMouseEnter="{{ s.onEnter }}" onMouseLeave="{{ s.onLeave }}" style="flex:{{ s.flex }};background:{{ s.color }};border-radius:4px;opacity:{{ s.opacity }};transition:flex .5s cubic-bezier(.2,.8,.2,1),opacity .2s;cursor:pointer"></div></sc-for>
+              <div style="flex:{{ remainFlex }};border-radius:4px;background:repeating-linear-gradient(135deg,rgba(41,79,125,.12) 0 4px,transparent 4px 8px);transition:flex .5s"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ segs }}" as="s" hint-placeholder-count="6">
+                <div onMouseEnter="{{ s.onEnter }}" onMouseLeave="{{ s.onLeave }}" style="display:flex;align-items:center;gap:10px;padding:7px 8px;margin:0 -8px;border-radius:10px;font-size:13px;background:{{ s.rowBg }};transition:background .2s;cursor:default">
+                  <span style="width:8px;height:8px;border-radius:3px;background:{{ s.color }}"></span><span style="flex:1;color:#33475e">{{ s.label }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px">{{ s.priceFmt }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ over }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:14px;padding:14px;border-radius:16px;background:#f5e5e2;font-size:13px;line-height:1.45;color:#6d3f38">
+                This set is {{ overFmt }} over. Swap or remove a piece, or let us rebuild it to fit.
+                <button onClick="{{ underBudget }}" style="margin-top:10px;display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:12px;border:0;background:#14202e;color:#fff;font-size:13px;cursor:pointer"><iconify-icon icon="ph:scissors"></iconify-icon>Generate under budget</button>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="border-radius:24px;padding:22px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.85);backdrop-filter:blur(22px);box-shadow:0 16px 40px rgba(41,79,125,.1);animation:bpUp .6s .24s cubic-bezier(.2,.8,.2,1) both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5d6b7b">Style profile</span>
+              <a href="Inspiration.dc.html" style="font-size:12px;display:flex;align-items:center;gap:4px">Edit<iconify-icon icon="ph:arrow-up-right"></iconify-icon></a>
+            </div>
+            <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:36px;line-height:1.05;margin-bottom:16px">Scandinavian</div>
+            <div style="display:flex;margin-bottom:16px">
+              <span title="White" style="width:44px;height:44px;border-radius:50%;background:#ffffff;border:3px solid #fff;box-shadow:0 4px 12px rgba(20,32,46,.12)"></span>
+              <span title="Beige" style="width:44px;height:44px;border-radius:50%;background:#e8dccb;border:3px solid #fff;margin-left:-10px;box-shadow:0 4px 12px rgba(20,32,46,.12)"></span>
+              <span title="Sage Green" style="width:44px;height:44px;border-radius:50%;background:#a3b18a;border:3px solid #fff;margin-left:-10px;box-shadow:0 4px 12px rgba(20,32,46,.12)"></span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <span style="padding:5px 11px;border-radius:999px;background:#d4e4f0;color:#294f7d;font-size:12px">Calm &amp; Relaxing</span>
+              <span style="padding:5px 11px;border-radius:999px;background:#d4e4f0;color:#294f7d;font-size:12px">Cozy &amp; Warm</span>
+              <span style="padding:5px 11px;border-radius:999px;background:rgba(41,79,125,.06);color:#33475e;font-size:12px">Reading Nook</span>
+              <span style="padding:5px 11px;border-radius:999px;background:rgba(41,79,125,.06);color:#33475e;font-size:12px">Accent Chair</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </div>
+
+    <section style="margin-top:44px">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px">
+        <div>
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5d6b7b">Shop the room</span>
+          <h2 style="margin:6px 0 0;font-family:'Instrument Serif',serif;font-weight:400;font-size:40px;line-height:1">Every piece, <span style="font-style:italic;color:#294f7d">ready to buy</span></h2>
+        </div>
+        <div style="display:flex;padding:4px;border-radius:999px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.8)">
+          <button onClick="{{ sortPlan }}" style="height:32px;padding:0 14px;border:0;border-radius:999px;font-size:13px;cursor:pointer;background:{{ sortPlanBg }};box-shadow:{{ sortPlanShadow }}">Room order</button>
+          <button onClick="{{ sortPrice }}" style="height:32px;padding:0 14px;border:0;border-radius:999px;font-size:13px;cursor:pointer;background:{{ sortPriceBg }};box-shadow:{{ sortPriceShadow }}">Price</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px">
+        <sc-for list="{{ cards }}" as="c" hint-placeholder-count="0">
+          <article onMouseEnter="{{ c.onEnter }}" onMouseLeave="{{ c.onLeave }}" style="position:relative;display:flex;flex-direction:column;border-radius:22px;padding:8px;background:{{ c.bg }};border:{{ c.border }};backdrop-filter:blur(18px);box-shadow:{{ c.shadow }};opacity:{{ c.opacity }};transform:{{ c.transform }};transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .25s;animation:bpUp .5s {{ c.delay }} cubic-bezier(.2,.8,.2,1) both">
+            <div style="position:relative;aspect-ratio:4 / 3;border-radius:16px;overflow:hidden;background:#fff">
+              <img src="{{ c.img }}" alt="{{ c.name }}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;display:block;filter:{{ c.imgFilter }}">
+              <span style="position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border-radius:999px;background:rgba(255,255,255,.92);font-size:11px;font-weight:500"><span style="width:7px;height:7px;border-radius:2px;background:{{ c.accent }}"></span>{{ c.label }}</span>
+              <button onClick="{{ c.onToggle }}" title="{{ c.toggleTitle }}" style="position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.92);display:grid;place-items:center;font-size:15px;cursor:pointer;color:#33475e" style-hover="background:#fff;color:#c04040"><iconify-icon icon="{{ c.toggleIcon }}"></iconify-icon></button>
+            </div>
+            <div style="padding:12px 8px 6px;display:flex;flex-direction:column;flex:1">
+              <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#a8665c">{{ c.brand }}</span>
+              <h3 style="margin:4px 0 14px;font-size:15px;font-weight:500;line-height:1.3;flex:1">{{ c.name }}</h3>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="flex:1;font-family:'Instrument Serif',serif;font-size:26px;line-height:1">{{ c.priceFmt }}</span>
+                <button onClick="{{ c.onSwap }}" title="Try another product" style="height:34px;padding:0 12px;border-radius:11px;border:1px solid rgba(41,79,125,.16);background:transparent;font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer" style-hover="background:rgba(41,79,125,.07)"><iconify-icon icon="ph:shuffle"></iconify-icon>Swap</button>
+                <a href="#" style="height:34px;padding:0 14px;border-radius:11px;background:#294f7d;color:#fff;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px" style-hover="background:#1f4069;color:#fff">Buy<iconify-icon icon="ph:arrow-up-right"></iconify-icon></a>
+              </div>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <footer style="padding:28px 0 36px;text-align:center;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5d6b7b">BluPrint · Room planner</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;budget&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3000,&quot;min&quot;:500,&quot;max&quot;:10000,&quot;step&quot;:100,&quot;tsType&quot;:&quot;number&quot;},&quot;planStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;paper&quot;,&quot;blueprint&quot;],&quot;default&quot;:&quot;paper&quot;,&quot;tsType&quot;:&quot;'paper' | 'blueprint'&quot;}}">
+const IMG = {
+  sofa: 'photo-1555041469-a586c61ea9bc', coffee_table: 'photo-1533090161767-e6ffed986c88', rug: 'photo-1600166898405-da9535204843',
+  floor_lamp: 'photo-1507473885765-e6ed057f782c', accent_chair: 'photo-1567538096630-e0c55bd6374c', side_table: 'photo-1532372320572-cda25653a26d',
+};
+const img = (c) => `https://images.unsplash.com/${IMG[c]}?auto=format&fit=crop&q=80&w=500`;
+const ORDER = ['rug', 'sofa', 'coffee_table', 'accent_chair', 'side_table', 'floor_lamp'];
+const LABEL = { sofa: 'Sofa', coffee_table: 'Coffee table', rug: 'Rug', floor_lamp: 'Floor lamp', accent_chair: 'Accent chair', side_table: 'Side table' };
+const SHORT = { sofa: 'Sofa', coffee_table: 'Table', rug: 'Rug', floor_lamp: '', accent_chair: 'Chair', side_table: '' };
+const ACCENT = { rug: '#b8d4e8', sofa: '#294f7d', coffee_table: '#5f8fb8', accent_chair: '#d3968c', side_table: '#3a7050', floor_lamp: '#8fc5e7' };
+const OPTS = {
+  sofa: [{ name: 'Linnea 3-Seat Sofa, Oat Linen', brand: 'Nordhaus', price: 1149, color: '#d9d2c4' }, { name: 'Arlo Low-Arm Sofa, Fog', brand: 'Fern & Co', price: 1290, color: '#c3ccd3' }, { name: 'Halden Loveseat, Sand', brand: 'Oakline', price: 849, color: '#e0d5c0' }],
+  coffee_table: [{ name: 'Oval Ash Coffee Table', brand: 'Oakline', price: 329, color: '#d6b98f' }, { name: 'Round Travertine Table', brand: 'Stoneworks', price: 410, color: '#e7dccb' }],
+  rug: [{ name: 'Hand-Woven Wool Rug, 9 × 6', brand: 'Fern & Co', price: 389, color: '#efe7da' }, { name: 'Flatweave Jute Rug, 9 × 6', brand: 'Nordhaus', price: 249, color: '#e4d6bb' }],
+  floor_lamp: [{ name: 'Arc Linen Floor Lamp', brand: 'Lumo', price: 159, color: '#f3ead2' }, { name: 'Paper Globe Floor Lamp', brand: 'Lumo', price: 119, color: '#f7f1e3' }],
+  accent_chair: [{ name: 'Bouclé Lounge Chair', brand: 'Nordhaus', price: 479, color: '#ece7de' }, { name: 'Rattan Reading Chair', brand: 'Fern & Co', price: 395, color: '#d8c19a' }],
+  side_table: [{ name: 'Oak Drum Side Table', brand: 'Oakline', price: 139, color: '#c79e6e' }, { name: 'Ceramic Stool Table', brand: 'Stoneworks', price: 159, color: '#c9d4cf' }],
+};
+const SHAPE = {
+  rug: { w: 9, h: 6.2, r: '6px', rug: true }, sofa: { w: 7, h: 2.9, r: '10px 10px 6px 6px' }, coffee_table: { w: 3.6, h: 1.9, r: '999px' },
+  accent_chair: { w: 2.7, h: 2.7, r: '12px' }, side_table: { w: 1.4, h: 1.4, r: '50%' }, floor_lamp: { w: 1.3, h: 1.3, r: '50%' },
+};
+const START = { rug: { x: 2.5, y: 4.1 }, sofa: { x: 3.5, y: 8.7 }, coffee_table: { x: 5.2, y: 6.0 }, accent_chair: { x: 10.3, y: 4.4 }, side_table: { x: 1.6, y: 9.5 }, floor_lamp: { x: 11.3, y: 9.6 } };
+const STEPS = ['Reading your room', 'Matching the light', 'Placing the sofa', 'Laying the rug', 'Final touches'];
+const money = (n) => '$' + Math.round(n).toLocaleString();
+
+class Component extends DCLogic {
+  state = {
+    sel: { sofa: 0, coffee_table: 0, rug: 0, floor_lamp: 0, accent_chair: 0, side_table: 0 },
+    pos: JSON.parse(JSON.stringify(START)), hidden: {}, linked: null, dragging: null,
+    view: 'plan', render: 'idle', progress: 0, editing: false, name: 'Sunlit Living Room', nameDraft: '',
+    save: 'saved', sort: 'plan', regen: false, shown: null,
+  };
+  planRef = React.createRef();
+
+  componentDidMount() {
+    this._mv = (e) => { const r = document.documentElement.style; r.setProperty('--mx', e.clientX + 'px'); r.setProperty('--my', e.clientY + 'px'); };
+    window.addEventListener('pointermove', this._mv);
+    this.setState({ shown: this.total() });
+  }
+  componentWillUnmount() { window.removeEventListener('pointermove', this._mv); clearInterval(this._ri); cancelAnimationFrame(this._raf); }
+  componentDidUpdate() {
+    const t = this.total();
+    if (this.state.shown !== null && this._target !== t) {
+      this._target = t; cancelAnimationFrame(this._raf);
+      const from = this.state.shown, t0 = performance.now();
+      const step = (now) => { const k = Math.min(1, (now - t0) / 600), e = 1 - Math.pow(1 - k, 3); this.setState({ shown: from + (t - from) * e }); if (k < 1) this._raf = requestAnimationFrame(step); };
+      this._raf = requestAnimationFrame(step);
+    }
+  }
+  item(c) { return OPTS[c][this.state.sel[c]]; }
+  total() { return ORDER.filter((c) => !this.state.hidden[c]).reduce((s, c) => s + this.item(c).price, 0); }
+  touchSave() { this.setState({ save: 'saving' }); clearTimeout(this._st); this._st = setTimeout(() => this.setState({ save: 'saved' }), 900); }
+  link(c) { if (!this.state.dragging) this.setState({ linked: c }); }
+
+  down(c, e) {
+    e.preventDefault();
+    const rect = this.planRef.current.getBoundingClientRect();
+    const s = SHAPE[c], p0 = this.state.pos[c], x0 = e.clientX, y0 = e.clientY;
+    this.setState({ dragging: c, linked: c });
+    const move = (ev) => {
+      const x = Math.max(0, Math.min(14 - s.w, p0.x + (ev.clientX - x0) / rect.width * 14));
+      const y = Math.max(0, Math.min(12 - s.h, p0.y + (ev.clientY - y0) / rect.height * 12));
+      this.setState((st) => ({ pos: { ...st.pos, [c]: { x, y } } }));
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); this.setState({ dragging: null }); this.touchSave(); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  }
+  swap(c) { this.setState((st) => ({ sel: { ...st.sel, [c]: (st.sel[c] + 1) % OPTS[c].length } })); this.touchSave(); }
+  toggle(c) { this.setState((st) => ({ hidden: { ...st.hidden, [c]: !st.hidden[c] } })); this.touchSave(); }
+  startRender() {
+    clearInterval(this._ri); this.setState({ render: 'running', progress: 0 });
+    this._ri = setInterval(() => this.setState((st) => {
+      const p = Math.min(100, st.progress + 2 + Math.random() * 3);
+      if (p >= 100) { clearInterval(this._ri); return { progress: 100, render: 'done' }; }
+      return { progress: p };
+    }), 90);
+  }
+  regenerate() {
+    if (this.state.regen) return;
+    this.setState({ regen: true });
+    setTimeout(() => {
+      const sel = {}; ORDER.forEach((c) => { sel[c] = Math.floor(Math.random() * OPTS[c].length); });
+      this.setState({ regen: false, sel, hidden: {}, pos: JSON.parse(JSON.stringify(START)) }); this.touchSave();
+    }, 1200);
+  }
+  underBudget() {
+    const budget = this.props.budget ?? 3000; const sel = { ...this.state.sel };
+    ORDER.forEach((c) => { let best = 0; OPTS[c].forEach((o, i) => { if (o.price < OPTS[c][best].price) best = i; }); sel[c] = best; });
+    this.setState({ sel }); const hidden = {}; let t = ORDER.reduce((s, c) => s + OPTS[c][sel[c]].price, 0);
+    ['floor_lamp', 'side_table', 'accent_chair', 'rug'].forEach((c) => { if (t > budget) { hidden[c] = true; t -= OPTS[c][sel[c]].price; } });
+    this.setState({ hidden }); this.touchSave();
+  }
+
+  renderVals() {
+    const st = this.state, budget = this.props.budget ?? 3000, blueprint = (this.props.planStyle ?? 'paper') === 'blueprint';
+    const total = this.total(), over = total > budget, linked = st.linked;
+    const pieces = ORDER.filter((c) => !st.hidden[c]).map((c) => {
+      const s = SHAPE[c], p = st.pos[c], it = this.item(c), isL = linked === c, dim = linked && !isL, drag = st.dragging === c;
+      return {
+        name: it.name, short: SHORT[c],
+        left: (p.x / 14 * 100) + '%', top: (p.y / 12 * 100) + '%', width: (s.w / 14 * 100) + '%', height: (s.h / 12 * 100) + '%',
+        z: drag ? 20 : s.rug ? 1 : 5, radius: s.r,
+        bg: s.rug ? (blueprint ? 'rgba(255,255,255,.08)' : 'rgba(184,212,232,.28)') : it.color,
+        border: s.rug ? `1.5px dashed ${blueprint ? 'rgba(255,255,255,.5)' : 'rgba(41,79,125,.4)'}` : `1.5px solid ${isL ? '#294f7d' : 'rgba(20,32,46,.35)'}`,
+        opacity: dim ? 0.4 : 1,
+        shadow: isL ? '0 0 0 3px rgba(41,79,125,.25), 0 12px 24px rgba(20,32,46,.22)' : s.rug ? 'none' : '0 3px 8px rgba(20,32,46,.12)',
+        transition: drag ? 'box-shadow .2s, opacity .2s' : 'left .5s cubic-bezier(.2,.8,.2,1), top .5s cubic-bezier(.2,.8,.2,1), box-shadow .2s, opacity .2s, background .3s',
+        onDown: (e) => this.down(c, e), onEnter: () => this.link(c), onLeave: () => this.link(null),
+      };
+    });
+    const order = st.sort === 'price' ? [...ORDER].sort((a, b) => this.item(b).price - this.item(a).price) : ORDER;
+    const cards = order.map((c, i) => {
+      const it = this.item(c), off = !!st.hidden[c], isL = linked === c, dim = linked && !isL;
+      return {
+        label: LABEL[c], name: it.name, brand: it.brand, priceFmt: money(it.price), img: img(c), accent: ACCENT[c], delay: (0.05 * i) + 's',
+        bg: off ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.7)',
+        border: off ? '1.5px dashed rgba(41,79,125,.3)' : isL ? '1px solid rgba(41,79,125,.5)' : '1px solid rgba(255,255,255,.9)',
+        shadow: isL ? '0 0 0 3px rgba(41,79,125,.18), 0 20px 40px rgba(41,79,125,.18)' : '0 10px 26px rgba(41,79,125,.08)',
+        transform: isL ? 'translateY(-4px)' : 'none', opacity: dim ? 0.55 : off ? 0.75 : 1, imgFilter: off ? 'grayscale(1) opacity(.6)' : 'none',
+        toggleIcon: off ? 'ph:plus-bold' : 'ph:minus-bold', toggleTitle: off ? 'Add back to plan' : 'Remove from plan',
+        onEnter: () => this.link(c), onLeave: () => this.link(null), onSwap: () => this.swap(c), onToggle: () => this.toggle(c),
+      };
+    });
+    const segs = ORDER.filter((c) => !st.hidden[c]).map((c) => ({
+      label: LABEL[c], priceFmt: money(this.item(c).price), flex: this.item(c).price, color: ACCENT[c],
+      opacity: linked && linked !== c ? 0.35 : 1, rowBg: linked === c ? 'rgba(41,79,125,.08)' : 'transparent',
+      onEnter: () => this.link(c), onLeave: () => this.link(null),
+    }));
+    const pct = Math.round(st.progress);
+    return {
+      name: st.name, nameDraft: st.nameDraft, editing: st.editing, notEditing: !st.editing,
+      startEdit: () => this.setState({ editing: true, nameDraft: st.name }),
+      onNameInput: (e) => this.setState({ nameDraft: e.target.value }),
+      commitName: () => this.setState((s) => ({ editing: false, name: s.nameDraft.trim() || s.name })),
+      onNameKey: (e) => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') this.setState({ editing: false }); },
+      pieceCount: pieces.length,
+      saveDot: st.save === 'saving' ? '#d3968c' : '#3a7050', saveLabel: st.save === 'saving' ? 'Saving…' : 'All changes saved',
+      saveNow: () => this.touchSave(),
+      regenerate: () => this.regenerate(), regenLabel: st.regen ? 'Finding new pieces…' : 'Regenerate',
+      regenAnim: st.regen ? 'bpSpin .9s linear infinite' : 'none',
+      segLeft: st.view === 'plan' ? '4px' : '50%', isPlan: st.view === 'plan', isRender: st.view === 'render',
+      showPlan: () => this.setState({ view: 'plan' }), showRender: () => this.setState({ view: 'render' }),
+      stageHint: st.view === 'plan' ? 'Drag pieces to rearrange' : 'Uses the photo from Define room',
+      blueprint, paper: !blueprint,
+      floorBg: blueprint ? '#1d4775' : '#fefcfa', floorGrid: blueprint ? 'rgba(255,255,255,.08)' : 'rgba(41,79,125,.07)',
+      wallColor: blueprint ? '#f4f8fb' : '#14202e', dimColor: blueprint ? 'rgba(255,255,255,.75)' : '#5d6b7b',
+      pieces, cards, segs,
+      totalFmt: money(st.shown ?? total), budgetFmt: money(budget), remainFlex: Math.max(0, budget - total),
+      over, overFmt: money(total - budget), underBudget: () => this.underBudget(),
+      budgetChip: over ? 'Over by ' + money(total - budget) : money(budget - total) + ' left',
+      budgetChipBg: over ? '#f5e5e2' : 'rgba(58,112,80,.12)', budgetChipFg: over ? '#8a4e45' : '#3a7050',
+      renderIdle: st.render === 'idle', renderRunning: st.render === 'running', renderDone: st.render === 'done',
+      renderPct: pct + '%', renderStep: STEPS[Math.min(STEPS.length - 1, Math.floor(pct / 20))],
+      startRender: () => this.startRender(), photoLabel: st.render === 'done' ? 'rendered photo · ' + pieces.length + ' pieces placed' : 'your room photo',
+      sortPlan: () => this.setState({ sort: 'plan' }), sortPrice: () => this.setState({ sort: 'price' }),
+      sortPlanBg: st.sort === 'plan' ? '#fff' : 'transparent', sortPriceBg: st.sort === 'price' ? '#fff' : 'transparent',
+      sortPlanShadow: st.sort === 'plan' ? '0 2px 8px rgba(41,79,125,.14)' : 'none', sortPriceShadow: st.sort === 'price' ? '0 2px 8px rgba(41,79,125,.14)' : 'none',
+    };
+  }
+}
+</script>
+</body>
+</html>
