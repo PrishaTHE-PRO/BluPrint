@@ -4,11 +4,11 @@
   --bp-bg: #f8f5f0;
   --bp-surface: #fefcfa;
   --bp-ink: #1c1714;
-  --bp-muted: #7a7060;
+  --bp-muted: #6b7480;
   --bp-primary: #3d5a80;
   --bp-primary-hover: #4d6d95;
-  --bp-soft: #ede8e1;
-  --bp-secondary: #ebe4da;
+  --bp-soft: #e9ecf0;
+  --bp-secondary: #e4e8ed;
   --bp-blue-soft: #d4e4f0;
   --bp-blue: #b8d4e8;
   --bp-green: #3a7050;
@@ -70,7 +70,7 @@ textarea:focus-visible {
 ::selection { background: var(--bp-blue); color: var(--bp-ink); }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent !important; }
-::-webkit-scrollbar-thumb { background: #c8c0b5 !important; border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: #c3c9d1 !important; border-radius: 999px; }
 
 .grid-background { background-image: none !important; }
 .noise-texture, .floating-particle, .particle { display: none !important; }
@@ -531,7 +531,8 @@ button.theme-switch-btn {
 }
 
 .bp-wordmark-rest {
-  font-size: 14px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -1044,7 +1045,7 @@ button.theme-switch-btn {
 
 .input-field::placeholder,
 .dimension-input::placeholder,
-.page-inspo input::placeholder { color: #a79e92 !important; }
+.page-inspo input::placeholder { color: #9aa2ad !important; }
 
 .input-field:focus,
 .dimension-input:focus,
@@ -1352,8 +1353,8 @@ body:not(.page-login) nav.workflow-steps {
   height: 27px;
   place-items: center;
   border-radius: 50%;
-  background: #ddd7cf;
-  color: #625b52;
+  background: #dde1e7;
+  color: #59616c;
   font-size: 12px;
   font-weight: 700;
 }
@@ -1375,7 +1376,7 @@ body:not(.page-login) nav.workflow-steps {
   height: 2px;
   margin: 0 12px;
   border-radius: 999px;
-  background: #d8d2ca;
+  background: #d6dbe2;
 }
 .workflow-step.completed span {
   background: var(--dimension-primary, var(--bp-primary));
@@ -2017,7 +2018,7 @@ a.workflow-step:focus-visible {
   grid-row: 2;
 }
 .page-inspo #analyze-status { grid-column: 1; grid-row: 3; }
-.page-inspo header h1 { color: var(--bp-ink) !important; font-size: clamp(38px, 5vw, 52px) !important; }
+.page-inspo header h1 { color: var(--bp-ink) !important; font-size: 32px !important; }
 .page-inspo header p { color: var(--bp-muted) !important; font-size: 15px !important; }
 .page-inspo .step-circle { width: 26px; height: 26px; border: 0 !important; background: var(--bp-soft); color: var(--bp-muted); font-size: 12px; }
 .page-inspo .step-circle.active,
@@ -2184,7 +2185,7 @@ a.workflow-step:focus-visible {
 }
 .ai-analysis-panel > p {
   margin: 0 0 22px;
-  color: #514940 !important;
+  color: #4b535e !important;
   font-size: 13px !important;
   line-height: 1.65;
 }
@@ -4312,7 +4313,7 @@ html.dark-mode input.room-name-input {
   object-fit: cover;
   border-radius: 10px;
   margin-bottom: 8px;
-  background: var(--bp-soft, #ede8e1);
+  background: var(--bp-soft, #e9ecf0);
 }
 .page-result .render-hotspot__name {
   margin: 0 0 2px;
@@ -4374,7 +4375,7 @@ html.dark-mode input.room-name-input {
   height: 8px;
   border-radius: 999px;
   overflow: hidden;
-  background: var(--bp-soft, #ede8e1);
+  background: var(--bp-soft, #e9ecf0);
 }
 .page-result .room-render-view__bar > div {
   height: 100%;

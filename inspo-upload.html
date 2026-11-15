@@ -46,6 +46,23 @@
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: var(--garden-dark); }
     ::-webkit-scrollbar-thumb { background: var(--garden-moss); border-radius: 10px; }
+    /* Budget amount box: same dark blue and white text as the Next button. */
+    html:not(.dark-mode) body.page-inspo #budget-input {
+      background: var(--bp-primary) !important;
+      border-color: var(--bp-primary) !important;
+      color: #fff !important;
+    }
+    html:not(.dark-mode) body.page-inspo #budget-input:focus { border-color: var(--bp-primary-hover) !important; }
+    body.page-inspo #budget-input { font-size: 20px; }
+    html:not(.dark-mode) body.page-inspo #budget-input::placeholder { color: #fff !important; opacity: 1; }
+    html:not(.dark-mode) body.page-inspo .budget-dollar { font-size: 20px; color: #fff; z-index: 1; }
+    html.dark-mode body.page-inspo .budget-dollar { font-size: 20px; color: var(--bp-muted); }
+    /* How it works box: same light blue as the directions box on Define Room
+       (that box's translucent blue laid over the white card surface). */
+    html:not(.dark-mode) body.page-inspo .how-it-works-panel {
+      background: linear-gradient(rgba(136, 178, 210, .16), rgba(136, 178, 210, .16)), var(--bp-surface) !important;
+      border-color: rgba(136, 178, 210, .38) !important;
+    }
   </style>
   <link rel="stylesheet" href="./design-system.css">
   <link rel="stylesheet" href="./mobile-ui.css">
@@ -132,9 +149,7 @@
       <!-- Header -->
       <header class="analyze-hero animate-reveal text-center space-y-4">
         <span class="analyze-eyebrow"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon> Your creative direction</span>
-        <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Analyze Style</h1>
-        <p>Give BluPrint a little context, then let it turn your taste into a room-ready plan.</p>
-      </header>
+        <h1 class="text-5xl md:text-7xl font-bold text-[#F7F4D5]">Analyze Style</h1>      </header>
 
       <!-- Stepper -->
       <div class="stepper animate-reveal flex items-center justify-center gap-4 md:gap-12" style="animation-delay:0.2s">
@@ -166,24 +181,22 @@
                   <iconify-icon icon="ph:piggy-bank-duotone" class="text-[#D3968C]"></iconify-icon>
                   Your Budget
                 </h3>
-                <p class="text-sm text-[#F7F4D5]/50 mt-1">No pressure. Your room can keep its financial secrets.</p>
               </div>
-              <span class="px-3 py-1 rounded-full bg-[#839958]/20 border border-[#839958]/30 text-[#F7F4D5]/70 text-xs font-bold uppercase tracking-wider">Totally optional</span>
             </div>
 
             <div class="grid md:grid-cols-[1fr_180px] gap-4 items-center">
               <input type="range" id="budget-slider" min="500" max="25000" step="250" value="5000"
                 aria-label="Optional furniture budget"
-                class="w-full accent-[#D3968C] cursor-pointer">
+                class="w-full cursor-pointer" style="accent-color: var(--bp-primary);">
               <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#F7F4D5]/50 font-bold">$</span>
+                <span class="budget-dollar absolute left-4 top-1/2 -translate-y-1/2 font-bold">$</span>
                 <input type="number" id="budget-input" min="500" max="25000" step="250" placeholder="Optional"
-                  class="w-full pl-8 pr-4 py-3 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/25 focus:outline-none focus:border-[#D3968C]/50 transition-all font-bold">
+                  class="w-full pl-9 pr-4 py-3 border-2 rounded-xl focus:outline-none transition-all font-bold">
               </div>
             </div>
 
             <div class="flex items-center justify-between gap-4">
-              <p id="budget-status" class="text-sm font-medium text-[#F7F4D5]/50">Budget-free and fabulous. Move the slider only if you want to.</p>
+              <p id="budget-status" class="text-sm font-medium text-[#F7F4D5]/50"></p>
               <button type="button" id="clear-budget" class="hidden shrink-0 text-sm font-bold text-[#D3968C] hover:text-[#F7F4D5] transition-colors">Clear budget</button>
             </div>
           </div>
@@ -281,7 +294,7 @@
           </button>
           <button id="step2-analyze" disabled
             class="px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100">
-            Analyze with AI <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>
+            Analyze <iconify-icon icon="ph:sparkle-bold" class="ml-2"></iconify-icon>
           </button>
         </div>
       </div>
@@ -332,10 +345,6 @@
       <div id="analyze-status" class="hidden text-sm font-medium text-center py-2"></div>
     </main>
 
-    <footer class="py-12 border-t border-[#F7F4D5]/5 flex flex-col items-center justify-center gap-4 opacity-40 text-center">
-      <iconify-icon icon="ph:house-duotone" class="text-4xl text-[#839958]"></iconify-icon>
-      <p class="text-sm tracking-[0.2em] uppercase font-bold text-[#F7F4D5] text-center px-4">Designed with Serenity • BluPrint Interior Studio</p>
-    </footer>
     <div id="settings-overlay" class="settings-overlay hidden">
       <div class="settings-modal">
         <button id="settings-close-btn" class="settings-modal-close" aria-label="Close settings">
@@ -601,7 +610,7 @@
       if (value === '' || !Number.isFinite(parsed) || parsed <= 0) {
         state.budgetTotal = null;
         budgetInput.value = '';
-        budgetStatus.textContent = 'Budget-free and fabulous. Move the slider only if you want to.';
+        budgetStatus.textContent = '';
         clearBudget.classList.add('hidden');
         localStorage.removeItem('blueprintBudgetTotal');
         return;
@@ -611,7 +620,7 @@
       state.budgetTotal = budget;
       budgetSlider.value = String(budget);
       budgetInput.value = String(budget);
-      budgetStatus.textContent = `Lovely, we’ll aim to keep the furniture around $${budget.toLocaleString()}.`;
+      budgetStatus.textContent = '';
       clearBudget.classList.remove('hidden');
       localStorage.setItem('blueprintBudgetTotal', String(budget));
     }
@@ -928,7 +937,7 @@
 
       function showError(msg) {
         btn.disabled    = false;
-        btn.textContent = 'Analyze with AI';
+        btn.textContent = 'Analyze';
         statusEl.textContent  = msg;
         statusEl.className    = 'text-sm font-medium text-center py-2 text-[#D3968C]';
         statusEl.classList.remove('hidden');

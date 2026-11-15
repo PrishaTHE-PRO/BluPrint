@@ -21,7 +21,7 @@
   <style>
     :root {
       --ink: #1c1714;
-      --muted: #756d63;
+      --muted: #6b7480;
       --paper: #f8f5f0;
       --surface: rgba(255, 253, 250, .82);
       --blue: #3d5a80;
@@ -105,10 +105,10 @@
     }
     .brand { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; font-size: 20px; font-weight: 700; }
     .brand-name {
-      font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
-      font-size: 22px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
+      font-family: "DM Sans", sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--ink);
       line-height: 1;
@@ -449,10 +449,10 @@
       animation: app-float 7s ease-in-out infinite;
     }
     .window-bar { display: flex; align-items: center; gap: 7px; height: 48px; padding: 0 18px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.48); }
-    .window-dot { width: 8px; height: 8px; border-radius: 50%; background: #d9d0c7; }
+    .window-dot { width: 8px; height: 8px; border-radius: 50%; background: #d6dbe2; }
     .window-dot:nth-child(2) { background: #c4d5df; }
     .window-dot:nth-child(3) { background: #bacdbd; }
-    .window-title { margin-left: auto; color: #8c857d; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .window-title { margin-left: auto; color: #858d98; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
     .planner { display: grid; grid-template-columns: 1fr 148px; height: calc(100% - 48px); padding: 22px; gap: 17px; }
     .canvas {
       position: relative;
@@ -492,7 +492,7 @@
       border-radius: 999px;
       background: rgba(255,255,255,.82);
       box-shadow: 0 6px 16px rgba(46,58,68,.1);
-      color: #6f675e; font-size: 11px; font-weight: 700; white-space: nowrap;
+      color: #646c77; font-size: 11px; font-weight: 700; white-space: nowrap;
       transform: translateX(-50%);
       backdrop-filter: blur(6px);
     }
@@ -514,7 +514,7 @@
       padding: 7px 4px;
       border: 0; border-radius: 11px;
       background: transparent;
-      color: #6f675e; font-family: inherit; font-size: 11px; font-weight: 700;
+      color: #646c77; font-family: inherit; font-size: 11px; font-weight: 700;
       white-space: nowrap;
       cursor: pointer;
       transition: background .2s ease, color .2s ease;
@@ -536,7 +536,7 @@
     .mini-card { padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.86); box-shadow: 0 7px 16px rgba(46,58,68,.05); }
     .mini-image { display: grid; place-items: center; height: 55px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(145deg, #d8e8f1, #e8ded2); }
     .mini-image iconify-icon { color: var(--blue-dark); font-size: 26px; opacity: .78; }
-    .mini-line { width: 74%; height: 5px; margin-bottom: 5px; border-radius: 999px; background: #cfc8bf; }
+    .mini-line { width: 74%; height: 5px; margin-bottom: 5px; border-radius: 999px; background: #cdd3db; }
     .mini-line.short { width: 42%; background: #97acbe; }
     .floating-note {
       position: absolute;
@@ -661,7 +661,7 @@
     .swatch-row span { width: 37px; height: 72px; border-radius: 999px; box-shadow: inset 0 0 0 3px rgba(255,255,255,.6); }
     .budget-meter { position: absolute; inset: 23px; display: grid; align-content: center; gap: 13px; }
     .budget-meter strong { color: var(--blue-dark); font-size: 24px; }
-    .budget-track { height: 10px; overflow: hidden; border-radius: 999px; background: #e8e3dc; }
+    .budget-track { height: 10px; overflow: hidden; border-radius: 999px; background: #e4e8ed; }
     .budget-track::after { display: block; width: 82%; height: 100%; border-radius: inherit; content: ""; background: #d3968c; animation: meter-pulse 3s ease-in-out infinite; }
     .transform-demo { position: absolute; top: 25px; left: 50%; width: 110px; height: 75px; transform: translateX(-50%) rotate(-5deg); border: 2px solid var(--blue); border-radius: 10px; background: var(--sky); }
     .transform-demo i { position: absolute; width: 13px; height: 13px; border: 2px solid #fff; border-radius: 50%; background: #d3968c; }
@@ -864,8 +864,8 @@
       }
       .brand-name {
         display: inline !important;
-        font-size: 15px;
-        letter-spacing: 0.06em;
+        font-size: 11px;
+        letter-spacing: 0.12em;
         max-width: 9.5rem;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -942,7 +942,6 @@
       <a class="button button-primary nav-cta" href="login.html" aria-label="Design my room">
         <span class="nav-cta__full">Design my room</span>
         <span class="nav-cta__short">Design</span>
-        <span aria-hidden="true">↗</span>
       </a>
     </div>
   </nav>
@@ -956,12 +955,8 @@
         </div>
         <p class="hero-copy">Turn inspiration into a room plan that fits your space, style, and budget.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="login.html">Start designing <iconify-icon icon="ph:arrow-up-right-bold"></iconify-icon></a>
+          <a class="button button-primary" href="login.html">Design my room</a>
           <a class="button button-secondary" href="#how-it-works">See how it works</a>
-        </div>
-        <div class="micro-proof">
-          <iconify-icon icon="ph:check-circle-fill" style="color:#5e7d66;font-size:20px"></iconify-icon>
-          No design experience required. Built for real rooms and real budgets.
         </div>
       </div>
 
@@ -986,7 +981,7 @@
                 <circle cx="61" cy="64" r="17" fill="#A9C4AB"/>
                 <path d="M32 280Q70 280 70 328" stroke="#294F7D" stroke-width="3" stroke-dasharray="5 4"/>
                 <path d="M145 28h105" stroke="#8FC5E7" stroke-width="9" stroke-linecap="round"/>
-                <text x="210" y="350" text-anchor="middle" fill="#756D63" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
+                <text x="210" y="350" text-anchor="middle" fill="#6b7480" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
       </svg>
 
               <!-- Live 3D room. Empty until src/landing-hero3d.js lazily mounts
@@ -1093,7 +1088,6 @@
       <div class="process-wrap reveal">
         <div class="section-heading">
           <h2>A clear path to a room you love.</h2>
-          <p>Three quick steps. One complete plan.</p>
         </div>
         <div class="process">
           <article class="process-step">
@@ -1119,7 +1113,7 @@
       <div class="eyebrow"><span class="eyebrow-dot"></span> Your blank room is waiting</div>
       <h2>Make space for a better idea.</h2>
       <p>Build your first room plan in minutes, then keep refining it until every piece feels right.</p>
-      <a class="button button-primary" href="login.html">Create my BluPrint <iconify-icon icon="ph:arrow-up-right-bold"></iconify-icon></a>
+      <a class="button button-primary" href="login.html">Design my room</a>
     </section>
   </main>
 
@@ -1135,7 +1129,7 @@
       </ul>
     </div>
     <div class="footer-bar">
-      <a class="brand" href="index.html"><span class="brand-mark"><iconify-icon icon="ph:blueprint-duotone"></iconify-icon></span>BluPrint</a>
+      <a class="brand" href="index.html"><span class="brand-name">BluPrint</span></a>
       <span>Rooms that work beautifully.</span>
       <div class="footer-links"><a href="#features">Features</a><a href="login.html">Sign in</a></div>
     </div>

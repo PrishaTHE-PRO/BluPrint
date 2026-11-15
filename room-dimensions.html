@@ -108,7 +108,7 @@
       width: 100%;
       padding: 10px 16px;
       border-top: 1px solid var(--bp-border);
-      background: rgba(28, 23, 20, .03);
+      background: var(--bp-soft);
     }
     .photo-panel__status { margin: 0; font-size: 12px; color: var(--bp-muted); }
     .photo-panel__status.is-error { color: #b8453c; }
@@ -128,7 +128,7 @@
       margin: 0;
       padding: 14px 16px;
       border-radius: 16px;
-      background: rgba(28, 23, 20, .04);
+      background: var(--bp-soft);
       border: 1px solid var(--bp-border);
       font-size: 13px;
       line-height: 1.5;
@@ -153,7 +153,7 @@
     .photo-existing {
       padding: 14px 16px;
       border-radius: 16px;
-      background: rgba(28, 23, 20, .04);
+      background: var(--bp-soft);
       border: 1px solid var(--bp-border);
     }
     .photo-existing__title { margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--bp-muted); }
@@ -182,8 +182,8 @@
     .photo-blurb__card {
       padding: 18px;
       border-radius: 20px;
-      background: rgba(211, 150, 140, .08);
-      border: 1px solid rgba(211, 150, 140, .18);
+      background: rgba(136, 178, 210, .16);
+      border: 1px solid rgba(136, 178, 210, .38);
       font-size: 13px;
       line-height: 1.6;
       color: var(--bp-muted);
@@ -193,7 +193,16 @@
     .photo-blurb__card strong { color: var(--bp-ink); }
     .photo-blurb__steps { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
     .photo-blurb__steps li { display: flex; gap: 10px; align-items: flex-start; }
-    .photo-blurb__steps iconify-icon { flex-shrink: 0; margin-top: 2px; font-size: 18px; color: #D3968C; }
+    .photo-blurb__steps iconify-icon { flex-shrink: 0; margin-top: 2px; font-size: 18px; color: var(--bp-primary); }
+    /* One gray for every neutral fill on this page. */
+    body.page-dimensions #room-name,
+    body.page-dimensions kbd,
+    body.page-dimensions #draggable-door,
+    body.page-dimensions #draggable-door > div:first-child,
+    body.page-dimensions main > section:last-child .mt-auto {
+      background: var(--bp-soft) !important;
+      border-color: var(--bp-border) !important;
+    }
   </style>
 </head>
 <body class="page-dimensions">
@@ -360,7 +369,6 @@
             <iconify-icon icon="ph:camera-duotone" class="text-3xl text-[#D3968C] font-normal"></iconify-icon>
             Image Upload
           </h2>
-          <p class="text-[10px] text-[#F7F4D5]/40 font-bold uppercase tracking-[0.15em]">YOUR ROOM, FURNISHED IN YOUR OWN PHOTO</p>
           <div class="photo-blurb__card">
             <p><strong>Upload one photo of the room</strong> and we take it from there.</p>
             <ul class="photo-blurb__steps">

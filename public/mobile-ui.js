@@ -454,44 +454,19 @@
 
     buildStepbar(main);
 
-    var hero = el('header', 'm-inspo-hero m-only',
-      '<h1>Show us the photos you saved at 2am</h1>' +
-      '<p>Up to three. We\'ll read the palette and pretend it was intentional.</p>');
-    main.insertBefore(hero, main.firstChild);
-
-    // Live budget value above the slider, mirroring 1b. Shown on desktop too;
-    // only the "Budget" title is phone-only (desktop already has "Your Budget").
+    // $min / $max labels under the budget slider.
     var slider = document.getElementById('budget-slider');
     if (slider) {
-      var head = el('div', 'm-budget-head',
-        '<h2 class="m-only" style="margin:0;font:500 20px Fraunces,serif;letter-spacing:-.02em">Budget</h2>' +
-        '<strong data-m-budget>-</strong>');
       var scale = el('div', 'm-budget-scale',
         '<span>$' + Number(slider.min || 500).toLocaleString() + '</span>' +
         '<span>$' + Number(slider.max || 25000).toLocaleString() + '</span>');
-      // Wrap head + slider + scale in one column so they take the slider's
+      // Wrap slider + scale in one column so they take the slider's
       // single cell in the desktop two-column (slider | $ input) grid.
       var col = el('div', 'm-budget-col');
       slider.parentNode.insertBefore(col, slider);
-      col.appendChild(head);
       col.appendChild(slider);
       col.appendChild(scale);
 
-      // The number box holds the real budget (empty = no budget). Clearing,
-      // typing and the saved-budget restore all set it without firing events
-      // on the slider, but every path rewrites #budget-status, so watch that.
-      var out = head.querySelector('[data-m-budget]');
-      var input = document.getElementById('budget-input');
-      var status = document.getElementById('budget-status');
-      var sync = function () {
-        var value = input ? input.value : slider.value;
-        out.textContent = value ? '$' + Number(value).toLocaleString() : 'No budget';
-        out.classList.toggle('is-empty', !value);
-      };
-      slider.addEventListener('input', sync);
-      slider.addEventListener('change', sync);
-      if (status) new MutationObserver(sync).observe(status, { childList: true, characterData: true, subtree: true });
-      sync();
     }
   }
 
