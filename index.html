@@ -324,16 +324,6 @@
       border-color: rgba(232, 238, 244, .09);
       background: linear-gradient(145deg, rgba(126, 168, 201, .14), rgba(232, 238, 244, .03));
     }
-    html.dark-mode .feature-card:nth-child(2) .feature-icon,
-    html.dark-mode .feature-card:nth-child(5) .feature-icon {
-      color: #d9c3a4;
-      background: rgba(217, 195, 164, .14);
-    }
-    html.dark-mode .feature-card:nth-child(3) .feature-icon,
-    html.dark-mode .feature-card:nth-child(6) .feature-icon {
-      color: var(--green);
-      background: rgba(138, 171, 130, .16);
-    }
     html.dark-mode .mini-room::after { background: rgba(217, 195, 164, .38); }
     html.dark-mode .upload-stack span {
       background: rgba(30, 40, 52, .96);
@@ -472,6 +462,11 @@
     }
     .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); transition: opacity .5s ease; }
     .floor-plan.is-faded { opacity: 0; }
+    /* The 3D sketch of the demo room (src/landing-hero3d.js): its paper and
+       grid drop away so it floats on the canvas like the room cards. */
+    .floor-plan--sketch { width: 88%; height: auto; overflow: visible; }
+    .floor-plan--sketch .iso-paper { display: none; }
+    html.dark-mode .floor-plan--sketch .iso-floor-label { fill: #9aabb8; }
 
     /* Live 3D room, layered over the SVG plan. Stays invisible (and zero-cost)
        until the viewer actually mounts and JS adds .is-live. */
@@ -610,17 +605,13 @@
       transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease, border-color .32s ease;
     }
     .feature-card:hover { transform: translateY(-10px); border-color: rgba(255,255,255,.98); box-shadow: 0 30px 68px rgba(43,54,61,.16); }
-    .feature-icon { display: grid; width: 44px; height: 44px; margin-bottom: 0; place-items: center; border-radius: 13px; color: var(--blue); background: var(--sky-soft); font-size: 23px; }
-    .feature-card:nth-child(2) .feature-icon { color: #6f624f; background: #f0e7dc; }
-    .feature-card:nth-child(3) .feature-icon { color: var(--green); background: #e5eee6; }
-    .feature-card:nth-child(5) .feature-icon { color: #6f624f; background: #f0e7dc; }
-    .feature-card:nth-child(6) .feature-icon { color: var(--green); background: #e5eee6; }
     .feature-card h3 { margin-bottom: 8px; font-size: 26px; }
     .feature-card p { margin-bottom: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
-    .feature-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    /* Just the step number now; the space the icon took goes to the screenshot. */
+    .feature-top { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
     .feature-visual {
       position: relative;
-      height: 132px;
+      height: 155px;
       margin: 22px 0 24px;
       overflow: hidden;
       border: 1px solid var(--line);
@@ -628,6 +619,13 @@
       background: linear-gradient(145deg, rgba(233,243,249,.9), rgba(255,255,255,.72));
     }
     .feature-visual > * { transition: transform .35s cubic-bezier(.22,1,.36,1); }
+    /* Real screens from the site, cropped to the visual's shape; light and
+       dark captures swap with the theme. */
+    .feature-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .feature-shot--dark { display: none; }
+    html.dark-mode .feature-shot--light { display: none; }
+    html.dark-mode .feature-shot--dark { display: block; }
+    .feature-card:hover .feature-shot { transform: scale(1.04); }
     .feature-card:hover .mini-room,
     .feature-card:hover .upload-stack,
     .feature-card:hover .swatch-row,
@@ -843,8 +841,7 @@
       .section-heading p { margin-top: 20px; }
       .feature-grid { grid-template-columns: 1fr; }
       .feature-card { min-height: 260px; }
-      .feature-icon { margin-bottom: 0; }
-      .capability-grid { grid-template-columns: repeat(2, 1fr); }
+        .capability-grid { grid-template-columns: repeat(2, 1fr); }
       .process { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
@@ -1035,49 +1032,38 @@
       </div>
       <div class="feature-grid">
         <article class="feature-card reveal">
-          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:ruler-duotone"></iconify-icon></div><span>01</span></div>
-          <div class="feature-visual">
-            <div class="mini-room">
-              <span class="room-dimension room-dimension-width">14 ft</span>
-              <span class="room-dimension room-dimension-depth">12 ft</span>
-            </div>
-          </div>
+          <div class="feature-top"><span>01</span></div>
+          <div class="feature-visual"><img class="feature-shot feature-shot--light" src="./assets/landing/feature-01.jpg" alt="Room dimensions editor with a measured floor plan" loading="lazy" decoding="async"><img class="feature-shot feature-shot--dark" src="./assets/landing/feature-01-dark.jpg" alt="Room dimensions editor with a measured floor plan" loading="lazy" decoding="async"></div>
           <h3>Build the real room</h3>
           <p>Dimensions, doors, windows, and cutouts.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:image-square-duotone"></iconify-icon></div><span>02</span></div>
-          <div class="feature-visual"><div class="upload-stack"><span></span><span></span><span><iconify-icon icon="ph:cloud-arrow-up-duotone"></iconify-icon></span></div></div>
+          <div class="feature-top"><span>02</span></div>
+          <div class="feature-visual"><img class="feature-shot feature-shot--light" src="./assets/landing/feature-02.jpg" alt="Inspiration image upload area" loading="lazy" decoding="async"><img class="feature-shot feature-shot--dark" src="./assets/landing/feature-02-dark.jpg" alt="Inspiration image upload area" loading="lazy" decoding="async"></div>
           <h3>Bring inspiration</h3>
           <p>Upload an image. AI reads the direction.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:palette-duotone"></iconify-icon></div><span>03</span></div>
-          <div class="feature-visual"><div class="swatch-row"><span style="background:#b8d4e8"></span><span style="background:#d3968c"></span><span style="background:#839958"></span><span style="background:#e5d8c8"></span></div></div>
+          <div class="feature-top"><span>03</span></div>
+          <div class="feature-visual"><img class="feature-shot feature-shot--light" src="./assets/landing/feature-03.jpg" alt="Color palette choices" loading="lazy" decoding="async"><img class="feature-shot feature-shot--dark" src="./assets/landing/feature-03-dark.jpg" alt="Color palette choices" loading="lazy" decoding="async"></div>
           <h3>Choose the feeling</h3>
           <p>Style, mood, palette, and must-haves.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:wallet-duotone"></iconify-icon></div><span>04</span></div>
-          <div class="feature-visual"><div class="budget-meter"><strong>$4,920</strong><div class="budget-track"></div><small>of $5,000</small></div></div>
+          <div class="feature-top"><span>04</span></div>
+          <div class="feature-visual"><img class="feature-shot feature-shot--light" src="./assets/landing/feature-04.jpg" alt="Budget slider set to $4,750" loading="lazy" decoding="async"><img class="feature-shot feature-shot--dark" src="./assets/landing/feature-04-dark.jpg" alt="Budget slider set to $4,750" loading="lazy" decoding="async"></div>
           <h3>Stay near budget</h3>
           <p>One target, optimized across the room.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:cursor-click-duotone"></iconify-icon></div><span>05</span></div>
-          <div class="feature-visual"><div class="transform-demo"><i></i><i></i></div></div>
+          <div class="feature-top"><span>05</span></div>
+          <div class="feature-visual"><img class="feature-shot feature-shot--light" src="./assets/landing/feature-05.jpg" alt="Element library with doors, windows and wall cutouts to drag onto the plan" loading="lazy" decoding="async"><img class="feature-shot feature-shot--dark" src="./assets/landing/feature-05-dark.jpg" alt="Element library with doors, windows and wall cutouts to drag onto the plan" loading="lazy" decoding="async"></div>
           <h3>Move everything</h3>
           <p>Drag, rotate, resize, swap, or remove.</p>
         </article>
         <article class="feature-card reveal">
-          <div class="feature-top"><div class="feature-icon"><iconify-icon icon="ph:shopping-bag-open-duotone"></iconify-icon></div><span>06</span></div>
-          <div class="feature-visual">
-            <div class="shop-stack">
-              <span><iconify-icon icon="ph:armchair-duotone"></iconify-icon></span>
-              <span><iconify-icon icon="ph:lamp-duotone"></iconify-icon></span>
-              <span><iconify-icon icon="ph:couch-duotone"></iconify-icon></span>
-            </div>
-          </div>
+          <div class="feature-top"><span>06</span></div>
+          <div class="feature-visual"><img class="feature-shot feature-shot--light" src="./assets/landing/feature-06.jpg" alt="Saved rooms shown as hand-drawn 3D sketches" loading="lazy" decoding="async"><img class="feature-shot feature-shot--dark" src="./assets/landing/feature-06-dark.jpg" alt="Saved rooms shown as hand-drawn 3D sketches" loading="lazy" decoding="async"></div>
           <h3>Shop and save</h3>
           <p>Real products, buy links, saved projects.</p>
         </article>

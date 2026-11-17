@@ -1,13 +1,16 @@
 // landing-hero3d.js — turns the hero's static floor-plan mockup into a live,
-// orbitable 3D room with a style switcher.
+// orbitable 3D room with a style switcher, drawn first as the site's 3D sketch.
 //
 // Three.js is ~600KB, which has no business blocking a landing page's first
 // paint, so the viewer is dynamically imported and only once:
 //   - the hero is actually on screen (IntersectionObserver), and
 //   - the browser is idle.
 // Until then — and permanently, if WebGL is missing or the visitor prefers
-// reduced motion — the existing SVG plan stays exactly as it is. The 3D is an
+// reduced motion — the room shows as the hand-drawn 3D sketch instead. The 3D is an
 // upgrade layered on top, never a requirement.
+
+import rough from 'roughjs';
+import { renderIsoRoom } from '../iso-preview.js';
 
 const STYLES = [
   { key: 'modern', label: 'Modern' },
@@ -53,9 +56,45 @@ function whenIdle(fn) {
   else window.setTimeout(fn, 700);
 }
 
+// The same demo room drawn as the site's hand-drawn 3D sketch (the one on the
+// dashboard and project cards). It replaces the old flat plan as what shows
+// before the live 3D loads, and for good on reduced motion or no WebGL.
+function mountSketch(plan) {
+  if (!plan) return plan;
+  try {
+    window.rough = window.rough || rough;
+    const markup = renderIsoRoom({
+      _id: 'landing-hero',
+      name: 'Living room',
+      widthFt: DEMO_ROOM.widthFt,
+      lengthFt: DEMO_ROOM.lengthFt,
+      heightFt: DEMO_ROOM.heightFt,
+      sqft: DEMO_ROOM.widthFt * DEMO_ROOM.lengthFt,
+      furnitureLayout: {
+        items: DEMO_ROOM.furnitureLayout.map((f) => ({
+          category: f.category, x: f.x, y: f.y, rotation: f.rot,
+          item: { widthIn: f.wIn, depthIn: f.dIn },
+        })),
+      },
+    }, { floorLabel: `${DEMO_ROOM.widthFt} ft × ${DEMO_ROOM.lengthFt} ft` });
+    const tpl = document.createElement('template');
+    tpl.innerHTML = (markup || '').trim();
+    const sketch = tpl.content.firstElementChild;
+    if (!sketch) return plan;
+    sketch.setAttribute('class', 'floor-plan floor-plan--sketch');
+    sketch.setAttribute('aria-hidden', 'true');
+    sketch.removeAttribute('role');
+    plan.replaceWith(sketch);
+    return sketch;
+  } catch (error) {
+    console.warn('[hero3d] sketch unavailable, keeping the flat plan', error);
+    return plan;
+  }
+}
+
 export function initHero3D() {
   const stage = document.querySelector('[data-hero-3d]');
-  const plan = document.querySelector('.floor-plan');
+  const plan = mountSketch(document.querySelector('.floor-plan'));
   const chipRow = document.querySelector('[data-hero-styles]');
   if (!stage) return;
 
