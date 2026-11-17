@@ -278,11 +278,46 @@ function stackElevationFt(entry, items) {
     return elev;
 }
 
+// The camera. null = the standard isometric view every card rests in. While a
+// card is hovered, renderIsoRoom sets it to turn the camera around the room's
+// centre (yaw) and raise it (pitch), so the sketch is re-projected and really
+// rotates instead of being squashed by a CSS transform.
+let ISO_VIEW = null;
+// Unit vector on the floor pointing toward the camera; (1,1)/√2 in the
+// standard view. Depth sorting and which walls are drawn follow it, so the
+// room still draws correctly when the camera goes all the way around.
+const ISO_CAM_DEFAULT = { x: Math.SQRT1_2, y: Math.SQRT1_2 };
+let ISO_CAM = ISO_CAM_DEFAULT;
+const isoDepth = (x, y) => x * ISO_CAM.x + y * ISO_CAM.y;        // larger = nearer the camera
+const isoAcross = (x, y) => x * ISO_CAM.y - y * ISO_CAM.x;       // proportional to screen x
+const ISO_K = Math.SQRT2 * Math.cos(ISO.angle) * ISO.unit;   // screen units per foot
+const ISO_BASE_PITCH = Math.asin(Math.tan(ISO.angle));       // 35.26°, true isometric
+
 function isoProject(x, y, z) {
+    if (ISO_VIEW) {
+        // Same as below at yaw = pitch = 0: rotate the floor by 45° + yaw about
+        // the room centre, then tilt it toward the camera by the pitch.
+        const { cx, cy, ox, oy, cosA, sinA, sinP, cosP } = ISO_VIEW;
+        const dx = x - cx, dy = y - cy;
+        const xr = dx * cosA - dy * sinA, yr = dx * sinA + dy * cosA;
+        return { px: ox + ISO_K * xr, py: oy + ISO_K * (yr * sinP - z * cosP) };
+    }
     return {
         px: (x - y) * Math.cos(ISO.angle) * ISO.unit,
         py: (x + y) * Math.sin(ISO.angle) * ISO.unit - z * ISO.unit,
     };
+}
+
+function isoSetView(view, W, L) {
+    ISO_CAM = ISO_CAM_DEFAULT;
+    if (!view || (!view.yaw && !view.pitch)) { ISO_VIEW = null; return; }
+    const centre = isoProject(W / 2, L / 2, 0);   // standard view: keeps the room's centre fixed on screen
+    const a = Math.PI / 4 + (view.yaw || 0), p = ISO_BASE_PITCH + (view.pitch || 0);
+    ISO_VIEW = {
+        cx: W / 2, cy: L / 2, ox: centre.px, oy: centre.py,
+        cosA: Math.cos(a), sinA: Math.sin(a), sinP: Math.sin(p), cosP: Math.cos(p),
+    };
+    ISO_CAM = { x: Math.sin(a), y: Math.cos(a) };
 }
 
 // Darken/lighten a colour by amt (-1..1) — used for the shaded box faces.
@@ -334,7 +369,7 @@ function isoCutoutParts(cutout, minX, minY, WH) {
         const a = pts[i];
         const b = pts[(i + 1) % pts.length];
         walls.push({
-            order: (a.x + b.x) / 2 + (a.y + b.y) / 2,
+            order: isoDepth((a.x + b.x) / 2, (a.y + b.y) / 2),
             wall: { a, b },
             foot: [a, b],
             ops: [
@@ -358,7 +393,7 @@ function isoCutoutParts(cutout, minX, minY, WH) {
 
     const cx = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
     const cy = pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
-    return { walls, floor: { order: -1e6 + 3 + cx + cy * 0.01, ops: floorOps } };
+    return { walls, floor: { order: -1e6 + 3 + isoDepth(cx, cy), ops: floorOps } };
 }
 
 // Corners of an axis-aligned footprint box, for the wall side tests below.
@@ -376,7 +411,7 @@ function isoSideOfWall(a, b, foot) {
     const lines = [[ty, -tx, a], [-ty, tx, a], [tx, ty, b], [-tx, -ty, a]];
     for (const [nx, ny, o] of lines) {
         if (foot.every((p) => nx * (p.x - o.x) + ny * (p.y - o.y) >= -eps)) {
-            const toward = nx + ny; // normal · camera direction (1,1)
+            const toward = isoDepth(nx, ny); // normal · camera direction
             if (Math.abs(toward) > eps) return toward > 0 ? 1 : -1;
         }
     }
@@ -385,7 +420,7 @@ function isoSideOfWall(a, b, foot) {
     const cx = foot.reduce((sum, p) => sum + p.x, 0) / foot.length;
     const cy = foot.reduce((sum, p) => sum + p.y, 0) / foot.length;
     const side = ty * (cx - a.x) - tx * (cy - a.y);
-    const toward = ty - tx;
+    const toward = isoDepth(ty, -tx);
     if (Math.abs(side) > eps && Math.abs(toward) > eps) return side * toward > 0 ? 1 : -1;
     return 0;
 }
@@ -394,7 +429,7 @@ function isoSideOfWall(a, b, foot) {
 function isoPaintConstraint(u, v) {
     if (u.foot && v.foot) {
         const span = (foot) => {
-            const s = foot.map((p) => p.x - p.y); // screen x is proportional to x - y
+            const s = foot.map((p) => isoAcross(p.x, p.y));
             return [Math.min(...s), Math.max(...s)];
         };
         const [u0, u1] = span(u.foot), [v0, v1] = span(v.foot);
@@ -660,7 +695,7 @@ function isoIsWallMounted(cat) { return cat === 'wall_art' || cat === 'floating_
 // Left-wall attachments are omitted in 3D (still shown on 2D).
 function isoWallMounted(cat, cx, cy, w, d, hex, WH) {
     const onBack = cy <= cx;
-    if (!onBack) return null;
+    if (!onBack || ISO_CAM.y <= 0) return null;  // the y=0 wall isn't drawn from this side
     const along = cx;
     const P = (x, y, z) => { const q = isoProject(x, y, z); return [q.px, q.py]; };
     const ops = [];
@@ -733,6 +768,7 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
     const fy = spanY > 0 ? (el.y - minY) / spanY : 0.5;
     const m = Math.min(fy, 1 - fy, fx, 1 - fx);
     let onBack, along;
+    if (ISO_CAM.y <= 0) return null;                          // y=0 wall not drawn from this side
     if (m === fy) { onBack = true; along = fx * W; }          // back wall (y=0)
     else if (m === fx) { return null; }                      // left wall — keep clear in 3D
     else return null;                                        // front wall → skip
@@ -759,13 +795,27 @@ function isoArchElement(el, W, L, WH, minX, minY, spanX, spanY) {
 }
 
 function renderIsoRoom(room, opts = {}) {
+    if (!window.rough) return null;
+    try {
+        return renderIsoRoomView(room, opts);
+    } finally {
+        ISO_VIEW = null;
+        ISO_CAM = ISO_CAM_DEFAULT;
+    }
+}
+
+// opts.view = { yaw, pitch } in radians turns the camera (see isoProject).
+// The viewBox always comes from the standard view, so every angle of the same
+// room shares one frame and the room turns in place.
+function renderIsoRoomView(room, opts) {
     const rough = window.rough;
-    if (!rough) return null;
+    ISO_VIEW = null;
 
     const layout = getRoomPreviewLayout(room);
     const W = Math.max(toNumber(layout.widthFt, room.widthFt), 1);
     const L = Math.max(toNumber(layout.lengthFt, room.lengthFt), 1);
     const WH = ISO.wallHeightFt;
+    isoSetView(opts.view, W, L);
 
     const svgNs = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNs, 'svg');
@@ -803,9 +853,11 @@ function renderIsoRoom(room, opts = {}) {
     // depth. Within a piece, sub-boxes stay in their MODELED order (listed
     // back→front, bottom→top) — this stacks stacked parts (pillows on a bed,
     // seat on chair legs) correctly, which a single depth sort cannot.
+    // The two walls on the far side of the camera (x=0 and y=0 in the standard view).
+    const wx = ISO_CAM.x > 0 ? 0 : W, wy = ISO_CAM.y > 0 ? 0 : L;
     const shell = [
-        { order: -1e6,     ops: [{ kind: 'poly', pts: [isoProject(0, 0, 0), isoProject(0, L, 0), isoProject(0, L, WH), isoProject(0, 0, WH)].map(pt), fill: ISO_COLORS.wallSide }] },
-        { order: -1e6 + 1, ops: [{ kind: 'poly', pts: [isoProject(0, 0, 0), isoProject(W, 0, 0), isoProject(W, 0, WH), isoProject(0, 0, WH)].map(pt), fill: ISO_COLORS.wallTop }] },
+        { order: -1e6,     ops: [{ kind: 'poly', pts: [isoProject(wx, 0, 0), isoProject(wx, L, 0), isoProject(wx, L, WH), isoProject(wx, 0, WH)].map(pt), fill: ISO_COLORS.wallSide }] },
+        { order: -1e6 + 1, ops: [{ kind: 'poly', pts: [isoProject(0, wy, 0), isoProject(W, wy, 0), isoProject(W, wy, WH), isoProject(0, wy, WH)].map(pt), fill: ISO_COLORS.wallTop }] },
         { order: -1e6 + 2, ops: [{ kind: 'poly', pts: [isoProject(0, 0, 0), isoProject(W, 0, 0), isoProject(W, L, 0), isoProject(0, L, 0)].map(pt), fill: ISO_COLORS.floor }] },
     ];
 
@@ -833,7 +885,7 @@ function renderIsoRoom(room, opts = {}) {
         }
         if (cat === 'indoor_plants') {
             pieces.push({
-                order: (x + w / 2) + (y + d / 2) + elev * 0.01,
+                order: isoDepth(x + w / 2, y + d / 2) + elev * 0.01,
                 ops: isoPlantOps(x + w / 2, y + d / 2, w, d, elev),
                 foot: isoBoxFoot(x, y, x + w, y + d),
             });
@@ -845,7 +897,7 @@ function renderIsoRoom(room, opts = {}) {
             const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad), cx = x + w / 2, cy = y + d / 2;
             const corners = [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]]
                 .map(([lx, ly]) => isoProject(cx + lx * c - ly * s, cy + lx * s + ly * c, 0.02));
-            rugs.push({ order: x + y - 900, ops: [{ kind: 'poly', pts: corners.map(pt), fill: hex }] });
+            rugs.push({ order: isoDepth(x, y) - 900, ops: [{ kind: 'poly', pts: corners.map(pt), fill: hex }] });
             return;
         }
         const cxR = x + w / 2, cyR = y + d / 2;
@@ -857,7 +909,7 @@ function renderIsoRoom(room, opts = {}) {
             const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
             parts = parts.map((p) => {
                 const dx = (x + p.lx + p.lw / 2) - cxR, dy = (y + p.ly + p.ld / 2) - cyR;
-                return { p, k: (cxR + dx * c - dy * s) + (cyR + dx * s + dy * c) };
+                return { p, k: isoDepth(cxR + dx * c - dy * s, cyR + dx * s + dy * c) };
             }).sort((a, b) => a.k - b.k).map((o) => o.p);
         } else if (arch === 'bed') {
             // Keep the mattress→pillows stack, but move the headboard (parts[0])
@@ -865,14 +917,14 @@ function renderIsoRoom(room, opts = {}) {
             // faces the camera (otherwise the mattress paints over it).
             const rad = rot * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
             const hb = parts[0], dx = (x + hb.lx + hb.lw / 2) - cxR, dy = (y + hb.ly + hb.ld / 2) - cyR;
-            if ((cxR + dx * c - dy * s) + (cyR + dx * s + dy * c) > cxR + cyR) parts = [...parts.slice(1), hb];
+            if (isoDepth(cxR + dx * c - dy * s, cyR + dx * s + dy * c) > isoDepth(cxR, cyR)) parts = [...parts.slice(1), hb];
         }
         let ops = [];
         parts.forEach((p) => {
             ops = ops.concat(isoPartOps(x, y, cxR, cyR, rot, p.lx, p.ly, p.lw, p.ld, p.z0 + elev, p.h, p.color, p.seam));
         });
         const fp = isoFootprint(x, y, w, d, rot);
-        pieces.push({ order: cxR + cyR + elev * 0.01, ops, foot: isoBoxFoot(fp.minX, fp.minY, fp.maxX, fp.maxY) });
+        pieces.push({ order: isoDepth(cxR, cyR) + elev * 0.01, ops, foot: isoBoxFoot(fp.minX, fp.minY, fp.maxX, fp.maxY) });
     });
 
     // Doors, windows, and cutouts from the room layout.
@@ -901,7 +953,10 @@ function renderIsoRoom(room, opts = {}) {
         });
     }
 
-    // Fit the viewBox to the projected room bounding box (walls define the extent).
+    // Fit the viewBox to the projected room bounding box (walls define the extent),
+    // always in the standard view (see renderIsoRoomView).
+    const turned = ISO_VIEW;
+    ISO_VIEW = null;
     const bounds = [
         isoProject(0, 0, 0), isoProject(W, 0, 0), isoProject(W, L, 0), isoProject(0, L, 0),
         isoProject(W, 0, WH), isoProject(0, 0, WH), isoProject(0, L, WH),
@@ -927,7 +982,26 @@ function renderIsoRoom(room, opts = {}) {
         const halfLen = String(opts.floorLabel).length * fontSize * 0.3;
         const at = (along, out) => ({ px: mid.px + dir.x * along + normal.x * out, py: mid.py + dir.y * along + normal.y * out });
         [at(-halfLen, gap + fontSize), at(halfLen, gap + fontSize)].forEach(grow);
-        floorLabel = { text: String(opts.floorLabel), fontSize, anchor: at(0, gap) };
+        floorLabel = { text: String(opts.floorLabel), fontSize, anchor: at(0, gap), angle: ISO.angle };
+        if (turned) {
+            // Re-seat the label on the turned front-left edge, at its new slope.
+            ISO_VIEW = turned;
+            // The floor edge facing the camera and the screen's left most.
+            const edges = [
+                { n: [0, 1], a: [0, L], b: [W, L] }, { n: [1, 0], a: [W, 0], b: [W, L] },
+                { n: [0, -1], a: [0, 0], b: [W, 0] }, { n: [-1, 0], a: [0, 0], b: [0, L] },
+            ];
+            const score = (e) => isoDepth(e.n[0], e.n[1]) - isoAcross(e.n[0], e.n[1]);
+            const edge = edges.reduce((best, e) => (score(e) > score(best) ? e : best));
+            let a = isoProject(edge.a[0], edge.a[1], 0), b = isoProject(edge.b[0], edge.b[1], 0);
+            if (b.px < a.px) [a, b] = [b, a];   // read left to right
+            const m = { px: (a.px + b.px) / 2, py: (a.py + b.py) / 2 };
+            const len = Math.hypot(b.px - a.px, b.py - a.py) || 1;
+            const tdir = { x: (b.px - a.px) / len, y: (b.py - a.py) / len };
+            floorLabel.angle = Math.atan2(tdir.y, tdir.x);
+            floorLabel.anchor = { px: m.px - tdir.y * gap, py: m.py + tdir.x * gap };
+            ISO_VIEW = null;
+        }
     }
     const pad = ISO.pad;
     const vbX = minX - pad, vbY = minY - pad;
@@ -966,7 +1040,7 @@ function renderIsoRoom(room, opts = {}) {
         text.setAttribute('class', 'iso-floor-label');
         text.setAttribute('x', px.toFixed(1));
         text.setAttribute('y', py.toFixed(1));
-        text.setAttribute('transform', `rotate(${(ISO.angle * 180 / Math.PI).toFixed(0)} ${px.toFixed(1)} ${py.toFixed(1)})`);
+        text.setAttribute('transform', `rotate(${(floorLabel.angle * 180 / Math.PI).toFixed(1)} ${px.toFixed(1)} ${py.toFixed(1)})`);
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('dominant-baseline', 'hanging');
         text.setAttribute('font-size', floorLabel.fontSize.toFixed(1));
@@ -1028,6 +1102,66 @@ function renderRoomPreviewFlat(room) {
         </svg>`;
 }
 
+
+// Hover motion for a room card: while the pointer is on `card`, the camera
+// swings around the room and rises a little, and after a moment on the card
+// starts slowly spinning all the way around at a steady speed. On leave it eases back the
+// short way to the standard view. Each frame redraws the sketch from the new
+// angle into the card's existing <svg>, so CSS on that element (lift, shadow,
+// float) keeps running. Mouse/pen only; off for reduced motion.
+const TILT = {
+    yaw: 16, pitch: 9, easeMs: 140,
+    spinAfterMs: 1400,   // hover this long before the idle spin starts
+    spinTurnMs: 28235,   // one full turn, at a steady speed (24s slowed by 15%)
+    homeEaseMs: 260,     // how quickly it turns back to rest on leave
+};
+export function attachIsoTilt(card, room, opts = {}) {
+    if (!card || !window.rough) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+    const rad = Math.PI / 180, TAU = Math.PI * 2;
+    let hovered = false, hoverAt = 0, t = 0, spin = 0, raf = 0, last = 0;
+    const draw = (yaw, pitch) => {
+        const svg = card.querySelector('.room-float-preview > svg');
+        if (!svg) return false;
+        const tpl = document.createElement('template');
+        tpl.innerHTML = (renderIsoRoom(room, { ...opts, view: { yaw, pitch } }) || '').trim();
+        const fresh = tpl.content.firstElementChild;
+        if (!fresh) return false;
+        svg.setAttribute('viewBox', fresh.getAttribute('viewBox'));
+        svg.replaceChildren(...fresh.childNodes);
+        return true;
+    };
+    const ease = (from, to, dt, ms) => from + (to - from) * (1 - Math.exp(-dt / ms));
+    const tick = (now) => {
+        if (!card.isConnected) { raf = 0; return; }
+        const dt = Math.min(64, now - last);
+        last = now;
+        t = ease(t, hovered ? 1 : 0, dt, TILT.easeMs);
+        // Steady speed the whole time it spins: no speeding up or slowing down.
+        const spinning = hovered && now - hoverAt > TILT.spinAfterMs;
+        if (hovered) {
+            if (spinning) spin += (TAU / TILT.spinTurnMs) * dt;
+        } else {
+            // Turn back the short way to the nearest full turn.
+            spin = ease(spin, Math.round(spin / TAU) * TAU, dt, TILT.homeEaseMs);
+        }
+        const home = Math.abs(spin - Math.round(spin / TAU) * TAU);
+        if (!hovered && t < 0.003 && home < 0.002) {
+            t = 0; spin = 0; raf = 0;
+            draw(0, 0); // the exact resting drawing
+            return;
+        }
+        if (!draw(TILT.yaw * t * rad + spin, TILT.pitch * t * rad)) { raf = 0; return; }
+        raf = requestAnimationFrame(tick);
+    };
+    card.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'touch' || (reduce && reduce.matches)) return;
+        hovered = true;
+        hoverAt = performance.now();
+        if (!raf) { last = hoverAt; raf = requestAnimationFrame(tick); }
+    });
+    card.addEventListener('pointerleave', () => { hovered = false; });
+}
 
 export function renderProjectRoomPreview(room) {
   return renderRoomPreview(room);

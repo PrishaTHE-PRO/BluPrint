@@ -1,6 +1,6 @@
 import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
 import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
-import { renderRoomPreview, getRoomPreviewLayout, escapeHtml } from "./iso-preview.js";
+import { renderRoomPreview, getRoomPreviewLayout, escapeHtml, attachIsoTilt } from "./iso-preview.js";
 
 var logoutBtn = document.getElementById('logout-btn');
 var profileBtn = document.getElementById('profile-btn');
@@ -199,7 +199,7 @@ async function loadProjects(userId) {
 
             const card = document.createElement('div');
             card.className = 'garden-card room-float group cursor-pointer project-card-enter';
-            card.style.setProperty('--card-delay', `${index * 55}ms`);
+            card.style.setProperty('--card-delay', `${100 + index * 60}ms`);
             // mobile-ui.js reads these for the stat strip and the resume list.
             card.dataset.sqft = String(roomSqft);
             card.dataset.complete = String(!!(room.style || room.furnitureLayout));
@@ -217,6 +217,7 @@ async function loadProjects(userId) {
                     </button>
                 </div>`;
             cards.appendChild(card);
+            attachIsoTilt(card, room, { floorLabel: roomSqft ? `${roomSqft} sq ft` : '' });
 
             // Rename → inline edit, doesn't navigate
             card.querySelector('.rename-btn').addEventListener('click', (e) => {

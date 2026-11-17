@@ -1261,15 +1261,59 @@ html.dark-mode .page-projects #all-projects-grid .room-float:hover {
 .page-projects #all-projects-grid .room-float-preview { aspect-ratio: 4/3; }
 .page-dashboard #projects-grid .iso-paper,
 .page-projects #all-projects-grid .iso-paper { display: none; }
+/* Room card motion (from the redesign's Dashboard/Projects cards): the cards
+   rise in one after another, and on hover the room lifts off the page while
+   its shadow lengthens and falls down-left, as if it has risen toward you. */
+.page-dashboard #projects-grid .room-float.project-card-enter,
+.page-projects #all-projects-grid .room-float.project-card-enter {
+  animation: room-card-up .5s cubic-bezier(.2, .8, .2, 1) var(--card-delay, 100ms) both;
+}
+/* `translate`, not `transform`: .room-float pins transform with !important,
+   which would override the animation. */
+@keyframes room-card-up {
+  from { opacity: 0; translate: 0 14px; }
+  to { opacity: 1; translate: none; }
+}
+.page-dashboard #projects-grid .room-float-preview,
+.page-projects #all-projects-grid .room-float-preview { perspective: 900px; }
+/* Hover: the room turns in 3D (redrawn from a moving camera by attachIsoTilt
+   in iso-preview.js), rises toward you with its shadow falling down-left, then
+   keeps gently floating and swaying while the pointer stays. The float
+   runs all the time with zero height; hover fades its height in and out, so
+   the room never snaps when the pointer leaves. */
+@property --room-bob { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --room-bob-height { syntax: '<length>'; inherits: false; initial-value: 0px; }
 .page-dashboard #projects-grid .room-float-preview > svg,
 .page-projects #all-projects-grid .room-float-preview > svg {
-  filter: drop-shadow(0 14px 16px rgba(28, 23, 20, .14));
-  transition: transform .35s cubic-bezier(.22, 1, .36, 1), filter .35s ease;
+  transform-origin: 50% 60%;
+  /* A room spinning on hover can reach past its resting frame. */
+  overflow: visible;
+  translate: 0 calc(var(--room-bob) * var(--room-bob-height));
+  filter: drop-shadow(0 10px 20px rgba(20, 32, 46, .12));
+  animation: room-bob 3.2s ease-in-out infinite;
+  transition:
+    transform .6s cubic-bezier(.2, .8, .2, 1),
+    filter .6s cubic-bezier(.2, .8, .2, 1),
+    --room-bob-height .6s cubic-bezier(.2, .8, .2, 1);
 }
-.page-dashboard #projects-grid .room-float:hover .room-float-preview > svg,
-.page-projects #all-projects-grid .room-float:hover .room-float-preview > svg {
-  transform: translateY(-4px);
-  filter: drop-shadow(0 20px 20px rgba(28, 23, 20, .16));
+@keyframes room-bob {
+  0%, 100% { --room-bob: 0; }
+  50% { --room-bob: 1; }
+}
+@media (hover: hover) {
+  .page-dashboard #projects-grid .room-float:hover .room-float-preview > svg,
+  .page-projects #all-projects-grid .room-float:hover .room-float-preview > svg {
+    /* Lift only: the turn itself is redrawn in 3D by attachIsoTilt (iso-preview.js). */
+    transform: translateZ(18px) translateY(-8px);
+    filter: drop-shadow(-14px 22px 24px rgba(20, 32, 46, .22));
+    --room-bob-height: -8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-dashboard #projects-grid .room-float.project-card-enter,
+  .page-projects #all-projects-grid .room-float.project-card-enter { animation: none; }
+  .page-dashboard #projects-grid .room-float-preview > svg,
+  .page-projects #all-projects-grid .room-float-preview > svg { transition: none; animation: none; }
 }
 .page-dashboard #projects-grid .iso-floor-label,
 .page-projects #all-projects-grid .iso-floor-label {

@@ -172,7 +172,7 @@
 <script type="module">
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { auth, isFirebaseConfigured, authedFetch } from "./firebase.mjs";
-    import { renderRoomPreview as renderIsoPreview, getRoomPreviewLayout, escapeHtml } from "./iso-preview.js";
+    import { renderRoomPreview as renderIsoPreview, getRoomPreviewLayout, escapeHtml, attachIsoTilt } from "./iso-preview.js";
 
     const ROOM_LAYOUT_STORAGE_KEY = 'blueprintRoomLayout';
     const FURNITURE_PLACEMENT_STORAGE_KEY = 'blueprintFurniturePlacement';
@@ -388,7 +388,7 @@
                 const roomName = escapeHtml(room.name || 'Untitled Room');
                 const card = document.createElement('div');
                 card.className = 'garden-card room-float group cursor-pointer project-card-enter';
-                card.style.setProperty('--card-delay', `${Math.min(index * 55, 330)}ms`);
+                card.style.setProperty('--card-delay', `${100 + Math.min(index, 6) * 60}ms`);
                 card.innerHTML = `
                     <div class="room-float-preview relative aspect-[16/10] flex items-center justify-center">
                         ${renderRoomPreview(room, { floorLabel: roomSqft ? `${roomSqft} sq ft` : '' })}
@@ -400,6 +400,7 @@
                         <h3 class="room-name-display text-3xl font-bold text-[#F7F4D5]">${roomName}</h3>
                     </div>`;
                 cards.appendChild(card);
+                attachIsoTilt(card, room, { floorLabel: roomSqft ? `${roomSqft} sq ft` : '' });
 
                 card.addEventListener('click', (e) => {
                     if (e.target.closest('.delete-btn')) return;
