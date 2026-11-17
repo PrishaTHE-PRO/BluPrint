@@ -5,8 +5,8 @@
   --bp-surface: #fefcfa;
   --bp-ink: #1c1714;
   --bp-muted: #6b7480;
-  --bp-primary: #3d5a80;
-  --bp-primary-hover: #4d6d95;
+  --bp-primary: #2f6f8f;
+  --bp-primary-hover: #3a809f;
   --bp-soft: #e9ecf0;
   --bp-secondary: #e4e8ed;
   --bp-blue-soft: #d4e4f0;
@@ -63,7 +63,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgba(61, 90, 128, 0.24) !important;
+  outline: 3px solid rgba(47, 111, 143, 0.24) !important;
   outline-offset: 2px;
 }
 
@@ -86,7 +86,7 @@ textarea:focus-visible {
 
 .garden-card:hover {
   background: var(--bp-surface) !important;
-  border-color: rgba(61, 90, 128, 0.14) !important;
+  border-color: rgba(47, 111, 143, 0.14) !important;
   box-shadow: 0 14px 40px rgba(28, 23, 20, 0.09) !important;
   transform: translateY(-3px) !important;
 }
@@ -213,7 +213,7 @@ body:not(.page-login) nav > div:last-child > a {
 }
 
 body:not(.page-login) nav > div:last-child > a:hover {
-  background: rgba(61, 90, 128, 0.08);
+  background: rgba(47, 111, 143, 0.08);
   color: var(--bp-primary) !important;
 }
 
@@ -313,7 +313,7 @@ body:not(.page-login) .app-brand > span {
 
 .app-nav-links > a:hover,
 .app-nav-links > a.active {
-  background: rgba(61, 90, 128, .08);
+  background: rgba(47, 111, 143, .08);
   color: var(--bp-primary) !important;
 }
 .app-nav-links > a:hover { transform: translateY(-2px) scale(1.04); }
@@ -544,7 +544,7 @@ button.theme-switch-btn {
   width: min(100%, 520px);
   margin: auto;
   color: var(--bp-primary);
-  filter: drop-shadow(0 16px 34px rgba(61, 90, 128, .08));
+  filter: drop-shadow(0 16px 34px rgba(47, 111, 143, .08));
   animation: bp-orb 5.5s ease-in-out infinite;
 }
 
@@ -586,12 +586,12 @@ button.theme-switch-btn {
   flex: 0 0 218px;
   height: 190px;
   overflow: hidden;
-  border: 1px solid rgba(61, 90, 128, .15);
+  border: 1px solid rgba(47, 111, 143, .15);
   border-radius: 8px;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, .92), rgba(250, 247, 242, .82)),
     var(--bp-surface);
-  box-shadow: 0 20px 45px rgba(61, 90, 128, .14);
+  box-shadow: 0 20px 45px rgba(47, 111, 143, .14);
 }
 
 .login-room-card::before {
@@ -600,8 +600,8 @@ button.theme-switch-btn {
   content: "";
   border-radius: 6px;
   background-image:
-    linear-gradient(rgba(61, 90, 128, .06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(61, 90, 128, .06) 1px, transparent 1px);
+    linear-gradient(rgba(47, 111, 143, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(47, 111, 143, .06) 1px, transparent 1px);
   background-size: 18px 18px;
   pointer-events: none;
 }
@@ -616,7 +616,7 @@ button.theme-switch-btn {
   max-width: calc(100% - 28px);
   min-height: 24px;
   padding: 4px 9px;
-  border: 1px solid rgba(61, 90, 128, .12);
+  border: 1px solid rgba(47, 111, 143, .12);
   border-radius: 999px;
   background: rgba(250, 247, 242, .86);
   color: var(--bp-primary);
@@ -633,12 +633,12 @@ button.theme-switch-btn {
   inset: 34px 8px 6px;
   width: calc(100% - 16px);
   height: calc(100% - 40px);
-  filter: drop-shadow(0 10px 14px rgba(61, 90, 128, .06));
+  filter: drop-shadow(0 10px 14px rgba(47, 111, 143, .06));
 }
 
 .login-room-card .room-paper {
   fill: rgba(254, 252, 250, .82);
-  stroke: rgba(61, 90, 128, .42);
+  stroke: rgba(47, 111, 143, .42);
   stroke-width: 2.4;
 }
 
@@ -650,25 +650,25 @@ button.theme-switch-btn {
 }
 
 .login-room-card .room-grid {
-  stroke: rgba(61, 90, 128, .14);
+  stroke: rgba(47, 111, 143, .14);
   stroke-width: .8;
 }
 
 .login-room-card .room-tile {
-  stroke: rgba(61, 90, 128, .16);
+  stroke: rgba(47, 111, 143, .16);
   stroke-width: .8;
   stroke-dasharray: 3 4;
 }
 
 .login-room-card .room-thin {
   fill: none;
-  stroke: rgba(61, 90, 128, .66);
+  stroke: rgba(47, 111, 143, .66);
   stroke-width: 1.5;
   stroke-linecap: round;
 }
 
 .login-room-card .room-thin-fill {
-  fill: rgba(61, 90, 128, .28);
+  fill: rgba(47, 111, 143, .28);
 }
 
 .login-room-card .room-rug {
@@ -680,13 +680,13 @@ button.theme-switch-btn {
 
 .login-room-card .room-furniture {
   fill: rgba(176, 160, 140, .72);
-  stroke: rgba(61, 90, 128, .45);
+  stroke: rgba(47, 111, 143, .45);
   stroke-width: 1.2;
 }
 
 .login-room-card .room-fill-blue {
   fill: #b8d4e8;
-  stroke: rgba(61, 90, 128, .42);
+  stroke: rgba(47, 111, 143, .42);
   stroke-width: 1.2;
 }
 
@@ -696,19 +696,19 @@ button.theme-switch-btn {
 
 .login-room-card .room-fill-moss {
   fill: rgba(131, 153, 88, .42);
-  stroke: rgba(61, 90, 128, .42);
+  stroke: rgba(47, 111, 143, .42);
   stroke-width: 1.2;
 }
 
 .login-room-card .room-fill-rose {
   fill: rgba(211, 150, 140, .48);
-  stroke: rgba(61, 90, 128, .42);
+  stroke: rgba(47, 111, 143, .42);
   stroke-width: 1.2;
 }
 
 .login-room-card .room-plant {
   fill: rgba(108, 143, 98, .68);
-  stroke: rgba(61, 90, 128, .42);
+  stroke: rgba(47, 111, 143, .42);
   stroke-width: 1.2;
 }
 
@@ -1089,7 +1089,7 @@ button.theme-switch-btn {
   margin-top: 4px;
   border-radius: 14px !important;
   background: var(--bp-primary) !important;
-  box-shadow: 0 8px 24px rgba(61, 90, 128, .22) !important;
+  box-shadow: 0 8px 24px rgba(47, 111, 143, .22) !important;
 }
 
 .login-card #login-btn:hover { background: var(--bp-primary-hover) !important; transform: translateY(-2px); }
@@ -1144,7 +1144,7 @@ button.theme-switch-btn {
   height: 280px;
   object-fit: contain;
   transform-origin: center bottom;
-  filter: drop-shadow(0 20px 24px rgba(61, 90, 128, .2));
+  filter: drop-shadow(0 20px 24px rgba(47, 111, 143, .2));
 }
 .dashboard-welcome-copy { min-width: 0; }
 
@@ -1185,12 +1185,12 @@ button.theme-switch-btn {
   color: #fff !important;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 5px 18px rgba(61, 90, 128, .2);
+  box-shadow: 0 5px 18px rgba(47, 111, 143, .2);
   transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
 .dashboard-new-room:hover {
   background: var(--bp-primary-hover) !important;
-  box-shadow: 0 10px 28px rgba(61, 90, 128, .28) !important;
+  box-shadow: 0 10px 28px rgba(47, 111, 143, .28) !important;
   transform: translateY(-2px);
 }
 
@@ -1345,13 +1345,13 @@ html.dark-mode .page-projects #all-projects-grid .room-float:hover {
 .page-dashboard #projects-grid span { color: var(--bp-muted) !important; font-size: 11px !important; }
 .project-card-skeleton {
   min-height: 280px;
-  border: 1px solid rgba(61, 90, 128, .08);
+  border: 1px solid rgba(47, 111, 143, .08);
   border-radius: 16px;
   background:
     linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .72) 48%, transparent 61%),
     linear-gradient(#edf2f5 68%, #f8fafb 68%);
   background-size: 220% 100%, 100% 100%;
-  box-shadow: 0 10px 30px rgba(61, 90, 128, .06);
+  box-shadow: 0 10px 30px rgba(47, 111, 143, .06);
   animation: project-skeleton 1.25s ease-in-out infinite;
 }
 @keyframes project-skeleton {
@@ -1361,7 +1361,7 @@ html.dark-mode .page-projects #all-projects-grid .room-float:hover {
 
 /* Dimension editor */
 .page-dimensions {
-  --dimension-primary: #294f7d;
+  --dimension-primary: #2f6f8f;
   --dimension-blue: #8fc5e7;
   --dimension-cutout: #6c8f62;
   --dimension-window: #d3968d;
@@ -1553,7 +1553,7 @@ a.workflow-step:focus-visible {
 .page-dimensions .canvas-area,
 .page-dimensions #photo-panel {
   min-height: 620px;
-  border: 1px solid rgba(41, 79, 125, .16) !important;
+  border: 1px solid rgba(47, 111, 143, .16) !important;
   border-radius: 16px !important;
   background: var(--bp-surface) !important;
   box-shadow: 0 12px 36px rgba(28, 23, 20, .07) !important;
@@ -1564,7 +1564,7 @@ a.workflow-step:focus-visible {
 .page-dimensions .room-path { fill: rgba(143, 197, 231, .16) !important; stroke: var(--dimension-primary) !important; }
 .page-dimensions .edge-highlight.active { stroke: var(--bp-green) !important; }
 .page-dimensions .element-hoverable:hover {
-  filter: drop-shadow(0 2px 5px rgba(41, 79, 125, .2)) !important;
+  filter: drop-shadow(0 2px 5px rgba(47, 111, 143, .2)) !important;
 }
 .page-dimensions .placed-element-group .delete-btn {
   opacity: 0;
@@ -1606,7 +1606,7 @@ a.workflow-step:focus-visible {
   text-shadow: none !important;
 }
 .page-dimensions #ghost-element path {
-  fill: rgba(41, 79, 125, .16) !important;
+  fill: rgba(47, 111, 143, .16) !important;
   stroke: var(--dimension-primary) !important;
   stroke-width: 2.5 !important;
 }
@@ -1690,8 +1690,8 @@ a.workflow-step:focus-visible {
   background: var(--dimension-primary) !important;
   color: #fff !important;
 }
-.page-dimensions #smallGrid path { stroke: rgba(41, 79, 125, .08) !important; }
-.page-dimensions #largeGrid > path { stroke: rgba(41, 79, 125, .16) !important; }
+.page-dimensions #smallGrid path { stroke: rgba(47, 111, 143, .08) !important; }
+.page-dimensions #largeGrid > path { stroke: rgba(47, 111, 143, .16) !important; }
 .page-dimensions #door-template path:first-child {
   stroke: var(--dimension-door) !important;
   stroke-width: 6 !important;
@@ -1740,7 +1740,7 @@ a.workflow-step:focus-visible {
 }
 .page-dimensions #window-template line { stroke: #fff7f5 !important; }
 .page-dimensions .cutout-group .cutout-preview-outline {
-  fill: rgba(41, 79, 125, .12) !important;
+  fill: rgba(47, 111, 143, .12) !important;
   stroke: var(--dimension-primary) !important;
   stroke-opacity: 1 !important;
   stroke-width: 1.75 !important;
@@ -1753,7 +1753,7 @@ a.workflow-step:focus-visible {
   vector-effect: non-scaling-stroke;
 }
 .page-dimensions .cutout-group .cutout-move-hit {
-  fill: rgba(41, 79, 125, .1) !important;
+  fill: rgba(47, 111, 143, .1) !important;
   stroke: transparent !important;
   stroke-width: 14 !important;
   stroke-opacity: 1 !important;
@@ -1770,7 +1770,7 @@ a.workflow-step:focus-visible {
   fill: #fff !important;
   stroke: var(--dimension-primary) !important;
   stroke-width: 2 !important;
-  filter: drop-shadow(0 2px 5px rgba(41, 79, 125, .22));
+  filter: drop-shadow(0 2px 5px rgba(47, 111, 143, .22));
 }
 .page-dimensions .cutout-group circle:not(.cutout-resize-handle):not(.cutout-resize-handle-hit) {
   fill: var(--dimension-primary) !important;
@@ -1854,9 +1854,9 @@ a.workflow-step:focus-visible {
   font-size: 20px !important;
 }
 .page-dimensions #drawing-layer path {
-  fill: rgba(41, 79, 125, .18) !important;
+  fill: rgba(47, 111, 143, .18) !important;
   stroke: var(--dimension-primary) !important;
-  filter: drop-shadow(0 8px 18px rgba(41, 79, 125, .18)) !important;
+  filter: drop-shadow(0 8px 18px rgba(47, 111, 143, .18)) !important;
 }
 .page-dimensions #drawing-layer .pending-cutout-preview {
   fill: rgba(74, 222, 128, .24) !important;
@@ -1886,8 +1886,8 @@ a.workflow-step:focus-visible {
 }
 .page-dimensions #drawing-layer .draw-cutout-callout .draw-cutout-label {
   fill: rgba(254, 252, 250, .96) !important;
-  stroke: rgba(41, 79, 125, .18) !important;
-  filter: drop-shadow(0 6px 14px rgba(41, 79, 125, .16)) !important;
+  stroke: rgba(47, 111, 143, .18) !important;
+  filter: drop-shadow(0 6px 14px rgba(47, 111, 143, .16)) !important;
 }
 .page-dimensions #drawing-layer .draw-cutout-callout text {
   fill: var(--bp-ink) !important;
@@ -1908,7 +1908,7 @@ a.workflow-step:focus-visible {
 }
 .page-dimensions #door-flip-tooltip .door-flip-label {
   fill: rgba(254, 252, 250, .94) !important;
-  stroke: rgba(41, 79, 125, .18) !important;
+  stroke: rgba(47, 111, 143, .18) !important;
 }
 .page-dimensions #door-flip-tooltip text {
   fill: #1c1714 !important;
@@ -1923,15 +1923,15 @@ a.workflow-step:focus-visible {
   color: #fff !important;
   padding-top: 15px !important;
   padding-bottom: 15px !important;
-  box-shadow: 0 8px 24px rgba(41, 79, 125, .2) !important;
+  box-shadow: 0 8px 24px rgba(47, 111, 143, .2) !important;
 }
 .page-dimensions #cta-save-continue:hover {
   background: var(--bp-primary-hover) !important;
-  box-shadow: 0 12px 30px rgba(41, 79, 125, .24) !important;
+  box-shadow: 0 12px 30px rgba(47, 111, 143, .24) !important;
 }
 .page-dimensions #custom-toast {
   background: var(--bp-surface) !important;
-  border-color: rgba(41, 79, 125, .18) !important;
+  border-color: rgba(47, 111, 143, .18) !important;
   color: var(--bp-ink) !important;
   box-shadow: 0 16px 36px rgba(28, 23, 20, .12) !important;
 }
@@ -2020,10 +2020,10 @@ a.workflow-step:focus-visible {
 .page-inspo .workflow-step.active span,
 .page-inspo .workflow-step.completed span {
   background: var(--bp-primary) !important;
-  box-shadow: 0 8px 18px rgba(61, 90, 128, .16);
+  box-shadow: 0 8px 18px rgba(47, 111, 143, .16);
 }
 .page-inspo .workflow-connector.completed { background: var(--bp-primary); }
-.page-inspo a.workflow-step:hover span { box-shadow: 0 0 0 3px rgba(61, 90, 128, .18); }
+.page-inspo a.workflow-step:hover span { box-shadow: 0 0 0 3px rgba(47, 111, 143, .18); }
 .page-inspo .stepper { display: none !important; }
 .page-inspo main {
   display: grid !important;
@@ -2067,7 +2067,7 @@ a.workflow-step:focus-visible {
 .page-inspo .garden-card h2 { font-size: 25px !important; }
 .page-inspo .garden-card h3 { font-size: 20px !important; }
 .page-inspo .garden-card p { color: var(--bp-muted) !important; font-size: 14px !important; }
-.page-inspo #file-drop-area { border-color: rgba(61, 90, 128, .2) !important; background: var(--bp-surface) !important; border-radius: 14px !important; }
+.page-inspo #file-drop-area { border-color: rgba(47, 111, 143, .2) !important; background: var(--bp-surface) !important; border-radius: 14px !important; }
 .page-inspo #file-drop-area:hover { background: rgba(184, 212, 232, .1) !important; border-color: var(--bp-primary) !important; }
 .page-inspo .option-btn {
   padding: 14px 17px !important;
@@ -2082,7 +2082,7 @@ a.workflow-step:focus-visible {
   box-shadow: 0 8px 20px rgba(28, 23, 20, .07);
   transform: translateY(-2px);
 }
-.page-inspo .option-btn.selected { border-color: rgba(61, 90, 128, .2) !important; background: var(--bp-primary) !important; color: #fff !important; }
+.page-inspo .option-btn.selected { border-color: rgba(47, 111, 143, .2) !important; background: var(--bp-primary) !important; color: #fff !important; }
 .page-inspo .option-btn.selected * { color: #fff !important; }
 .page-inspo #step-2:not(.hidden) {
   display: flex !important;
@@ -2134,7 +2134,7 @@ a.workflow-step:focus-visible {
   margin: 0 auto;
   object-fit: contain;
   transform-origin: center bottom;
-  filter: drop-shadow(0 14px 18px rgba(61, 90, 128, .18));
+  filter: drop-shadow(0 14px 18px rgba(47, 111, 143, .18));
   animation: inspo-character-float 6s ease-in-out infinite;
 }
 @keyframes inspo-character-float {
@@ -2389,7 +2389,7 @@ a.workflow-step:focus-visible {
   transition: box-shadow .3s ease, border-color .3s ease, transform .3s ease;
 }
 .page-result .room-layout-canvas:hover {
-  border-color: rgba(61, 90, 128, .16);
+  border-color: rgba(47, 111, 143, .16);
   box-shadow: 0 24px 64px rgba(28, 23, 20, .11);
   transform: translateY(-2px);
 }
@@ -2562,7 +2562,7 @@ a.workflow-step:focus-visible {
   height: 6px;
 }
 .page-result .furniture-h-strip__track::-webkit-scrollbar-thumb {
-  background: rgba(61, 90, 128, .25);
+  background: rgba(47, 111, 143, .25);
   border-radius: 999px;
 }
 .page-result .furniture-strip-card {
@@ -3542,7 +3542,7 @@ html.dark-mode .login-room-card {
 }
 html.dark-mode .login-room-card > span {
   background: rgba(245, 239, 229, .9);
-  color: #294f7d;
+  color: #2f6f8f;
 }
 html.dark-mode .login-room-stage .login-room-card {
   background:
@@ -4226,7 +4226,7 @@ html.dark-mode input.room-name-input {
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 8px 22px rgba(61, 90, 128, .24);
+  box-shadow: 0 8px 22px rgba(47, 111, 143, .24);
   transition: background .2s ease, transform .2s ease;
 }
 .page-result .room-render-view__btn:hover { background: var(--result-blue-hover); transform: translateY(-1px); }
@@ -4305,8 +4305,8 @@ html.dark-mode input.room-name-input {
 .page-result .render-hotspot:focus-within,
 .page-result .render-hotspot.is-linked {
   border-color: var(--result-blue);
-  background: rgba(61, 90, 128, .14);
-  box-shadow: 0 0 0 3px rgba(61, 90, 128, .28);
+  background: rgba(47, 111, 143, .14);
+  box-shadow: 0 0 0 3px rgba(47, 111, 143, .28);
 }
 .page-result .render-hotspot__card {
   display: none;
@@ -4381,7 +4381,7 @@ html.dark-mode input.room-name-input {
   display: grid;
   place-items: center;
   font-size: 20px;
-  color: var(--bp-primary, #3d5a80);
+  color: var(--bp-primary, #2f6f8f);
   animation: room-render-spin 2.4s linear infinite;
 }
 .page-result .room-render-view__progress-line {

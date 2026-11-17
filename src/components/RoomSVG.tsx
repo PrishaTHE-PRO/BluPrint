@@ -969,11 +969,11 @@ function DoorMark({ sizePx }: { sizePx: number }) {
       <line x1={0} y1={0} x2={sizePx} y2={0} stroke="#0A3323" strokeWidth={4} strokeLinecap="round" />
       {/* swing arc */}
       <path d={`M ${sizePx} 0 A ${sizePx} ${sizePx} 0 0 1 0 ${sizePx}`}
-            fill="none" stroke="#294F7D" strokeWidth={2.6}
+            fill="none" stroke="#2f6f8f" strokeWidth={2.6}
             strokeDasharray="5 2.5" opacity={0.95} />
       {/* open door leaf */}
-      <line x1={0} y1={0} x2={0} y2={sizePx} stroke="#294F7D" strokeWidth={5.5} strokeLinecap="round" />
-      <circle cx={0} cy={0} r={3.5} fill="#294F7D" />
+      <line x1={0} y1={0} x2={0} y2={sizePx} stroke="#2f6f8f" strokeWidth={5.5} strokeLinecap="round" />
+      <circle cx={0} cy={0} r={3.5} fill="#2f6f8f" />
     </g>
   );
 }

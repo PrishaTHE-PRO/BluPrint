@@ -24,8 +24,8 @@
       --muted: #6b7480;
       --paper: #f8f5f0;
       --surface: rgba(255, 253, 250, .82);
-      --blue: #3d5a80;
-      --blue-dark: #294563;
+      --blue: #2f6f8f;
+      --blue-dark: #245a72;
       --sky: #b8d4e8;
       --sky-soft: #e9f3f9;
       --sand: #e9dfd2;
@@ -290,7 +290,7 @@
     html.dark-mode .floor-plan [fill="#DDE7DD"] { fill: #33453a; }
     html.dark-mode .floor-plan [fill="#C7D9E5"] { fill: #2f4557; }
     html.dark-mode .floor-plan [fill="#B8D4E8"] { fill: #3d5f7d; }
-    html.dark-mode .floor-plan [stroke="#294F7D"] { stroke: #7ea8c9; }
+    html.dark-mode .floor-plan [stroke="#2f6f8f"] { stroke: #7ea8c9; }
     html.dark-mode .floor-plan [stroke="#8F7B68"] { stroke: #b9a488; }
     html.dark-mode .floor-plan [stroke="#7D987F"] { stroke: #8aab82; }
 
@@ -381,8 +381,8 @@
       transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
     }
     .button:hover { transform: translateY(-2px); }
-    .button-primary { color: #fff; background: var(--blue); box-shadow: 0 12px 26px rgba(61, 90, 128, .24); }
-    .button-primary:hover { background: var(--blue-dark); box-shadow: 0 16px 34px rgba(61, 90, 128, .3); }
+    .button-primary { color: #fff; background: var(--blue); box-shadow: 0 12px 26px rgba(47, 111, 143, .24); }
+    .button-primary:hover { background: var(--blue-dark); box-shadow: 0 16px 34px rgba(47, 111, 143, .3); }
     .button-secondary { border: 1px solid var(--line); color: var(--ink); background: rgba(255,255,255,.66); }
     .button-secondary:hover { background: #fff; box-shadow: 0 12px 28px rgba(43, 52, 58, .09); }
 
@@ -403,7 +403,7 @@
       gap: 9px;
       margin-bottom: 24px;
       padding: 7px 11px;
-      border: 1px solid rgba(61,90,128,.13);
+      border: 1px solid rgba(47, 111, 143,.13);
       border-radius: 999px;
       color: var(--blue-dark);
       background: rgba(255,255,255,.5);
@@ -460,14 +460,14 @@
       display: grid;
       place-items: center;
       overflow: hidden;
-      border: 1px solid rgba(61,90,128,.09);
+      border: 1px solid rgba(47, 111, 143,.09);
       border-radius: 20px;
       background: #f7f3ec;
     }
     .canvas::before {
       position: absolute; inset: 0; content: "";
       opacity: .45;
-      background-image: linear-gradient(rgba(61,90,128,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(61,90,128,.08) 1px, transparent 1px);
+      background-image: linear-gradient(rgba(47, 111, 143,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 111, 143,.08) 1px, transparent 1px);
       background-size: 22px 22px;
     }
     .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); transition: opacity .5s ease; }
@@ -520,7 +520,7 @@
       cursor: pointer;
       transition: background .2s ease, color .2s ease;
     }
-    .hero-chip:hover { background: rgba(61,90,128,.09); color: var(--blue-dark); }
+    .hero-chip:hover { background: rgba(47, 111, 143,.09); color: var(--blue-dark); }
     .hero-chip.is-active { background: var(--blue-dark); color: #fff; }
     .hero-chip:focus-visible { outline: 2px solid var(--blue-dark); outline-offset: 2px; }
 
@@ -641,7 +641,7 @@
       position: absolute;
       z-index: 2;
       padding: 2px 6px;
-      border: 1px solid rgba(61,90,128,.14);
+      border: 1px solid rgba(47, 111, 143,.14);
       border-radius: 999px;
       color: var(--blue-dark);
       background: rgba(255,255,255,.88);
@@ -718,7 +718,7 @@
     }
     .capability iconify-icon { color: var(--blue); font-size: 18px; }
 
-    .process-wrap { padding: 58px; border: 1px solid rgba(255,255,255,.76); border-radius: 30px; background: linear-gradient(145deg, rgba(61,90,128,.96), rgba(41,69,99,.98)); box-shadow: 0 30px 80px rgba(41,69,99,.2); transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease; }
+    .process-wrap { padding: 58px; border: 1px solid rgba(255,255,255,.76); border-radius: 30px; background: linear-gradient(145deg, rgba(47, 111, 143,.96), rgba(41,69,99,.98)); box-shadow: 0 30px 80px rgba(41,69,99,.2); transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease; }
     .process-wrap:hover { transform: translateY(-7px); box-shadow: 0 42px 95px rgba(41,69,99,.3); }
     .process-wrap .section-heading h2, .process-wrap .section-heading p { color: #fff; }
     .process-wrap .section-heading p { opacity: .7; }
@@ -971,15 +971,15 @@
           <div class="planner">
             <div class="canvas">
               <svg class="floor-plan" viewBox="0 0 420 360" fill="none" aria-hidden="true">
-                <rect x="32" y="28" width="356" height="300" rx="7" fill="#FCFAF7" stroke="#294F7D" stroke-width="5"/>
-                <rect x="68" y="226" width="220" height="68" rx="13" fill="#B8D4E8" stroke="#294F7D" stroke-width="2"/>
+                <rect x="32" y="28" width="356" height="300" rx="7" fill="#FCFAF7" stroke="#2f6f8f" stroke-width="5"/>
+                <rect x="68" y="226" width="220" height="68" rx="13" fill="#B8D4E8" stroke="#2f6f8f" stroke-width="2"/>
                 <rect x="103" y="128" width="148" height="70" rx="10" fill="#E5D8C8" stroke="#8F7B68" stroke-width="2"/>
                 <rect x="86" y="100" width="180" height="130" rx="16" fill="#DDE7DD" opacity=".7" stroke="#7D987F" stroke-width="2" stroke-dasharray="7 6"/>
                 <rect x="300" y="70" width="55" height="55" rx="12" fill="#D8C7B5" stroke="#8F7B68" stroke-width="2"/>
                 <circle cx="327" cy="97" r="15" fill="#F8F5F0" stroke="#8F7B68"/>
-                <rect x="302" y="220" width="52" height="73" rx="9" fill="#C7D9E5" stroke="#294F7D" stroke-width="2"/>
+                <rect x="302" y="220" width="52" height="73" rx="9" fill="#C7D9E5" stroke="#2f6f8f" stroke-width="2"/>
                 <circle cx="61" cy="64" r="17" fill="#A9C4AB"/>
-                <path d="M32 280Q70 280 70 328" stroke="#294F7D" stroke-width="3" stroke-dasharray="5 4"/>
+                <path d="M32 280Q70 280 70 328" stroke="#2f6f8f" stroke-width="3" stroke-dasharray="5 4"/>
                 <path d="M145 28h105" stroke="#8FC5E7" stroke-width="9" stroke-linecap="round"/>
                 <text x="210" y="350" text-anchor="middle" fill="#6b7480" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
       </svg>

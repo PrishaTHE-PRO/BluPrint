@@ -74,7 +74,7 @@ export default function FurnitureLoadingOverlay({ open, label = 'Rebuilding your
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <span className="fl-spin" style={{ display: 'grid', placeItems: 'center', fontSize: 20, color: 'var(--bp-primary, #3d5a80)' }}>
+          <span className="fl-spin" style={{ display: 'grid', placeItems: 'center', fontSize: 20, color: 'var(--bp-primary, #2f6f8f)' }}>
             <iconify-icon icon="ph:armchair-duotone" />
           </span>
           <strong style={{ font: '600 15px "DM Sans", system-ui, sans-serif' }}>{label}</strong>
@@ -94,7 +94,7 @@ export default function FurnitureLoadingOverlay({ open, label = 'Rebuilding your
         }}>
           <div style={{
             width: `${pct}%`, height: '100%', borderRadius: 999,
-            background: 'linear-gradient(90deg, var(--bp-primary, #3d5a80), #839958)',
+            background: 'linear-gradient(90deg, var(--bp-primary, #2f6f8f), #839958)',
             transition: 'width .25s ease-out',
           }} />
         </div>

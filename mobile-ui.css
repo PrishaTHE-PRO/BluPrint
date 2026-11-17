@@ -28,7 +28,7 @@
 :root {
   --m-card: var(--bp-surface);
   --m-sh: 0 1px 2px rgba(28, 23, 20, .04);
-  --m-sh2: 0 10px 30px rgba(61, 90, 128, .07);
+  --m-sh2: 0 10px 30px rgba(47, 111, 143, .07);
   --m-sheet-sh: 0 -14px 44px rgba(28, 23, 20, .16);
   --m-dock-h: 66px;
   --m-mono: "DM Mono", ui-monospace, SFMono-Regular, monospace;
@@ -266,7 +266,7 @@
     color: #fff;
     font-size: 22px;
     text-decoration: none;
-    box-shadow: 0 8px 20px rgba(61, 90, 128, .34);
+    box-shadow: 0 8px 20px rgba(47, 111, 143, .34);
     transition: transform .18s cubic-bezier(.22, 1, .36, 1);
   }
   .m-dock-fab:active { transform: translateY(-2px) scale(1.04); }
@@ -314,7 +314,7 @@
     width: 82px;
     height: 112px;
     object-position: bottom;
-    filter: drop-shadow(0 12px 16px rgba(61, 90, 128, .18));
+    filter: drop-shadow(0 12px 16px rgba(47, 111, 143, .18));
   }
   /* The desktop float travels -20px and scales 1.08, which pushed the head
      under the nav at this size. Swap in a gentler drift with no scale. */
@@ -503,8 +503,8 @@
        the graph paper moves to the container and the SVG's own grid rect is
        dropped — one continuous grid instead of a banded one. */
     background-image:
-      linear-gradient(rgba(41, 79, 125, .07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(41, 79, 125, .07) 1px, transparent 1px) !important;
+      linear-gradient(rgba(47, 111, 143, .07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(47, 111, 143, .07) 1px, transparent 1px) !important;
     background-size: 22px 22px !important;
   }
   .page-dimensions #svg-bg { display: none; }
@@ -735,7 +735,7 @@
     min-height: 54px;
     border-radius: 16px !important;
     background: var(--bp-primary) !important;
-    box-shadow: 0 8px 22px rgba(61, 90, 128, .26);
+    box-shadow: 0 8px 22px rgba(47, 111, 143, .26);
     font-size: 16px !important;
   }
   /* Keyboard shortcuts card is meaningless on a phone. */
@@ -929,7 +929,7 @@
     border: 0 !important;
     background: var(--bp-primary) !important;
     color: #fff !important;
-    box-shadow: 0 8px 22px rgba(61, 90, 128, .24);
+    box-shadow: 0 8px 22px rgba(47, 111, 143, .24);
   }
 
   /* No side margin: the section's 24px gutter already insets these, and the
