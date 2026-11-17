@@ -80,14 +80,13 @@
   // Bottom dock — every page
   // ======================================================================
 
+  // Home · New room · Rooms
   var DOCK = [
     { key: 'home',   href: 'dashboard.html',        icon: 'ph:house-duotone',       label: 'Home'   },
-    { key: 'rooms',  href: 'past-inspiration.html', icon: 'ph:squares-four-duotone', label: 'Rooms'  },
     // newRoom: clears the stored room first (see public/new-room.js). Without
     // it this FAB reopened the previous room and saved over it.
     { key: 'plan',   href: 'room-dimensions.html',  icon: 'ph:plus-bold',           label: 'New room', fab: true, newRoom: true },
-    { key: 'inspo',  href: 'inspo-upload.html',     icon: 'ph:sparkle-duotone',     label: 'Style'  },
-    { key: 'result', href: 'room-result.html',      icon: 'ph:cube-duotone',        label: 'Design' }
+    { key: 'rooms',  href: 'past-inspiration.html', icon: 'ph:squares-four-duotone', label: 'Rooms'  }
   ];
 
   function buildDock() {
@@ -156,13 +155,12 @@
     var copy = document.querySelector('.dashboard-welcome-copy');
     if (!copy) return;
 
-    // "Welcome back" → the live date, as in 1b.
+    // "Welcome back" → today's weekday. No clock: it was stamped once at load
+    // and never updated.
     var eyebrow = copy.querySelector('.dashboard-eyebrow');
     if (eyebrow) {
       eyebrow.classList.add('m-hidden');
-      var now = new Date();
-      var stamp = now.toLocaleDateString(undefined, { weekday: 'long' }) + ' · ' +
-                  now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      var stamp = new Date().toLocaleDateString(undefined, { weekday: 'long' });
       copy.insertBefore(el('p', 'dashboard-eyebrow m-eyebrow m-only', stamp), eyebrow);
     }
 
@@ -173,7 +171,6 @@
       h1.insertBefore(el('span', 'm-hi m-only', 'Hi, '), nameEl);
     }
 
-    var quip = el('p', 'm-quip m-only', '');
     // The stat strip, room deck and resume list show on desktop too; only the
     // phone-specific bits stay .m-only.
     var stats = el('div', 'm-stats');
@@ -182,9 +179,6 @@
         '<p class="m-stat-label">sq ft drawn</p></div>' +
       '<div class="m-stat"><p class="m-stat-value" data-m-done>-</p>' +
         '<p class="m-stat-label" data-m-done-label>rooms finished</p></div>';
-
-    if (h1) h1.insertAdjacentElement('afterend', quip);
-    else copy.appendChild(quip);
 
     // The stat strip spans the hero, below the avatar row.
     var heroRow = document.querySelector('.dashboard-hero-layout');
@@ -236,9 +230,7 @@
       });
       // The deck only shows the newest rooms; dashboard.js puts the counts for
       // every room on the grid, so "rooms finished" covers all of them.
-      var total = cards.length;
       if (grid.dataset.roomsDone != null) done = Number(grid.dataset.roomsDone) || 0;
-      if (grid.dataset.roomsTotal != null) total = Number(grid.dataset.roomsTotal) || 0;
 
       var sqftEl = stats.querySelector('[data-m-sqft]');
       var doneEl = stats.querySelector('[data-m-done]');
@@ -247,18 +239,10 @@
       if (doneEl) doneEl.textContent = String(done);
       if (doneLabel) doneLabel.textContent = done === 1 ? 'room finished' : 'rooms finished';
 
-      quip.textContent = total
-        ? capitalise(spell(total)) + ' room' + (total === 1 ? '' : 's') + '. ' +
-          (done === 0 ? 'None are' : capitalise(spell(done)) + (done === 1 ? ' is' : ' are')) +
-          ' finished. We don\'t bring up the office.'
-        : 'No rooms yet. A blank page is also a design choice.';
-
       // Dots track the deck.
       dots.innerHTML = '';
       cards.forEach(function () { dots.appendChild(el('i')); });
       syncDots();
-
-      buildResume(cards);
     }
 
     function syncDots() {
@@ -280,38 +264,6 @@
       Array.prototype.forEach.call(dots.children, function (d, i) {
         d.classList.toggle('is-active', i === index);
       });
-    }
-
-    var resume = null;
-    function buildResume(cards) {
-      if (resume) resume.remove();
-      if (!cards.length) return;
-
-      // One row per unfinished room (newest first, at most three). Each row
-      // clicks its card, so it opens THAT room on the step it's up to; a plain
-      // link would reopen whichever room happens to be in localStorage.
-      var pending = cards.filter(function (card) {
-        return card.dataset.complete !== 'true';
-      }).slice(0, 3);
-      if (!pending.length) return;
-
-      resume = el('section', 'm-resume');
-      resume.appendChild(elText('h2', 'm-section-label', 'Pick up where you left off'));
-      var list = el('div', 'm-resume-list');
-      pending.forEach(function (card, i) {
-        var nameEl = card.querySelector('.room-name-display');
-        var name = nameEl ? nameEl.textContent.trim() : 'room';
-        var row = el('button', 'm-resume-row',
-          '<span class="m-resume-icon"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon></span>' +
-          '<span class="m-resume-copy"><strong>Finish the ' + esc(name) + '</strong>' +
-          '<small>' + (i === 0 ? 'Walls are up. Bold of you to stop there.' : 'Walls are up. Style is next.') + '</small></span>' +
-          '<span class="m-chev">›</span>');
-        row.type = 'button';
-        row.addEventListener('click', function () { card.click(); });
-        list.appendChild(row);
-      });
-      resume.appendChild(list);
-      grid.parentNode.parentNode.appendChild(resume);
     }
 
     grid.addEventListener('scroll', syncDots, { passive: true });

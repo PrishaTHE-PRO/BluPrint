@@ -4553,3 +4553,46 @@ body.page-inspo #step2-analyze {
 }
 body.page-inspo #step2-back iconify-icon,
 body.page-inspo #step2-analyze iconify-icon { margin: 0 !important; }
+/* Dashboard "View all": same light translucent blue as the other buttons. */
+.dashboard-section-heading > a {
+  padding: 7px 14px;
+  border: 1px solid var(--bp-btn-soft-border);
+  border-radius: 12px;
+  background: var(--bp-btn-soft-bg);
+  color: var(--bp-btn-soft-text) !important;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .2s ease;
+}
+.dashboard-section-heading > a:hover { background: var(--bp-btn-soft-bg-hover); }
+.dashboard-section-heading > a iconify-icon { color: inherit !important; }
+/* Room result estimate pill: one light transparent green, desktop and mobile,
+   with a small asterisk note when the total is over budget. */
+.page-result .result-est {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.page-result .result-est__pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid rgba(131, 153, 88, .3);
+  border-radius: 999px;
+  background: rgba(131, 153, 88, .2);
+  color: var(--bp-ink);
+}
+.page-result .result-est__label { font-size: 10px; font-weight: 700; color: var(--bp-muted) !important; }
+.page-result .result-est__total { font-size: 14px; font-weight: 700; color: var(--bp-ink) !important; }
+.page-result .result-est__budget { font-size: 10px; font-weight: 700; color: var(--bp-muted) !important; }
+.page-result .result-est__note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--bp-muted) !important;
+}
+@media (max-width: 600px) {
+  .page-result .result-est { align-items: center; }
+}

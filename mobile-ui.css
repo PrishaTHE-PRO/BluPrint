@@ -187,6 +187,12 @@
   body:not(.page-login):not(.page-dimensions) {
     padding-bottom: calc(var(--m-dock-h) + 28px + env(safe-area-inset-bottom, 0px));
   }
+  /* The full-screen page wrappers (Tailwind min-h-screen) plus the dock room
+     above made every page scroll a dock's height past its content. Take the
+     dock room out of the wrapper's minimum so the page ends with the content. */
+  body:not(.page-login):not(.page-dimensions) .min-h-screen {
+    min-height: calc(100dvh - var(--m-dock-h) - 28px - env(safe-area-inset-bottom, 0px)) !important;
+  }
 
   /* ---- shared type helpers ------------------------------------------ */
   .m-eyebrow {
@@ -367,6 +373,9 @@
     text-transform: uppercase;
   }
   .page-dashboard .dashboard-section-heading > a { font-size: 12px; }
+  /* Title on the left; View all sits right beside the dots, not mid-row. */
+  .page-dashboard .dashboard-section-heading h2 { margin-right: auto !important; }
+  .page-dashboard .dashboard-section-heading .m-deck-nav { margin-left: 10px; }
 
   .page-dashboard #projects-grid {
     display: flex !important;

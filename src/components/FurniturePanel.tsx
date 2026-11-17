@@ -35,8 +35,6 @@ export default function FurniturePanel({
   onLinkCategory,
   hiddenCategories,
   onToggleInRoom,
-  onGenerateUnderBudget,
-  underBudgetTried = false,
   notice = null,
 }: Props) {
   const stripRef = useRef<HTMLDivElement>(null);
@@ -73,17 +71,16 @@ export default function FurniturePanel({
   const header = (
     <div className="flex items-center justify-end animate-reveal mb-4 shrink-0" style={{ animationDelay: '0.4s' }}>
       {total > 0 && (
-        <div className={`px-3 py-1 rounded-full border ${
-          style.budgetTotal > 0 && total > style.budgetTotal
-            ? 'bg-[#D3968C]/20 border-[#D3968C]/30'
-            : 'bg-[#839958]/20 border-[#839958]/30'
-        }`}>
-          <span className="text-[10px] font-bold text-[#F7F4D5]/60">Est.</span>
-          <span className="text-sm font-bold ml-1.5 text-[#F7F4D5]">${total.toLocaleString()}</span>
-          {style.budgetTotal > 0 && (
-            <span className="text-[10px] font-bold text-[#F7F4D5]/50 ml-1">
-              / ${style.budgetTotal.toLocaleString()}
-            </span>
+        <div className="result-est">
+          <div className="result-est__pill">
+            <span className="result-est__label">Est.</span>
+            <span className="result-est__total">${total.toLocaleString()}</span>
+            {budget > 0 && (
+              <span className="result-est__budget">/ ${budget.toLocaleString()}</span>
+            )}
+          </div>
+          {overBudget && (
+            <p className="result-est__note">* ${overBy.toLocaleString()} over your budget</p>
           )}
         </div>
       )}
@@ -114,41 +111,6 @@ export default function FurniturePanel({
             {notice.kind === 'full' ? 'Your room is already well furnished' : 'We kept what is already in your photo'}
           </p>
           <p className="text-xs text-[#F7F4D5]/60 mt-1 leading-relaxed">{notice.message}</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  const budgetNotice = overBudget && (
-    <div
-      role="status"
-      className="animate-reveal mb-4 rounded-2xl border border-[#D3968C]/30 bg-[#D3968C]/10 px-4 py-3"
-      style={{ animationDelay: '0.42s' }}
-    >
-      <div className="flex items-start gap-3">
-        <span className="text-[#D3968C] text-lg leading-none mt-0.5 shrink-0">
-          <iconify-icon icon="ph:hand-heart-duotone" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-[#F7F4D5]">
-            Sorry, we went over budget.
-          </p>
-          <p className="text-xs text-[#F7F4D5]/60 mt-1 leading-relaxed">
-            {underBudgetTried
-              ? `We trimmed this room as far as we could without leaving it empty, but the pieces that fit your room still come to $${total.toLocaleString()}, which is $${overBy.toLocaleString()} over your $${budget.toLocaleString()} budget.`
-              : `We tried to stay as close to your original $${budget.toLocaleString()} as we could, but this set comes to $${total.toLocaleString()}, which is $${overBy.toLocaleString()} over. You can swap or remove any piece, or let us rebuild the room to fit.`}
-          </p>
-          {onGenerateUnderBudget && !underBudgetTried && (
-            <button
-              type="button"
-              onClick={onGenerateUnderBudget}
-              disabled={loading}
-              className="mt-3 px-4 py-2 rounded-xl bg-[#839958] hover:bg-[#93aa63] disabled:opacity-50 disabled:cursor-wait text-white text-xs font-bold inline-flex items-center gap-2 transition-all"
-            >
-              <iconify-icon icon="ph:scissors-duotone" />
-              Generate under budget
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -194,7 +156,6 @@ export default function FurniturePanel({
       <section className="mb-10 result-furniture-section">
         {header}
         {photoNotice}
-        {budgetNotice}
         {views}
         <p className="text-[#F7F4D5]/40 text-center py-8">
           {notice?.kind === 'full' ? 'Nothing more fits comfortably in this room.' : 'No furniture found. Try re-analyzing your room.'}
@@ -207,7 +168,6 @@ export default function FurniturePanel({
     <section className="mb-10 result-furniture-section">
       {header}
       {photoNotice}
-      {budgetNotice}
       {views}
       <div className="furniture-h-strip mt-5 animate-reveal" style={{ animationDelay: '0.5s' }}>
         <div className="furniture-h-strip__label">Shop pieces</div>
