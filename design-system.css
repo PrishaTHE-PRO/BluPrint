@@ -4711,3 +4711,23 @@ html.dark-mode body.page-dimensions #photo-panel {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
   border-color: rgba(126, 168, 201, 0.2) !important;
 }
+
+/* Same frosted glass as the room dimensions panels (40% surface + blur) for
+   the dashboard stat tiles and the results page's 2D layout and Shop pieces
+   boxes, on desktop and mobile, light and dark. */
+html body.page-dashboard .m-stat,
+html body.page-result .room-layout-canvas,
+html body.page-result .room-layout-canvas:hover,
+html body.page-result .furniture-h-strip {
+  background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
+  border-color: color-mix(in srgb, #fff 70%, transparent) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+  backdrop-filter: blur(22px) saturate(140%) !important;
+}
+html.dark-mode body.page-dashboard .m-stat,
+html.dark-mode body.page-result .room-layout-canvas,
+html.dark-mode body.page-result .room-layout-canvas:hover,
+html.dark-mode body.page-result .furniture-h-strip {
+  background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
+  border-color: rgba(126, 168, 201, 0.2) !important;
+}
