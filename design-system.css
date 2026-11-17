@@ -1143,6 +1143,9 @@ button.theme-switch-btn {
   width: 250px;
   height: 280px;
   object-fit: contain;
+  object-position: bottom;
+  /* The mascot reads big at full size: 15% smaller, scaled from his feet. */
+  scale: .85;
   transform-origin: center bottom;
   filter: drop-shadow(0 20px 24px rgba(47, 111, 143, .2));
 }
@@ -2130,7 +2133,7 @@ a.workflow-step:focus-visible {
 .how-it-works-panel .inspo-character img {
   display: block;
   width: auto;
-  height: 190px;
+  height: 162px; /* mascot, 15% under the old 190px */
   margin: 0 auto;
   object-fit: contain;
   transform-origin: center bottom;
