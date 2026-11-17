@@ -4596,3 +4596,14 @@ body.page-inspo #step2-analyze iconify-icon { margin: 0 !important; }
 @media (max-width: 600px) {
   .page-result .result-est { align-items: center; }
 }
+/* Render frame takes the picture's own shape once it has loaded (the image
+   area gets an inline aspect-ratio), so there are no dark bars beside it. */
+.page-result .room-render-view.room-render-view--fit {
+  flex: 0 0 auto;
+  aspect-ratio: auto;
+  min-height: 0 !important;
+}
+.page-result .room-render-view--fit .room-render-view__stage {
+  flex: 0 0 auto;
+  width: 100%;
+}

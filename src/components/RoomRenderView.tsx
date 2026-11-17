@@ -118,6 +118,9 @@ export default function RoomRenderView({
   const [pct, setPct] = useState(0);
   const [line, setLine] = useState(0);
   const [box, setBox] = useState<ContentBox | null>(null);
+  // The picture's own width/height ratio. The image area takes this shape so
+  // the photo fills it edge to edge, with no dark bars beside it.
+  const [aspect, setAspect] = useState<number | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const startedAt = useRef(0);
@@ -141,6 +144,10 @@ export default function RoomRenderView({
     const stage = stageRef.current;
     const img = imgRef.current;
     if (!stage || !img) return;
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      const next = img.naturalWidth / img.naturalHeight;
+      setAspect((prev) => (prev !== null && Math.abs(prev - next) < 0.001 ? prev : next));
+    }
     setBox(contentBoxFor(stage.clientWidth, stage.clientHeight, img.naturalWidth, img.naturalHeight));
   }, []);
 
@@ -220,7 +227,7 @@ export default function RoomRenderView({
 
   return (
     <div
-      className="room-render-view"
+      className={`room-render-view${aspect ? ' room-render-view--fit' : ''}`}
       aria-busy={rendering}
       onMouseLeave={() => link(null)}
     >
@@ -254,7 +261,11 @@ export default function RoomRenderView({
         )}
       </div>
 
-      <div className="room-render-view__stage" ref={stageRef}>
+      <div
+        className="room-render-view__stage"
+        ref={stageRef}
+        style={aspect ? { aspectRatio: String(aspect) } : undefined}
+      >
         {shownUrl && (
           <img
             ref={imgRef}
