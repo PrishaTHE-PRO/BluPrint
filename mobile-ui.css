@@ -632,7 +632,12 @@
     background: transparent !important;
     box-shadow: none !important;
     gap: 18px !important;
-    overflow-y: auto;
+    /* !important: design-system.css's 900px block sets overflow: visible
+       !important on this card, which left the sheet's lower half (Room name,
+       Save & Continue) clipped and unscrollable in photo mode. */
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
   .page-dimensions main > section:last-child > .garden-card::-webkit-scrollbar { display: none; }
@@ -799,11 +804,38 @@
     font: 600 14px "DM Sans", sans-serif !important;
     text-align: left !important;
   }
+  /* Style chips carry a name and a description: stack them instead of
+     running them together on one line. */
+  .page-inspo #style-grid > * {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    padding: 9px 16px !important;
+  }
+  /* Colour swatches: equal columns so every button is the same size. */
   .page-inspo #color-grid {
-    display: flex !important;
-    flex-wrap: wrap;
-    grid-template-columns: none !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 9px !important;
+  }
+  .page-inspo #color-grid > .option-btn {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    min-width: 0;
+    height: 104px !important;
+    padding: 12px 8px !important;
+    text-align: center !important;
+  }
+  .page-inspo #color-grid > .option-btn > span { flex-shrink: 0; }
+  .page-inspo #color-grid > .option-btn > p {
+    margin: 0;
+    font-size: 12px !important;
+    line-height: 1.25;
+    text-align: center;
   }
 
   /* Uploaded photos become a snapping strip. */
@@ -860,13 +892,15 @@
     gap: 16px !important;
     margin-top: 18px;
   }
-  /* Homepage / Save / Export stack; the icon button stays a 44px square.
-     These carry Tailwind colour utilities that read as near-invisible on the
-     light skin, so the mobile layer restates them from the design tokens. */
+  /* Regenerate / Homepage / Save stack. */
   .page-result main > header .flex.gap-3 {
     display: grid !important;
     grid-template-columns: 1fr;
     gap: 10px !important;
+  }
+  /* Regenerate (first in the markup) drops to the bottom of the stack on phones. */
+  .page-result main > header .flex.gap-3 > :first-child {
+    order: 1;
   }
   .page-result main > header .flex.gap-3 > a,
   .page-result main > header .flex.gap-3 > button {

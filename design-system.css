@@ -4104,15 +4104,6 @@ html.dark-mode body.page-inspo #generate-room-design:hover,
 html.dark-mode .ai-analysis-panel #generate-room-design:hover {
   background: var(--bp-primary-hover) !important;
 }
-html.dark-mode body.page-inspo #step2-back {
-  background: rgba(36, 49, 64, 0.9) !important;
-  color: var(--bp-ink) !important;
-  border: 1px solid rgba(126, 168, 201, 0.16) !important;
-}
-html.dark-mode body.page-inspo #step2-back:hover {
-  background: rgba(48, 66, 88, 0.98) !important;
-  border-color: rgba(126, 168, 201, 0.32) !important;
-}
 html.dark-mode body.page-inspo #clear-budget {
   color: var(--bp-primary) !important;
 }
@@ -4412,22 +4403,31 @@ html.dark-mode .page-result .room-render-view {
 }
 
 
-/* Room result page colours. Change them here.
+/* Light translucent blue button, shared by the room result buttons and every
+   Back button. Change it here. */
+:root {
+  --bp-btn-soft-bg: rgba(136, 178, 210, .22);
+  --bp-btn-soft-bg-hover: rgba(136, 178, 210, .36);
+  --bp-btn-soft-border: rgba(136, 178, 210, .45);
+  --bp-btn-soft-text: #1f2f45;
+}
+html.dark-mode {
+  --bp-btn-soft-bg: rgba(126, 168, 201, .36);
+  --bp-btn-soft-bg-hover: rgba(126, 168, 201, .48);
+  --bp-btn-soft-border: rgba(126, 168, 201, .52);
+  --bp-btn-soft-text: var(--bp-ink);
+}
+
+/* Room result page colours.
    --result-blue: accents (render highlight, progress bar).
    --result-btn-*: every button on the page (header, Render my room, card actions). */
 .page-result {
   --result-blue: var(--bp-primary);
   --result-blue-hover: var(--bp-primary-hover);
-  --result-btn-bg: rgba(136, 178, 210, .22);
-  --result-btn-bg-hover: rgba(136, 178, 210, .36);
-  --result-btn-border: rgba(136, 178, 210, .45);
-  --result-btn-text: #1f2f45;
-}
-html.dark-mode .page-result {
-  --result-btn-bg: rgba(126, 168, 201, .36);
-  --result-btn-bg-hover: rgba(126, 168, 201, .48);
-  --result-btn-border: rgba(126, 168, 201, .52);
-  --result-btn-text: var(--bp-ink);
+  --result-btn-bg: var(--bp-btn-soft-bg);
+  --result-btn-bg-hover: var(--bp-btn-soft-bg-hover);
+  --result-btn-border: var(--bp-btn-soft-border);
+  --result-btn-text: var(--bp-btn-soft-text);
 }
 
 /* Regenerate / Return to Homepage / Save Layout share one look at every width. */
@@ -4519,3 +4519,61 @@ body.page-result main > header .result-action iconify-icon { color: inherit !imp
   font-family: "DM Sans", sans-serif;
   font-weight: 500;
 }
+/* Inspo style options: name on top, description underneath, at every width. */
+.page-inspo #style-grid .style-option__name {
+  display: block;
+  margin: 0;
+  color: var(--bp-ink) !important;
+  font-size: 15px !important;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.page-inspo #style-grid .style-option__desc {
+  display: block;
+  margin: 2px 0 0;
+  color: var(--bp-muted) !important;
+  font-size: 12px !important;
+  font-weight: 400;
+  line-height: 1.35;
+}
+.page-inspo #style-grid .option-btn.selected .style-option__name,
+.page-inspo #style-grid .option-btn.selected .style-option__desc {
+  color: #fff !important;
+}
+html.dark-mode .page-inspo #style-grid .option-btn.selected .style-option__name,
+html.dark-mode .page-inspo #style-grid .option-btn.selected .style-option__desc {
+  color: #0d1218 !important;
+}
+
+/* Back buttons (inspo step 2 and the phone step bar), desktop and mobile:
+   same light translucent blue as the room result buttons. */
+body .m-back,
+body.page-inspo #step2-back {
+  border: 1px solid var(--bp-btn-soft-border) !important;
+  background: var(--bp-btn-soft-bg) !important;
+  color: var(--bp-btn-soft-text) !important;
+  font-family: "DM Sans", sans-serif !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+body .m-back:hover,
+body.page-inspo #step2-back:hover {
+  background: var(--bp-btn-soft-bg-hover) !important;
+}
+body .m-back iconify-icon,
+body.page-inspo #step2-back iconify-icon { color: inherit !important; }
+/* Back and Analyze on inspo step 2: Analyze matches Back's original size
+   (px-8 py-3, 16px text). */
+body.page-inspo #step2-back,
+body.page-inspo #step2-analyze {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 32px !important;
+  border-radius: 16px !important;
+  font-size: 16px !important;
+  line-height: 1.5;
+}
+body.page-inspo #step2-back iconify-icon,
+body.page-inspo #step2-analyze iconify-icon { margin: 0 !important; }

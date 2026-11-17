@@ -784,7 +784,7 @@
       STYLES.forEach(s => {
         const btn = document.createElement('button');
         btn.className = 'option-btn' + (state.selectedStyle === s.label ? ' selected' : '');
-        btn.innerHTML = `<p class="font-bold text-lg">${s.label}</p><p class="text-xs text-[#F7F4D5]/40">${s.desc}</p>`;
+        btn.innerHTML = `<p class="style-option__name">${s.label}</p><p class="style-option__desc">${s.desc}</p>`;
         btn.addEventListener('click', () => {
           grid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
