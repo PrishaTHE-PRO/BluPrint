@@ -1227,38 +1227,75 @@ button.theme-switch-btn {
   gap: 16px !important;
 }
 .page-dashboard #projects-grid .garden-card { padding: 0 !important; }
-/* Floating rooms: the iso drawing floats on a soft shadow inside a soft white
-   card the blueprint grid shows through, with the room name centred underneath
+/* Floating rooms: the iso drawing floats on a soft shadow inside a soft teal
+   glow the blueprint grid shows through, with the room name centred underneath
    and its square footage in small print along the front floor edge (drawn by
    iso-preview.js). */
-/* No border: the tint is a white radial wash, strongest behind the room and
-   fading to clear at the card's edges. --float-tint is the centre colour. */
+/* No border, no shadow: a soft teal ombre glows from behind the room and
+   fades to fully clear at the card's edges. `closest-side` keeps the whole
+   fade inside the card, so every edge and corner is transparent. A second,
+   fainter blob in a neighbouring hue (mint / periwinkle / aqua, cycled per
+   card) sits off-centre and also fades out well inside the card.
+   --float-core is the centre strength; it's registered so hover can ease it. */
+@property --float-core { syntax: '<percentage>'; inherits: false; initial-value: 48%; }
 .page-dashboard #projects-grid .room-float,
 .page-projects #all-projects-grid .room-float {
-  --float-tint: color-mix(in srgb, #fff 55%, transparent);
-  padding: 0 0 14px !important;
+  --float-teal: #4b8dbf;
+  --float-core: 48%;
+  --float-accent: #7fd1c4;
+  --float-accent-at: 36% 40%;
+  /* Side padding keeps neighbouring rooms a little further apart. */
+  padding: 0 22px 14px !important;
   /* .garden-card frosts what's behind it; keep the blueprint crisp here. */
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  background: radial-gradient(ellipse 80% 80% at 50% 45%, var(--float-tint) 0%, var(--float-tint) 50%, transparent 100%) !important;
+  background:
+    radial-gradient(ellipse closest-side at var(--float-accent-at),
+      color-mix(in srgb, var(--float-accent) 11%, transparent) 0%,
+      color-mix(in srgb, var(--float-accent) 5%, transparent) 40%,
+      transparent 70%),
+    radial-gradient(ellipse closest-side at 50% 45%,
+      color-mix(in srgb, var(--float-teal) var(--float-core), transparent) 0%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .92), transparent) 38%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .66), transparent) 60%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .34), transparent) 78%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .1), transparent) 91%,
+      transparent 100%) !important;
   border-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
+  /* A spinning room draws past its frame at full size; let it show. */
+  overflow: visible !important;
+  transition: --float-core .3s ease;
 }
+.page-dashboard #projects-grid .room-float:nth-child(3n+2),
+.page-projects #all-projects-grid .room-float:nth-child(3n+2) { --float-accent: #9fb4ff; --float-accent-at: 64% 38%; }
+.page-dashboard #projects-grid .room-float:nth-child(3n+3),
+.page-projects #all-projects-grid .room-float:nth-child(3n+3) { --float-accent: #8fd8f0; --float-accent-at: 50% 58%; }
 .page-dashboard #projects-grid .room-float:hover,
 .page-projects #all-projects-grid .room-float:hover {
-  --float-tint: color-mix(in srgb, #fff 70%, transparent);
+  --float-core: 56%;
   border-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
 }
+/* Dark mode: same shape and colour, a touch stronger so it shows. */
 html.dark-mode .page-dashboard #projects-grid .room-float,
 html.dark-mode .page-projects #all-projects-grid .room-float {
-  --float-tint: color-mix(in srgb, #fff 7%, transparent);
+  --float-teal: #4b8dbf;
+  --float-core: 50%;
 }
 html.dark-mode .page-dashboard #projects-grid .room-float:hover,
 html.dark-mode .page-projects #all-projects-grid .room-float:hover {
-  --float-tint: color-mix(in srgb, #fff 10%, transparent);
+  --float-core: 58%;
+}
+/* The pencil is cream for the old dark cards; on the light teal wash it
+   needs ink. Dark mode's --bp-ink is already light. */
+.page-dashboard #projects-grid .room-float .rename-btn,
+.page-projects #all-projects-grid .room-float .rename-btn { color: var(--bp-ink); }
+@media (prefers-reduced-motion: reduce) {
+  .page-dashboard #projects-grid .room-float,
+  .page-projects #all-projects-grid .room-float { transition: none; }
 }
 .page-dashboard #projects-grid .room-float-preview,
 .page-projects #all-projects-grid .room-float-preview { aspect-ratio: 4/3; }

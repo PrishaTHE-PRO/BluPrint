@@ -1042,10 +1042,9 @@
     display: flex !important;
     gap: 14px;
     padding: 12px !important;
-    border: 1px solid var(--bp-border) !important;
     border-radius: 20px !important;
-    background: var(--m-card) !important;
-    box-shadow: var(--m-sh) !important;
+    /* No fill, border or shadow: the teal ombre from design-system.css
+       (.room-float) shows here too, clear at the edges. */
   }
   .page-projects #all-projects-grid .garden-card:hover { transform: none; }
   .page-projects #all-projects-grid .garden-card > div:first-child {
@@ -1116,10 +1115,12 @@
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
-    /* overflow-x also clips vertically: leave room for the hover lift and
-       shadow, then pull the space back out of the layout. */
-    padding: 6px 0 40px;
-    margin: -6px 0 -32px;
+    /* overflow-x also clips vertically: leave room for the hover lift, the
+       float, the full-size spinning room (it reaches ~30px past its frame)
+       and the shadow, then pull the space back out of the layout. */
+    padding: 48px 16px 48px;
+    margin: -48px -16px -40px;
+    scroll-padding-inline: 16px;
   }
   .page-dashboard #projects-grid::-webkit-scrollbar { display: none; }
   .page-dashboard #projects-grid > * {

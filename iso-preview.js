@@ -1151,6 +1151,8 @@ export function attachIsoTilt(card, room, opts = {}) {
             draw(0, 0); // the exact resting drawing
             return;
         }
+        // Full size at every angle: the room may draw past its frame while it
+        // turns (the <svg> and its card are overflow: visible).
         if (!draw(TILT.yaw * t * rad + spin, TILT.pitch * t * rad)) { raf = 0; return; }
         raf = requestAnimationFrame(tick);
     };
