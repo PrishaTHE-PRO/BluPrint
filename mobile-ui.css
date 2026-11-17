@@ -377,20 +377,37 @@
   .page-dashboard .dashboard-section-heading h2 { margin-right: auto !important; }
   .page-dashboard .dashboard-section-heading .m-deck-nav { margin-left: 10px; }
 
+  /* Carousel deck: the rooms sit around a cylinder. The one in the middle
+     faces you; the others swing round the curve, back and to the side, and
+     fade. mobile-ui.js sets --deck-x, --deck-z, --deck-turn, --deck-dim and
+     --deck-fade on each card from its distance to the centre. */
   .page-dashboard #projects-grid {
+    --deck-card: 258px;
     display: flex !important;
     grid-template-columns: none !important;
-    gap: 14px;
-    padding: 0 24px 6px;
+    gap: 6px;
+    /* Side padding lets the first and last rooms reach the centre. */
+    padding: 10px calc(50% - var(--deck-card) / 2) 16px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    scroll-padding-left: 24px;
     scrollbar-width: none;
+    perspective: 1600px; /* deeper view = less keystone stretch on the side rooms */
+    position: relative; /* cards measure offsetLeft against the deck */
   }
   .page-dashboard #projects-grid::-webkit-scrollbar { display: none; }
   .page-dashboard #projects-grid > * {
-    flex: 0 0 258px;
-    scroll-snap-align: start;
+    flex: 0 0 var(--deck-card);
+    scroll-snap-align: center;
+  }
+  /* Individual translate/rotate properties: the room cards pin `transform`.
+     No transition: the values follow the finger frame by frame. */
+  .page-dashboard #projects-grid > .garden-card {
+    translate: var(--deck-x, 0px) 0 var(--deck-z, 0px);
+    rotate: y var(--deck-turn, 0deg);
+    scale: 1 var(--deck-scale-y, 1);
+    filter: brightness(var(--deck-dim, 1));
+    opacity: var(--deck-fade, 1);
+    will-change: translate, rotate;
   }
   .page-dashboard #projects-grid .garden-card:hover { transform: none; }
   .page-dashboard #projects-grid .room-float-preview { aspect-ratio: 3 / 2; }

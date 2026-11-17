@@ -253,21 +253,69 @@
       prev.disabled = grid.scrollLeft <= 1;
       next.disabled = grid.scrollLeft >= max - 1;
       if (!cards.length) return;
-      var left = grid.getBoundingClientRect().left + (parseFloat(getComputedStyle(grid).paddingLeft) || 0);
       var index = 0, best = Infinity;
-      cards.forEach(function (card, i) {
-        var delta = Math.abs(card.getBoundingClientRect().left - left);
-        if (delta < best) { best = delta; index = i; }
-      });
-      // At the far end the last cards can't reach the left edge; light the last dot.
-      if (max > 1 && grid.scrollLeft >= max - 1) index = cards.length - 1;
+
+      if (MQ.matches) {
+        // Phone carousel: the cards sit on a cylinder. A card d steps from the
+        // middle sits at angle d * STEP_DEG round it, so it is drawn at
+        // R·sin(angle) across (instead of its flat d·step) and R·(1 − cos) back,
+        // turned by the same angle. offsetLeft ignores the translate/rotate we
+        // apply, so measuring never feeds back into itself.
+        var STEP_DEG = 38;          // how far round the cylinder each room sits
+        var middle = grid.scrollLeft + grid.clientWidth / 2;
+        var gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+        cards.forEach(function (card, i) {
+          var step = card.offsetWidth + gap;
+          var d = (card.offsetLeft + card.offsetWidth / 2 - middle) / (step || 1);
+          // Smaller radius pulls the side rooms in so they tuck behind the front one.
+          var radius = card.offsetWidth * 0.78;
+          var angle = Math.max(-100, Math.min(100, d * STEP_DEG)) * Math.PI / 180;
+          var x = radius * Math.sin(angle) - d * step;   // pull towards the curve
+          var z = -radius * (1 - Math.cos(angle));        // and back into the page
+          var a = Math.abs(d);
+          card.style.setProperty('--deck-x', x.toFixed(1) + 'px');
+          card.style.setProperty('--deck-z', z.toFixed(1) + 'px');
+          // Negative: the outer edge turns away, so the deck reads as the
+          // outside of a carousel rather than the inside of a bowl.
+          // Turned only ~40% of their place on the curve, so the side rooms
+          // read as angled without being stretched out of shape.
+          card.style.setProperty('--deck-turn', (-angle * 0.4 * 180 / Math.PI).toFixed(1) + 'deg');
+          // Back rooms run a little shorter than the front one, with only a
+          // faint darkening.
+          card.style.setProperty('--deck-scale-y', Math.max(0.84, 1 - 0.1 * a).toFixed(3));
+          card.style.setProperty('--deck-dim', Math.max(0.95, 1 - 0.04 * a).toFixed(3));
+          card.style.setProperty('--deck-fade', Math.max(0, Math.min(1, 1.9 - 0.75 * a)).toFixed(3));
+          card.style.zIndex = String(100 - Math.round(a * 10));
+          if (a < best) { best = a; index = i; }
+        });
+      } else {
+        cards.forEach(function (card) {
+          ['--deck-x', '--deck-z', '--deck-turn', '--deck-scale-y', '--deck-dim', '--deck-fade'].forEach(function (p) {
+            card.style.removeProperty(p);
+          });
+          card.style.removeProperty('z-index');
+        });
+        var left = grid.getBoundingClientRect().left + (parseFloat(getComputedStyle(grid).paddingLeft) || 0);
+        cards.forEach(function (card, i) {
+          var delta = Math.abs(card.getBoundingClientRect().left - left);
+          if (delta < best) { best = delta; index = i; }
+        });
+        // At the far end the last cards can't reach the left edge; light the last dot.
+        if (max > 1 && grid.scrollLeft >= max - 1) index = cards.length - 1;
+      }
       Array.prototype.forEach.call(dots.children, function (d, i) {
         d.classList.toggle('is-active', i === index);
       });
     }
 
-    grid.addEventListener('scroll', syncDots, { passive: true });
+    var deckFrame = 0;
+    function onDeckScroll() {
+      if (deckFrame) return;
+      deckFrame = requestAnimationFrame(function () { deckFrame = 0; syncDots(); });
+    }
+    grid.addEventListener('scroll', onDeckScroll, { passive: true });
     window.addEventListener('resize', syncDots);
+    if (MQ.addEventListener) MQ.addEventListener('change', syncDots);
     new MutationObserver(refresh).observe(grid, { childList: true });
     refresh();
   }
