@@ -4651,3 +4651,23 @@ body.page-inspo #step2-analyze iconify-icon { margin: 0 !important; }
   flex: 0 0 auto;
   width: 100%;
 }
+
+/* Room dimensions: frosted-glass tiles. The panels let the blueprint
+   background show through, softened by a blur, instead of sitting on it as
+   solid cards. Placed last so it wins over the solid fills above. */
+.page-dimensions .garden-card,
+.page-dimensions .garden-card:hover,
+.page-dimensions .canvas-area,
+.page-dimensions #photo-panel {
+  background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
+  border-color: color-mix(in srgb, #fff 70%, transparent) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+  backdrop-filter: blur(22px) saturate(140%) !important;
+}
+html.dark-mode body.page-dimensions .garden-card,
+html.dark-mode body.page-dimensions .garden-card:hover,
+html.dark-mode body.page-dimensions .canvas-area,
+html.dark-mode body.page-dimensions #photo-panel {
+  background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
+  border-color: rgba(126, 168, 201, 0.2) !important;
+}

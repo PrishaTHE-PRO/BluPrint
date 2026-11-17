@@ -1104,15 +1104,15 @@ function renderRoomPreviewFlat(room) {
 
 
 // Hover motion for a room card: while the pointer is on `card`, the camera
-// swings around the room and rises a little, and after a moment on the card
-// starts slowly spinning all the way around at a steady speed. On leave it eases back the
-// short way to the standard view. Each frame redraws the sketch from the new
+// swings around the room, rises a little and right away starts slowly spinning
+// all the way around at a steady speed. On leave it eases back the short way
+// to the standard view. Each frame redraws the sketch from the new
 // angle into the card's existing <svg>, so CSS on that element (lift, shadow,
 // float) keeps running. Mouse/pen only; off for reduced motion.
 const TILT = {
     yaw: 16, pitch: 9, easeMs: 140,
-    spinAfterMs: 1400,   // hover this long before the idle spin starts
-    spinTurnMs: 28235,   // one full turn, at a steady speed (24s slowed by 15%)
+    spinAfterMs: 0,      // spin starts as soon as the pointer is on the card
+    spinTurnMs: 30690,   // one full turn, at a steady speed
     homeEaseMs: 260,     // how quickly it turns back to rest on leave
 };
 export function attachIsoTilt(card, room, opts = {}) {
