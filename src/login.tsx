@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import rough from 'roughjs/bundled/rough.esm.js';
 import { FloatingInput } from './components/ui/floating-input';
-import { renderRoomPreview } from '../iso-preview.js';
+import { renderRoomPreview, attachIsoTilt } from '../iso-preview.js';
 import './index.css';
 
 (window as Window & { rough?: typeof rough }).rough = rough;
@@ -211,11 +211,13 @@ function renderLoginRoomMockups() {
 
     if (!room) return;
 
-    card.innerHTML = renderRoomPreview({
-      ...room,
-      _id: `${room._id}-${index}`,
-    });
+    // Same sketch, floating glow and hover spin as the dashboard room cards:
+    // attachIsoTilt redraws the <svg> inside .room-float-preview each frame.
+    const sized = { ...room, _id: `${room._id}-${index}` };
+    const opts = { floorLabel: `${room.widthFt * room.lengthFt} sq ft` };
+    card.innerHTML = `<div class="room-float-preview">${renderRoomPreview(sized, opts)}</div>`;
     card.classList.add('is-rendered');
+    attachIsoTilt(card, sized, opts);
   });
 }
 

@@ -4740,3 +4740,177 @@ html.dark-mode body.page-result .furniture-h-strip {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+/* Analyze Style: the right-hand panel (How it works, then the AI analysis)
+   gets the same frosted glass as the room dimensions panels. */
+html body.page-inspo .how-it-works-panel,
+html body.page-inspo .ai-analysis-panel {
+  background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
+  border-color: color-mix(in srgb, #fff 70%, transparent) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+  backdrop-filter: blur(22px) saturate(140%) !important;
+}
+html.dark-mode body.page-inspo .how-it-works-panel,
+html.dark-mode body.page-inspo .ai-analysis-panel {
+  background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
+  border-color: rgba(126, 168, 201, 0.2) !important;
+}
+
+/* Sign in: the moving strip of rooms uses the dashboard room cards' look and
+   motion. Each room sits on the same blue glow (no card box), lifts and
+   floats on hover, and spins slowly while hovered (attachIsoTilt in
+   iso-preview.js, wired in src/login.tsx). Hovering the strip pauses it so a
+   spinning room stays put under the pointer. */
+html body.page-login .login-room-stage {
+  /* Room to spin at full size without being cut off at the top or bottom. */
+  padding: 34px 0 40px;
+}
+html body.page-login .login-room-stage:hover .login-room-track {
+  animation-play-state: paused;
+}
+html body.page-login .login-room-stage .login-room-card {
+  --float-teal: #4b8dbf;
+  --float-core: 48%;
+  --float-accent: #7fd1c4;
+  --float-accent-at: 36% 40%;
+  overflow: visible;
+  border-color: transparent;
+  background:
+    radial-gradient(ellipse closest-side at var(--float-accent-at),
+      color-mix(in srgb, var(--float-accent) 11%, transparent) 0%,
+      color-mix(in srgb, var(--float-accent) 5%, transparent) 40%,
+      transparent 70%),
+    radial-gradient(ellipse closest-side at 50% 50%,
+      color-mix(in srgb, var(--float-teal) var(--float-core), transparent) 0%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .92), transparent) 38%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .66), transparent) 60%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .34), transparent) 78%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .1), transparent) 91%,
+      transparent 100%);
+  box-shadow: none;
+  transition: --float-core .3s ease;
+}
+html body.page-login .login-room-stage .login-room-card:nth-child(3n+2) { --float-accent: #9fb4ff; --float-accent-at: 64% 38%; }
+html body.page-login .login-room-stage .login-room-card:nth-child(3n+3) { --float-accent: #8fd8f0; --float-accent-at: 50% 58%; }
+html body.page-login .login-room-stage .login-room-card:hover {
+  --float-core: 56%;
+  box-shadow: none;
+  /* The room itself lifts and turns; the card doesn't grow. */
+  transform: translateY(var(--login-room-card-y));
+}
+html.dark-mode body.page-login .login-room-stage .login-room-card { --float-core: 50%; background-color: transparent; }
+html.dark-mode body.page-login .login-room-stage .login-room-card:hover { --float-core: 58%; }
+html body.page-login .login-room-stage .login-room-card::before { display: none; }
+html body.page-login .login-room-card .room-float-preview {
+  position: absolute;
+  inset: 4px 14px;
+  perspective: 900px;
+}
+html body.page-login .login-room-card .iso-paper { display: none; }
+html body.page-login .login-room-stage .login-room-card .room-float-preview > svg {
+  position: static;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform-origin: 50% 60%;
+  translate: 0 calc(var(--room-bob) * var(--room-bob-height));
+  filter: drop-shadow(0 10px 20px rgba(20, 32, 46, .12));
+  animation: room-bob 3.2s ease-in-out infinite;
+  transition:
+    transform .6s cubic-bezier(.2, .8, .2, 1),
+    filter .6s cubic-bezier(.2, .8, .2, 1),
+    --room-bob-height .6s cubic-bezier(.2, .8, .2, 1);
+}
+@media (hover: hover) {
+  html body.page-login .login-room-stage .login-room-card:hover .room-float-preview > svg {
+    transform: translateZ(18px) translateY(-8px);
+    filter: drop-shadow(-14px 22px 24px rgba(20, 32, 46, .22));
+    --room-bob-height: -8px;
+  }
+}
+html body.page-login .login-room-card .iso-floor-label {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  letter-spacing: .06em;
+  opacity: .55;
+}
+@media (prefers-reduced-motion: reduce) {
+  html body.page-login .login-room-stage .login-room-card { transition: none; }
+  html body.page-login .login-room-stage .login-room-card .room-float-preview > svg { transition: none; animation: none; }
+}
+/* The white haze behind the strip washed out the glow (and read as a grey
+   band in dark mode); each room's own glow replaces it. */
+html body.page-login .login-room-stage::before,
+html body.page-login .login-room-showcase::before { display: none; }
+/* Each room nearly fills its card, so the glow is drawn on a layer that
+   reaches past the card's edges to show around the room like on the dashboard. */
+html body.page-login .login-room-stage .login-room-card,
+html.dark-mode body.page-login .login-room-stage .login-room-card { background: none; }
+html body.page-login .login-room-stage .login-room-card::after {
+  position: absolute;
+  inset: -26px -34px;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse closest-side at var(--float-accent-at),
+      color-mix(in srgb, var(--float-accent) 11%, transparent) 0%,
+      color-mix(in srgb, var(--float-accent) 5%, transparent) 40%,
+      transparent 70%),
+    radial-gradient(ellipse closest-side at 50% 50%,
+      color-mix(in srgb, var(--float-teal) var(--float-core), transparent) 0%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .92), transparent) 38%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .66), transparent) 60%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .34), transparent) 78%,
+      color-mix(in srgb, var(--float-teal) calc(var(--float-core) * .1), transparent) 91%,
+      transparent 100%);
+}
+/* --float-core is registered as non-inheriting; pull the card's (eased)
+   value onto the glow layer, and keep the layer behind this card's room. */
+html body.page-login .login-room-stage .login-room-card::after { --float-core: inherit; }
+html body.page-login .login-room-stage .login-room-card { isolation: isolate; }
+
+/* Sign in: the two word banners (room types strip and the tagline) are teal
+   instead of pink. */
+html body.page-login .login-room-type-banner,
+html body.page-login .login-room-copy-banner {
+  border-color: rgba(47, 111, 143, .24);
+  background: color-mix(in srgb, #2f6f8f 20%, var(--bp-surface));
+  box-shadow: 0 18px 40px rgba(47, 111, 143, .12), inset 0 1px 0 rgba(255, 255, 255, .7);
+}
+html body.page-login .login-room-type-banner { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6); }
+html body.page-login .login-room-type-track span {
+  border-color: rgba(47, 111, 143, .2);
+  color: #2f6f8f;
+}
+html.dark-mode body.page-login .login-room-type-banner,
+html.dark-mode body.page-login .login-room-copy-banner {
+  border-color: rgba(126, 168, 201, .3);
+  background: #2f6f8f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+html.dark-mode body.page-login .login-room-copy-banner { box-shadow: 0 18px 40px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .12); }
+html.dark-mode body.page-login .login-room-type-track span { color: #2f6f8f; }
+html.dark-mode body.page-login .login-room-copy-banner strong { color: #f3f7fa; }
+html.dark-mode body.page-login .login-room-copy-banner span { color: rgba(243, 247, 250, .78); }
+
+/* Logo: the top-left BluPrint wordmark is set in Nippo Medium
+   (self-hosted from public/fonts, ITF Free Font License). */
+@font-face {
+  font-family: 'Nippo';
+  src: url('/fonts/Nippo-Medium.woff2') format('woff2'),
+       url('/fonts/Nippo-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+html body .app-brand.app-brand > span,
+html body .bp-wordmark-rest {
+  font-family: 'Nippo', "DM Sans", sans-serif !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  line-height: 1;
+}

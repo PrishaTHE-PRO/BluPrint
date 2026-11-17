@@ -114,6 +114,22 @@
       color: var(--ink);
       line-height: 1;
     }
+    /* Logo in Nippo Medium, like the app pages' wordmark. */
+    @font-face {
+      font-family: 'Nippo';
+      src: url('/fonts/Nippo-Medium.woff2') format('woff2'),
+           url('/fonts/Nippo-Medium.woff') format('woff');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+    .brand .brand-name {
+      font-family: 'Nippo', "DM Sans", sans-serif;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+    }
     .brand-mark {
       display: grid;
       width: 38px;
@@ -927,7 +943,7 @@
   <span class="ambient-orb ambient-three"></span>
   <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html" aria-label="BluPrint home">
-      <span class="brand-name">BLUPRINT</span>
+      <span class="brand-name">BluPrint</span>
     </a>
     <div class="nav-links">
       <a href="#features">What it does</a>

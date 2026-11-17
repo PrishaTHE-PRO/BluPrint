@@ -136,6 +136,15 @@
     }
     .photo-estimate-summary strong { color: var(--bp-ink); }
     .page-dimensions #dimension-fields.hidden { display: none !important; }
+    /* Under the width/length boxes once they hold the photo's estimate. */
+    .page-dimensions .dimension-estimate-note {
+      margin: -10px 0 0 !important;
+      font-size: 12px;
+      font-style: italic;
+      line-height: 1.5;
+      color: var(--bp-muted);
+    }
+    .page-dimensions .dimension-estimate-note[hidden] { display: none; }
 
     /* Detected furniture, with a per-piece "replace" toggle. */
     .photo-existing {
@@ -444,6 +453,7 @@
                 </div>
               </div>
             </div>
+            <p id="dimension-estimate-note" class="dimension-estimate-note" aria-live="polite" hidden>*This is a predicted estimate of your room's dimensions. You can click into the boxes to change them.</p>
             <p id="dimension-error" class="dimension-error hidden" role="alert" aria-live="polite"></p>
             <input type="hidden" id="room-height" value="9.5" data-sd-id="79">
           </div>
@@ -2435,6 +2445,7 @@ const photoMode = (() => {
     if (!state.active || userEditedDims) return;
     userEditedDims = true;
     syncAwaiting();
+    updateEstimateNote();
     // The other box was empty a moment ago; re-run the editor's handler now
     // that both hold a value so the size and any error message are current.
     if (typeof widthInput.oninput === "function") widthInput.oninput();
@@ -2492,7 +2503,18 @@ const photoMode = (() => {
     return currentUnit === "m" ? (ft * FT_TO_M).toFixed(1) + " m" : ft + " ft";
   }
 
+  // "*This is a predicted estimate..." under the boxes: shown while they hold
+  // the photo's estimate, hidden once the user types their own size or
+  // switches to Draw Room.
+  const estimateNote = document.getElementById("dimension-estimate-note");
+  function updateEstimateNote() {
+    if (!estimateNote) return;
+    // A fallback size is not a prediction; its own message says so.
+    estimateNote.hidden = !(state.active && state.estimate && !state.estimate.fallback && !userEditedDims);
+  }
+
   function updateSummary() {
+    updateEstimateNote();
     if (!summary) return;
     if (!state.active) { summary.hidden = true; return; }
     summary.hidden = false;
@@ -2660,6 +2682,8 @@ const photoMode = (() => {
 
     showPreview(URL.createObjectURL(file));
     userEditedDims = false;
+    // The boxes still show the last photo's numbers until this one is analyzed.
+    if (estimateNote) estimateNote.hidden = true;
     setStatus("Preparing your photo...");
     state.analyzing = true;
     try {
