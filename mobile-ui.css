@@ -1031,61 +1031,53 @@
   }
   .page-projects #all-projects-grid { margin-top: 24px; }
 
-  /* Cards become compact list rows with a thumbnail. */
+  /* Rooms stack down the page at full size, each as it looks on the
+     dashboard: the room itself, with its name in small type underneath. */
   .page-projects #all-projects-grid {
     display: flex !important;
     flex-direction: column;
     grid-template-columns: none !important;
-    gap: 12px !important;
+    gap: 22px !important;
   }
   .page-projects #all-projects-grid .garden-card {
-    display: flex !important;
-    gap: 14px;
-    padding: 12px !important;
+    display: block !important;
+    width: 100%;
+    padding: 0 !important;
     border-radius: 20px !important;
     /* No fill, border or shadow: the teal ombre from design-system.css
        (.room-float) shows here too, clear at the edges. */
   }
   .page-projects #all-projects-grid .garden-card:hover { transform: none; }
-  .page-projects #all-projects-grid .garden-card > div:first-child {
-    flex: 0 0 96px;
-    width: 96px;
-    height: 78px;
-    aspect-ratio: auto !important;
+  .page-projects #all-projects-grid .room-float-preview {
+    width: 100%;
+    aspect-ratio: 3 / 2 !important;
     margin: 0 !important;
-    border-radius: 14px !important;
   }
-  /* Tailwind's w-9/h-9/top-5/left-5 are injected at runtime — outrank them. */
-  .page-projects #all-projects-grid .garden-card > div:first-child .delete-btn {
-    top: 5px !important;
-    left: 5px !important;
-    width: 24px !important;
-    height: 24px !important;
+  /* Tailwind's w-9/h-9/top-5/left-5 are injected at runtime — outrank them.
+     On touch there is no hover, so the delete button stays visible. */
+  .page-projects #all-projects-grid .room-float .delete-btn {
+    top: 10px !important;
+    left: 10px !important;
+    width: 28px !important;
+    height: 28px !important;
     min-width: 0 !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
+    opacity: 1;
   }
-  .page-projects #all-projects-grid .delete-btn iconify-icon { font-size: 11px !important; }
-  .page-projects #all-projects-grid .garden-card > div:first-child > div:last-child { display: none; }
-  .page-projects #all-projects-grid .garden-card > div:last-child {
+  .page-projects #all-projects-grid .delete-btn iconify-icon { font-size: 12px !important; }
+  .page-projects #all-projects-grid .room-float-label {
     display: flex;
-    flex: 1;
-    flex-direction: column;
     justify-content: center;
-    min-width: 0;
-    padding: 0 !important;
+    padding: 6px 8px 0 !important;
   }
   .page-projects #all-projects-grid h3 {
     font-family: "Fraunces", serif !important;
-    font-size: 17px !important;
+    font-size: 19px !important;
     font-weight: 500 !important;
     letter-spacing: -.02em;
+    text-align: center;
   }
   .page-projects #all-projects-grid .rename-btn { display: none; }
-  .page-projects #all-projects-grid .garden-card > div:last-child > div:last-child {
-    margin-top: 8px !important;
-    padding-top: 0 !important;
-    border: 0 !important;
-  }
 }
 
 @media (max-width: 600px) and (prefers-reduced-motion: reduce) {
