@@ -2515,7 +2515,7 @@ a.workflow-step:focus-visible {
   padding: 26px 22px 22px;
   border: 1px solid var(--bp-border);
   border-radius: 22px;
-  background: linear-gradient(160deg, rgba(254, 252, 250, .96), rgba(239, 246, 250, .9));
+  background: rgba(254, 252, 250, .88); /* same as the 2D Room Layout */
   box-shadow: 0 18px 52px rgba(28, 23, 20, .08);
   backdrop-filter: blur(20px);
 }
@@ -2649,7 +2649,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   }
   .page-result main > header > div:last-child > div:last-child {
     display: grid !important;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: repeat(3, 1fr);
     width: 100%;
     gap: 10px !important;
   }
@@ -2946,10 +2946,6 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
   .page-result main > header a,
   .page-result main > header button {
     width: 100%;
-  }
-  .page-result main > header button:last-child {
-    width: 44px;
-    justify-self: end;
   }
   .page-result .result-furniture-section > div:first-child {
     flex-direction: column;
@@ -3614,7 +3610,6 @@ html.dark-mode .project-card-skeleton {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-html.dark-mode .page-result .result-dual-pane,
 html.dark-mode .page-result .furniture-strip,
 html.dark-mode .page-result .furniture-h-strip,
 html.dark-mode .page-result .furniture-scroll-panel {
@@ -3623,14 +3618,29 @@ html.dark-mode .page-result .furniture-scroll-panel {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
   backdrop-filter: blur(18px);
 }
-/* Keep floor-plan + iso sketches on warm paper so ink stays legible */
-html.dark-mode .page-result .room-layout-canvas,
+/* Keep the iso sketch on warm paper so its ink stays legible */
 html.dark-mode .page-result .iso-room-preview {
   background: linear-gradient(165deg, #efe8dc 0%, #e6dfd2 55%, #ddd5c6 100%) !important;
   border: 1px solid rgba(126, 168, 201, 0.22) !important;
   box-shadow:
     0 20px 52px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+/* 2D plan: half-transparent dark blue frame, with the tan moved onto the room floor.
+   The Shop pieces strip uses the same background. */
+html.dark-mode .page-result .room-layout-canvas,
+html.dark-mode .page-result .furniture-h-strip {
+  background: rgba(30, 44, 62, 0.6) !important;
+  border: 1px solid rgba(126, 168, 201, 0.22) !important;
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(18px);
+}
+html.dark-mode .page-result .room-layout-canvas svg [fill="#F7F4D5"] {
+  fill: #e6dfd2 !important;
+}
+/* Furniture labels sit on the tan floor, so they stay dark in dark mode. */
+html.dark-mode .page-result .room-layout-canvas svg text[fill="#0A3323"] {
+  fill: #1c1714 !important;
 }
 html.dark-mode .page-result .room-layout-canvas:hover,
 html.dark-mode .page-result .iso-room-preview:hover {
@@ -4200,15 +4210,15 @@ html.dark-mode input.room-name-input {
   padding: 12px 22px;
   border: 0;
   border-radius: 14px;
-  background: #D3968C;
+  background: var(--result-blue);
   color: #fff;
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+  box-shadow: 0 8px 22px rgba(61, 90, 128, .24);
   transition: background .2s ease, transform .2s ease;
 }
-.page-result .room-render-view__btn:hover { background: #c1867b; transform: translateY(-1px); }
+.page-result .room-render-view__btn:hover { background: var(--result-blue-hover); transform: translateY(-1px); }
 .page-result .room-render-view__btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .page-result .room-render-view__btn--small {
   padding: 7px 12px;
@@ -4283,9 +4293,9 @@ html.dark-mode input.room-name-input {
 .page-result .render-hotspot:hover,
 .page-result .render-hotspot:focus-within,
 .page-result .render-hotspot.is-linked {
-  border-color: #D3968C;
-  background: rgba(211, 150, 140, .14);
-  box-shadow: 0 0 0 3px rgba(211, 150, 140, .28);
+  border-color: var(--result-blue);
+  background: rgba(61, 90, 128, .14);
+  box-shadow: 0 0 0 3px rgba(61, 90, 128, .28);
 }
 .page-result .render-hotspot__card {
   display: none;
@@ -4380,7 +4390,7 @@ html.dark-mode input.room-name-input {
 .page-result .room-render-view__bar > div {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--bp-primary, #3d5a80), #839958);
+  background: var(--result-blue);
   transition: width .3s ease-out;
 }
 @keyframes room-render-spin { to { transform: rotate(360deg); } }
@@ -4399,4 +4409,113 @@ html.dark-mode input.room-name-input {
 html.dark-mode .page-result .room-render-view {
   border: 1px solid rgba(126, 168, 201, .22) !important;
   box-shadow: 0 20px 52px rgba(0, 0, 0, .35) !important;
+}
+
+
+/* Room result page colours. Change them here.
+   --result-blue: accents (render highlight, progress bar).
+   --result-btn-*: every button on the page (header, Render my room, card actions). */
+.page-result {
+  --result-blue: var(--bp-primary);
+  --result-blue-hover: var(--bp-primary-hover);
+  --result-btn-bg: rgba(136, 178, 210, .22);
+  --result-btn-bg-hover: rgba(136, 178, 210, .36);
+  --result-btn-border: rgba(136, 178, 210, .45);
+  --result-btn-text: #1f2f45;
+}
+html.dark-mode .page-result {
+  --result-btn-bg: rgba(126, 168, 201, .36);
+  --result-btn-bg-hover: rgba(126, 168, 201, .48);
+  --result-btn-border: rgba(126, 168, 201, .52);
+  --result-btn-text: var(--bp-ink);
+}
+
+/* Regenerate / Return to Homepage / Save Layout share one look at every width. */
+body.page-result main > header .flex.gap-3 > .result-action,
+body.page-result main > header .result-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px 22px !important;
+  border: 1px solid var(--result-btn-border) !important;
+  border-radius: 14px !important;
+  background: var(--result-btn-bg) !important;
+  color: var(--result-btn-text) !important;
+  font-family: "DM Sans", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.15;
+  text-decoration: none;
+  box-shadow: none !important;
+  transition: background .2s ease, transform .2s ease;
+}
+body.page-result main > header .flex.gap-3 > .result-action:hover,
+body.page-result main > header .result-action:hover {
+  background: var(--result-btn-bg-hover) !important;
+}
+body.page-result main > header .result-action iconify-icon { color: inherit !important; }
+
+/* Render my room uses the same look. The ghost variant over the image is unchanged. */
+.page-result .room-render-view__btn:not(.room-render-view__btn--ghost) {
+  border: 1px solid var(--result-btn-border);
+  background: var(--result-btn-bg);
+  color: var(--result-btn-text) !important;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  box-shadow: none;
+}
+.page-result .room-render-view__btn:not(.room-render-view__btn--ghost):hover {
+  background: var(--result-btn-bg-hover);
+}
+/* The render overlay sits on a photo, so give the light button a solid base there. */
+.page-result .room-render-view__center .room-render-view__btn {
+  background: linear-gradient(var(--result-btn-bg), var(--result-btn-bg)), var(--bp-surface);
+}
+.page-result .room-render-view__center .room-render-view__btn:hover {
+  background: linear-gradient(var(--result-btn-bg-hover), var(--result-btn-bg-hover)), var(--bp-surface);
+}
+
+/* Furniture card actions (Swap / Buy / Remove / Add). */
+.card-action {
+  border: 1px solid var(--result-btn-border, rgba(136, 178, 210, .45)) !important;
+  background: var(--result-btn-bg, rgba(136, 178, 210, .22)) !important;
+  color: var(--result-btn-text, #1f2f45) !important;
+  font-family: "DM Sans", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.3;
+  text-decoration: none;
+  box-shadow: none !important;
+}
+.card-action:hover:not(:disabled) {
+  background: var(--result-btn-bg-hover, rgba(136, 178, 210, .36)) !important;
+}
+.card-action iconify-icon,
+.card-action span { color: inherit !important; }
+/* Swap and Buy are the main card actions, so they run a little larger than Remove/Add. */
+.card-action.card-action--main { font-size: 13px !important; }
+/* Buy's label is a <span>; keep the card-wide span colour from overriding it
+   so it matches Swap exactly. */
+.page-result .garden-card .card-action span,
+.card-action > span {
+  color: inherit !important;
+  font: inherit !important;
+}
+/* Re-render sits on the rendered photo, so it uses the same dark
+   glass look as "Match plan to picture" beside it, in both modes. */
+.page-result .room-render-view__toolbar .room-render-view__btn:not(.room-render-view__btn--ghost) {
+  border: 1px solid rgba(247, 244, 213, .25);
+  background: rgba(23, 20, 15, .78);
+  color: #fff !important;
+  backdrop-filter: blur(6px);
+}
+.page-result .room-render-view__toolbar .room-render-view__btn:not(.room-render-view__btn--ghost):hover {
+  background: rgba(23, 20, 15, .92);
+}
+/* Ghost toolbar button follows the page's regular-weight button text. */
+.page-result .room-render-view__btn--ghost {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
 }

@@ -71,13 +71,7 @@ export default function FurniturePanel({
   ));
 
   const header = (
-    <div className="flex items-center justify-between animate-reveal mb-4 shrink-0" style={{ animationDelay: '0.4s' }}>
-      <h2 className="text-xl font-bold flex items-center gap-2">
-        Furniture
-        <span className="text-[#D3968C]">
-          <iconify-icon icon="ph:magic-wand-duotone" />
-        </span>
-      </h2>
+    <div className="flex items-center justify-end animate-reveal mb-4 shrink-0" style={{ animationDelay: '0.4s' }}>
       {total > 0 && (
         <div className={`px-3 py-1 rounded-full border ${
           style.budgetTotal > 0 && total > style.budgetTotal
@@ -100,7 +94,8 @@ export default function FurniturePanel({
   // server quietly scaled prices down so this could almost never happen.
   // For photo rooms. Amber when the room is full and only accents are
   // offered; neutral when we simply skipped what the picture already has.
-  const photoNotice = notice && (
+  // The "we kept what is already in your photo" variant is intentionally not shown.
+  const photoNotice = notice && notice.kind === 'full' && (
     <div
       role="status"
       className={`animate-reveal mb-4 rounded-2xl border px-4 py-3 ${

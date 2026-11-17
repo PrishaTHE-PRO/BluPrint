@@ -1525,12 +1525,6 @@ export default function RoomSVG({
           <iconify-icon icon="ph:layout-duotone" class="text-[#D3968C]" />
           2D Room Layout
         </h3>
-        <span className="text-[10px] text-[#F7F4D5]/40 font-medium text-right">
-          {ghostRects.length > 0 ? 'Dashed pieces are already in your room and stay put. ' : ''}
-          {coarsePointer
-            ? 'Tap to select · drag to move · tap/drag top handle to rotate'
-            : 'Drag to move · top handle rotates'}
-        </span>
       </div>
 
       {/* Floor plan SVG */}

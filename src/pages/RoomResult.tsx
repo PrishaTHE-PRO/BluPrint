@@ -931,14 +931,14 @@ export default function RoomResult() {
                 onClick={handleRegenerate}
                 disabled={furnitureLoading}
                 title="Pick a fresh set of furniture for this room"
-                className="px-6 py-3 bg-[#839958] hover:bg-[#93aa63] disabled:opacity-50 disabled:cursor-wait text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm"
+                className="result-action disabled:opacity-50 disabled:cursor-wait"
               >
                 <iconify-icon icon="ph:arrows-clockwise-bold" />
                 {furnitureLoading ? 'Regenerating…' : 'Regenerate'}
               </button>
               <a
                 href="/dashboard.html"
-                className="px-6 py-3 bg-[#105666] hover:bg-[#156a7d] text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm no-underline"
+                className="result-action no-underline"
               >
                 <iconify-icon icon="ph:house-duotone" />
                 Return to Homepage
@@ -947,8 +947,7 @@ export default function RoomResult() {
                 onClick={handleSaveLayout}
                 disabled={saveStatus === 'saving'}
                 className={[
-                  'px-6 py-3 text-white rounded-2xl font-bold flex items-center gap-2 transition-all text-sm',
-                  saveStatus === 'error' ? 'bg-[#D3968C] hover:bg-[#c1867b]' : 'bg-[#105666] hover:bg-[#156a7d]',
+                  'result-action',
                   saveStatus === 'saving' ? 'opacity-70 cursor-wait' : '',
                 ].join(' ')}
               >
@@ -961,9 +960,6 @@ export default function RoomResult() {
                   : saveStatus === 'saved' ? 'Auto-saved'
                   : saveStatus === 'error' ? 'Retry Save'
                   : 'Save Layout'}
-              </button>
-              <button className="p-3 bg-white/5 border border-white/10 text-white rounded-2xl hover:bg-white/10 transition-all">
-                <iconify-icon icon="ph:export-duotone" class="text-xl" />
               </button>
             </div>
           </div>
@@ -1024,13 +1020,6 @@ export default function RoomResult() {
         />
 
       </main>
-
-      <footer className="relative z-10 py-16 flex flex-col items-center gap-6 opacity-40">
-        <div className="w-12 h-12 flex items-center justify-center bg-[#839958]/20 rounded-full">
-          <iconify-icon icon="ph:house-line-duotone" class="text-2xl text-[#839958]" />
-        </div>
-        <p className="text-xs tracking-[0.3em] uppercase font-bold text-[#F7F4D5]">Designed with Serenity • BluPrint Room Planner</p>
-      </footer>
     </div>
   );
 }

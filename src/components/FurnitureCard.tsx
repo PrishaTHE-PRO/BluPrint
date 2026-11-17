@@ -17,7 +17,7 @@ interface Props {
 
 const BUY_BTN_CLASS =
   'buy-btn group relative inline-flex items-center justify-center overflow-hidden ' +
-  'bg-[#D3968C] text-white font-bold shadow transition-colors hover:bg-[#c1867b] whitespace-nowrap';
+  'card-action font-bold transition-colors whitespace-nowrap';
 
 export function BuyButton({ href, className = '' }: { href: string; className?: string }) {
   return (
@@ -160,12 +160,7 @@ export default function FurnitureCard({
       type="button"
       onClick={onToggleInRoom}
       title={inRoom ? 'Remove from floor plan' : 'Add back to floor plan'}
-      className={[
-        'flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold transition-all flex-shrink-0',
-        inRoom
-          ? 'text-[#F7F4D5]/40 hover:text-[#D3968C] hover:bg-white/5'
-          : 'text-[#839958] bg-[#839958]/15 hover:bg-[#839958]/30 hover:text-[#F7F4D5]',
-      ].join(' ')}
+      className="card-action flex items-center gap-1 px-2 py-0.5 rounded font-bold transition-all flex-shrink-0"
     >
       <iconify-icon icon={inRoom ? 'ph:minus-circle-duotone' : 'ph:plus-circle-duotone'} />
       {inRoom ? 'Remove' : 'Add'}
@@ -205,11 +200,11 @@ export default function FurnitureCard({
                 }}
                 disabled={!canSwap}
                 title={canSwap ? 'Try another product' : 'No other options yet'}
-                className="px-3 py-1.5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                className="card-action card-action--main px-4 py-2 rounded-lg font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Swap
               </button>
-              <BuyButton href={item.buyUrl} className="px-3 py-1.5 rounded-lg text-xs min-w-[3.25rem]" />
+              <BuyButton href={item.buyUrl} className="card-action--main px-4 py-2 rounded-lg min-w-[3.75rem]" />
             </div>
           </div>
         </div>
@@ -251,11 +246,11 @@ export default function FurnitureCard({
               }}
               disabled={!canSwap}
               title={canSwap ? 'Try another product' : 'No other options yet'}
-              className="px-2 py-0.5 border border-white/10 rounded text-[10px] font-bold hover:bg-white/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              className="card-action card-action--main px-3 py-1 rounded-md font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Swap
             </button>
-            <BuyButton href={item.buyUrl} className="px-2.5 py-0.5 rounded text-[10px] min-w-[2.75rem]" />
+            <BuyButton href={item.buyUrl} className="card-action--main px-3 py-1 rounded-md min-w-[3.25rem]" />
           </div>
         </div>
       </div>

@@ -888,14 +888,6 @@
     color: #fff !important;
     box-shadow: 0 8px 22px rgba(61, 90, 128, .24);
   }
-  .page-result main > header .flex.gap-3 > button:last-child {
-    width: 48px !important;
-    justify-self: end;
-    border: 1px solid var(--bp-border) !important;
-    background: var(--bp-surface) !important;
-    color: var(--bp-ink) !important;
-    box-shadow: none;
-  }
 
   .page-result .room-layout-canvas,
   .page-result .iso-room-preview {
