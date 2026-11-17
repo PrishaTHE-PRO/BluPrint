@@ -136,18 +136,6 @@
     }
     .photo-estimate-summary strong { color: var(--bp-ink); }
     .page-dimensions #dimension-fields.hidden { display: none !important; }
-    .photo-dimensions-option { display: none; }
-    body[data-input-mode="photo"] .photo-dimensions-option { display: block; }
-    .photo-dimensions-option label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .photo-dimensions-option input { accent-color: var(--bp-primary); }
-    .photo-dimensions-option p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--bp-muted); }
 
     /* Detected furniture, with a per-piece "replace" toggle. */
     .photo-existing {
@@ -194,8 +182,15 @@
     .photo-blurb__steps { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
     .photo-blurb__steps li { display: flex; gap: 10px; align-items: flex-start; }
     .photo-blurb__steps iconify-icon { flex-shrink: 0; margin-top: 2px; font-size: 18px; color: var(--bp-primary); }
+    /* Undo / redo only apply to the drawn plan, so they are hidden in Image Upload.
+       visibility (not display) keeps the header height, so the boxes do not jump
+       when switching tabs. */
+    body[data-input-mode="photo"] #btn-undo,
+    body[data-input-mode="photo"] #btn-redo { visibility: hidden; pointer-events: none; }
     /* One gray for every neutral fill on this page. */
     body.page-dimensions #room-name,
+    body.page-dimensions #room-width,
+    body.page-dimensions #room-length,
     body.page-dimensions kbd,
     body.page-dimensions #draggable-door,
     body.page-dimensions #draggable-door > div:first-child,
@@ -356,7 +351,7 @@
           <img id="photo-preview" alt="Your room" class="photo-dropzone__preview" hidden>
         </div>
         <div class="photo-panel__bar">
-          <p id="photo-status" class="photo-panel__status" aria-live="polite">We will estimate the room size from your photo.</p>
+          <p id="photo-status" class="photo-panel__status" aria-live="polite"></p>
           <button type="button" id="photo-replace" class="photo-panel__replace" hidden>Replace photo</button>
         </div>
       </div>
@@ -370,12 +365,6 @@
             Image Upload
           </h2>
           <div class="photo-blurb__card">
-            <p><strong>Upload one photo of the room</strong> and we take it from there.</p>
-            <ul class="photo-blurb__steps">
-              <li><iconify-icon icon="ph:ruler-duotone"></iconify-icon><span>We estimate the room's size and type from the photo. If you know the measurements, you can enter them below.</span></li>
-              <li><iconify-icon icon="ph:armchair-duotone"></iconify-icon><span>On the results page, the furniture we recommend is placed right into your photo, so you see the real pieces in your real room.</span></li>
-              <li><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon><span>Prefer to draw the room and place doors and windows yourself? Switch to Draw Room above.</span></li>
-            </ul>
             <p>A clear, well-lit shot taken from a doorway or corner works best.</p>
           </div>
         </div>
@@ -434,19 +423,10 @@
               <label for="room-name" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="66">ROOM NAME</label>
               <input type="text" id="room-name" value="My Room" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="67">
             </div>
-            <p id="photo-estimate-summary" class="photo-estimate-summary" hidden></p>
             <div id="photo-existing" class="photo-existing" hidden>
               <p class="photo-existing__title">Already in your photo</p>
               <p id="photo-existing-note" class="photo-existing__note"></p>
               <ul id="photo-existing-list" class="photo-existing__list"></ul>
-              <p class="photo-existing__hint">We keep these and only recommend what is missing. Tick a piece to have it replaced instead.</p>
-            </div>
-            <div class="photo-dimensions-option">
-              <label for="photo-manual-dimensions">
-                <input type="checkbox" id="photo-manual-dimensions" aria-controls="dimension-fields" aria-describedby="photo-dimensions-hint">
-                Enter room dimensions (optional)
-              </label>
-              <p id="photo-dimensions-hint">Use your own width and length, or leave this unchecked to estimate them from your photo.</p>
             </div>
             <div id="dimension-fields" class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
@@ -473,13 +453,6 @@
             Save &amp; Continue
             <iconify-icon icon="ph:arrow-right-bold" class="text-xl"></iconify-icon>
           </button>
-        </div>
-        <div class="mt-auto p-4 rounded-xl bg-[#D3968C]/5 border border-[#D3968C]/10 space-y-2" data-sd-id="82">
-          <div class="flex items-center gap-2 text-[#D3968C] text-xs font-bold" data-sd-id="83">
-            <iconify-icon icon="ph:command-bold"></iconify-icon>
-            <span data-sd-id="84">Shortcuts</span>
-          </div>
-          <p class="text-[#F7F4D5]/40 text-[10px] leading-relaxed" data-sd-id="85"><kbd class="px-1 py-0.5 bg-black/20 rounded">Ctrl+Z</kbd> Undo &nbsp;<kbd class="px-1 py-0.5 bg-black/20 rounded">Ctrl+Y</kbd> Redo &nbsp;<kbd class="px-1 py-0.5 bg-black/20 rounded">Del</kbd> Remove</p>
         </div>
       </div>
     </section>
@@ -509,6 +482,9 @@ const heightInput = document.getElementById("room-height");
 
 const ROOM_LAYOUT_SCALE = 20;
 let currentUnit = "ft";
+/** Image Upload mode before any photo is analyzed: width/length stay empty
+ *  until the photo's estimate fills them (set by photoMode below). */
+let dimsAwaitingPhoto = false;
 const FT_TO_M = 0.3048;
 const MIN_ROOM_FT = 5;
 const MAX_ROOM_FT = 50;
@@ -1894,10 +1870,10 @@ function updateDimensionsDisplay() {
   const decimals = currentUnit === "ft" ? 1 : 2;
   // Don't overwrite while typing — toFixed("17.") → "17.0" blocks decimals like 17.5.
   if (document.activeElement !== widthInput) {
-    widthInput.value = displayWidth.toFixed(decimals);
+    widthInput.value = dimsAwaitingPhoto ? "" : displayWidth.toFixed(decimals);
   }
   if (document.activeElement !== lengthInput) {
-    lengthInput.value = displayLength.toFixed(decimals);
+    lengthInput.value = dimsAwaitingPhoto ? "" : displayLength.toFixed(decimals);
   }
 
   let area = polygonArea(pts);
@@ -2452,7 +2428,28 @@ const photoMode = (() => {
   const existingList = document.getElementById("photo-existing-list");
   const existingNote = document.getElementById("photo-existing-note");
   const dimFields = document.getElementById("dimension-fields");
-  const manualDimensions = document.getElementById("photo-manual-dimensions");
+  // Width/length are always shown. The photo estimate fills them in, unless the
+  // user has typed their own size since this photo was picked.
+  let userEditedDims = false;
+  const markEdited = () => {
+    if (!state.active || userEditedDims) return;
+    userEditedDims = true;
+    syncAwaiting();
+    // The other box was empty a moment ago; re-run the editor's handler now
+    // that both hold a value so the size and any error message are current.
+    if (typeof widthInput.oninput === "function") widthInput.oninput();
+  };
+  // Until a photo is analyzed (or the user types a size), the boxes stay empty
+  // so the first values shown are the ones predicted from the photo.
+  function syncAwaiting() {
+    const awaiting = state.active && !state.photoUrl && !state.estimate && !userEditedDims;
+    if (awaiting === dimsAwaitingPhoto) return;
+    dimsAwaitingPhoto = awaiting;
+    widthInput.placeholder = lengthInput.placeholder = awaiting ? "From photo" : "";
+    if (typeof updateDimensionsDisplay === "function") updateDimensionsDisplay();
+  }
+  widthInput.addEventListener("input", markEdited);
+  lengthInput.addEventListener("input", markEdited);
 
   const MAX_BYTES = 8 * 1024 * 1024;
   const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
@@ -2499,7 +2496,7 @@ const photoMode = (() => {
     if (!summary) return;
     if (!state.active) { summary.hidden = true; return; }
     summary.hidden = false;
-    if (manualDimensions.checked) {
+    if (userEditedDims) {
       summary.textContent = "Your width and length will be used instead of the photo estimate.";
     } else if (state.estimate && !state.estimate.fallback) {
       summary.innerHTML =
@@ -2568,7 +2565,8 @@ const photoMode = (() => {
     canvasEl.classList.toggle("hidden", state.active);
     panel.classList.toggle("hidden", !state.active);
     panel.hidden = !state.active;
-    if (dimFields) dimFields.classList.toggle("hidden", state.active && !manualDimensions.checked);
+    if (dimFields) dimFields.classList.remove("hidden");
+    syncAwaiting();
     updateSummary();
     renderExisting();
   }
@@ -2611,18 +2609,17 @@ const photoMode = (() => {
     const w = Number(estimate.widthFt), l = Number(estimate.lengthFt), h = Number(estimate.heightFt);
     if (Number.isFinite(h) && h > 0) heightInput.value = String(h);
     // A photo can finish analyzing while the user is entering measurements.
-    if (!manualDimensions.checked) applyEstimatedDimensions();
+    syncAwaiting();
+    if (!userEditedDims) applyEstimatedDimensions();
     scheduleRoomAutosave();
 
     if (estimate.fallback) {
-      setStatus(manualDimensions.checked
+      setStatus(userEditedDims
         ? "We could not estimate this room from the photo. Using your room dimensions."
-        : "We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; enter your own dimensions below to adjust.", true);
-    } else if (estimate.full) {
-      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ". This room already looks fully furnished, so we will suggest accents only.", true);
+        : "We could not estimate this room from the photo. It is set to " + fmt(w) + " x " + fmt(l) + "; adjust the width and length if needed.", true);
     } else {
-      const found = Array.isArray(estimate.existingFurniture) ? estimate.existingFurniture.length : 0;
-      setStatus("Estimated " + fmt(w) + " x " + fmt(l) + ", " + fmt(h) + " ceiling." + (found ? " Found " + found + " piece" + (found === 1 ? "" : "s") + " of furniture already there." : "") + (manualDimensions.checked ? " Using your width and length." : " Enter your own dimensions below to adjust."));
+      // The estimate is shown in the width/length boxes; no message under the photo.
+      setStatus("");
     }
     updateSummary();
     renderExisting();
@@ -2662,6 +2659,7 @@ const photoMode = (() => {
     }
 
     showPreview(URL.createObjectURL(file));
+    userEditedDims = false;
     setStatus("Preparing your photo...");
     state.analyzing = true;
     try {
@@ -2690,15 +2688,6 @@ const photoMode = (() => {
 
   btnPhoto.addEventListener("click", () => setMode("photo"));
   btnDims.addEventListener("click", () => setMode("dimensions"));
-  manualDimensions.addEventListener("change", () => {
-    if (!manualDimensions.checked) {
-      if (state.estimate) applyEstimatedDimensions();
-      else renderAll();
-      const dims = readTypedDimensionsFt();
-      setDimensionError(getDimensionRangeMessage(dims?.widthFt, dims?.lengthFt));
-    }
-    setMode(state.active ? "photo" : "dimensions");
-  });
   toggleFt.addEventListener("click", updateSummary);
   toggleM.addEventListener("click", updateSummary);
 
@@ -2730,7 +2719,6 @@ const photoMode = (() => {
   // A returning room with a photo reopens on it; otherwise an empty drop zone.
   if (state.photoUrl) {
     showPreview(state.photoUrl);
-    setStatus("Photo saved with this room. Replace it to estimate again.");
   }
   setMode("photo");
 
@@ -2739,7 +2727,8 @@ const photoMode = (() => {
     get photoUrl() { return state.photoUrl; },
     get analyzing() { return state.analyzing; },
     getDimensionError() {
-      if (!state.active || !manualDimensions.checked) return "";
+      if (!state.active) return "";
+      if (dimsAwaitingPhoto) return "Upload a photo of your room, or enter its width and length.";
       const dims = readTypedDimensionsFt();
       return getDimensionRangeMessage(dims?.widthFt, dims?.lengthFt);
     },
@@ -3049,6 +3038,61 @@ setTimeout(() => { roomAutosaveArmed = true; }, 0);
     <span id="settings-save-status" class="settings-save-status"></span>
   </div>
 </div>
+<script>
+// Desktop layout: the right panel's top lines up with the left box, and in
+// Draw Room the plan box stretches down to the bottom of the right panel.
+(() => {
+  const main = document.querySelector(".page-dimensions main");
+  const left = main && main.querySelector("section:first-child");
+  const right = main && main.querySelector("section:last-child");
+  const canvas = document.getElementById("canvas-container");
+  const photo = document.getElementById("photo-panel");
+  if (!left || !right || !canvas) return;
+  const card = right.querySelector(".garden-card") || right;
+  const MIN_CANVAS = 620;
+  let frame = 0;
+
+  function reset() {
+    right.style.removeProperty("margin-top");
+    canvas.style.removeProperty("min-height");
+    left.style.removeProperty("overflow");
+  }
+
+  function sync() {
+    frame = 0;
+    if (window.innerWidth <= 900) { reset(); return; }
+    const box = !canvas.classList.contains("hidden") ? canvas : photo;
+    if (!box) return;
+
+    // Top: move the right panel down (or up) to the left box's top edge.
+    const currentMargin = parseFloat(getComputedStyle(right).marginTop) || 0;
+    const delta = box.getBoundingClientRect().top - right.getBoundingClientRect().top;
+    if (Math.abs(delta) > 0.5) {
+      right.style.setProperty("margin-top", Math.round(currentMargin + delta) + "px", "important");
+    }
+
+    // Height: Draw Room's plan box reaches the bottom of the right panel.
+    if (box === canvas) {
+      const target = card.getBoundingClientRect().bottom - canvas.getBoundingClientRect().top;
+      left.style.overflow = "visible";
+      canvas.style.setProperty("min-height", Math.max(MIN_CANVAS, Math.round(target)) + "px", "important");
+    } else {
+      canvas.style.removeProperty("min-height");
+      left.style.removeProperty("overflow");
+    }
+  }
+
+  const schedule = () => { if (!frame) frame = setTimeout(sync, 16); };
+  window.addEventListener("resize", schedule);
+  new ResizeObserver(schedule).observe(card);
+  new MutationObserver(schedule).observe(canvas, { attributes: true, attributeFilter: ["class"] });
+  if (photo) new MutationObserver(schedule).observe(photo, { attributes: true, attributeFilter: ["class", "hidden"] });
+  // The panels slide in on load; measure again once that motion has settled.
+  document.addEventListener("animationend", schedule, true);
+  setTimeout(schedule, 1500);
+  schedule();
+})();
+</script>
 <script src="./mobile-ui.js" defer></script>
 <script src="./theme-toggle.js" defer></script>
 <script type="module" src="/src/theme-switch.tsx"></script>

@@ -1892,26 +1892,6 @@ a.workflow-step:focus-visible {
   box-shadow: 0 16px 36px rgba(28, 23, 20, .12) !important;
 }
 .page-dimensions #custom-toast iconify-icon { color: var(--dimension-primary) !important; }
-.page-dimensions main > section:last-child > div > div:last-child {
-  background: var(--bp-soft) !important;
-  border-color: var(--bp-border) !important;
-  padding: 12px 14px !important;
-  border-radius: 12px !important;
-}
-.page-dimensions main > section:last-child > div > div:last-child > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 8px !important;
-}
-.page-dimensions main > section:last-child > div > div:last-child,
-.page-dimensions main > section:last-child > div > div:last-child p,
-.page-dimensions main > section:last-child > div > div:last-child span,
-.page-dimensions main > section:last-child > div > div:last-child kbd {
-  color: var(--bp-ink) !important;
-  opacity: 1 !important;
-}
-.page-dimensions main > section:last-child > div > div:last-child p {
-  font-size: 10px !important;
-  line-height: 1.5 !important;
-}
 
 /* Animated sky shared by all three room-design steps. */
 .page-dimensions,
@@ -3892,10 +3872,6 @@ html.dark-mode body.page-dimensions #draggable-door > div:first-child,
 html.dark-mode body.page-dimensions #draggable-window > div:first-child,
 html.dark-mode body.page-dimensions #draggable-cutout > div:first-child {
   background: rgba(126, 168, 201, 0.18) !important;
-}
-html.dark-mode body.page-dimensions main > section:last-child > div > div:last-child {
-  background: rgba(36, 49, 64, 0.9) !important;
-  border-color: rgba(126, 168, 201, 0.14) !important;
 }
 html.dark-mode body.page-dimensions #custom-toast {
   background: #2a3d54 !important;

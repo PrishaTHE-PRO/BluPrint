@@ -181,8 +181,7 @@
       '<div class="m-stat"><p class="m-stat-value" data-m-sqft>-</p>' +
         '<p class="m-stat-label">sq ft drawn</p></div>' +
       '<div class="m-stat"><p class="m-stat-value" data-m-done>-</p>' +
-        '<p class="m-stat-label" data-m-done-label>rooms finished</p>' +
-        '<div class="m-stat-bar"><i data-m-bar style="width:0"></i></div></div>';
+        '<p class="m-stat-label" data-m-done-label>rooms finished</p></div>';
 
     if (h1) h1.insertAdjacentElement('afterend', quip);
     else copy.appendChild(quip);
@@ -235,18 +234,21 @@
         sqft += Number(card.dataset.sqft) || 0;
         if (card.dataset.complete === 'true') done++;
       });
+      // The deck only shows the newest rooms; dashboard.js puts the counts for
+      // every room on the grid, so "rooms finished" covers all of them.
+      var total = cards.length;
+      if (grid.dataset.roomsDone != null) done = Number(grid.dataset.roomsDone) || 0;
+      if (grid.dataset.roomsTotal != null) total = Number(grid.dataset.roomsTotal) || 0;
 
       var sqftEl = stats.querySelector('[data-m-sqft]');
       var doneEl = stats.querySelector('[data-m-done]');
       var doneLabel = stats.querySelector('[data-m-done-label]');
-      var bar = stats.querySelector('[data-m-bar]');
       if (sqftEl) sqftEl.textContent = sqft ? sqft.toLocaleString() : '0';
-      if (doneEl) doneEl.textContent = done + ' / ' + cards.length;
-      if (doneLabel) doneLabel.textContent = 'rooms finished';
-      if (bar) bar.style.width = (cards.length ? (done / cards.length) * 100 : 0) + '%';
+      if (doneEl) doneEl.textContent = String(done);
+      if (doneLabel) doneLabel.textContent = done === 1 ? 'room finished' : 'rooms finished';
 
-      quip.textContent = cards.length
-        ? capitalise(spell(cards.length)) + ' room' + (cards.length === 1 ? '' : 's') + '. ' +
+      quip.textContent = total
+        ? capitalise(spell(total)) + ' room' + (total === 1 ? '' : 's') + '. ' +
           (done === 0 ? 'None are' : capitalise(spell(done)) + (done === 1 ? ' is' : ' are')) +
           ' finished. We don\'t bring up the office.'
         : 'No rooms yet. A blank page is also a design choice.';

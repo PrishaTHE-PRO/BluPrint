@@ -175,12 +175,18 @@ async function loadProjects(userId) {
         const rooms = await res.json();
 
         if (!rooms.length) {
+            grid.dataset.roomsTotal = '0';
+            grid.dataset.roomsDone = '0';
             grid.innerHTML = '<p class="text-[#F7F4D5]/40 text-center col-span-2 py-12">No projects yet. Click "Get Started" to create your first room!</p>';
             grid.setAttribute('aria-busy', 'false');
             return;
         }
 
-        // Newest first, cap at 4 on dashboard
+        // The stat strip (mobile-ui.js) counts every room, not just the cards shown.
+        grid.dataset.roomsTotal = String(rooms.length);
+        grid.dataset.roomsDone = String(rooms.filter((room) => !!(room.style || room.furnitureLayout)).length);
+
+        // Newest first, cap at 6 on dashboard
         rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         const recent = rooms.slice(0, 6);
 
