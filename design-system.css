@@ -4731,3 +4731,12 @@ html.dark-mode body.page-result .furniture-h-strip {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
   border-color: rgba(126, 168, 201, 0.2) !important;
 }
+/* The left panel matches the right one: the right panel's slide-in leaves a
+   transform on its section, which turns its backdrop blur off, so it reads
+   as see-through glass with the blueprint showing. A real 22px blur on the
+   left smoothed the blueprint away and made it look solid. */
+.page-dimensions .canvas-area,
+.page-dimensions #photo-panel {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
