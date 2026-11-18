@@ -542,6 +542,10 @@
         if (state.selectedRoomType) other.value = state.selectedRoomType;
       }
       syncBathFixtureCard();
+      // A restored room type must unlock the Wild card and the step-one
+      // button the same way a click would, or coming back from View Design
+      // leaves the card greyed out with a room already chosen.
+      checkStep1Valid();
       checkStep2Valid();
     }
     window.addEventListener('beforeunload', persistPicks);
