@@ -5001,11 +5001,11 @@ html body .bp-wordmark-rest {
   background: rgba(255, 255, 255, .55) !important;
   color: var(--bp-ink) !important;
   text-align: left;
-  font: 500 14px/1.2 "DM Sans", sans-serif !important;
+  font: 500 15px/1.2 "DM Sans", sans-serif !important;
   box-shadow: none !important;
   transition: transform .25s cubic-bezier(.2, .8, .2, 1), background .25s ease, border-color .25s ease !important;
 }
-.page-inspo #room-type-grid > .inspo-room iconify-icon { font-size: 24px; color: inherit !important; }
+.page-inspo #room-type-grid > .inspo-room iconify-icon { font-size: 28px; color: inherit !important; }
 .page-inspo #room-type-grid > .inspo-room:hover { border-color: var(--bp-primary) !important; transform: translateY(-2px); }
 .page-inspo #room-type-grid > .inspo-room.selected {
   background: var(--bp-primary) !important;
@@ -5015,31 +5015,13 @@ html body .bp-wordmark-rest {
 }
 .page-inspo #room-type-grid > .inspo-room.selected * { color: #fff !important; }
 
-/* Budget above Wild card, each the full width of the column. On wide screens
-   the Budget card runs in two columns (title and switch on the left, the
-   amount and slider on the right) and the Wild card is one horizontal strip. */
+/* Budget, full width of the column. It stacks at every width: title and
+   switch on top, then the amount, then a slider that runs the full width of
+   the card. (The Wild card sits inside the Visual inspiration card.) */
 .page-inspo .inspo-row { display: flex; flex-direction: column; gap: 16px; }
-.page-inspo .inspo-row > .inspo-card--budget,
-.page-inspo .inspo-row > .inspo-wild { flex: none; width: 100%; min-width: 0; }
-.page-inspo .inspo-card--budget { padding: clamp(24px, 3vw, 32px) !important; }
+.page-inspo .inspo-row > .inspo-card--budget { flex: none; width: 100%; min-width: 0; }
+.page-inspo .inspo-card--budget { padding: clamp(20px, 2.4vw, 26px) !important; }
 .page-inspo .inspo-budget__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-@media (min-width: 720px) {
-  .page-inspo .inspo-card--budget {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
-    grid-template-areas:
-      "head   amount"
-      "note   slider"
-      "note   scale";
-    column-gap: clamp(28px, 5vw, 72px);
-    align-items: center;
-  }
-  .page-inspo .inspo-budget__head { grid-area: head; flex-direction: column; align-items: flex-start; gap: 10px; }
-  .page-inspo .inspo-budget__amount { grid-area: amount; margin: 0 !important; }
-  .page-inspo .inspo-budget__note { grid-area: note; margin: 0 !important; align-self: start; }
-  .page-inspo .inspo-budget__slider { grid-area: slider; margin-top: 14px; }
-  .page-inspo .inspo-budget__scale { grid-area: scale; }
-}
 .page-inspo .inspo-switch {
   display: inline-flex;
   align-items: center;
@@ -5077,9 +5059,13 @@ html body .bp-wordmark-rest {
   display: flex;
   align-items: baseline;
   gap: 2px;
-  margin: 18px 0 6px;
-  font-family: "Fraunces", serif;
-  font-size: clamp(44px, 5vw, 56px);
+  margin: 12px 0 10px;
+  /* Plain DM Sans at the room-button weight, in black ink. */
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: clamp(32px, 3.6vw, 38px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em;
   line-height: 1;
   color: var(--bp-ink);
   transition: color .3s ease;
@@ -5099,10 +5085,29 @@ html body .bp-wordmark-rest {
 .page-inspo .inspo-budget__amount input::-webkit-outer-spin-button,
 .page-inspo .inspo-budget__amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .page-inspo .inspo-budget__amount input::placeholder { color: var(--bp-muted); opacity: .7; }
-.page-inspo .inspo-budget__amount input:focus { border-bottom: 2px solid #d3968c; }
+/* Typing underline: a teal line that grows out from the left while the
+   amount field has focus, and shrinks back when it loses it. */
+.page-inspo .inspo-budget__amount { position: relative; }
+.page-inspo .inspo-budget__amount::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--bp-primary);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+  pointer-events: none;
+}
+.page-inspo .inspo-budget__amount:focus-within::after { transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) {
+  .page-inspo .inspo-budget__amount::after { transition: none; }
+}
 .page-inspo .inspo-card--budget.is-off .inspo-budget__amount { color: var(--bp-muted); }
 .page-inspo .inspo-card--budget.is-off .inspo-budget__dollar { opacity: .5; }
-.page-inspo .inspo-budget__note { margin: 0 0 14px !important; font-size: 13px !important; color: var(--bp-muted) !important; }
 .page-inspo .inspo-budget__slider { width: 100%; accent-color: var(--bp-primary); cursor: pointer; transition: opacity .25s ease; }
 .page-inspo .inspo-card--budget.is-off .inspo-budget__slider { opacity: .4; cursor: default; }
 .page-inspo .inspo-budget__scale {
@@ -5119,52 +5124,88 @@ html body .bp-wordmark-rest {
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  padding: clamp(24px, 3vw, 32px) !important;
+  padding: clamp(20px, 2.4vw, 26px) !important;
   text-align: left;
   cursor: pointer;
   color: var(--bp-ink) !important;
   transition: background .35s ease, color .35s ease, border-color .35s ease, transform .3s ease !important;
 }
 .page-inspo .inspo-wild:disabled { opacity: .6; cursor: not-allowed; transform: none !important; }
-.page-inspo .inspo-wild__icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-size: 24px;
-  background: #f5e5e2;
-  color: #8a4e45;
-  transition: transform .5s cubic-bezier(.2, .8, .2, 1), background .35s ease, color .35s ease;
+/* The title sits in its own rounded outline so it reads as a button. */
+.page-inspo .inspo-wild__title {
+  display: inline-flex;
+  align-items: center;
+  min-height: 60px;
+  padding: 12px 72px;
+  /* Translucent green, the same shade as the Wall Cutout button on the
+     room dimensions page (--dimension-cutout, #6c8f62). */
+  border: 1.5px solid rgba(108, 143, 98, .45);
+  background: rgba(108, 143, 98, .08);
+  border-radius: 18px;
+  /* Same face, weight and size as the section titles ("Visual inspiration",
+     "Budget", "What room are you designing?"). */
+  font-family: "Fraunces", serif;
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+  white-space: nowrap;
+  color: #5b7a52 !important;
+  transition: background .25s ease, color .25s ease, border-color .25s ease;
 }
-.page-inspo .inspo-wild__title { font-family: "Fraunces", serif; font-size: 30px; line-height: 1; color: inherit !important; }
+.page-inspo .inspo-wild:not(:disabled):hover .inspo-wild__title { background: rgba(108, 143, 98, .16); border-color: rgba(108, 143, 98, .65); }
 .page-inspo .inspo-wild__copy { font-size: 13px; line-height: 1.45; color: var(--bp-muted) !important; }
 @media (min-width: 720px) {
   .page-inspo .inspo-wild { flex-direction: row; align-items: center; gap: clamp(18px, 2.5vw, 32px); }
-  .page-inspo .inspo-wild__icon { flex: none; width: 56px; height: 56px; font-size: 30px; }
-  .page-inspo .inspo-wild__title { flex: none; min-width: 170px; }
+  .page-inspo .inspo-wild__title { flex: none; }
   .page-inspo .inspo-wild__copy { flex: 1; max-width: 560px; }
 }
-.page-inspo .inspo-wild.is-on,
-.page-inspo .inspo-wild.is-on:hover {
-  background: #d3968c !important;
-  border-color: #d3968c !important;
+/* Pressed: only the "Wild card" button fills in (solid cutout green); the
+   card stays as is.
+   The click also disables the card while the next page loads, so keep it at
+   full strength instead of the faded disabled look. */
+.page-inspo .inspo-wild.is-on:disabled,
+html.dark-mode .page-inspo .inspo-wild.is-on:disabled { opacity: 1; cursor: default; }
+.page-inspo .inspo-wild.is-on .inspo-wild__title {
+  background: #6c8f62;
+  border-color: #6c8f62;
   color: #fff !important;
 }
-.page-inspo .inspo-wild.is-on .inspo-wild__icon { background: rgba(255, 255, 255, .25); color: #fff; transform: rotate(180deg); }
-.page-inspo .inspo-wild.is-on .inspo-wild__copy { color: rgba(255, 255, 255, .85) !important; }
-.page-inspo .inspo-wild.is-rolling .inspo-wild__icon { animation: inspo-dice-roll 1s cubic-bezier(.2, .8, .2, 1) both; }
-@keyframes inspo-dice-roll {
-  0%   { transform: rotate(0deg) translateY(0); }
-  40%  { transform: rotate(380deg) translateY(-12px); }
-  70%  { transform: rotate(640deg) translateY(2px); }
-  100% { transform: rotate(900deg) translateY(0); }
-}
 
-html.dark-mode .page-inspo #room-type-grid > .inspo-room { background: rgba(255, 255, 255, .06) !important; border-color: rgba(255, 255, 255, .12) !important; }
+/* Step 2 buttons (style, mood, colour, bath fixture, features) share the
+   step 1 room tile look: soft white card, thin outline, 18px corners, ink
+   text, teal outline on hover, solid teal when picked. Each grid keeps its
+   own layout. Id strength so the generic .option-btn rules above lose. */
+.page-inspo #step-2 .option-btn {
+  border: 1.5px solid var(--bp-border) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, .55) !important;
+  color: var(--bp-ink) !important;
+  font-family: "DM Sans", sans-serif !important;
+  box-shadow: none !important;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), background .25s ease, border-color .25s ease !important;
+}
+.page-inspo #step-2 .option-btn:not(.disabled):hover { border-color: var(--bp-primary) !important; transform: translateY(-2px); }
+.page-inspo #step-2 .option-btn.selected {
+  background: var(--bp-primary) !important;
+  border-color: var(--bp-primary) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+}
+.page-inspo #step-2 .option-btn.selected * { color: #fff !important; }
+.page-inspo #step-2 .option-btn.disabled { transform: none !important; }
+
+/* Dark mode for both steps. :not(.selected) keeps the teal on picked
+   buttons; before this, a picked room tile lost its teal in dark mode. */
+html.dark-mode .page-inspo #room-type-grid > .inspo-room:not(.selected),
+html.dark-mode .page-inspo #step-2 .option-btn:not(.selected) { background: rgba(255, 255, 255, .06) !important; border-color: rgba(255, 255, 255, .12) !important; color: var(--bp-ink) !important; }
+html.dark-mode .page-inspo #room-type-grid > .inspo-room:not(.selected):hover,
+html.dark-mode .page-inspo #step-2 .option-btn:not(.selected):not(.disabled):hover { border-color: var(--bp-primary) !important; }
+html.dark-mode .page-inspo #room-type-grid > .inspo-room.selected,
+html.dark-mode .page-inspo #step-2 .option-btn.selected { background: var(--bp-primary) !important; border-color: var(--bp-primary) !important; color: #0d1218 !important; }
+html.dark-mode .page-inspo #room-type-grid > .inspo-room.selected *,
+html.dark-mode .page-inspo #step-2 .option-btn.selected * { color: #0d1218 !important; }
 html.dark-mode .page-inspo .inspo-switch__track { background: rgba(255, 255, 255, .18); }
-html.dark-mode .page-inspo .inspo-wild__icon { background: rgba(211, 150, 140, .18); color: #e8b3a9; }
-html.dark-mode .page-inspo .inspo-wild.is-on .inspo-wild__icon { background: rgba(255, 255, 255, .22); color: #fff; }
 
 /* Amount field: no box of its own, it reads as the big number. Scale labels
    stay on one line on phones too. */
@@ -5177,19 +5218,14 @@ html.dark-mode .page-inspo .inspo-wild.is-on .inspo-wild__icon { background: rgb
   padding: 0 !important;
   outline: none !important;
 }
-.page-inspo .inspo-budget__amount input:focus { border-bottom: 2px solid #d3968c !important; }
 .page-inspo .budget-zone > .inspo-budget__scale {
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
   text-align: left !important;
 }
-html.dark-mode .page-inspo .inspo-wild:not(.is-on),
-html.dark-mode .page-inspo .inspo-wild:not(.is-on):hover {
-  background: linear-gradient(155deg, rgba(42, 58, 78, .96), rgba(33, 46, 62, .94)) !important;
-  border-color: rgba(126, 168, 201, .16) !important;
-  color: var(--bp-ink) !important;
-}
+html.dark-mode .page-inspo .inspo-wild,
+html.dark-mode .page-inspo .inspo-wild:hover { color: var(--bp-ink) !important; }
 html.dark-mode .page-inspo .inspo-wild:disabled { opacity: .55; }
 
 /* Dark mode, at id strength so the generic dark input and button rules above
@@ -5201,22 +5237,19 @@ html.dark-mode body.page-inspo #budget-input:focus {
   box-shadow: none !important;
   color: var(--bp-ink) !important;
 }
-html.dark-mode body.page-inspo #budget-input:focus { border-bottom: 2px solid #d3968c !important; }
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on),
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on):hover {
-  background: linear-gradient(155deg, rgba(42, 58, 78, .96), rgba(33, 46, 62, .94)) !important;
-  border: 1px solid rgba(126, 168, 201, .16) !important;
+/* The Wild card sits inside a card, so in dark mode it stays transparent
+   (the generic dark button rule above would otherwise fill it teal). */
+html.dark-mode body.page-inspo #wild-card-btn,
+html.dark-mode body.page-inspo #wild-card-btn:hover {
+  background: transparent !important;
+  border: 0 !important;
   color: var(--bp-ink) !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, .32) !important;
+  box-shadow: none !important;
 }
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__title { color: var(--bp-ink) !important; }
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__copy { color: var(--bp-muted) !important; }
-html.dark-mode body.page-inspo #wild-card-btn.is-on,
-html.dark-mode body.page-inspo #wild-card-btn.is-on:hover {
-  background: #d3968c !important;
-  border-color: #d3968c !important;
-  color: #fff !important;
-}
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__title { background: rgba(108, 143, 98, .16); border-color: rgba(143, 180, 132, .5); color: #a3c497 !important; }
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on):not(:disabled):hover .inspo-wild__title { background: rgba(108, 143, 98, .26); }
+html.dark-mode body.page-inspo #wild-card-btn .inspo-wild__copy { color: var(--bp-muted) !important; }
+html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { background: #8fb484; border-color: #8fb484; color: #0d1218 !important; }
 /* ---------------------------------------------------------------------------
    Results page: "Shop the room" grid under the plan, and the floor plan's
    sheet legend. Serif display and mono labels follow the redesign mockups
@@ -5633,3 +5666,80 @@ html.dark-mode .page-result main > header .result-title__edit { color: #9fb0c3; 
 @media (max-width: 600px) {
   .page-dimensions .dimensions-mascot { height: 64px; }
 }
+
+/* Add Inspiration, desktop: every text size a touch smaller (about 8%),
+   except the room-type tiles ("Bedroom", "Living Room"...), whose 15px
+   labels are matched by the step 2 option labels. Phones keep their own sizes from mobile-ui.css. */
+@media (min-width: 601px) {
+  .page-inspo header h1 { font-size: 29px !important; }
+  .page-inspo header p { font-size: 14px !important; }
+  .page-inspo .step-circle,
+  .page-inspo .stepper span { font-size: 11px; }
+  .page-inspo .garden-card h2 { font-size: 23px !important; }
+  .page-inspo .inspo-card h2 { font-size: 25px !important; }
+  .page-inspo .garden-card h3 { font-size: 18px !important; }
+  .page-inspo .garden-card p { font-size: 13px !important; }
+  .page-inspo #image-count { font-size: 11px; }
+  /* Step 2 option labels match the step 1 room tiles (15px). Secondary
+     lines (style descriptions, bath fixture hints) stay a step smaller. */
+  .page-inspo #step-2 .option-btn p { font-size: 15px !important; }
+  .page-inspo #step-2 #bath-fixture-grid .option-btn p.text-xs { font-size: 12px !important; }
+
+  .page-inspo .inspo-switch { font-size: 12px; }
+  .page-inspo .inspo-budget__amount { font-size: clamp(28px, 3vw, 34px); }
+  .page-inspo .inspo-budget__scale { font-size: 10px; }
+  .page-inspo .inspo-wild__title { font-size: 25px; }
+  .page-inspo .inspo-wild__copy { font-size: 12px; }
+
+  .page-inspo #step-2 #style-grid .style-option__desc { font-size: 12px !important; }
+  body.page-inspo #step1-next { font-size: 18px !important; }
+  body.page-inspo #step2-back,
+  body.page-inspo #step2-analyze { font-size: 15px !important; }
+
+  .page-inspo .how-it-works-label { font-size: 13px !important; }
+  .page-inspo .how-it-works-step > span { font-size: 12px; }
+  .page-inspo .how-it-works-step > p { font-size: 14.5px !important; }
+  .page-inspo .ai-analysis-label strong,
+  .page-inspo .ai-analysis-label em,
+  .page-inspo .ai-analysis-section > span { font-size: 10px; }
+  .page-inspo .ai-analysis-panel h2 { font-size: 22px !important; }
+  .page-inspo .ai-analysis-panel > p { font-size: 12px !important; }
+  .page-inspo .ai-analysis-panel #generate-room-design { font-size: 12px; }
+}
+
+/* Step 1 warning ("Please choose a room type first"): same face, weight and
+   size as the room-type buttons, not bold. */
+.page-inspo #step1-error { font: 500 15px/1.3 "DM Sans", sans-serif; }
+@media (max-width: 600px) {
+  .page-inspo #step1-error { font-size: 14px; }
+}
+
+/* Wild card lives inside the Visual inspiration card, above an OR divider.
+   It is a plain strip there: no card fill, outline, shadow or padding of
+   its own, so the two read as one card. */
+.page-inspo .inspo-wild {
+  width: 100%;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+/* The OR divider: a hairline broken in the middle by a small blue "OR". */
+.page-inspo .inspo-or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--bp-primary);
+  font: 600 12px/1 "DM Sans", sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.page-inspo .inspo-or::before,
+.page-inspo .inspo-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--bp-border);
+}
+html.dark-mode .page-inspo .inspo-or::before,
+html.dark-mode .page-inspo .inspo-or::after { background: rgba(255, 255, 255, .12); }
