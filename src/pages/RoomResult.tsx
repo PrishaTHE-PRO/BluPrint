@@ -160,6 +160,7 @@ export default function RoomResult() {
     const placement = buildFurniturePlacement({
       roomId: localStorage.getItem('blueprintCurrentRoomId'),
       styleTag: style.styleTag,
+      roomType: style.roomType,
       budgetTotal: style.budgetTotal,
       roomFeatures: style.roomFeatures,
       slots: furnitureSlots,
@@ -183,6 +184,7 @@ export default function RoomResult() {
         id: entry.item?.id,
       })),
       styleTag: placement.styleTag,
+      roomType: placement.roomType,
       budgetTotal: placement.budgetTotal,
     });
     if (signature === lastPersistedRef.current && !opts?.updateState) {
@@ -256,6 +258,11 @@ export default function RoomResult() {
     if (savedPlacement.styleTag && style && savedPlacement.styleTag !== style.styleTag) {
       return null;
     }
+    // Same for the room type: a bedroom's set does not carry into a living room.
+    const norm = (v?: string | null) => String(v || '').trim().toLowerCase();
+    if (savedPlacement.roomType && style?.roomType && norm(savedPlacement.roomType) !== norm(style.roomType)) {
+      return null;
+    }
     if (style && (savedPlacement.budgetTotal ?? 0) !== style.budgetTotal) {
       return null;
     }
@@ -268,6 +275,23 @@ export default function RoomResult() {
     }
     return savedPlacement;
   }, [savedPlacement, style]);
+
+  // The design was redone: a saved layout exists but no longer applies because
+  // the room type, style, budget or features changed since it was arranged.
+  const designChanged = Boolean(savedPlacement) && !activePlacement;
+
+  // When that happens to a room that already has a rendered picture, the
+  // picture shows the old furniture. Once the new set has landed and been
+  // placed, ask the render pane to redraw it, once per visit.
+  const [autoRenderToken, setAutoRenderToken] = useState(0);
+  const autoRenderFiredRef = useRef(false);
+  useEffect(() => {
+    if (autoRenderFiredRef.current) return;
+    if (!designChanged || !room?.render || !room.photoUrl) return;
+    if (furnitureLoading || furniture.length === 0 || Object.keys(furnitureSlots).length === 0) return;
+    autoRenderFiredRef.current = true;
+    setAutoRenderToken(Date.now());
+  }, [designChanged, room?.render, room?.photoUrl, furnitureLoading, furniture.length, furnitureSlots]);
 
   // Compose the slots from the fresh search, then overlay anything the user
   // saved. The two arrive independently, so this runs whenever either lands.
@@ -1026,6 +1050,7 @@ export default function RoomResult() {
                 linkedCategory={linkedCategory}
                 onLinkCategory={setLinkedCategory}
                 onRenderSaved={handleRenderSaved}
+                autoRenderToken={autoRenderToken}
               />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
