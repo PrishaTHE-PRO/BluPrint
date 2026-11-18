@@ -158,7 +158,7 @@
             class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
         </div>
 
-        <!-- Budget and Wild card -->
+        <!-- Budget -->
         <div class="inspo-row">
           <div class="garden-card ghibli-border inspo-card inspo-card--budget budget-zone">
             <div class="inspo-budget__head">
@@ -178,14 +178,16 @@
             <div class="inspo-budget__scale budget-scale" aria-hidden="true"><span>$500</span><span>$25,000</span></div>
             <p id="budget-status" class="hidden"></p>
           </div>
-
-          <button type="button" id="wild-card-btn" class="garden-card ghibli-border inspo-wild" disabled>
-            <span class="inspo-wild__title">Wild card</span>
-            <span class="inspo-wild__copy" id="wild-card-copy">Choose a room first, then let BluPrint randomly pick the style, mood, colours and features.</span>
-          </button>
         </div>
 
         <div class="garden-card ghibli-border inspo-card p-8 md:p-12 space-y-8">
+          <!-- Wild card at the top of the card, then an OR divider, then the
+               upload. Picking either one is enough to move on. -->
+          <button type="button" id="wild-card-btn" class="inspo-wild" disabled>
+            <span class="inspo-wild__title">Wild card</span>
+            <span class="inspo-wild__copy" id="wild-card-copy">Choose a room first, then let BluPrint randomly pick the style, mood, colours and features.</span>
+          </button>
+          <div class="inspo-or" aria-hidden="true"><span>or</span></div>
           <h2 class="text-3xl font-bold">Visual inspiration</h2>
           <p class="text-lg text-[#F7F4D5]/60">Up to 3 photos that capture your vision. PNG, JPG or WebP, up to 5 MB each.</p>
 
@@ -207,16 +209,17 @@
 
           <!-- Status -->
           <div id="vision-status" class="hidden p-6 rounded-2xl text-lg font-medium"></div>
+        </div>
 
-          <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-4">
-            <div id="step1-error" class="hidden px-4 py-3 rounded-2xl pointer-events-none text-center sm:text-left w-full sm:w-auto order-1 sm:order-none"
-                 style="background: rgba(211,150,140,0.15); border: 1px solid rgba(211,150,140,0.5); color: #D3968C;">
-            </div>
-            <button id="step1-next"
-                    class="order-2 sm:order-none w-full sm:w-auto px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl">
-              Next: Your Picks <iconify-icon icon="ph:arrow-right-bold" class="ml-2"></iconify-icon>
-            </button>
+        <!-- Next sits on the background, like Back/Analyze on step 2 -->
+        <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 inspo-step1-nav">
+          <div id="step1-error" class="hidden px-4 py-3 rounded-2xl pointer-events-none text-center sm:text-left w-full sm:w-auto order-1 sm:order-none"
+               style="background: rgba(211,150,140,0.15); border: 1px solid rgba(211,150,140,0.5); color: #D3968C;">
           </div>
+          <button id="step1-next"
+                  class="order-2 sm:order-none w-full sm:w-auto px-10 py-4 bg-[#D3968C] text-[#F7F4D5] rounded-2xl font-bold text-xl hover:bg-[#c1867b] transition-all transform hover:scale-105 shadow-xl">
+            Next: Your Picks <iconify-icon icon="ph:arrow-right-bold" class="ml-2"></iconify-icon>
+          </button>
         </div>
       </div>
 

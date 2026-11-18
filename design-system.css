@@ -5005,7 +5005,7 @@ html body .bp-wordmark-rest {
   box-shadow: none !important;
   transition: transform .25s cubic-bezier(.2, .8, .2, 1), background .25s ease, border-color .25s ease !important;
 }
-.page-inspo #room-type-grid > .inspo-room iconify-icon { font-size: 24px; color: inherit !important; }
+.page-inspo #room-type-grid > .inspo-room iconify-icon { font-size: 28px; color: inherit !important; }
 .page-inspo #room-type-grid > .inspo-room:hover { border-color: var(--bp-primary) !important; transform: translateY(-2px); }
 .page-inspo #room-type-grid > .inspo-room.selected {
   background: var(--bp-primary) !important;
@@ -5015,13 +5015,11 @@ html body .bp-wordmark-rest {
 }
 .page-inspo #room-type-grid > .inspo-room.selected * { color: #fff !important; }
 
-/* Budget above Wild card, each the full width of the column. The Budget card
-   stacks at every width: title and switch on top, then the amount, then a
-   slider that runs the full width of the card. The Wild card is one
-   horizontal strip. */
+/* Budget, full width of the column. It stacks at every width: title and
+   switch on top, then the amount, then a slider that runs the full width of
+   the card. (The Wild card sits inside the Visual inspiration card.) */
 .page-inspo .inspo-row { display: flex; flex-direction: column; gap: 16px; }
-.page-inspo .inspo-row > .inspo-card--budget,
-.page-inspo .inspo-row > .inspo-wild { flex: none; width: 100%; min-width: 0; }
+.page-inspo .inspo-row > .inspo-card--budget { flex: none; width: 100%; min-width: 0; }
 .page-inspo .inspo-card--budget { padding: clamp(20px, 2.4vw, 26px) !important; }
 .page-inspo .inspo-budget__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .page-inspo .inspo-switch {
@@ -5062,9 +5060,9 @@ html body .bp-wordmark-rest {
   align-items: baseline;
   gap: 2px;
   margin: 12px 0 10px;
-  /* Same face as the Wild card and section titles, kept in black ink. */
-  font-family: "Fraunces", serif;
-  font-weight: 400;
+  /* Plain DM Sans at the room-button weight, in black ink. */
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
   font-size: clamp(32px, 3.6vw, 38px);
   font-variant-numeric: tabular-nums;
   letter-spacing: -.025em;
@@ -5139,7 +5137,10 @@ html body .bp-wordmark-rest {
   align-items: center;
   min-height: 60px;
   padding: 12px 72px;
-  border: 1.5px solid var(--bp-primary);
+  /* Translucent green, the same shade as the Wall Cutout button on the
+     room dimensions page (--dimension-cutout, #6c8f62). */
+  border: 1.5px solid rgba(108, 143, 98, .45);
+  background: rgba(108, 143, 98, .08);
   border-radius: 18px;
   /* Same face, weight and size as the section titles ("Visual inspiration",
      "Budget", "What room are you designing?"). */
@@ -5149,24 +5150,25 @@ html body .bp-wordmark-rest {
   letter-spacing: -.025em;
   line-height: 1.1;
   white-space: nowrap;
-  color: var(--bp-primary) !important;
+  color: #5b7a52 !important;
   transition: background .25s ease, color .25s ease, border-color .25s ease;
 }
-.page-inspo .inspo-wild:not(:disabled):hover .inspo-wild__title { background: var(--bp-primary); color: #fff !important; }
+.page-inspo .inspo-wild:not(:disabled):hover .inspo-wild__title { background: rgba(108, 143, 98, .16); border-color: rgba(108, 143, 98, .65); }
 .page-inspo .inspo-wild__copy { font-size: 13px; line-height: 1.45; color: var(--bp-muted) !important; }
 @media (min-width: 720px) {
   .page-inspo .inspo-wild { flex-direction: row; align-items: center; gap: clamp(18px, 2.5vw, 32px); }
   .page-inspo .inspo-wild__title { flex: none; }
   .page-inspo .inspo-wild__copy { flex: 1; max-width: 560px; }
 }
-/* Pressed: only the "Wild card" button fills teal; the card stays as is.
+/* Pressed: only the "Wild card" button fills in (solid cutout green); the
+   card stays as is.
    The click also disables the card while the next page loads, so keep it at
    full strength instead of the faded disabled look. */
 .page-inspo .inspo-wild.is-on:disabled,
 html.dark-mode .page-inspo .inspo-wild.is-on:disabled { opacity: 1; cursor: default; }
 .page-inspo .inspo-wild.is-on .inspo-wild__title {
-  background: var(--bp-primary);
-  border-color: var(--bp-primary);
+  background: #6c8f62;
+  border-color: #6c8f62;
   color: #fff !important;
 }
 
@@ -5223,11 +5225,7 @@ html.dark-mode .page-inspo .inspo-switch__track { background: rgba(255, 255, 255
   text-align: left !important;
 }
 html.dark-mode .page-inspo .inspo-wild,
-html.dark-mode .page-inspo .inspo-wild:hover {
-  background: linear-gradient(155deg, rgba(42, 58, 78, .96), rgba(33, 46, 62, .94)) !important;
-  border-color: rgba(126, 168, 201, .16) !important;
-  color: var(--bp-ink) !important;
-}
+html.dark-mode .page-inspo .inspo-wild:hover { color: var(--bp-ink) !important; }
 html.dark-mode .page-inspo .inspo-wild:disabled { opacity: .55; }
 
 /* Dark mode, at id strength so the generic dark input and button rules above
@@ -5239,17 +5237,19 @@ html.dark-mode body.page-inspo #budget-input:focus {
   box-shadow: none !important;
   color: var(--bp-ink) !important;
 }
+/* The Wild card sits inside a card, so in dark mode it stays transparent
+   (the generic dark button rule above would otherwise fill it teal). */
 html.dark-mode body.page-inspo #wild-card-btn,
 html.dark-mode body.page-inspo #wild-card-btn:hover {
-  background: linear-gradient(155deg, rgba(42, 58, 78, .96), rgba(33, 46, 62, .94)) !important;
-  border: 1px solid rgba(126, 168, 201, .16) !important;
+  background: transparent !important;
+  border: 0 !important;
   color: var(--bp-ink) !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, .32) !important;
+  box-shadow: none !important;
 }
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__title { color: var(--bp-primary) !important; }
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on):not(:disabled):hover .inspo-wild__title { color: #0d1218 !important; }
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__title { background: rgba(108, 143, 98, .16); border-color: rgba(143, 180, 132, .5); color: #a3c497 !important; }
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on):not(:disabled):hover .inspo-wild__title { background: rgba(108, 143, 98, .26); }
 html.dark-mode body.page-inspo #wild-card-btn .inspo-wild__copy { color: var(--bp-muted) !important; }
-html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { background: var(--bp-primary); border-color: var(--bp-primary); color: #0d1218 !important; }
+html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { background: #8fb484; border-color: #8fb484; color: #0d1218 !important; }
 /* ---------------------------------------------------------------------------
    Results page: "Shop the room" grid under the plan, and the floor plan's
    sheet legend. Serif display and mono labels follow the redesign mockups
@@ -5713,3 +5713,33 @@ html.dark-mode .page-result main > header .result-title__edit { color: #9fb0c3; 
 @media (max-width: 600px) {
   .page-inspo #step1-error { font-size: 14px; }
 }
+
+/* Wild card lives inside the Visual inspiration card, above an OR divider.
+   It is a plain strip there: no card fill, outline, shadow or padding of
+   its own, so the two read as one card. */
+.page-inspo .inspo-wild {
+  width: 100%;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+/* The OR divider: a hairline broken in the middle by a small blue "OR". */
+.page-inspo .inspo-or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--bp-primary);
+  font: 600 12px/1 "DM Sans", sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.page-inspo .inspo-or::before,
+.page-inspo .inspo-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--bp-border);
+}
+html.dark-mode .page-inspo .inspo-or::before,
+html.dark-mode .page-inspo .inspo-or::after { background: rgba(255, 255, 255, .12); }

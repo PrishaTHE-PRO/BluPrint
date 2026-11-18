@@ -843,22 +843,19 @@
     font-size: 14px !important;
   }
   /* Wild card title follows the 20px section titles on phones. */
-  /* Budget and Wild card share one row wrapper. The wrapper takes the same
-     side and top margins as every other card; the two cards inside drop
-     theirs. Before, each card was 100% wide plus 24px side margins, so both
-     ran off the right edge, and the wrapper's own spacing doubled the gap
-     above Budget. */
+  /* Budget sits in a row wrapper. The wrapper takes the same side and top
+     margins as every other card and the card inside drops its own; a 100%
+     wide card plus 24px side margins would run off the right edge. */
   .page-inspo .inspo-row {
     margin: 22px 24px 0 !important;
     gap: 22px;
   }
-  .page-inspo .inspo-row > .inspo-card--budget,
-  .page-inspo .inspo-row > .inspo-wild {
+  .page-inspo .inspo-row > .inspo-card--budget {
     width: auto !important;
     margin: 0 !important;
+    padding: 18px 20px !important;
   }
-  .page-inspo .inspo-row > .inspo-card--budget { padding: 18px 20px !important; }
-  .page-inspo .inspo-row > .inspo-wild { padding: 18px 20px !important; gap: 10px; }
+  .page-inspo .inspo-wild { gap: 10px; }
   .page-inspo .inspo-wild__title { font-size: 20px; min-height: 48px; padding: 10px 56px; }
   /* Style chips carry a name and a description: stack them instead of
      running them together on one line. */
@@ -892,6 +889,9 @@
     line-height: 1.25;
   }
   /* Back and Analyze: same side margins as the cards above them. */
+  /* Step 1 Next and step 2 Back/Analyze sit on the background, outside the
+     cards: same side margins as the cards so they line up. */
+  .page-inspo .inspo-step1-nav,
   .page-inspo .inspo-step2-nav { margin: 22px 24px 0 !important; gap: 12px; }
   /* Colour swatches: equal columns so every button is the same size. */
   .page-inspo #color-grid {
