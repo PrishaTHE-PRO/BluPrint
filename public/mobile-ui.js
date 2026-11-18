@@ -458,7 +458,8 @@
 
     // $min / $max labels under the budget slider.
     var slider = document.getElementById('budget-slider');
-    if (slider) {
+    // The page draws its own $min / $max scale now; only add one if it did not.
+    if (slider && !document.querySelector('.budget-scale')) {
       var scale = el('div', 'm-budget-scale',
         '<span>$' + Number(slider.min || 500).toLocaleString() + '</span>' +
         '<span>$' + Number(slider.max || 25000).toLocaleString() + '</span>');

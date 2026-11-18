@@ -4921,3 +4921,219 @@ html body .bp-wordmark-rest {
    click. The shapes ignore the pointer; the <svg> itself, which stays put,
    takes the click and it bubbles to the card. */
 .room-float-preview > svg * { pointer-events: none; }
+
+/* ---------------------------------------------------------------------------
+   Add Inspiration, step one, after the redesign mockups: room tiles with
+   icons, a Budget card with a switch and a typeable amount, and a Wild card
+   that rolls its dice and turns rose when pressed. Fraunces and DM Sans stay.
+   --------------------------------------------------------------------------- */
+.page-inspo .inspo-card h2 { font-size: 28px !important; }
+.page-inspo #room-type-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px !important;
+}
+.page-inspo #room-type-grid > .inspo-room {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  width: auto !important;
+  min-height: 108px;
+  padding: 14px !important;
+  border: 1.5px solid var(--bp-border) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, .55) !important;
+  color: var(--bp-ink) !important;
+  text-align: left;
+  font: 500 14px/1.2 "DM Sans", sans-serif !important;
+  box-shadow: none !important;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), background .25s ease, border-color .25s ease !important;
+}
+.page-inspo #room-type-grid > .inspo-room iconify-icon { font-size: 24px; color: inherit !important; }
+.page-inspo #room-type-grid > .inspo-room:hover { border-color: var(--bp-primary) !important; transform: translateY(-2px); }
+.page-inspo #room-type-grid > .inspo-room.selected {
+  background: var(--bp-primary) !important;
+  border-color: var(--bp-primary) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+}
+.page-inspo #room-type-grid > .inspo-room.selected * { color: #fff !important; }
+
+.page-inspo .inspo-row { display: flex; flex-wrap: wrap; gap: 16px; }
+.page-inspo .inspo-row > .inspo-card--budget { flex: 1 1 320px; min-width: 0; }
+.page-inspo .inspo-row > .inspo-wild { flex: 1 1 240px; min-width: 0; }
+.page-inspo .inspo-card--budget { padding: clamp(24px, 3vw, 32px) !important; }
+.page-inspo .inspo-budget__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.page-inspo .inspo-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bp-muted);
+  font: 500 13px "DM Sans", sans-serif;
+  cursor: pointer;
+}
+.page-inspo .inspo-switch__track {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  border-radius: 99px;
+  background: rgba(41, 79, 125, .18);
+  transition: background .25s ease;
+}
+.page-inspo .inspo-switch__knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+  transition: left .25s cubic-bezier(.2, .8, .2, 1);
+}
+.page-inspo .inspo-switch[aria-checked="true"] .inspo-switch__track { background: var(--bp-primary); }
+.page-inspo .inspo-switch[aria-checked="true"] .inspo-switch__knob { left: 19px; }
+.page-inspo .inspo-budget__amount {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: 18px 0 6px;
+  font-family: "Fraunces", serif;
+  font-size: clamp(44px, 5vw, 56px);
+  line-height: 1;
+  color: var(--bp-ink);
+  transition: color .3s ease;
+}
+.page-inspo .inspo-budget__amount input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.page-inspo .inspo-budget__amount input::-webkit-outer-spin-button,
+.page-inspo .inspo-budget__amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.page-inspo .inspo-budget__amount input::placeholder { color: var(--bp-muted); opacity: .7; }
+.page-inspo .inspo-budget__amount input:focus { border-bottom: 2px solid #d3968c; }
+.page-inspo .inspo-card--budget.is-off .inspo-budget__amount { color: var(--bp-muted); }
+.page-inspo .inspo-card--budget.is-off .inspo-budget__dollar { opacity: .5; }
+.page-inspo .inspo-budget__note { margin: 0 0 14px !important; font-size: 13px !important; color: var(--bp-muted) !important; }
+.page-inspo .inspo-budget__slider { width: 100%; accent-color: var(--bp-primary); cursor: pointer; transition: opacity .25s ease; }
+.page-inspo .inspo-card--budget.is-off .inspo-budget__slider { opacity: .4; cursor: default; }
+.page-inspo .inspo-budget__scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  color: var(--bp-muted);
+}
+
+.page-inspo .inspo-wild {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: clamp(24px, 3vw, 32px) !important;
+  text-align: left;
+  cursor: pointer;
+  color: var(--bp-ink) !important;
+  transition: background .35s ease, color .35s ease, border-color .35s ease, transform .3s ease !important;
+}
+.page-inspo .inspo-wild:disabled { opacity: .6; cursor: not-allowed; transform: none !important; }
+.page-inspo .inspo-wild__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  background: #f5e5e2;
+  color: #8a4e45;
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1), background .35s ease, color .35s ease;
+}
+.page-inspo .inspo-wild__title { font-family: "Fraunces", serif; font-size: 30px; line-height: 1; color: inherit !important; }
+.page-inspo .inspo-wild__copy { font-size: 13px; line-height: 1.45; color: var(--bp-muted) !important; }
+.page-inspo .inspo-wild.is-on,
+.page-inspo .inspo-wild.is-on:hover {
+  background: #d3968c !important;
+  border-color: #d3968c !important;
+  color: #fff !important;
+}
+.page-inspo .inspo-wild.is-on .inspo-wild__icon { background: rgba(255, 255, 255, .25); color: #fff; transform: rotate(180deg); }
+.page-inspo .inspo-wild.is-on .inspo-wild__copy { color: rgba(255, 255, 255, .85) !important; }
+.page-inspo .inspo-wild.is-rolling .inspo-wild__icon { animation: inspo-dice-roll 1s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes inspo-dice-roll {
+  0%   { transform: rotate(0deg) translateY(0); }
+  40%  { transform: rotate(380deg) translateY(-12px); }
+  70%  { transform: rotate(640deg) translateY(2px); }
+  100% { transform: rotate(900deg) translateY(0); }
+}
+
+html.dark-mode .page-inspo #room-type-grid > .inspo-room { background: rgba(255, 255, 255, .06) !important; border-color: rgba(255, 255, 255, .12) !important; }
+html.dark-mode .page-inspo .inspo-switch__track { background: rgba(255, 255, 255, .18); }
+html.dark-mode .page-inspo .inspo-wild__icon { background: rgba(211, 150, 140, .18); color: #e8b3a9; }
+html.dark-mode .page-inspo .inspo-wild.is-on .inspo-wild__icon { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* Amount field: no box of its own, it reads as the big number. Scale labels
+   stay on one line on phones too. */
+.page-inspo .inspo-budget__amount input,
+.page-inspo .inspo-budget__amount input:focus {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+.page-inspo .inspo-budget__amount input:focus { border-bottom: 2px solid #d3968c !important; }
+.page-inspo .budget-zone > .inspo-budget__scale {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  text-align: left !important;
+}
+html.dark-mode .page-inspo .inspo-wild:not(.is-on),
+html.dark-mode .page-inspo .inspo-wild:not(.is-on):hover {
+  background: linear-gradient(155deg, rgba(42, 58, 78, .96), rgba(33, 46, 62, .94)) !important;
+  border-color: rgba(126, 168, 201, .16) !important;
+  color: var(--bp-ink) !important;
+}
+html.dark-mode .page-inspo .inspo-wild:disabled { opacity: .55; }
+
+/* Dark mode, at id strength so the generic dark input and button rules above
+   do not restyle these two. */
+html.dark-mode body.page-inspo #budget-input,
+html.dark-mode body.page-inspo #budget-input:focus {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--bp-ink) !important;
+}
+html.dark-mode body.page-inspo #budget-input:focus { border-bottom: 2px solid #d3968c !important; }
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on),
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on):hover {
+  background: linear-gradient(155deg, rgba(42, 58, 78, .96), rgba(33, 46, 62, .94)) !important;
+  border: 1px solid rgba(126, 168, 201, .16) !important;
+  color: var(--bp-ink) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .32) !important;
+}
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__title { color: var(--bp-ink) !important; }
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__copy { color: var(--bp-muted) !important; }
+html.dark-mode body.page-inspo #wild-card-btn.is-on,
+html.dark-mode body.page-inspo #wild-card-btn.is-on:hover {
+  background: #d3968c !important;
+  border-color: #d3968c !important;
+  color: #fff !important;
+}
