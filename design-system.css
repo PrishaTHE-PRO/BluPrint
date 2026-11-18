@@ -4203,31 +4203,44 @@ html.dark-mode input.room-name-input {
    inside the box (object-fit: contain), and the hotspot layer is sized to the
    painted image box by the component so percentage boxes stay aligned.
    --------------------------------------------------------------------------- */
+/* Same frosted card as the floor plan beside it: title and controls in a
+   header row, the picture centred below with its height capped to match the
+   plan, caption under it. */
 .page-result .room-render-view {
-  flex: 1;
-  min-height: 320px;
-  aspect-ratio: 4 / 3;
   position: relative;
   display: flex;
   flex-direction: column;
+  padding: clamp(20px, 2.5vw, 30px);
   border-radius: 22px;
-  overflow: hidden;
   border: 1px solid var(--bp-border);
-  background: #17140f;
-  box-shadow: 0 18px 52px rgba(28, 23, 20, .12);
+  background: rgba(254, 252, 250, .88);
+  box-shadow: 0 18px 52px rgba(28, 23, 20, .08);
+  backdrop-filter: blur(20px);
+}
+.page-result .room-render-view__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 0 4px 12px;
 }
 .page-result .room-render-view__stage {
   position: relative;
-  flex: 1;
-  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 160px;
 }
 .page-result .room-render-view__img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
   display: block;
+  max-width: 100%;
+  max-height: min(64vh, 620px);
+  width: auto;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(28, 23, 20, .14);
   user-select: none;
   transition: opacity .3s ease, filter .3s ease;
 }
@@ -4279,39 +4292,35 @@ html.dark-mode input.room-name-input {
   box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
 }
 .page-result .room-render-view__btn--ghost {
-  background: rgba(23, 20, 15, .78);
-  border: 1px solid rgba(247, 244, 213, .25);
-  backdrop-filter: blur(6px);
+  background: var(--bp-surface);
+  color: var(--bp-ink);
+  border: 1px solid var(--bp-border);
+  box-shadow: none;
 }
-.page-result .room-render-view__btn--ghost:hover { background: rgba(23, 20, 15, .92); }
+.page-result .room-render-view__btn--ghost:hover { background: var(--bp-soft, #ede8e1); }
 .page-result .room-render-view__toolbar {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 6;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-  max-width: calc(100% - 20px);
+  margin-left: auto;
 }
 /* Original / Rendered switch on the picture. Same dark glass as the buttons
    beside it; the chosen side is the light pill. */
 .page-result .room-render-view__toggle {
   display: inline-flex;
   padding: 3px;
-  border-radius: 10px;
-  background: rgba(23, 20, 15, .78);
-  border: 1px solid rgba(247, 244, 213, .25);
-  backdrop-filter: blur(6px);
+  border-radius: 999px;
+  background: rgba(41, 79, 125, .08);
+  border: 1px solid rgba(41, 79, 125, .10);
 }
 .page-result .room-render-view__toggle-btn {
-  padding: 5px 10px;
+  padding: 5px 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   background: transparent;
-  color: rgba(247, 244, 213, .78);
+  color: var(--bp-muted);
   font-family: "DM Sans", sans-serif;
   font-size: 12px;
   font-weight: 600;
@@ -4319,29 +4328,27 @@ html.dark-mode input.room-name-input {
   cursor: pointer;
   transition: background .15s ease, color .15s ease;
 }
-.page-result .room-render-view__toggle-btn:hover { color: #fff; }
+.page-result .room-render-view__toggle-btn:hover { color: var(--bp-ink); }
 .page-result .room-render-view__toggle-btn.is-on {
-  background: rgba(247, 244, 213, .94);
-  color: #1f2f45;
+  background: #fff;
+  color: var(--bp-ink);
+  box-shadow: 0 2px 8px rgba(41, 79, 125, .16);
 }
-.page-result .room-render-view__toggle-btn.is-on:hover { color: #1f2f45; }
 .page-result .room-render-view__badge {
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(23, 20, 15, .78);
-  color: #F7F4D5;
+  background: rgba(211, 150, 140, .16);
+  color: #9a5a4e;
   font-size: 11px;
   font-weight: 700;
-  border: 1px solid rgba(247, 244, 213, .25);
-  backdrop-filter: blur(6px);
+  border: 1px solid rgba(211, 150, 140, .35);
 }
 .page-result .room-render-view__caption {
   margin: 0;
-  padding: 8px 12px;
-  font-size: 11px;
+  padding: 12px 4px 0;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--bp-muted);
-  background: var(--bp-surface);
-  border-top: 1px solid var(--bp-border);
 }
 .page-result .room-render-view__error {
   position: absolute;
@@ -4596,17 +4603,6 @@ body.page-result main > header .result-action iconify-icon { color: inherit !imp
   color: inherit !important;
   font: inherit !important;
 }
-/* Re-render sits on the rendered photo, so it uses the same dark
-   glass look as "Match plan to picture" beside it, in both modes. */
-.page-result .room-render-view__toolbar .room-render-view__btn:not(.room-render-view__btn--ghost) {
-  border: 1px solid rgba(247, 244, 213, .25);
-  background: rgba(23, 20, 15, .78);
-  color: #fff !important;
-  backdrop-filter: blur(6px);
-}
-.page-result .room-render-view__toolbar .room-render-view__btn:not(.room-render-view__btn--ghost):hover {
-  background: rgba(23, 20, 15, .92);
-}
 /* Ghost toolbar button follows the page's regular-weight button text. */
 .page-result .room-render-view__btn--ghost {
   font-family: "DM Sans", sans-serif;
@@ -4715,15 +4711,6 @@ body.page-inspo #step2-analyze iconify-icon { margin: 0 !important; }
 }
 /* Render frame takes the picture's own shape once it has loaded (the image
    area gets an inline aspect-ratio), so there are no dark bars beside it. */
-.page-result .room-render-view.room-render-view--fit {
-  flex: 0 0 auto;
-  aspect-ratio: auto;
-  min-height: 0 !important;
-}
-.page-result .room-render-view--fit .room-render-view__stage {
-  flex: 0 0 auto;
-  width: 100%;
-}
 
 /* Room dimensions: frosted-glass tiles. The panels let the blueprint
    background show through, softened by a blur, instead of sitting on it as
@@ -5209,3 +5196,15 @@ html.dark-mode .page-result .room-layout-canvas svg line[stroke="#14202e"] { str
 html.dark-mode .page-result .room-layout-canvas svg text[fill="#5d6b7b"] { fill: #b7c4d3 !important; }
 html.dark-mode .page-result .room-layout-canvas svg line[stroke="#5d6b7b"] { stroke: #b7c4d3 !important; }
 html.dark-mode .page-result .room-layout-canvas svg line[stroke="#fdfcfa"] { stroke: #e6dfd2 !important; }
+
+/* Dark mode: the picture card matches the plan card, and its controls stay readable. */
+html.dark-mode .page-result .room-render-view {
+  background: rgba(20, 32, 46, .62);
+  border-color: rgba(255, 255, 255, .10);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, .3);
+}
+html.dark-mode .page-result .room-render-view__toggle { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .12); }
+html.dark-mode .page-result .room-render-view__toggle-btn.is-on { background: rgba(255, 255, 255, .16); color: #fff; box-shadow: none; }
+html.dark-mode .page-result .room-render-view__badge { background: rgba(211, 150, 140, .18); color: #e8b3a9; border-color: rgba(211, 150, 140, .35); }
+html.dark-mode .page-result .room-render-view__btn--ghost { background: rgba(255, 255, 255, .06); color: #e6edf5; border-color: rgba(255, 255, 255, .14); }
+html.dark-mode .page-result .room-render-view__btn--ghost:hover { background: rgba(255, 255, 255, .12); }
