@@ -4533,32 +4533,55 @@ html.dark-mode {
   --result-btn-text: var(--bp-btn-soft-text);
 }
 
-/* Regenerate / Return to Homepage / Save Layout share one look at every width. */
+/* Regenerate, the home button and Save layout: frosted white pills, with
+   Save layout solid navy and the home link an icon-only square. */
 body.page-result main > header .flex.gap-3 > .result-action,
 body.page-result main > header .result-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 12px 22px !important;
-  border: 1px solid var(--result-btn-border) !important;
-  border-radius: 14px !important;
-  background: var(--result-btn-bg) !important;
-  color: var(--result-btn-text) !important;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 24px !important;
+  border: 1px solid rgba(255, 255, 255, .85) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, .62) !important;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  color: #14202e !important;
   font-family: "DM Sans", sans-serif !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
   font-weight: 500 !important;
   line-height: 1.15;
   text-decoration: none;
-  box-shadow: none !important;
-  transition: background .2s ease, transform .2s ease;
+  box-shadow: 0 8px 24px rgba(20, 32, 46, .08) !important;
+  transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
 }
 body.page-result main > header .flex.gap-3 > .result-action:hover,
 body.page-result main > header .result-action:hover {
-  background: var(--result-btn-bg-hover) !important;
+  background: rgba(255, 255, 255, .85) !important;
+  box-shadow: 0 10px 28px rgba(20, 32, 46, .12) !important;
 }
-body.page-result main > header .result-action iconify-icon { color: inherit !important; }
+body.page-result main > header .result-action iconify-icon { color: inherit !important; font-size: 18px; }
+body.page-result main > header .result-action--icon {
+  width: 48px;
+  padding: 0 !important;
+}
+body.page-result main > header .result-action--primary,
+body.page-result main > header .result-action--primary:hover {
+  background: #294f7d !important;
+  border-color: #294f7d !important;
+  color: #fff !important;
+}
+body.page-result main > header .result-action--primary:hover { background: #1f4069 !important; }
+html.dark-mode body.page-result main > header .result-action {
+  background: rgba(20, 32, 46, .62) !important;
+  border-color: rgba(255, 255, 255, .12) !important;
+  color: #e6edf5 !important;
+}
+html.dark-mode body.page-result main > header .result-action:hover { background: rgba(28, 44, 62, .8) !important; }
+html.dark-mode body.page-result main > header .result-action--primary { background: #3b6ea8 !important; border-color: #3b6ea8 !important; color: #fff !important; }
+html.dark-mode body.page-result main > header .result-action--primary:hover { background: #4b7fb9 !important; }
 
 /* Render my room uses the same look. The ghost variant over the image is unchanged. */
 .page-result .room-render-view__btn:not(.room-render-view__btn--ghost) {

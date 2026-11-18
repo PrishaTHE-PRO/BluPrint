@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FurnitureItem, RenderItem, Room, RoomRender } from '../types';
 import type { Placement } from './RoomSVG';
 import { BuyButton } from './FurnitureCard';
@@ -120,8 +120,6 @@ export default function RoomRenderView({
   const canCompare = Boolean(render && room.photoUrl);
   const showingOriginal = canCompare && showOriginal;
   const shownUrl = showingOriginal ? room.photoUrl! : (render?.url ?? room.photoUrl ?? '');
-  const visibleIds = useMemo(() => items.map((i) => i.id), [items]);
-  const stale = Boolean(render) && !sameIds(render!.itemIds, visibleIds);
 
   // Hover cards read from the render's stored items first: on a revisit they
   // exist before the furniture search has finished.
@@ -250,11 +248,6 @@ export default function RoomRenderView({
               Original
             </button>
           </div>
-        )}
-        {render && stale && !rendering && (
-          <span className="room-render-view__badge" title="The pieces in the room no longer match this picture">
-            Furniture changed since last render
-          </span>
         )}
         {render && (
           <button

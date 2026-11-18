@@ -953,28 +953,29 @@ export default function RoomResult() {
               </button>
               <a
                 href="/dashboard.html"
-                className="result-action no-underline"
+                className="result-action result-action--icon no-underline"
+                title="Return to homepage"
+                aria-label="Return to homepage"
               >
-                <iconify-icon icon="ph:house-duotone" />
-                Return to Homepage
+                <iconify-icon icon="ph:house-bold" />
               </a>
               <button
                 onClick={handleSaveLayout}
                 disabled={saveStatus === 'saving'}
                 className={[
-                  'result-action',
+                  'result-action result-action--primary',
                   saveStatus === 'saving' ? 'opacity-70 cursor-wait' : '',
                 ].join(' ')}
               >
                 <iconify-icon icon={
                   saveStatus === 'saved' ? 'ph:check-circle-duotone'
                   : saveStatus === 'error' ? 'ph:warning-circle-duotone'
-                  : 'ph:floppy-disk-duotone'
+                  : 'ph:floppy-disk-bold'
                 } />
                 {saveStatus === 'saving' ? 'Saving...'
                   : saveStatus === 'saved' ? 'Auto-saved'
                   : saveStatus === 'error' ? 'Retry Save'
-                  : 'Save Layout'}
+                  : 'Save layout'}
               </button>
             </div>
           </div>
