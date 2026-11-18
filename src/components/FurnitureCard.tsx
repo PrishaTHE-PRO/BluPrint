@@ -3,22 +3,33 @@ import type { FurnitureItem } from '../types';
 import { CATEGORY_LABELS } from '../utils/furnitureLayout';
 import { proxiedImageUrl } from '../utils/furnitureColor';
 
+/**
+ * One product in the "Shop the room" grid under the plan: picture with the
+ * category chip and an in-room toggle on it, then brand, name, price, Swap
+ * and Buy. Hovering a card highlights the same piece on the floor plan and
+ * the other way round (linkedCategory).
+ */
+
 interface Props {
   item:             FurnitureItem;
   canSwap:          boolean;
   onSwap:           () => void;
   animDelay:        string;
+  /** Kept for callers that still pass it; every card now has the one layout. */
   variant?:         'compact' | 'featured';
   linkedCategory?:  string | null;
   onLinkCategory?:  (category: string | null) => void;
   inRoom:           boolean;
   onToggleInRoom:   () => void;
+  /** Small square in the category chip, matched to the piece on the plan. */
+  accent?:          string;
 }
 
 const BUY_BTN_CLASS =
   'buy-btn group relative inline-flex items-center justify-center overflow-hidden ' +
   'card-action font-bold transition-colors whitespace-nowrap';
 
+/** Used by the render pane's hover cards. The shop cards draw their own Buy link. */
 export function BuyButton({ href, className = '' }: { href: string; className?: string }) {
   return (
     <a
@@ -94,16 +105,24 @@ const CATEGORY_FALLBACK: Record<string, string> = {
   nursery_lamp:    'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=400',
 };
 
+/** Chip colours, cycled by position in the room order. */
+export const CARD_ACCENTS = ['#a9c4dc', '#294f7d', '#6f9bc2', '#d3968c', '#5b7f6a', '#9fc0e0', '#c9a97a'];
+
+function formatPrice(price: number): string {
+  if (!(price > 0)) return '-';
+  return '$' + Math.round(price).toLocaleString();
+}
+
 export default function FurnitureCard({
   item,
   canSwap,
   onSwap,
   animDelay,
-  variant = 'featured',
   linkedCategory,
   onLinkCategory,
   inRoom,
   onToggleInRoom,
+  accent = CARD_ACCENTS[0],
 }: Props) {
   const categoryFallback = CATEGORY_FALLBACK[item.category] || '';
   const productUrl = item.imageUrl || categoryFallback;
@@ -115,145 +134,84 @@ export default function FurnitureCard({
     setImgEpoch((n) => n + 1);
   }, [item.id, item.imageUrl, item.category]);
 
-  // Proxy retailer CDNs — mobile Safari often blocks hotlinked product photos,
-  // which previously fell back to a generic Unsplash shot that didn't match the item.
-  const imgSrc = imgFailed
-    ? categoryFallback
-    : proxiedImageUrl(productUrl);
+  // Proxy retailer CDNs: mobile Safari often blocks hotlinked product photos,
+  // which used to fall back to a generic shot that did not match the item.
+  const imgSrc = imgFailed ? categoryFallback : proxiedImageUrl(productUrl);
 
   const isLinked = linkedCategory === item.category;
   const isDimmed = Boolean(linkedCategory && linkedCategory !== item.category);
   const categoryLabel = CATEGORY_LABELS[item.category] ?? item.category;
 
-  const linkProps = {
-    onMouseEnter: () => onLinkCategory?.(item.category),
-    onMouseLeave: () => onLinkCategory?.(null),
-    onClick: () => onLinkCategory?.(item.category),
-  };
-
   const shellClass = [
-    'garden-card rounded-2xl border group animate-reveal transition-all duration-200',
-    inRoom ? 'border-[#F7F4D5]/10' : 'border-dashed border-[#F7F4D5]/25',
-    isLinked ? 'ring-2 ring-[#D3968C] ring-offset-2 ring-offset-[#0A3323] scale-[1.02]' : '',
-    isDimmed ? 'opacity-40' : inRoom ? 'opacity-100' : 'opacity-70',
-  ].join(' ');
-
-  const productImage = (
-    <img
-      key={`${item.id}-${imgEpoch}-${imgFailed ? 'fb' : 'src'}`}
-      src={imgSrc}
-      alt={item.name}
-      loading="eager"
-      decoding="async"
-      referrerPolicy="no-referrer"
-      className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-500"
-      onError={() => {
-        if (!imgFailed && categoryFallback && imgSrc !== categoryFallback && imgSrc !== proxiedImageUrl(categoryFallback)) {
-          setImgFailed(true);
-        }
-      }}
-    />
-  );
-
-  const inRoomToggle = (
-    <button
-      type="button"
-      onClick={onToggleInRoom}
-      title={inRoom ? 'Remove from floor plan' : 'Add back to floor plan'}
-      className="card-action flex items-center gap-1 px-2 py-0.5 rounded font-bold transition-all flex-shrink-0"
-    >
-      <iconify-icon icon={inRoom ? 'ph:minus-circle-duotone' : 'ph:plus-circle-duotone'} />
-      {inRoom ? 'Remove' : 'Add'}
-    </button>
-  );
-
-  if (variant === 'compact') {
-    return (
-      <div
-        className={`${shellClass} p-4 flex gap-4 items-stretch`}
-        style={{ animationDelay: animDelay }}
-        {...linkProps}
-      >
-        <div className="w-28 h-28 bg-[#F7F4D5]/10 rounded-2xl overflow-hidden shadow-inner flex-shrink-0 relative">
-          {productImage}
-        </div>
-        <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
-          <div className="min-w-0">
-            <div className="flex items-center justify-between gap-1">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#839958] truncate">
-                {categoryLabel}{item.brand ? ` · ${item.brand}` : ''}
-              </p>
-              {inRoomToggle}
-            </div>
-            <h3 className="text-base font-bold leading-snug line-clamp-2 mt-1.5">{item.name}</h3>
-          </div>
-          <div className="flex items-center justify-between gap-2 mt-3">
-            <span className="text-lg font-bold text-[#F7F4D5] flex-shrink-0">
-              {item.price > 0 ? `$${item.price.toLocaleString()}` : '-'}
-            </span>
-            <div className="flex gap-2 flex-shrink-0">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSwap();
-                }}
-                disabled={!canSwap}
-                title={canSwap ? 'Try another product' : 'No other options yet'}
-                className="card-action card-action--main px-4 py-2 rounded-lg font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Swap
-              </button>
-              <BuyButton href={item.buyUrl} className="card-action--main px-4 py-2 rounded-lg min-w-[3.75rem]" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    'shop-card',
+    inRoom ? '' : 'is-out',
+    isLinked ? 'is-linked' : '',
+    isDimmed ? 'is-dimmed' : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div
-      className={`${shellClass} p-3 flex flex-col`}
+    <article
+      className={shellClass}
       style={{ animationDelay: animDelay }}
-      {...linkProps}
+      data-furniture-card={item.category}
+      onMouseEnter={() => onLinkCategory?.(item.category)}
+      onMouseLeave={() => onLinkCategory?.(null)}
+      onClick={() => onLinkCategory?.(item.category)}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[#839958] font-bold text-[9px] uppercase tracking-widest truncate">{categoryLabel}</span>
-        {inRoomToggle}
+      <div className="shop-card__media">
+        <img
+          key={`${item.id}-${imgEpoch}-${imgFailed ? 'fb' : 'src'}`}
+          src={imgSrc}
+          alt={item.name}
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={() => {
+            if (!imgFailed && categoryFallback && imgSrc !== categoryFallback && imgSrc !== proxiedImageUrl(categoryFallback)) {
+              setImgFailed(true);
+            }
+          }}
+        />
+        <span className="shop-card__chip">
+          <span className="shop-card__dot" style={{ background: accent }} aria-hidden="true" />
+          {categoryLabel}
+        </span>
+        <button
+          type="button"
+          className="shop-card__toggle"
+          onClick={(e) => { e.stopPropagation(); onToggleInRoom(); }}
+          title={inRoom ? 'Take this piece off the floor plan' : 'Put this piece back on the floor plan'}
+          aria-pressed={!inRoom}
+        >
+          <iconify-icon icon={inRoom ? 'ph:minus-bold' : 'ph:plus-bold'} />
+        </button>
       </div>
 
-      <div className="w-full aspect-[4/3] bg-[#F7F4D5]/10 rounded-lg overflow-hidden shadow-inner relative mb-2">
-        {productImage}
-      </div>
-
-      <div className="flex-1 flex flex-col gap-1 min-w-0">
-        {item.brand && (
-          <span className="text-[#D3968C] font-bold text-[9px] uppercase tracking-widest truncate">{item.brand}</span>
-        )}
-        <h3 className="text-xs font-bold leading-snug line-clamp-2 overflow-hidden">{item.name}</h3>
-
-        <div className="mt-auto pt-1.5 flex items-center justify-between gap-1 border-t border-[#F7F4D5]/10">
-          <span className="text-sm font-bold flex-shrink-0">
-            {item.price > 0 ? `$${item.price.toLocaleString()}` : '-'}
-          </span>
-          <div className="flex gap-1 flex-shrink-0">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSwap();
-              }}
-              disabled={!canSwap}
-              title={canSwap ? 'Try another product' : 'No other options yet'}
-              className="card-action card-action--main px-3 py-1 rounded-md font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Swap
-            </button>
-            <BuyButton href={item.buyUrl} className="card-action--main px-3 py-1 rounded-md min-w-[3.25rem]" />
-          </div>
+      <div className="shop-card__body">
+        <span className="shop-card__brand">{item.brand || ' '}</span>
+        <h3 className="shop-card__name">{item.name}</h3>
+        <div className="shop-card__row">
+          <span className="shop-card__price">{formatPrice(item.price)}</span>
+          <button
+            type="button"
+            className="shop-card__swap"
+            onClick={(e) => { e.stopPropagation(); onSwap(); }}
+            disabled={!canSwap}
+            title={canSwap ? 'Try another product' : 'No other options yet'}
+          >
+            <iconify-icon icon="ph:shuffle" /> Swap
+          </button>
+          <a
+            className="shop-card__buy"
+            href={item.buyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Buy <iconify-icon icon="ph:arrow-up-right" />
+          </a>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

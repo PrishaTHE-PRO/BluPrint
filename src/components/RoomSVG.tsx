@@ -552,412 +552,52 @@ function canvasDimsFt(room: Room, layout: RoomLayout | null | undefined) {
 
 // ─── Top-down furniture SVG icons ────────────────────────────────────────────
 
-function SofaIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const back = d * 0.28;
-  const arm  = Math.max(4, w * 0.10);
-  const inner = w - arm * 2;
-  return (
-    <g>
-      <rect width={w} height={d} rx={3} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      <rect width={w} height={back} rx={2} fill={t.dark} stroke="#0A3323" strokeWidth={1} />
-      <rect x={0} y={back} width={arm} height={d - back} rx={2} fill={t.mid} stroke="#0A3323" strokeWidth={1} />
-      <rect x={w - arm} y={back} width={arm} height={d - back} rx={2} fill={t.mid} stroke="#0A3323" strokeWidth={1} />
-      <line x1={arm + inner / 3}     y1={back} x2={arm + inner / 3}     y2={d} stroke="#0A3323" strokeWidth={0.8} opacity={0.35} />
-      <line x1={arm + (inner * 2) / 3} y1={back} x2={arm + (inner * 2) / 3} y2={d} stroke="#0A3323" strokeWidth={0.8} opacity={0.35} />
-    </g>
-  );
-}
-
-function ChairIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const back = d * 0.30;
-  const arm  = Math.max(3, w * 0.13);
-  return (
-    <g>
-      <rect width={w} height={d} rx={3} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      <rect width={w} height={back} rx={2} fill={t.dark} stroke="#0A3323" strokeWidth={1} />
-      <rect x={0}       y={back} width={arm} height={d - back - d * 0.12} rx={1} fill={t.mid} stroke="#0A3323" strokeWidth={1} />
-      <rect x={w - arm} y={back} width={arm} height={d - back - d * 0.12} rx={1} fill={t.mid} stroke="#0A3323" strokeWidth={1} />
-    </g>
-  );
-}
-
-function CoffeeTableIcon({
-  w, d, t, form = 'default',
-}: { w: number; d: number; t: FurnitureColorTones; form?: 'default' | 'round_table' | 'oval_table' }) {
-  if (form === 'round_table' || form === 'oval_table') {
-    const rx = form === 'oval_table' ? w / 2 - 1 : Math.min(w, d) / 2 - 1;
-    const ry = form === 'oval_table' ? d / 2 - 1 : rx;
-    const cx = w / 2;
-    const cy = d / 2;
-    const inner = 0.72;
-    return (
-      <g>
-        <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-        <ellipse
-          cx={cx} cy={cy} rx={rx * inner} ry={ry * inner}
-          fill="none" stroke="#0A3323" strokeWidth={0.7} opacity={0.45}
-        />
-      </g>
-    );
-  }
-  const mg = Math.max(3, Math.min(w, d) * 0.12);
-  return (
-    <g>
-      <rect width={w} height={d} rx={4} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-      <rect x={mg} y={mg} width={w - mg * 2} height={d - mg * 2} rx={2}
-            fill="none" stroke="#0A3323" strokeWidth={0.7} opacity={0.45} />
-    </g>
-  );
-}
-
-function BeanBagIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const cx = w / 2;
-  const cy = d / 2;
-  const rx = w / 2 - 1;
-  const ry = d / 2 - 1;
-  return (
-    <g>
-      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      <ellipse
-        cx={cx} cy={cy + ry * 0.08} rx={rx * 0.72} ry={ry * 0.55}
-        fill={t.base} stroke="#0A3323" strokeWidth={0.8} opacity={0.9}
-      />
-      <path
-        d={`M ${cx - rx * 0.35} ${cy - ry * 0.15} Q ${cx} ${cy + ry * 0.05} ${cx + rx * 0.35} ${cy - ry * 0.1}`}
-        fill="none" stroke="#0A3323" strokeWidth={0.7} opacity={0.4}
-      />
-    </g>
-  );
-}
-
-function LoungeChairIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const back = d * 0.22;
-  const arm = Math.max(4, w * 0.12);
-  return (
-    <g>
-      {/* Deep lounge seat */}
-      <rect width={w} height={d} rx={8} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      {/* Curved-looking back */}
-      <rect width={w} height={back} rx={7} fill={t.dark} stroke="#0A3323" strokeWidth={1} />
-      {/* Soft arms */}
-      <rect x={0} y={back} width={arm} height={d - back} rx={5} fill={t.mid} stroke="#0A3323" strokeWidth={1} />
-      <rect x={w - arm} y={back} width={arm} height={d - back} rx={5} fill={t.mid} stroke="#0A3323" strokeWidth={1} />
-      {/* Seat cushion */}
-      <rect
-        x={arm + 2} y={back + 2}
-        width={Math.max(4, w - arm * 2 - 4)} height={Math.max(4, d - back - 4)}
-        rx={6} fill={t.base} stroke="#0A3323" strokeWidth={0.7} opacity={0.85}
-      />
-    </g>
-  );
-}
-
-function RugIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const mg = Math.max(3, Math.min(w, d) * 0.08);
-  return (
-    <g>
-      <rect width={w} height={d} rx={6}
-            fill={t.light}
-            stroke={t.dark}
-            strokeWidth={1.5}
-            strokeDasharray="5 3"
-            opacity={0.9}
-      />
-      <rect x={mg} y={mg} width={w - mg * 2} height={d - mg * 2} rx={4}
-            fill="none" stroke={t.mid} strokeWidth={1} opacity={0.6} />
-    </g>
-  );
-}
-
-/** Thin straight curtain — vertical pleats, not a floor mat box. */
-function ShowerCurtainIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const folds = Math.max(5, Math.round(w / 10));
-  const lines = Array.from({ length: folds }, (_, i) => {
-    const x = ((i + 0.5) / folds) * w;
-    return (
-      <line
-        key={i}
-        x1={x} y1={1}
-        x2={x} y2={Math.max(2, d - 1)}
-        stroke={i % 2 === 0 ? t.dark : t.mid}
-        strokeWidth={1.1}
-        opacity={0.85}
-      />
-    );
-  });
-  return (
-    <g>
-      <rect width={w} height={d} rx={1.5} fill={t.light} stroke="#0A3323" strokeWidth={1.2} />
-      <line x1={1} y1={1.5} x2={w - 1} y2={1.5} stroke="#0A3323" strokeWidth={1.4} />
-      {lines}
-    </g>
-  );
-}
-
-function BathtubIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const rx = Math.max(8, w * 0.48);
-  const ry = Math.max(6, d * 0.42);
-  const cx = w / 2;
-  const cy = d / 2;
-  return (
-    <g>
-      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      <ellipse cx={cx} cy={cy} rx={rx * 0.72} ry={ry * 0.62} fill={t.base} stroke="#0A3323" strokeWidth={1} opacity={0.85} />
-      <circle cx={cx + rx * 0.35} cy={cy - ry * 0.15} r={Math.max(2, Math.min(w, d) * 0.05)} fill={t.dark} opacity={0.55} />
-    </g>
-  );
-}
-
-function StandingShowerIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const mg = Math.max(2, Math.min(w, d) * 0.08);
-  return (
-    <g>
-      <rect width={w} height={d} rx={2} fill={t.light} stroke="#0A3323" strokeWidth={1.5} opacity={0.55} />
-      <rect x={mg} y={mg} width={w - mg * 2} height={d - mg * 2} rx={1.5}
-            fill="none" stroke="#0A3323" strokeWidth={1.2} strokeDasharray="4 2" />
-      <circle cx={w * 0.72} cy={d * 0.28} r={Math.max(2.5, Math.min(w, d) * 0.07)} fill={t.dark} opacity={0.7} />
-      <line x1={w * 0.72} y1={d * 0.28} x2={w * 0.55} y2={d * 0.55} stroke={t.mid} strokeWidth={1.2} />
-    </g>
-  );
-}
-
-function FloorLampIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const r = Math.min(w, d) / 2 - 1;
-  return (
-    <g>
-      <circle cx={w / 2} cy={d / 2} r={r}    fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      <circle cx={w / 2} cy={d / 2} r={r * 0.35} fill={t.dark} />
-    </g>
-  );
-}
-
-function SideTableIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const r  = Math.min(w, d) / 2 - 1;
-  const r2 = r * 0.55;
-  return (
-    <g>
-      <circle cx={w / 2} cy={d / 2} r={r}  fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-      <circle cx={w / 2} cy={d / 2} r={r2} fill="none"    stroke="#0A3323" strokeWidth={0.7} opacity={0.5} />
-    </g>
-  );
-}
-
-// ── Bedroom icons ─────────────────────────────────────────────────────────────
-
-function BedIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const headH  = Math.max(6, d * 0.18);
-  const pilW   = w * 0.28;
-  const pilH   = Math.max(5, d * 0.16);
-  const pilY   = headH + Math.max(3, d * 0.05);
-  const pilGap = (w - pilW * 2) / 3;
-  return (
-    <g>
-      <rect width={w} height={d} rx={3} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      <rect width={w} height={headH} rx={2} fill={t.dark} stroke="#0A3323" strokeWidth={1} />
-      <rect x={pilGap} y={pilY} width={pilW} height={pilH} rx={3}
-            fill={t.base} stroke="#0A3323" strokeWidth={0.8} opacity={0.9} />
-      <rect x={pilGap * 2 + pilW} y={pilY} width={pilW} height={pilH} rx={3}
-            fill={t.base} stroke="#0A3323" strokeWidth={0.8} opacity={0.9} />
-    </g>
-  );
-}
-
-function NightstandIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const mg = Math.max(3, Math.min(w, d) * 0.15);
-  return (
-    <g>
-      <rect width={w} height={d} rx={3} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-      <line x1={mg} y1={d / 2} x2={w - mg} y2={d / 2} stroke="#0A3323" strokeWidth={0.8} opacity={0.5} />
-      <circle cx={w / 2} cy={d / 2} r={2} fill="#0A3323" opacity={0.4} />
-    </g>
-  );
-}
-
-function DresserIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const rows = 3;
-  const mgX = Math.max(3, w * 0.06);
-  const mgY = Math.max(2, d * 0.12);
-  const innerH = Math.max(4, d - mgY * 2);
-  return (
-    <g>
-      <rect width={w} height={d} rx={3} fill={t.mid} stroke="#0A3323" strokeWidth={1.5} />
-      <line
-        x1={mgX * 0.4} y1={d - 1.5} x2={w - mgX * 0.4} y2={d - 1.5}
-        stroke="#0A3323" strokeWidth={2} opacity={0.35} strokeLinecap="round"
-      />
-      {Array.from({ length: rows }, (_, i) => {
-        const y0 = mgY + (i / rows) * innerH;
-        const y1 = mgY + ((i + 1) / rows) * innerH;
-        const midY = (y0 + y1) / 2;
-        return (
-          <g key={i}>
-            <rect
-              x={mgX} y={y0 + 1}
-              width={w - mgX * 2} height={Math.max(2, y1 - y0 - 2)}
-              rx={1.5} fill={t.light} stroke="#0A3323" strokeWidth={0.75} opacity={0.95}
-            />
-            <circle cx={w / 2} cy={midY} r={1.7} fill="#0A3323" opacity={0.4} />
-          </g>
-        );
-      })}
-    </g>
-  );
-}
-
-function WardrobeIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const mid = w / 2;
-  return (
-    <g>
-      <rect width={w} height={d} rx={3} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-      <line x1={mid} y1={0} x2={mid} y2={d} stroke="#0A3323" strokeWidth={1} opacity={0.5} />
-      <circle cx={mid - 6} cy={d / 2} r={2} fill="#0A3323" opacity={0.4} />
-      <circle cx={mid + 6} cy={d / 2} r={2} fill="#0A3323" opacity={0.4} />
-    </g>
-  );
-}
-
-function DeskIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const surface = d * 0.55;
-  return (
-    <g>
-      <rect width={w} height={d} rx={3} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-      <line x1={0} y1={surface} x2={w} y2={surface} stroke="#0A3323" strokeWidth={0.7} opacity={0.4} />
-    </g>
-  );
-}
-
-function DiningTableIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const mg = Math.max(3, Math.min(w, d) * 0.1);
-  return (
-    <g>
-      <rect width={w} height={d} rx={5} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-      <rect x={mg} y={mg} width={w - mg * 2} height={d - mg * 2} rx={3}
-            fill="none" stroke="#0A3323" strokeWidth={0.7} opacity={0.4} />
-    </g>
-  );
-}
-
-/** Framed art seen from above: a frame band with the picture face inside. */
-function WallArtIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const frame = Math.min(d * 0.35, 0.9);
-  return (
-    <g>
-      <rect width={w} height={d} rx={1.5} fill={t.dark} stroke="#0A3323" strokeWidth={1.5} />
-      <rect x={frame} y={frame * 0.6} width={Math.max(0, w - frame * 2)} height={Math.max(0, d - frame * 1.2)}
-            fill={t.base} stroke="#0A3323" strokeWidth={0.7} opacity={0.75} />
-    </g>
-  );
-}
-
-function ShelfIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  return (
-    <g>
-      <rect width={w} height={d} rx={2} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />
-      {[0.33, 0.66].map(frac => (
-        <line key={frac} x1={w * frac} y1={0} x2={w * frac} y2={d}
-              stroke="#0A3323" strokeWidth={0.7} opacity={0.4} />
-      ))}
-    </g>
-  );
-}
-
-function CribIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  const slats = Math.max(3, Math.round(w / 14));
-  const gap   = w / (slats + 1);
-  return (
-    <g>
-      <rect width={w} height={d} rx={4} fill={t.light} stroke="#0A3323" strokeWidth={1.5} />
-      {Array.from({ length: slats }, (_, i) => (
-        <line key={i}
-          x1={(i + 1) * gap} y1={d * 0.1}
-          x2={(i + 1) * gap} y2={d * 0.9}
-          stroke="#0A3323" strokeWidth={1} opacity={0.3}
-        />
-      ))}
-    </g>
-  );
-}
-
-function LampIcon({ w, d, t }: { w: number; d: number; t: FurnitureColorTones }) {
-  return <FloorLampIcon w={w} d={d} t={t} />;
-}
-
-function FurnitureIcon({ item, wPx, dPx, color }: { item: FurnitureItem; wPx: number; dPx: number; color?: string }) {
-  const t = tonesFrom(color, item.category);
+/**
+ * Furniture on the plan, drawn the way an architect's sheet does it: a plain
+ * footprint in a muted tone with the name set small inside. Rugs are a dashed
+ * outline so pieces standing on them stay readable; round things (lamps,
+ * stools, round tables) are circles; oval tables are pills.
+ */
+function PlanShape({ item, wPx, dPx, color }: { item: FurnitureItem; wPx: number; dPx: number; color?: string }) {
+  const t: FurnitureColorTones = tonesFrom(color, item.category);
   const form = furnitureForm(item.category, item.name);
-  const p = { w: wPx, d: dPx, t };
-  switch (item.category) {
-    case 'sofa':            return <SofaIcon {...p} />;
-    case 'accent_chair':
-      if (form === 'beanbag') return <BeanBagIcon {...p} />;
-      if (form === 'lounge_chair') return <LoungeChairIcon {...p} />;
-      return <ChairIcon {...p} />;
-    case 'coffee_table':    return <CoffeeTableIcon {...p} form={form === 'round_table' || form === 'oval_table' ? form : 'default'} />;
-    case 'rug':             return <RugIcon {...p} />;
-    case 'floor_lamp':      return <FloorLampIcon {...p} />;
-    case 'side_table':
-      if (form === 'oval_table') return <CoffeeTableIcon {...p} form="oval_table" />;
-      if (form === 'round_table') return <CoffeeTableIcon {...p} form="round_table" />;
-      return <SideTableIcon {...p} />;
-    case 'bed':             return <BedIcon {...p} />;
-    case 'nightstand':      return <NightstandIcon {...p} />;
-    case 'dresser':         return <DresserIcon {...p} />;
-    case 'bedroom_rug':     return <RugIcon {...p} />;
-    case 'wardrobe':        return <WardrobeIcon {...p} />;
-    case 'bedside_lamp':    return <LampIcon {...p} />;
-    case 'bar_stool':       return <ChairIcon {...p} />;
-    case 'island_cart':     return <DiningTableIcon {...p} />;
-    case 'kitchen_shelf':   return <ShelfIcon {...p} />;
-    case 'kitchen_storage': return <DresserIcon {...p} />;
-    case 'pendant_light':   return <FloorLampIcon {...p} />;
-    case 'kitchen_rug':     return <RugIcon {...p} />;
-    case 'dining_table':
-      if (form === 'round_table' || form === 'oval_table') {
-        return <CoffeeTableIcon {...p} form={form} />;
-      }
-      return <DiningTableIcon {...p} />;
-    case 'dining_chair':    return <ChairIcon {...p} />;
-    case 'dining_rug':      return <RugIcon {...p} />;
-    case 'sideboard':       return <DresserIcon {...p} />;
-    case 'dining_light':    return <FloorLampIcon {...p} />;
-    case 'bar_cabinet':     return <WardrobeIcon {...p} />;
-    case 'desk':            return <DeskIcon {...p} />;
-    case 'office_chair':    return <ChairIcon {...p} />;
-    case 'bookshelf':       return <ShelfIcon {...p} />;
-    case 'desk_lamp':       return <LampIcon {...p} />;
-    case 'storage_cabinet': return <WardrobeIcon {...p} />;
-    case 'monitor_stand':   return <CoffeeTableIcon {...p} />;
-    case 'crib':            return <CribIcon {...p} />;
-    case 'nursery_dresser': return <DresserIcon {...p} />;
-    case 'rocking_chair':
-      if (form === 'beanbag') return <BeanBagIcon {...p} />;
-      return <ChairIcon {...p} />;
-    case 'nursery_rug':     return <RugIcon {...p} />;
-    case 'nursery_shelf':   return <ShelfIcon {...p} />;
-    case 'nursery_lamp':    return <LampIcon {...p} />;
-    case 'vanity':          return <DresserIcon {...p} />;
-    case 'bath_mirror':     return <CoffeeTableIcon {...p} />;
-    case 'bath_storage':    return <ShelfIcon {...p} />;
-    case 'bath_mat':        return <RugIcon {...p} />;
-    case 'bath_light':      return <LampIcon {...p} />;
-    case 'shower_curtain':  return <ShowerCurtainIcon {...p} />;
-    case 'bathtub':         return <BathtubIcon {...p} />;
-    case 'standing_shower': return <StandingShowerIcon {...p} />;
-    case 'reading_nook':
-      if (form === 'beanbag') return <BeanBagIcon {...p} />;
-      return <LoungeChairIcon {...p} />;
-    case 'smart_lighting':     return <LampIcon {...p} />;
-    case 'floating_shelves':   return <ShelfIcon {...p} />;
-    case 'wall_art':           return <WallArtIcon {...p} />;
-    case 'indoor_plants':      return <FloorLampIcon {...p} />;
-    case 'full_length_mirror': return <CoffeeTableIcon {...p} />;
-    case 'workspace_desk':     return <DeskIcon {...p} />;
-    case 'vanity_station':     return <DresserIcon {...p} />;
-    case 'bookcase':           return <ShelfIcon {...p} />;
-    default:
-      return <rect width={wPx} height={dPx} rx={3} fill={t.base} stroke="#0A3323" strokeWidth={1.5} />;
+  const stroke = 'rgba(20, 32, 46, .30)';
+  if (isFloorCovering(item.category)) {
+    return (
+      <rect width={wPx} height={dPx} rx={6}
+        fill="rgba(157, 180, 207, .16)" stroke="#9db4cf" strokeWidth={1.5} strokeDasharray="5 4" />
+    );
   }
+  const round = form === 'round_table'
+    || /lamp|light|stool|plant/.test(item.category)
+    || (Math.abs(wPx - dPx) < 2 && wPx < 56);
+  if (round) {
+    return <ellipse cx={wPx / 2} cy={dPx / 2} rx={wPx / 2} ry={dPx / 2} fill={t.base} stroke={stroke} strokeWidth={1.5} />;
+  }
+  const rx = form === 'oval_table' ? Math.min(wPx, dPx) / 2 : Math.min(10, Math.min(wPx, dPx) / 4);
+  return <rect width={wPx} height={dPx} rx={rx} fill={t.base} stroke={stroke} strokeWidth={1.5} />;
 }
+
+/** Largest mono size between 7 and 9.5 px at which the label fits the width, or null. */
+function fitPlanLabel(text: string, maxPx: number): { text: string; fontSize: number } | null {
+  for (let size = 9.5; size >= 7; size -= 0.5) {
+    if (text.length * size * 0.62 <= maxPx) return { text, fontSize: size };
+  }
+  return null;
+}
+
+/** 14.5 ft -> 14′ 6″ */
+function ftIn(ft: number): string {
+  let feet = Math.floor(ft);
+  let inches = Math.round((ft - feet) * 12);
+  if (inches === 12) { feet += 1; inches = 0; }
+  return `${feet}\u2032 ${inches}\u2033`;
+}
+
+const PLAN_MONO = "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+const PLAN_INK = '#14202e';
+const PLAN_DIM = '#5d6b7b';
+const PLAN_ROSE = '#d3968c';
 
 // ─── Door & window marks (top-down architectural symbols) ────────────────────
 
@@ -965,15 +605,14 @@ function DoorMark({ sizePx }: { sizePx: number }) {
   // Centered on the snap point; line = wall opening, arc = door swing
   return (
     <g transform={`translate(${-sizePx / 2}, 0)`}>
-      {/* wall gap */}
-      <line x1={0} y1={0} x2={sizePx} y2={0} stroke="#0A3323" strokeWidth={4} strokeLinecap="round" />
+      {/* wall opening: paints over the wall in the floor colour */}
+      <line x1={0} y1={0} x2={sizePx} y2={0} stroke="#fdfcfa" strokeWidth={9} />
       {/* swing arc */}
       <path d={`M ${sizePx} 0 A ${sizePx} ${sizePx} 0 0 1 0 ${sizePx}`}
-            fill="none" stroke="#2f6f8f" strokeWidth={2.6}
-            strokeDasharray="5 2.5" opacity={0.95} />
+            fill="none" stroke={PLAN_ROSE} strokeWidth={1.5}
+            strokeDasharray="4 3" opacity={0.9} />
       {/* open door leaf */}
-      <line x1={0} y1={0} x2={0} y2={sizePx} stroke="#2f6f8f" strokeWidth={5.5} strokeLinecap="round" />
-      <circle cx={0} cy={0} r={3.5} fill="#2f6f8f" />
+      <line x1={0} y1={0} x2={0} y2={sizePx} stroke={PLAN_ROSE} strokeWidth={3} strokeLinecap="round" />
     </g>
   );
 }
@@ -982,9 +621,8 @@ function WindowMark({ sizePx }: { sizePx: number }) {
   return (
     <g transform={`translate(${-sizePx / 2}, -5)`}>
       <rect width={sizePx} height={10} rx={1}
-            fill="rgba(131,212,224,0.35)" stroke="#0A3323" strokeWidth={1.5} />
-      <line x1={5} y1={2.5} x2={sizePx - 5} y2={2.5} stroke="rgba(131,212,224,0.9)" strokeWidth={1.5} />
-      <line x1={5} y1={7.5} x2={sizePx - 5} y2={7.5} stroke="rgba(131,212,224,0.9)" strokeWidth={1.5} />
+            fill="#f5e5e2" stroke={PLAN_ROSE} strokeWidth={1.5} />
+      <line x1={2} y1={5} x2={sizePx - 2} y2={5} stroke={PLAN_ROSE} strokeWidth={1} />
     </g>
   );
 }
@@ -1522,8 +1160,8 @@ export default function RoomSVG({
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-1 gap-2">
         <h3 className="text-base font-bold flex items-center gap-2 shrink-0">
-          <iconify-icon icon="ph:layout-duotone" class="text-[#D3968C]" />
-          2D Room Layout
+          <iconify-icon icon="ph:blueprint" class="text-[#D3968C]" />
+          Floor plan
         </h3>
       </div>
 
@@ -1548,26 +1186,30 @@ export default function RoomSVG({
           <mask id="room-wall-mask">
             <rect width={vbW} height={vbH} fill="white" />
             {cutoutPolygons.map((cutout, index) => (
-              <path key={index} d={cutout.path} fill="black" stroke="black" strokeWidth={6} />
+              <path key={index} d={cutout.path} fill="black" stroke="black" strokeWidth={10} />
             ))}
           </mask>
+          <pattern id="plan-paper-grid" width={SCALE / 2} height={SCALE / 2} patternUnits="userSpaceOnUse">
+            <path d={`M ${SCALE / 2} 0 L 0 0 0 ${SCALE / 2}`} fill="none" stroke="rgba(41, 79, 125, .06)" strokeWidth={1} />
+          </pattern>
         </defs>
 
-        {/* ── Background ── */}
-        <rect width={vbW} height={vbH} fill="transparent" />
+        {/* ── Paper ── */}
+        <rect width={vbW} height={vbH} rx={14} fill="#f7f9fb" />
+        <rect width={vbW} height={vbH} rx={14} fill="url(#plan-paper-grid)" />
 
         {/* ── Room fill and walls, with true open-sided cutouts ── */}
         <path
           d={roomPathD + cutoutPathD}
-          fill="#F7F4D5"
+          fill="#fdfcfa"
           fillRule="evenodd"
           stroke="none"
         />
         <path
           d={roomPathD}
           fill="none"
-          stroke="#0A3323"
-          strokeWidth={3}
+          stroke={PLAN_INK}
+          strokeWidth={7}
           strokeLinejoin="round"
           mask="url(#room-wall-mask)"
         />
@@ -1582,8 +1224,8 @@ export default function RoomSVG({
                 y1={point.y}
                 x2={next.x}
                 y2={next.y}
-                stroke="#0A3323"
-                strokeWidth={2.5}
+                stroke={PLAN_INK}
+                strokeWidth={6}
                 strokeLinejoin="round"
               />
             );
@@ -1596,14 +1238,14 @@ export default function RoomSVG({
             <line key={`v${i}`}
               x1={i * SCALE + MARGIN} y1={MARGIN}
               x2={i * SCALE + MARGIN} y2={cL * SCALE + MARGIN}
-              stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
+              stroke="rgba(41, 79, 125, .09)" strokeWidth={1}
             />
           ))}
           {gridH.map(i => (
             <line key={`h${i}`}
               x1={MARGIN} y1={i * SCALE + MARGIN}
               x2={cW * SCALE + MARGIN} y2={i * SCALE + MARGIN}
-              stroke="rgba(10,51,35,0.07)" strokeWidth={0.8}
+              stroke="rgba(41, 79, 125, .09)" strokeWidth={1}
             />
           ))}
         </g>
@@ -1618,30 +1260,24 @@ export default function RoomSVG({
           </g>
         ))}
 
-        {/* ── Dimension labels ── */}
-        <text
-          x={cW * SCALE / 2 + MARGIN}
-          y={MARGIN / 2 + 4}
-          textAnchor="middle"
-          fontSize={11}
-          fontWeight="700"
-          fill="rgba(247,244,213,0.85)"
-          fontFamily="Quicksand, sans-serif"
-        >
-          {cW % 1 === 0 ? cW : cW.toFixed(1)} ft
-        </text>
-        <text
-          x={MARGIN / 2 - 2}
-          y={cL * SCALE / 2 + MARGIN}
-          textAnchor="middle"
-          fontSize={11}
-          fontWeight="700"
-          fill="rgba(247,244,213,0.85)"
-          fontFamily="Quicksand, sans-serif"
-          transform={`rotate(-90, ${MARGIN / 2 - 2}, ${cL * SCALE / 2 + MARGIN})`}
-        >
-          {cL % 1 === 0 ? cL : cL.toFixed(1)} ft
-        </text>
+        {/* ── Dimension lines ── */}
+        {(() => {
+          const top = ftIn(cW), left = ftIn(cL);
+          const halfTop = top.length * 3.4 + 8, halfLeft = left.length * 3.4 + 8;
+          const cx = cW * SCALE / 2 + MARGIN, cy = cL * SCALE / 2 + MARGIN;
+          const y = MARGIN / 2, x = MARGIN / 2;
+          const common = { fontSize: 11, fontFamily: PLAN_MONO, fill: PLAN_DIM, textAnchor: 'middle' as const, dominantBaseline: 'middle' as const };
+          return (
+            <g aria-hidden="true">
+              <line x1={MARGIN} y1={y} x2={cx - halfTop} y2={y} stroke={PLAN_DIM} strokeWidth={1} opacity={0.45} />
+              <line x1={cx + halfTop} y1={y} x2={cW * SCALE + MARGIN} y2={y} stroke={PLAN_DIM} strokeWidth={1} opacity={0.45} />
+              <text x={cx} y={y} {...common}>{top}</text>
+              <line x1={x} y1={MARGIN} x2={x} y2={cy - halfLeft} stroke={PLAN_DIM} strokeWidth={1} opacity={0.45} />
+              <line x1={x} y1={cy + halfLeft} x2={x} y2={cL * SCALE + MARGIN} stroke={PLAN_DIM} strokeWidth={1} opacity={0.45} />
+              <text x={x} y={cy} {...common} transform={`rotate(-90, ${x}, ${cy})`}>{left}</text>
+            </g>
+          );
+        })()}
 
         {/* ── Furniture already in the room: fixed, translucent, not draggable ── */}
         {ghostRects.length > 0 && (
@@ -1796,24 +1432,36 @@ export default function RoomSVG({
                 </>
               )}
 
-              <FurnitureIcon item={item} wPx={wPx} dPx={dPx} color={colorByCategory?.[item.category]} />
+              <PlanShape item={item} wPx={wPx} dPx={dPx} color={colorByCategory?.[item.category]} />
 
-              {/* Label (not on rug — too noisy) */}
-              {!isRug && (
-                <text
-                  x={wPx / 2}
-                  y={dPx / 2 + Math.min(4, dPx * 0.15)}
-                  textAnchor="middle"
-                  fontSize={Math.max(7, Math.min(10, wPx / 7))}
-                  fontWeight="700"
-                  fill="#0A3323"
-                  opacity={0.65}
-                  fontFamily="Quicksand, sans-serif"
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
-                >
-                  {CATEGORY_LABELS[item.category] ?? item.category}
-                </text>
-              )}
+              {/* Name, set small and upright in the footprint whatever the piece's
+                  rotation. Rugs stay unlabelled; a name that cannot fit is left off. */}
+              {!isRug && (() => {
+                const turned = Math.abs(((rot % 180) + 180) % 180 - 90) < 45;
+                const availW = (turned ? dPx : wPx) - 8;
+                const availH = turned ? wPx : dPx;
+                if (availW < 24 || availH < 16) return null;
+                const label = fitPlanLabel((CATEGORY_LABELS[item.category] ?? item.category).toUpperCase(), availW);
+                if (!label) return null;
+                return (
+                  <text
+                    x={wPx / 2}
+                    y={dPx / 2}
+                    transform={`rotate(${-rot}, ${wPx / 2}, ${dPx / 2})`}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={label.fontSize}
+                    fontWeight="500"
+                    letterSpacing=".06em"
+                    fill={PLAN_INK}
+                    opacity={0.7}
+                    fontFamily={PLAN_MONO}
+                    style={{ pointerEvents: 'none', userSelect: 'none' }}
+                  >
+                    {label.text}
+                  </text>
+                );
+              })()}
 
               {/* Remove from floor plan — appears on hover. Counter-rotated so it
                   stays upright and pinned to the top-right corner at any rotation. */}
@@ -1844,35 +1492,11 @@ export default function RoomSVG({
         })}
       </svg>
 
-      {/* Category legend / tap targets */}
-      <div className="mt-3 flex flex-wrap gap-1.5 px-1">
-        {furniture.map(item => (
-          <button
-            key={item.id}
-            type="button"
-            className={[
-              'text-[10px] font-bold px-2 py-1.5 rounded-full border transition-all',
-              linkedCategory === item.category || selectedCategory === item.category
-                ? 'bg-[#D3968C]/30 border-[#D3968C] text-[#F7F4D5]'
-                : 'bg-[#105666]/20 border-[#F7F4D5]/10 text-[#F7F4D5]/60 hover:border-[#D3968C]/40',
-            ].join(' ')}
-            onClick={() => {
-              const next = selectedCategory === item.category ? null : item.category;
-              setSelectedCategory(next);
-              onLinkCategory?.(next);
-            }}
-            onMouseEnter={() => {
-              if (coarsePointer) return;
-              onLinkCategory?.(item.category);
-            }}
-            onMouseLeave={() => {
-              if (coarsePointer) return;
-              onLinkCategory?.(null);
-            }}
-          >
-            {CATEGORY_LABELS[item.category] ?? item.category}
-          </button>
-        ))}
+      {/* Sheet legend */}
+      <div className="room-layout-canvas__legend" aria-hidden="true">
+        <span><i className="room-layout-canvas__legend-door" />Door</span>
+        <span><i className="room-layout-canvas__legend-window" />Window</span>
+        <span><i className="room-layout-canvas__legend-sq" />1 sq = 1 ft</span>
       </div>
     </div>
   );

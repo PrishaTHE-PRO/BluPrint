@@ -1,7 +1,7 @@
-import { useRef, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { FurnitureItem, FurnitureNotice, Style } from '../types';
 import { orderedFurniture } from '../utils/furnitureLayout';
-import FurnitureCard from './FurnitureCard';
+import FurnitureCard, { CARD_ACCENTS } from './FurnitureCard';
 
 interface Props {
   slots:            Record<string, FurnitureItem>;
@@ -37,8 +37,16 @@ export default function FurniturePanel({
   onToggleInRoom,
   notice = null,
 }: Props) {
-  const stripRef = useRef<HTMLDivElement>(null);
+  // Room order follows the plan (big pieces first); Price is cheapest first.
+  const [sort, setSort] = useState<'room' | 'price'>('room');
   const displayed = orderedFurniture(slots, roomType);
+  // Chip colours follow room order so a piece keeps its colour when re-sorted.
+  const accentFor = useMemo(() => {
+    const map = new Map<string, string>();
+    displayed.forEach((item, i) => map.set(item.category, CARD_ACCENTS[i % CARD_ACCENTS.length]));
+    return map;
+  }, [displayed]);
+  const shown = sort === 'price' ? [...displayed].sort((a, b) => a.price - b.price) : displayed;
   const total = displayed
     .filter((item) => !hiddenCategories.has(item.category))
     .reduce((sum, item) => sum + item.price, 0);
@@ -47,26 +55,37 @@ export default function FurniturePanel({
   const overBudget = budget > 0 && total > budget;
   const overBy = overBudget ? total - budget : 0;
 
-  // Selecting a piece on the floor plan deliberately does NOT scroll the strip.
-  // scrollIntoView walks up every scrollable ancestor, so it moved the page as
-  // well as the strip and yanked the view out from under you. The selected card
-  // is still highlighted via `linkedCategory` — it just stays where it is.
+  // Selecting a piece on the floor plan deliberately does NOT scroll the grid.
+  // scrollIntoView walks up every scrollable ancestor and yanked the page; the
+  // selected card is highlighted through `linkedCategory` where it stands.
 
-  const cards = displayed.map((item, i) => (
-    <div key={item.id} className="furniture-strip-card shrink-0" data-furniture-card={item.category}>
-      <FurnitureCard
-        item={item}
-        canSwap
-        onSwap={() => onSwap(item.category)}
-        animDelay={`${0.45 + i * 0.07}s`}
-        variant="compact"
-        linkedCategory={linkedCategory}
-        onLinkCategory={onLinkCategory}
-        inRoom={!hiddenCategories.has(item.category)}
-        onToggleInRoom={() => onToggleInRoom(item.category)}
-      />
-    </div>
+  const cards = shown.map((item, i) => (
+    <FurnitureCard
+      key={item.id}
+      item={item}
+      canSwap
+      onSwap={() => onSwap(item.category)}
+      animDelay={`${0.1 + i * 0.06}s`}
+      linkedCategory={linkedCategory}
+      onLinkCategory={onLinkCategory}
+      inRoom={!hiddenCategories.has(item.category)}
+      onToggleInRoom={() => onToggleInRoom(item.category)}
+      accent={accentFor.get(item.category)}
+    />
   ));
+
+  const shopHeader = (
+    <div className="shop-room__head">
+      <div>
+        <span className="shop-room__eyebrow">Shop the room</span>
+        <h2 id="shop-room-title" className="shop-room__title">Every piece, <em>ready to buy</em></h2>
+      </div>
+      <div className="shop-room__sort" role="group" aria-label="Order the pieces">
+        <button type="button" className={sort === 'room' ? 'is-on' : ''} aria-pressed={sort === 'room'} onClick={() => setSort('room')}>Room order</button>
+        <button type="button" className={sort === 'price' ? 'is-on' : ''} aria-pressed={sort === 'price'} onClick={() => setSort('price')}>Price</button>
+      </div>
+    </div>
+  );
 
   const header = (
     <div className="flex items-center justify-end animate-reveal mb-4 shrink-0" style={{ animationDelay: '0.4s' }}>
@@ -135,11 +154,12 @@ export default function FurniturePanel({
           <div className="rounded-2xl aspect-[4/3] animate-pulse bg-[#EDE8E1]" />
           <div className="rounded-2xl aspect-[4/3] animate-pulse bg-[#EDE8E1]" />
         </div>
-        <div className="furniture-h-strip mt-5">
-          <div className="furniture-h-strip__track">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div key={i} className="furniture-strip-card shrink-0 garden-card rounded-2xl border border-[#F7F4D5]/10 p-3 animate-pulse">
-                <div className="h-14 bg-[#F7F4D5]/10 rounded-lg" />
+        <div className="shop-room shop-room--loading">
+          <div className="shop-room__grid">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="shop-card shop-card--skeleton animate-pulse" aria-hidden="true">
+                <div className="shop-card__media" />
+                <div className="shop-card__body"><span /><span /></div>
               </div>
             ))}
           </div>
@@ -169,12 +189,12 @@ export default function FurniturePanel({
       {header}
       {photoNotice}
       {views}
-      <div className="furniture-h-strip mt-5 animate-reveal" style={{ animationDelay: '0.5s' }}>
-        <div className="furniture-h-strip__label">Shop pieces</div>
-        <div ref={stripRef} className="furniture-h-strip__track custom-furniture-scroll">
+      <section className="shop-room animate-reveal" style={{ animationDelay: '0.5s' }} aria-labelledby="shop-room-title">
+        {shopHeader}
+        <div className="shop-room__grid">
           {cards}
         </div>
-      </div>
+      </section>
     </section>
   );
 }
