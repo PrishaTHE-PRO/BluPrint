@@ -414,13 +414,22 @@ const FACING_FROM_WALL = { "back wall": "camera", "front wall": "back wall", "le
  * piece touches and the way it faces. Snaps a piece that touches a wall
  * flush against it and keeps the footprint inside the room.
  */
-function placementFromReading({ h, read, kind, wall, wFt, dFt, W, L }) {
+// Low, deep pieces whose far end shows where they stand: when the box reaches
+// up past the back wall's floor line, the piece is against that wall.
+const REACHES_WALL = new Set(["bed", "crib", "daybed", "toddler_bed", "bunk_bed"]);
+
+function placementFromReading({ h, read, kind, wall, wFt, dFt, W, L, yBack = null }) {
+  let touching = read.touching;
   // Wall-hung pieces with no wall named go where they always went: the back wall.
-  const touching = wall && read.touching === "none" ? "back wall" : read.touching;
+  if (wall && touching === "none") touching = "back wall";
+  // The model tends to call a bed free-standing even with its head on the
+  // wall; the located box settles it.
+  if (touching === "none" && REACHES_WALL.has(kind) && yBack != null && h.y <= yBack + 0.03) touching = "back wall";
   let rotation;
-  if (wall) {
-    // A picture hangs flat on its wall and faces into the room, whatever
-    // the model said about its front.
+  if (touching !== "none") {
+    // Anything on a wall has its back to that wall: a picture hangs flat on
+    // it, a dresser or bed stands against it with its front into the room.
+    // That beats whatever the model said about the front or the long side.
     rotation = ROTATION_FOR_FACING[FACING_FROM_WALL[touching] || "camera"];
   } else if (FACING.has(kind)) {
     rotation = ROTATION_FOR_FACING[read.facing] ?? 0;
@@ -497,7 +506,7 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
 
     // The picture pass, when it placed this piece, wins over the geometry.
     const read = layout instanceof Map ? layout.get(h.category) : null;
-    if (read) return placementFromReading({ h, read, kind, wall, wFt, dFt, W, L });
+    if (read) return placementFromReading({ h, read, kind, wall, wFt, dFt, W, L, yBack: floor ? yBack : null });
 
     const px = h.x + h.w / 2;
     // Floor contact: the bottom of the box, unless the piece hangs on a wall.

@@ -60,7 +60,7 @@ For each piece report the centre of its footprint on the floor:
 - fromBackFt: feet from the back wall to the centre, 0 at the back wall up to ${lengthFt} at the front wall.
 The sizes given for each piece are your ruler. A piece standing against a wall has its centre half its depth from that wall, so count: the gap of clear floor between the wall and the piece's nearest edge, plus half the piece's depth. Worked example: a sofa 40 in deep against the back wall is at fromBackFt 1.7; a coffee table 24 in deep with 1.5 ft of floor between it and that sofa is at 3.3 + 1.5 + 1.0 = 5.8; a rug 8 x 10 ft that starts just in front of the same sofa has its centre about 4 ft further in than its near edge. Keep things that stand together close together: a side table is right next to the seat it serves, a plant on a table is where the table is.
 
-touching: the wall the piece stands against or hangs on, or "none". For wall art, mirrors, shelves and ceiling lights give the wall they are on and the position along it.
+touching: the wall the piece stands against or hangs on, or "none". Beds, sofas, dressers, desks, shelves and cabinets nearly always stand with their back to a wall; say which one, judging by the wall they are nearest and parallel to. For wall art, mirrors, shelves and ceiling lights give the wall they are on and the position along it.
 facing: where the piece's front points. "camera" means it faces the viewer.
 longSide: for a piece that is longer one way than the other, whether its longer side runs across the picture (parallel to the back wall) or toward the camera; "square" when it is about as wide as it is deep.
 Set found to false if the piece is not visible. Use the category key exactly as given.`;
