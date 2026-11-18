@@ -752,10 +752,27 @@
     html.dark-mode .process-number { color: #0f1720; background: var(--blue); box-shadow: 0 0 0 8px rgba(18,24,32,.6), 0 12px 26px rgba(0,0,0,.4); }
     html.dark-mode .process-card { border-color: rgba(126,168,201,.14); background: rgba(18,24,32,.55); box-shadow: 0 18px 50px rgba(0,0,0,.3); }
 
-    .final-cta { padding: 130px 0; text-align: center; }
-    .final-cta h2 { max-width: 760px; margin: 0 auto 22px; font-size: clamp(46px, 6vw, 76px); line-height: 1; }
-    .final-cta p { max-width: 570px; margin: 0 auto 32px; color: var(--muted); font-size: 18px; line-height: 1.6; }
+    /* The closing call: the page's own copy and button on a card in the
+       page's blue, with the blueprint drawing showing faintly through. */
+    .final-cta { padding: 70px 0 120px; text-align: center; }
+    .final-cta__card {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(64px, 9vw, 120px) 28px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 36px;
+      background:
+        linear-gradient(rgba(36, 90, 114, .88), rgba(36, 90, 114, .88)),
+        url("/blueprint-lines.webp") center / cover no-repeat #245a72;
+      box-shadow: 0 34px 90px rgba(36, 90, 114, .3);
+    }
+    .final-cta .eyebrow { border-color: rgba(255,255,255,.2); color: #eef5f9; background: rgba(255,255,255,.12); }
+    .final-cta h2 { max-width: 760px; margin: 0 auto 22px; color: #fff; font-size: clamp(46px, 6vw, 76px); line-height: 1; }
+    .final-cta p { max-width: 570px; margin: 0 auto 32px; color: rgba(238, 245, 249, .8); font-size: 18px; line-height: 1.6; }
     .final-cta .button { min-height: 56px; padding-inline: 28px; }
+    .final-cta .button-primary { color: #1d4356; background: #e9f3f9; box-shadow: 0 16px 36px rgba(0,0,0,.2); }
+    .final-cta .button-primary:hover { background: #fff; }
+    html.dark-mode .final-cta__card { background: linear-gradient(rgba(31, 63, 84, .9), rgba(31, 63, 84, .9)), url("/blueprint-lines.webp") center / cover no-repeat #1f3f54; border-color: rgba(126,168,201,.16); box-shadow: 0 34px 90px rgba(0,0,0,.45); }
     footer {
       display: flex;
       flex-direction: column;
@@ -915,7 +932,8 @@
       .section { padding-bottom: 84px; }
       .capability-grid { grid-template-columns: 1fr; }
       .process-wrap { padding: 0; }
-      .final-cta { padding: 96px 0; }
+      .final-cta { padding: 40px 0 80px; }
+      .final-cta__card { padding: 56px 20px; border-radius: 26px; }
       footer { gap: 28px; }
       .footer-contact__head { align-items: flex-start; flex-direction: column; gap: 8px; }
       .footer-team { grid-template-columns: 1fr; }
@@ -1111,10 +1129,12 @@
     </section>
 
     <section class="final-cta shell reveal" id="start">
-      <div class="eyebrow"><span class="eyebrow-dot"></span> Your blank room is waiting</div>
-      <h2>Make space for a better idea.</h2>
-      <p>Build your first room plan in minutes, then keep refining it until every piece feels right.</p>
-      <a class="button button-primary" href="login.html">Design my room</a>
+      <div class="final-cta__card">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> Your blank room is waiting</div>
+        <h2>Make space for a better idea.</h2>
+        <p>Build your first room plan in minutes, then keep refining it until every piece feels right.</p>
+        <a class="button button-primary" href="login.html">Design my room</a>
+      </div>
     </section>
   </main>
 
