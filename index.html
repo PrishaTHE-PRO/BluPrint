@@ -765,53 +765,32 @@
       color: var(--muted);
       font-size: 13px;
     }
-    .footer-contact {
-      max-width: 640px;
-    }
-    .footer-contact h2 {
-      margin: 0 0 8px;
-      color: var(--ink);
-      font-family: "Fraunces", serif;
-      font-size: clamp(28px, 3.2vw, 36px);
-      font-weight: 500;
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-    }
-    .footer-contact .contact-label {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .footer-contact ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 10px;
-    }
-    .footer-contact li {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 10px;
-      align-items: baseline;
-      font-size: 15px;
-      line-height: 1.45;
-      color: var(--muted);
-    }
-    .footer-contact li strong {
-      color: var(--ink);
-      font-weight: 600;
-    }
-    .footer-contact a {
-      color: var(--blue);
-      text-decoration: none;
-    }
-    .footer-contact a:hover {
-      text-decoration: underline;
-    }
+    /* Contact: a title row, then one frosted card per person with a tinted
+       initial, the name, the address and a mail icon. The whole card is the
+       mail link. */
+    .footer-contact { display: flex; flex-direction: column; gap: 26px; }
+    .footer-contact__head { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+    .footer-contact h2 { margin: 0; color: var(--ink); font-size: clamp(34px, 4.2vw, 58px); line-height: 1.05; letter-spacing: -.03em; }
+    .footer-contact h2 em { color: var(--blue); font-style: italic; }
+    .footer-contact__note { margin: 0 0 8px; color: var(--muted); font-size: 15px; }
+    .footer-team { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 0; padding: 0; list-style: none; }
+    .footer-member { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 16px 18px; border: 1px solid rgba(255,255,255,.72); border-radius: 22px; background: rgba(255,255,255,.5); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); box-shadow: 0 14px 40px rgba(41,69,99,.08); color: inherit; text-decoration: none; transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease; }
+    .footer-member:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(41,69,99,.14); }
+    .footer-member__avatar { display: grid; flex: none; width: 48px; height: 48px; place-items: center; border-radius: 50%; font-family: "Fraunces", serif; font-size: 17px; letter-spacing: .02em; }
+    .footer-member__avatar.is-blue  { color: #3f6485; background: #dbe7f3; }
+    .footer-member__avatar.is-rose  { color: #8a4e45; background: #f5e5e2; }
+    .footer-member__avatar.is-green { color: #5e7d66; background: #dfe7df; }
+    .footer-member__avatar.is-sand  { color: #86704e; background: #e9dfd2; }
+    .footer-member__text { min-width: 0; flex: 1; }
+    .footer-member__name { display: block; margin: 0 0 3px; overflow: hidden; color: var(--ink); font-size: 15.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; text-overflow: ellipsis; }
+    .footer-member__email { display: block; margin: 0; overflow: hidden; color: var(--muted); font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
+    .footer-member iconify-icon { flex: none; color: var(--blue-dark); font-size: 20px; }
+    html.dark-mode .footer-member { border-color: rgba(126,168,201,.14); background: rgba(18,24,32,.55); box-shadow: 0 14px 40px rgba(0,0,0,.3); }
+    html.dark-mode .footer-member__avatar.is-blue  { color: #b8d4e8; background: #24384d; }
+    html.dark-mode .footer-member__avatar.is-rose  { color: #e8b4ac; background: #4a2f2b; }
+    html.dark-mode .footer-member__avatar.is-green { color: #b5cdb8; background: #2a3d30; }
+    html.dark-mode .footer-member__avatar.is-sand  { color: #ddc9a8; background: #46392a; }
+    @media (max-width: 1100px) { .footer-team { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .footer-bar {
       display: flex;
       align-items: center;
@@ -938,6 +917,8 @@
       .process-wrap { padding: 0; }
       .final-cta { padding: 96px 0; }
       footer { gap: 28px; }
+      .footer-contact__head { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .footer-team { grid-template-columns: 1fr; }
       .footer-bar { align-items: flex-start; flex-direction: column; gap: 16px; }
       .footer-legal { align-items: flex-start; flex-direction: column; gap: 12px; }
     }
@@ -1139,13 +1120,43 @@
 
   <footer class="shell">
     <div class="footer-contact">
-      <h2>Have more questions?</h2>
-      <p class="contact-label">Contact</p>
-      <ul>
-        <li><strong>Prisha Agarwalla</strong>: <a href="mailto:prishaagarwalla50@gmail.com">prishaagarwalla50@gmail.com</a></li>
-        <li><strong>Aditi Amarnath</strong>: <a href="mailto:aamarnath@wisc.edu">aamarnath@wisc.edu</a></li>
-        <li><strong>Nidhi Gandhi</strong>: <a href="mailto:nvgandhi@wisc.edu">nvgandhi@wisc.edu</a></li>
-        <li><strong>Saanvi Gandhari</strong>: <a href="mailto:saanvi.gandhari@gmail.com">saanvi.gandhari@gmail.com</a></li>
+      <div class="footer-contact__head">
+        <h2>Have more <em>questions?</em></h2>
+        <p class="footer-contact__note">Reach out to the team directly.</p>
+      </div>
+      <ul class="footer-team">
+        <li><a class="footer-member" href="mailto:prishaagarwalla50@gmail.com">
+          <span class="footer-member__avatar is-blue" aria-hidden="true">PA</span>
+          <span class="footer-member__text">
+            <span class="footer-member__name">Prisha Agarwalla</span>
+            <span class="footer-member__email">prishaagarwalla50@gmail.com</span>
+          </span>
+          <iconify-icon icon="ph:envelope-simple" aria-hidden="true"></iconify-icon>
+        </a></li>
+        <li><a class="footer-member" href="mailto:aamarnath@wisc.edu">
+          <span class="footer-member__avatar is-rose" aria-hidden="true">AA</span>
+          <span class="footer-member__text">
+            <span class="footer-member__name">Aditi Amarnath</span>
+            <span class="footer-member__email">aamarnath@wisc.edu</span>
+          </span>
+          <iconify-icon icon="ph:envelope-simple" aria-hidden="true"></iconify-icon>
+        </a></li>
+        <li><a class="footer-member" href="mailto:nvgandhi@wisc.edu">
+          <span class="footer-member__avatar is-green" aria-hidden="true">NG</span>
+          <span class="footer-member__text">
+            <span class="footer-member__name">Nidhi Gandhi</span>
+            <span class="footer-member__email">nvgandhi@wisc.edu</span>
+          </span>
+          <iconify-icon icon="ph:envelope-simple" aria-hidden="true"></iconify-icon>
+        </a></li>
+        <li><a class="footer-member" href="mailto:saanvi.gandhari@gmail.com">
+          <span class="footer-member__avatar is-sand" aria-hidden="true">SG</span>
+          <span class="footer-member__text">
+            <span class="footer-member__name">Saanvi Gandhari</span>
+            <span class="footer-member__email">saanvi.gandhari@gmail.com</span>
+          </span>
+          <iconify-icon icon="ph:envelope-simple" aria-hidden="true"></iconify-icon>
+        </a></li>
       </ul>
     </div>
     <div class="footer-bar">
