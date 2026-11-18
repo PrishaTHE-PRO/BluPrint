@@ -377,6 +377,11 @@
     // ── Backend ───────────────────────────────────────────────────────
     import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { auth, authedFetch } from "./firebase.mjs";
+    import { gateWorkflow, takeMissingReason } from "./workflow.mjs";
+
+    // Step 2 needs a saved room. Sends the visitor back to Define Room if
+    // there is none; otherwise resolves to the room and the page carries on.
+    const workflowRoom = gateWorkflow("inspo");
 
     const profileBtn = document.getElementById('profile-btn');
     const profilePopup = document.getElementById('profile-popup');
@@ -1205,7 +1210,13 @@
     buildBathFixtureGrid();
     hydrateRestoredUi();
     showStep(1);
-  </script>
+  
+    // Sent back from View Design because this room has no style yet.
+    if (takeMissingReason() === "style") {
+      setVisionStatus("Pick a style and run Analyze before viewing the design.", "error");
+      document.getElementById("vision-status")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+</script>
   <script type="module" src="/src/inspo-glow.jsx"></script>
 </body>
 </html>
