@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('blueprintTheme') === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Meet the team behind BluPrint.">
+  <title>BluPrint | About Us</title>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="./design-system.css">
+  <style>
+    /* Same nav bar as the landing page (index.html), so it doesn't change between the two. */
+    @font-face {
+      font-family: 'Nippo';
+      src: url('/fonts/Nippo-Medium.woff2') format('woff2'), url('/fonts/Nippo-Medium.woff') format('woff');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+    .site-nav {
+      --ln-ink: #1c1714; --ln-muted: #6b7480; --ln-blue: #2f6f8f; --ln-blue-dark: #245a72;
+      position: fixed; z-index: 50; top: 16px; left: 50%;
+      display: flex; align-items: center;
+      width: min(calc(100% - 32px), 1180px); min-height: 68px;
+      padding: 10px 12px 10px 20px;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.75); border-radius: 20px;
+      background: rgba(251, 249, 246, .76);
+      box-shadow: 0 12px 38px rgba(42, 53, 61, .08);
+      backdrop-filter: blur(22px);
+      font-family: "DM Sans", sans-serif;
+    }
+    .site-nav a { color: inherit; text-decoration: none; }
+    .site-nav .brand { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; }
+    .site-nav .brand-name { font-family: 'Nippo', "DM Sans", sans-serif; font-size: 22px; font-weight: 500; line-height: 1; color: var(--ln-ink); }
+    .site-nav .nav-links { display: flex; align-items: center; gap: 28px; margin-right: 30px; color: var(--ln-muted); font-size: 14px; font-weight: 600; }
+    .site-nav .nav-links a { position: relative; }
+    .site-nav .nav-links a::after {
+      position: absolute; right: 0; bottom: -5px; left: 0; height: 1.5px; content: "";
+      transform: scaleX(0); transform-origin: right; background: var(--ln-blue); transition: transform .25s ease;
+    }
+    .site-nav .nav-links a:hover::after,
+    .site-nav .nav-links a[aria-current="page"]::after { transform: scaleX(1); transform-origin: left; }
+    .site-nav .nav-links a[aria-current="page"] { color: var(--ln-blue); }
+    .site-nav .nav-actions { display: flex; align-items: center; gap: 9px; }
+    .site-nav .nav-theme-switch { display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; line-height: 0; cursor: pointer; }
+    .site-nav .nav-signin { padding: 11px 15px; color: var(--ln-blue-dark); font-size: 14px; font-weight: 700; }
+    .site-nav .nav-cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      min-height: 46px; padding: 0 20px; border-radius: 13px;
+      color: #fff; background: var(--ln-blue); box-shadow: 0 12px 26px rgba(47, 111, 143, .24);
+      font-size: 14px; font-weight: 700;
+      transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+    }
+    .site-nav .nav-cta:hover { transform: translateY(-2px); background: var(--ln-blue-dark); box-shadow: 0 16px 34px rgba(47, 111, 143, .3); }
+    .site-nav .nav-cta__short { display: none; }
+    /* design-system.css styles every `nav > div:last-child > a` as a gray app-nav item with !important; undo that here. */
+    body.page-about nav.site-nav {
+      min-height: 68px; padding: 10px 12px 10px 20px !important;
+      background: rgba(251, 249, 246, .76) !important;
+      border: 1px solid rgba(255,255,255,.75) !important;
+      box-shadow: 0 12px 38px rgba(42, 53, 61, .08) !important;
+    }
+    html.dark-mode body.page-about nav.site-nav { background: rgba(16, 22, 29, .86) !important; border-color: rgba(232, 238, 244, .1) !important; }
+    body.page-about .site-nav .nav-actions { gap: 9px !important; color: inherit !important; }
+    body.page-about .site-nav .nav-actions > a.nav-signin { padding: 11px 15px; border-radius: 0; color: var(--ln-blue-dark) !important; font-size: 14px !important; font-weight: 700 !important; }
+    body.page-about .site-nav .nav-actions > a.nav-signin:hover { background: transparent; }
+    body.page-about .site-nav .nav-actions > a.nav-cta { padding: 0 20px; border-radius: 13px; color: #fff !important; font-size: 14px !important; font-weight: 700 !important; }
+    body.page-about .site-nav .nav-actions > a.nav-cta:hover { background: var(--ln-blue-dark); color: #fff !important; }
+    html.dark-mode .site-nav {
+      --ln-ink: #dbe7f3; --ln-muted: #8ea6bc; --ln-blue: #7ea8c9; --ln-blue-dark: #97bad4;
+      border-color: rgba(232, 238, 244, .1); background: rgba(16, 22, 29, .86);
+    }
+    body.page-about main { padding-top: 84px; }
+    @media (max-width: 900px) {
+      .site-nav { width: calc(100% - 24px); gap: 10px; }
+      body.page-about nav.site-nav { padding: 8px 10px 8px 14px !important; }
+      .site-nav .nav-links { display: none; }
+      .site-nav .nav-actions { gap: 8px; flex-shrink: 0; margin-left: auto; }
+    }
+    @media (max-width: 600px) {
+      .site-nav { top: 10px; width: calc(100% - 16px); border-radius: 16px; gap: 8px; }
+      body.page-about nav.site-nav { min-height: 52px; padding: 6px 8px 6px 10px !important; }
+      .site-nav .brand { margin-right: 0; min-width: 0; flex-shrink: 1; }
+      .site-nav .nav-signin { display: none; }
+      .site-nav .nav-actions { gap: 6px; }
+      .site-nav .nav-cta { min-height: 40px; padding: 0 12px; font-size: 13px; border-radius: 11px; white-space: nowrap; }
+      .site-nav .nav-cta__full { display: none; }
+      .site-nav .nav-cta__short { display: inline; }
+      body.page-about main { padding-top: 60px; }
+    }
+  </style>
+</head>
+<body class="page-about">
+  <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
+
+  <nav class="site-nav" aria-label="Main navigation">
+    <a class="brand" href="index.html" aria-label="BluPrint home">
+      <span class="brand-name">BluPrint</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html#features">What it does</a>
+      <a href="index.html#how-it-works">How it works</a>
+      <a href="index.html#start">Why BluPrint</a>
+      <a class="nav-about" href="about.html" aria-current="page">About us</a>
+    </div>
+    <div class="nav-actions">
+      <div data-theme-switch class="nav-theme-btn nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
+      <a class="nav-signin" href="login.html">Sign in</a>
+      <a class="nav-cta" href="login.html" aria-label="Design my room">
+        <span class="nav-cta__full">Design my room</span>
+        <span class="nav-cta__short">Design</span>
+      </a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="about-hero animate-reveal">
+        <div class="about-hero-copy">
+          <p class="about-eyebrow">About BluPrint</p>
+          <h1>Four students, one <em>better way</em> to plan a <em>room</em>.</h1>
+          <p>BluPrint turns your room dimensions, inspiration, and budget into a shoppable 2D interior plan.</p>
+          <div class="about-actions">
+            <a class="about-btn about-btn-primary" href="login.html">Start designing</a>
+            <a class="about-btn" href="#team">Meet the team</a>
+          </div>
+        </div>
+        <div class="about-plan-card">
+        <svg viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path stroke-width="4" d="M20 20H180M216 20H300V220H130M94 220H20V20"/>
+          <path d="M180 20a36 36 0 0 1-36 36M144 20v36M94 220a36 36 0 0 1 36-36M130 220v-36"/>
+          <path d="M190 20v80h110M20 130h90v90"/>
+          <rect x="214" y="124" width="66" height="76" rx="6"/>
+          <path d="M214 148h66"/>
+          <rect x="38" y="38" width="84" height="56" rx="6"/>
+          <circle cx="66" cy="175" r="24"/>
+          <rect x="214" y="40" width="66" height="26" rx="4"/>
+          <circle cx="150" cy="130" r="8"/>
+        </svg>
+        </div>
+    </header>
+
+    <section class="about-team-section" id="team" aria-labelledby="about-team-heading">
+      <h2 id="about-team-heading">We&rsquo;re building <strong>beautiful</strong> &amp; <strong>functional</strong> room plans that fit your space, style, and budget. Meet the team:</h2>
+      <div class="about-team">
+        <article class="about-member">
+          <img class="about-photo" src="/team/prisha.jpg" alt="Prisha Agarwalla" width="208" height="208">
+          <h3>Prisha Agarwalla</h3>
+          <p>Prisha studies Computer Science and Data Science at UW&ndash;Madison and is an AI/Technical Builder at the Tech Exploration Lab. A YC Startup School 2026 participant, Prisha also won the Notability Track at Cal Hacks 13.0.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/prisha-agarwalla-126a15285/" target="_blank" rel="noopener noreferrer" aria-label="Prisha Agarwalla on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+
+        <article class="about-member">
+          <img class="about-photo" src="/team/aditi.jpg" alt="Aditi Amarnath" width="208" height="208">
+          <h3>Aditi Amarnath</h3>
+          <p>Aditi studies Computer Science and Statistics at UW&ndash;Madison and is an undergraduate researcher in Industrial and Systems Engineering, working on optimization and probabilistic models. Aditi was previously a Cloud Analytics Intern at HGS.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/aditi-amarnath/" target="_blank" rel="noopener noreferrer" aria-label="Aditi Amarnath on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+
+        <article class="about-member">
+          <img class="about-photo" src="/team/nidhi.jpg" alt="Nidhi Gandhi" width="208" height="208">
+          <h3>Nidhi Gandhi</h3>
+          <p>Nidhi studies Computer Science at UW&ndash;Madison, with a background in data science volunteering and university research. Nidhi is part of Design Interactive and the Product Management Club, and won 1st place at the Badgers for Good Design-a-thon.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/nidhi-gandhi1/" target="_blank" rel="noopener noreferrer" aria-label="Nidhi Gandhi on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+
+        <article class="about-member">
+          <img class="about-photo" src="/team/saanvi.jpg" alt="Saanvi Gandhari" width="208" height="208">
+          <h3>Saanvi Gandhari</h3>
+          <p>Saanvi studies Computer Science and Data Science at UW&ndash;Madison and is a Lab Associate and AI/Tech Builder at the Tech Exploration Lab. Saanvi is also a Project Manager at Design Interactive and won 1st place at the Badgers for Good Design-a-thon.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/saanvi-gandhari/" target="_blank" rel="noopener noreferrer" aria-label="Saanvi Gandhari on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="about-split" aria-labelledby="about-stage-heading">
+      <div>
+        <ul class="about-notes">
+          <li><iconify-icon icon="ph:map-trifold-duotone"></iconify-icon>Sharpening our market</li>
+          <li><iconify-icon icon="ph:diamond-duotone"></iconify-icon>Strengthening our value proposition</li>
+          <li><iconify-icon icon="ph:path-duotone"></iconify-icon>Shaping our go-to-market strategy</li>
+          <li><iconify-icon icon="ph:handshake-duotone"></iconify-icon>Preparing for early customers</li>
+        </ul>
+      </div>
+      <div class="about-split-panel">
+        <p class="about-eyebrow">Where we are now</p>
+        <h2 id="about-stage-heading">Stage 2: <em>Venture Build</em></h2>
+        <p>We&rsquo;re currently in the Venture Build stage at the UW&ndash;Madison Tech Exploration Lab, where we&rsquo;re working to make BluPrint better.</p>
+        <p>This semester, we&rsquo;re collaborating with MBA students in the Wisconsin School of Business&rsquo;s New Product Innovation course, alongside industry mentors and alumni advisors. Together, we&rsquo;re sharpening our market and value proposition, shaping our go-to-market strategy, and preparing for early customers.</p>
+      </div>
+    </section>
+
+    <section class="about-closing">
+      <p>Your room, <em>thoughtfully</em> planned.</p>
+      <div class="about-actions"><a class="about-btn about-btn-primary" href="login.html">Start designing <iconify-icon icon="ph:arrow-up-right-bold" aria-hidden="true"></iconify-icon></a></div>
+    </section>
+  </main>
+
+  <script src="./theme-toggle.js" defer></script>
+  <script type="module" src="/src/theme-switch.tsx"></script>
+  <script type="module" src="/src/cursor-grid-background.jsx"></script>
+</body>
+</html>
