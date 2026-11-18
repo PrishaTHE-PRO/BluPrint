@@ -24,6 +24,7 @@ import type { FurniturePlacement } from '../utils/furniturePlacement';
 import { resolveFurnitureColors, paletteFallback, colorFromName } from '../utils/furnitureColor';
 import { roomDimsFromPoints } from '../utils/furnitureConstraints';
 import { authedFetch } from '../../firebase.mjs';
+import { gateWorkflow } from '../../workflow.mjs';
 
 // Lazy so Three.js only loads when the user opens the 3D view.
 const Room3DView = lazy(() => import('../components/Room3DView'));
@@ -114,6 +115,9 @@ export default function RoomResult() {
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
   const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const [loading,          setLoading]          = useState(true);
+  // Step 3 needs a room with a style. gateWorkflow() sends the visitor back
+  // to the step they skipped; until it answers, nothing below is fetched.
+  const [gateOpen,         setGateOpen]         = useState(false);
   const [error,            setError]            = useState('');
   const [savedPlacement,   setSavedPlacement]   = useState<FurniturePlacement | null>(() => readScopedSavedFurniturePlacement());
   const [saveStatus,       setSaveStatus]       = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -478,6 +482,17 @@ export default function RoomResult() {
   }, [saveStatus]);
 
   useEffect(() => {
+    let cancelled = false;
+    gateWorkflow('result').then((room) => {
+      // null means the check could not run (not signed in, API down); the
+      // page's own handling of those cases applies, so open it anyway.
+      if (!cancelled) setGateOpen(room !== undefined);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!gateOpen) return;
     const roomId = localStorage.getItem('blueprintCurrentRoomId');
     const raw    = localStorage.getItem('blueprintStyleResult');
 
@@ -576,7 +591,7 @@ export default function RoomResult() {
       parsedStyle.budgetTotal,
       parsedStyle.colorPalette,
     );
-  }, []);
+  }, [gateOpen]);
 
   function fetchFurniture(
     roomId: string,
