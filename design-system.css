@@ -2743,6 +2743,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     min-width: 0;
   }
   .page-result .room-layout-canvas,
+  .page-result .room-render-view,
   .page-result .iso-room-preview {
     width: 100%;
     max-width: 100%;
@@ -3019,6 +3020,7 @@ footer { color: var(--bp-muted) !important; border-color: var(--bp-border) !impo
     text-align: center;
   }
   .page-result .room-layout-canvas,
+  .page-result .room-render-view,
   .page-result .iso-room-preview {
     min-height: 300px;
     padding: 12px !important;
@@ -4210,6 +4212,7 @@ html.dark-mode input.room-name-input {
   position: relative;
   display: flex;
   flex-direction: column;
+  flex: 1;
   padding: clamp(20px, 2.5vw, 30px);
   border-radius: 22px;
   border: 1px solid var(--bp-border);
@@ -4230,7 +4233,7 @@ html.dark-mode input.room-name-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+  flex: 1;
   min-height: 160px;
 }
 .page-result .room-render-view__img {
@@ -4286,9 +4289,9 @@ html.dark-mode input.room-name-input {
 .page-result .room-render-view__btn:hover { background: var(--result-blue-hover); transform: translateY(-1px); }
 .page-result .room-render-view__btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .page-result .room-render-view__btn--small {
-  padding: 7px 12px;
-  font-size: 12px;
-  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
 }
 .page-result .room-render-view__btn--ghost {
@@ -4303,7 +4306,7 @@ html.dark-mode input.room-name-input {
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   margin-left: auto;
 }
 /* Original / Rendered switch on the picture. Same dark glass as the buttons
@@ -4316,13 +4319,13 @@ html.dark-mode input.room-name-input {
   border: 1px solid rgba(41, 79, 125, .10);
 }
 .page-result .room-render-view__toggle-btn {
-  padding: 5px 12px;
+  padding: 8px 16px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--bp-muted);
   font-family: "DM Sans", sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
   cursor: pointer;
@@ -4335,11 +4338,11 @@ html.dark-mode input.room-name-input {
   box-shadow: 0 2px 8px rgba(41, 79, 125, .16);
 }
 .page-result .room-render-view__badge {
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 999px;
   background: rgba(211, 150, 140, .16);
   color: #9a5a4e;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   border: 1px solid rgba(211, 150, 140, .35);
 }
@@ -4738,6 +4741,7 @@ html.dark-mode body.page-dimensions #photo-panel {
 html body.page-dashboard .m-stat,
 html body.page-result .room-layout-canvas,
 html body.page-result .room-layout-canvas:hover,
+html body.page-result .room-render-view,
 html body.page-result .furniture-h-strip {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
   border-color: color-mix(in srgb, #fff 70%, transparent) !important;
@@ -4747,6 +4751,7 @@ html body.page-result .furniture-h-strip {
 html.dark-mode body.page-dashboard .m-stat,
 html.dark-mode body.page-result .room-layout-canvas,
 html.dark-mode body.page-result .room-layout-canvas:hover,
+html.dark-mode body.page-result .room-render-view,
 html.dark-mode body.page-result .furniture-h-strip {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
   border-color: rgba(126, 168, 201, 0.2) !important;
