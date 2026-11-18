@@ -153,16 +153,12 @@ export function initHero3D() {
     if (shouldSpin) viewer.requestFrame();
   }
 
-  // The scene clears to a solid colour, so it has to follow the page theme —
-  // a cream room floating in a dark page reads as a bug. Matches the
-  // html.dark-mode .canvas background in index.html.
-  const sceneBackground = () =>
-    document.documentElement.classList.contains('dark-mode') ? 0x131b24 : 0xf7f9fb;
-
   function mount(style) {
     currentStyle = style;
     viewer?.dispose?.();
-    viewer = mod.createRoomViewer(stage, { style, background: sceneBackground() });
+    // No scene colour: the canvas behind it carries the grid paper, which
+    // already follows the page theme in CSS.
+    viewer = mod.createRoomViewer(stage, { style, background: 'transparent' });
     viewer.controls.autoRotateSpeed = 0.55;
     viewer.controls.enableZoom = false;   // the hero must never eat page scroll
     viewer.controls.addEventListener('start', () => {
@@ -205,14 +201,6 @@ export function initHero3D() {
         // rather than trying to repaint every material in place.
         mount(button.dataset.style);
       });
-
-      // Re-mount on a theme toggle so the scene background tracks the page.
-      // Toggling is rare enough that rebuilding the scene is cheaper than
-      // wiring a live background setter through the viewer.
-      new MutationObserver(() => {
-        const wanted = sceneBackground();
-        if (viewer?.scene?.background?.getHex() !== wanted) mount(currentStyle);
-      }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     });
   };
 
