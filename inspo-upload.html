@@ -1056,13 +1056,55 @@
       window.location.href = 'room-result.html';
     });
 
+    // Downscale an image in the browser before upload. Three phone photos can
+    // total well over the 4.5 MB a Vercel function accepts per request, so each
+    // file is kept under about 1.4 MB: start at 2048 px on the long edge and
+    // step down until it fits. The style analysis never needed more than that.
+    // Anything that cannot be decoded is sent as it is.
+    const UPLOAD_TARGET_BYTES = 1.4 * 1024 * 1024;
+    const UPLOAD_STEPS = [[2048, 0.86], [1600, 0.82], [1280, 0.78], [1024, 0.72]];
+    async function shrinkForUpload(file) {
+      try {
+        if (file.size <= UPLOAD_TARGET_BYTES) {
+          const probe = await createImageBitmap(file);
+          const small = Math.max(probe.width, probe.height) <= UPLOAD_STEPS[0][0];
+          probe.close();
+          if (small) return file;
+        }
+        const bitmap = await createImageBitmap(file);
+        let best = null;
+        for (const [edge, quality] of UPLOAD_STEPS) {
+          const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(bitmap.width * scale);
+          canvas.height = Math.round(bitmap.height * scale);
+          canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+          if (!blob) break;
+          if (!best || blob.size < best.size) best = blob;
+          if (blob.size <= UPLOAD_TARGET_BYTES) break;
+        }
+        bitmap.close();
+        if (!best || best.size >= file.size) return file;
+        return new File([best], (file.name || 'inspo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+      } catch (err) {
+        console.warn('[inspo] could not resize, uploading the original', err);
+        return file;
+      }
+    }
+
     // ── Save to MongoDB ───────────────────────────────────────────────
     async function saveToBackend(roomId) {
       const base = '/api/rooms/' + roomId;
       try {
         if (state.uploadedFiles.length) {
           const form = new FormData();
-          state.uploadedFiles.forEach(file => form.append('images', file));
+          // Phone photos are often 3 to 5 MB each; three of them would pass the
+          // per-file limit yet exceed the 4.5 MB a Vercel function accepts per
+          // request. Shrink in the browser first; the analysis never needed
+          // more than about 2000 px anyway.
+          const uploads = await Promise.all(state.uploadedFiles.map(shrinkForUpload));
+          uploads.forEach(file => form.append('images', file, file.name));
           const r = await authedFetch(base + '/images', { method: 'POST', body: form });
           if (!r.ok) {
             let msg = 'Image upload failed';

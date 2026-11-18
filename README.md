@@ -22,6 +22,27 @@ npm start
 
 This builds `dist/` and serves it from the API on port 3001, which is exactly what production does. The dev server injects CSS in a different order than the build, and this app leans on cascade order, so check anything visual against the production build before calling it a bug.
 
+### Running it on Vercel
+
+The same code also deploys to Vercel, where there is no idle spin-down. Vercel builds the pages with `vite build` and serves `dist/` itself; `api/index.js` exports the Express app as one serverless function, and `vercel.json` routes every `/api/*` request (and `/healthz`) to it. `server/index.js` is only used by Render and local runs.
+
+Import the repo as a Vercel project (framework preset: Vite) and add these environment variables in the project settings. The `VITE_*` ones are read at build time, the rest by the function:
+
+| Variable | Used by |
+|----------|---------|
+| `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID` | the pages (Firebase sign-in) |
+| `FIREBASE_PROJECT_ID` | token verification (same value as `VITE_FIREBASE_PROJECT_ID`) |
+| `MONGODB_URI` | rooms, inspiration, styles |
+| `OPENAI_API_KEY` | photo analysis, style analysis, renders |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | photo and inspiration storage |
+| `SERPER_API_KEY` | furniture search |
+| `CHANNEL3_API_KEY` | furniture search (if used) |
+| `NODEJS_HELPERS` = `0` | hands Express the raw request so its own body parsing and multer run unchanged |
+
+Two limits to know about. A Vercel function accepts at most 4.5 MB per request, so the pages shrink photos in the browser before uploading (the room photo to 2048 px, inspiration images to about 1.4 MB each). And `vercel.json` sets `maxDuration` to 300 seconds for renders, which needs Fluid Compute (on by default for new projects); if the deploy rejects that value, lower it to 60.
+
+Also add the Vercel domain to Firebase under **Authentication > Settings > Authorized domains**, or Google sign-in will refuse the popup there.
+
 ## Pages
 
 | URL | Page |

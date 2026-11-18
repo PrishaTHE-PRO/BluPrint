@@ -1,0 +1,140 @@
+// The Express app, without a listener. server/index.js mounts it on a port for
+// Render and local runs; api/index.js hands it to Vercel as one function.
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
+// The Firebase config lives in the project-root .env as VITE_* (Vite reads it
+// at build time). server/middleware/auth.js falls back to
+// VITE_FIREBASE_PROJECT_ID, but that fallback could never fire locally because
+// only server/.env was ever loaded, so every API route answered 503. dotenv
+// does not overwrite variables that are already set, so server/.env still wins.
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const { connectDb } = require("./db");
+
+const app = express();
+
+// Render and Vercel both terminate TLS at their edge, so without this every
+// request looks like it comes from the proxy's IP — the rate limiters below would then throttle
+// all users as one bucket. `1` trusts exactly one hop (Render's proxy) rather
+// than blindly trusting a client-supplied X-Forwarded-For chain.
+app.set("trust proxy", 1);
+
+// gzip responses. optional so the server still boots before `npm install`
+let compression = null;
+try {
+  compression = require("compression");
+} catch (err) {
+  console.warn("compression not installed, run `npm install` to enable gzip");
+}
+if (compression) app.use(compression());
+
+// CORS was wide open: any site on the internet could drive this API from a
+// visitor's browser. Same-origin needs no CORS at all, so the default is to
+// send no allow-origin header; set CORS_ORIGINS (comma-separated) only if a
+// separate front-end origin genuinely needs access.
+const ALLOWED_ORIGINS = String(process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // No Origin header: same-origin navigations, curl, server-to-server.
+      if (!origin) return callback(null, true);
+      callback(null, ALLOWED_ORIGINS.includes(origin));
+    },
+  })
+);
+
+app.use(express.json({ limit: "10mb" }));
+
+// Rate limiting. Auth now gates the expensive routes, but a signed-in account
+// could still hammer GPT-4o and Serper on our keys, and the image proxy is
+// deliberately public because <img> tags cannot send an Authorization header.
+const rateLimit = require("express-rate-limit");
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests — slow down a moment." },
+});
+// Tighter cap on the routes that cost real money per call.
+const expensiveLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 12,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests — slow down a moment." },
+});
+
+app.use("/api", apiLimiter);
+app.use("/api/rooms/:roomId/analyze-style", expensiveLimiter);
+app.use("/api/rooms/:roomId/furniture", expensiveLimiter);
+app.use("/api/rooms/:roomId/pinterest", expensiveLimiter);
+app.use("/api/rooms/:roomId/images", expensiveLimiter);
+// Photo mode: one Vision call per upload, one image edit plus a Vision call
+// per render. The render is the single most expensive request in the app.
+app.use("/api/rooms/photo-analyze", expensiveLimiter);
+app.use("/api/rooms/:roomId/render", expensiveLimiter);
+app.use("/api/rooms/:roomId/render/hotspots", expensiveLimiter);
+
+// cheap wake-up target for the keep-alive ping. touches nothing, answers instantly
+app.get("/healthz", (req, res) => {
+  res.status(200).json({
+    ok: true,
+    db: mongoose.connection.readyState === 1 ? "connected" : "connecting",
+    uptime: Math.round(process.uptime()),
+  });
+});
+
+// Every API route needs the database. On a long-running server this resolves
+// instantly after boot; on Vercel it makes the connection on the first request
+// of a cold instance. A database that cannot be reached answers 503 as JSON
+// rather than letting Mongoose queue the query until it times out.
+app.use("/api", async (req, res, next) => {
+  try {
+    await connectDb();
+    next();
+  } catch (err) {
+    console.error("DB connection error:", err.message);
+    res.status(503).json({ error: "The database is not reachable right now. Please try again." });
+  }
+});
+
+// rooms.js goes first. The other three routers guard every "/:roomId" path
+// with requireRoomOwner, and a "/:roomId" pattern matches "photo-analyze" as
+// a room id, which would 404 that route before rooms.js ever saw it. Nothing
+// in rooms.js shadows the others: its paths are "/", "/photo-analyze" and a
+// single-segment "/:roomId", none of which match "/:roomId/images" and co.
+app.use("/api/rooms", require("./routes/rooms"));
+app.use("/api/rooms", require("./routes/inspo"));
+app.use("/api/rooms", require("./routes/styleRoutes"));
+app.use("/api/rooms", require("./routes/furniture"));
+app.use("/api/rooms", require("./routes/render"));
+app.use("/api", require("./routes/imageProxy"));
+
+// Static pages. Render serves the Vite build from here. On Vercel the platform
+// serves dist/ itself and only /api and /healthz reach this app, so these two
+// handlers simply never match there.
+// vite hashes asset filenames, so they can be cached hard. html stays fresh
+app.use(
+  express.static(path.join(__dirname, "..", "dist"), {
+    setHeaders(res, filePath) {
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      } else if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache");
+      }
+    },
+  })
+);
+
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
+});
+
+module.exports = app;
