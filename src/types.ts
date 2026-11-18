@@ -31,6 +31,8 @@ export interface RenderPlacement {
   rotation?: number;
   /** True when the back wall could not be found and a typical camera was assumed. */
   approx?:   boolean;
+  /** "picture" when the vision model read the position off the render itself. */
+  source?:   'picture';
 }
 
 export interface RoomRender {

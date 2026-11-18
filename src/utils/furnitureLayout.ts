@@ -254,7 +254,28 @@ export function isSurface(category: string) {
   return SURFACE_CATEGORIES.has(category);
 }
 
-/** True when one piece may share a footprint with the other (lamp on desk, mirror on vanity, …). */
+/** Pieces that hang on a wall or from the ceiling. They take no floor, so a
+ *  picture above a dresser is not a clash on the plan. */
+const WALL_HUNG_CATEGORIES = new Set([
+  'wall_art',
+  'floating_shelves',
+  'full_length_mirror',
+  'bath_mirror',
+  'wall_shelf',
+  'kitchen_shelf',
+  'nursery_shelf',
+  'pendant_light',
+  'dining_light',
+  'bath_light',
+  'smart_lighting',
+]);
+
+export function isWallHung(category: string) {
+  return WALL_HUNG_CATEGORIES.has(category);
+}
+
+/** True when one piece may share a footprint with the other (lamp on desk, mirror on vanity, art above a dresser, …). */
 export function canStackTogether(a: string, b: string) {
+  if (isWallHung(a) || isWallHung(b)) return true;
   return (isStackable(a) && isSurface(b)) || (isSurface(a) && isStackable(b));
 }

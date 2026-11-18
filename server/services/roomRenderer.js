@@ -33,6 +33,7 @@ const sharp = require("sharp");
 const { httpAgent, httpsAgent } = require("../utils/safeRequest");
 const { uploadToCloudinary } = require("../utils/cloudinary");
 const { locateOnGrid } = require("./gridLocator");
+const { describeLayout } = require("./planFromPicture");
 
 const IMAGE_EDIT_URL = "https://api.openai.com/v1/images/edits";
 const CHAT_URL = "https://api.openai.com/v1/chat/completions";
@@ -402,6 +403,72 @@ const DEPTH_GAMMA = 0.7;
 // snap to the wall.
 const BACK_WALL_SNAP = 0.07;
 
+// RoomSVG's rotation 0 faces the camera (the front wall, at the bottom of
+// the plan); rotation runs clockwise, so 90 faces the left wall.
+const ROTATION_FOR_FACING = { camera: 0, "back wall": 180, "left wall": 90, "right wall": 270 };
+// What a wall-hung piece faces, given the wall it hangs on.
+const FACING_FROM_WALL = { "back wall": "camera", "front wall": "back wall", "left wall": "right wall", "right wall": "left wall" };
+
+/**
+ * A plan position from the picture pass: centre in feet plus the wall the
+ * piece touches and the way it faces. Snaps a piece that touches a wall
+ * flush against it and keeps the footprint inside the room.
+ */
+// Low, deep pieces whose far end shows where they stand: when the box reaches
+// up past the back wall's floor line, the piece is against that wall.
+const REACHES_WALL = new Set(["bed", "crib", "daybed", "toddler_bed", "bunk_bed"]);
+
+function placementFromReading({ h, read, kind, wall, wFt, dFt, W, L, yBack = null }) {
+  let touching = read.touching;
+  // Wall-hung pieces with no wall named go where they always went: the back wall.
+  if (wall && touching === "none") touching = "back wall";
+  // The model tends to call a bed free-standing even with its head on the
+  // wall; the located box settles it.
+  if (touching === "none" && REACHES_WALL.has(kind) && yBack != null && h.y <= yBack + 0.03) touching = "back wall";
+  let rotation;
+  if (touching !== "none") {
+    // Anything on a wall has its back to that wall: a picture hangs flat on
+    // it, a dresser or bed stands against it with its front into the room.
+    // That beats whatever the model said about the front or the long side.
+    rotation = ROTATION_FOR_FACING[FACING_FROM_WALL[touching] || "camera"];
+  } else if (FACING.has(kind)) {
+    rotation = ROTATION_FOR_FACING[read.facing] ?? 0;
+  } else {
+    // No front to speak of (a rug, a table): turn it only when its longer
+    // side runs the other way from how it is listed.
+    const listedAcross = wFt >= dFt;
+    const seenAcross = read.longSide === "across";
+    rotation = read.longSide && read.longSide !== "square" && listedAcross !== seenAcross ? 90 : 0;
+  }
+  const sideways = rotation === 90 || rotation === 270;
+  // The footprint turns with the piece, so the clamp uses the turned size.
+  const wEff = sideways ? dFt : wFt;
+  const dEff = sideways ? wFt : dFt;
+  let cx = read.cx;
+  let cy = read.cy;
+  // Flush against the wall; a hung piece sits a hair off it so it draws.
+  const off = wall ? 0.1 : 0;
+  if (touching === "back wall") cy = dEff / 2 + off;
+  else if (touching === "front wall") cy = L - dEff / 2 - off;
+  else if (touching === "left wall") cx = wEff / 2 + off;
+  else if (touching === "right wall") cx = W - wEff / 2 - off;
+  cx = Math.min(Math.max(wEff / 2, cx), Math.max(wEff / 2, W - wEff / 2));
+  cy = Math.min(Math.max(dEff / 2, cy), Math.max(dEff / 2, L - dEff / 2));
+  // Corners are for the unturned footprint; the plan rotates about the centre.
+  const placement = {
+    category: h.category,
+    itemId: h.itemId,
+    x: Math.round(Math.max(0, cx - wFt / 2) * 10) / 10,
+    y: Math.round(Math.max(0, cy - dFt / 2) * 10) / 10,
+    cx: Math.round(cx * 10) / 10,
+    cy: Math.round(cy * 10) / 10,
+    approx: false,
+    source: "picture",
+  };
+  placement.rotation = rotation;
+  return placement;
+}
+
 /**
  * Projects each located product from the picture onto the floor plan.
  *
@@ -418,7 +485,7 @@ const BACK_WALL_SNAP = 0.07;
  * right order relative to everything else, is what matching the picture
  * means here. Positions are top-left corners in feet, clamped to the room.
  */
-function projectToPlan({ hotspots, floor, products, room }) {
+function projectToPlan({ hotspots, floor, products, room, layout = null }) {
   const W = Number(room?.widthFt) || 0;
   const L = Number(room?.lengthFt) || 0;
   if (!W || !L || !Array.isArray(hotspots) || hotspots.length === 0) return [];
@@ -435,8 +502,13 @@ function projectToPlan({ hotspots, floor, products, room }) {
     const kind = String(product.kind || h.category).toLowerCase();
     const wFt = Math.max(0.5, (Number(product.widthIn) || 30) / 12);
     const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
-    const px = h.x + h.w / 2;
     const wall = WALL_MOUNTED.has(kind);
+
+    // The picture pass, when it placed this piece, wins over the geometry.
+    const read = layout instanceof Map ? layout.get(h.category) : null;
+    if (read) return placementFromReading({ h, read, kind, wall, wFt, dFt, W, L, yBack: floor ? yBack : null });
+
+    const px = h.x + h.w / 2;
     // Floor contact: the bottom of the box, unless the piece hangs on a wall.
     const py = wall ? yBack : h.y + h.h;
     const againstBackWall = wall || py - yBack <= BACK_WALL_SNAP;
@@ -559,7 +631,8 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
   console.log("[render] image ready in", Date.now() - startedAt, "ms");
 
   const { hotspots, floor } = await locateProducts(png, url, products);
-  const placements = projectToPlan({ hotspots, floor, products, room });
+  const layout = await describeLayout({ image: png, products, hotspots, room });
+  const placements = projectToPlan({ hotspots, floor, products, room, layout });
   console.log("[render] done in", Date.now() - startedAt, "ms with", hotspots.length, "hotspot(s),", placements.length, "plan position(s)");
 
   return {
@@ -601,7 +674,8 @@ async function relocateRender(render, room = null) {
   if (products.length === 0) throw new Error("The render has no products to locate");
   const startedAt = Date.now();
   const { hotspots, floor } = await locateProducts(image.buffer, render.url, products);
-  const placements = projectToPlan({ hotspots, floor, products, room });
+  const layout = await describeLayout({ image: image.buffer, products, hotspots, room });
+  const placements = projectToPlan({ hotspots, floor, products, room, layout });
   console.log("[render] hotspots refreshed in", Date.now() - startedAt, "ms:", hotspots.length, "found,", placements.length, "plan position(s)");
   return { hotspots, floor, placements };
 }
