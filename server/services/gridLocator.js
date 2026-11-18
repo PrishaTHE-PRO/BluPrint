@@ -224,6 +224,9 @@ function cellsToHotspots(items, products) {
       y: (r0 - 1) / ROWS,
       w: (c1 - c0 + 1) / COLS,
       h: (r1 - r0 + 1) / ROWS,
+      // The model's own few words on where the piece is; the plan pass
+      // uses them to point at the right thing.
+      where: String(it.where || "").slice(0, 120),
     });
   }
   return out;
