@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+
+/** Today as YYYY-MM-DD in the visitor's time zone (what a date input uses). */
+function localToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 import { createPortal } from 'react-dom';
 
 function readStoredName() {
@@ -88,6 +94,11 @@ export default function ProfileMenu() {
   };
 
   const saveSettings = async () => {
+    // The birthday can't be in the future.
+    if (birthdayDraft && birthdayDraft > localToday()) {
+      setSaveStatus("Birthday can't be in the future.");
+      return;
+    }
     const next = nameDraft.trim();
     try {
       if (next) {
@@ -195,6 +206,7 @@ export default function ProfileMenu() {
             id="result-settings-birthday"
             type="date"
             value={birthdayDraft}
+            max={localToday()}
             onChange={(e) => setBirthdayDraft(e.target.value)}
           />
         </div>

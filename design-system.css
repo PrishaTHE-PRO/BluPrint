@@ -5273,7 +5273,7 @@ html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { backgro
 }
 .page-result .shop-room__title {
   margin: 6px 0 0;
-  font-family: 'Instrument Serif', 'Fraunces', serif !important;
+  font-family: 'Fraunces', serif !important;
   font-weight: 400 !important;
   font-size: clamp(30px, 3.2vw, 40px);
   line-height: 1;
@@ -5743,3 +5743,61 @@ html.dark-mode .page-result main > header .result-title__edit { color: #9fb0c3; 
 }
 html.dark-mode .page-inspo .inspo-or::before,
 html.dark-mode .page-inspo .inspo-or::after { background: rgba(255, 255, 255, .12); }
+
+/* Dark mode: the dashboard stat tiles (sq ft drawn, rooms finished) take the
+   View all button's look: translucent blue fill, blue border, no shadow or
+   blur. Same values the dark View all button computes to. */
+html.dark-mode body.page-dashboard .m-stat {
+  background: rgba(126, 168, 201, .54) !important;
+  border-color: rgba(126, 168, 201, .52) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Dashboard mascot: click to boop (src/dashboard-mascot.ts). */
+.dashboard-character-wrap.is-boopable { position: relative; transform-origin: 50% 92%; }
+.dashboard-character-wrap.is-boopable img { cursor: pointer; -webkit-user-drag: none; user-select: none; }
+.mascot-burst {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+.mascot-burst__icon {
+  position: absolute;
+  display: block;
+  line-height: 1;
+  opacity: 0;
+  filter: drop-shadow(0 2px 3px rgba(28, 23, 20, .15));
+}
+
+/* Room dimensions Element Library: the Window card is teal instead of pink,
+   and the Door card's icon is green. Only the library cards change; windows
+   and doors drawn on the plan keep their colours. */
+html body.page-dimensions #draggable-window {
+  background: rgba(47, 111, 143, .12) !important;
+  border-color: rgba(47, 111, 143, .34) !important;
+}
+html body.page-dimensions #draggable-window > div:first-child {
+  background: rgba(47, 111, 143, .18) !important;
+}
+html body.page-dimensions #draggable-window iconify-icon[icon="ph:square-duotone"] {
+  color: var(--dimension-primary) !important;
+}
+/* Door icon: the same green as the Wall Cutout icon. */
+html body.page-dimensions #draggable-door iconify-icon[icon="ph:door-duotone"] {
+  color: var(--bp-green) !important;
+}
+html.dark-mode body.page-dimensions #draggable-window {
+  background: rgba(126, 168, 201, .16) !important;
+  border-color: rgba(126, 168, 201, .36) !important;
+}
+html.dark-mode body.page-dimensions #draggable-window > div:first-child {
+  background: rgba(126, 168, 201, .24) !important;
+}
+@media (max-width: 600px) {
+  /* Phones drop the icon tile behind every library card's icon. */
+  html body.page-dimensions #draggable-window > div:first-child { background: none !important; }
+}
