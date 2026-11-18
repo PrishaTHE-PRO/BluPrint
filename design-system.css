@@ -5185,6 +5185,7 @@ html.dark-mode body.page-inspo #wild-card-btn.is-on:hover {
   border-color: #d3968c !important;
   color: #fff !important;
 }
+/* ---------------------------------------------------------------------------
    Results page: "Shop the room" grid under the plan, and the floor plan's
    sheet legend. Serif display and mono labels follow the redesign mockups
    (Instrument Serif, Geist Mono; loaded by room-result.html).
