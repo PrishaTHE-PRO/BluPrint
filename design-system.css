@@ -4914,3 +4914,10 @@ html body .bp-wordmark-rest {
   text-transform: none !important;
   line-height: 1;
 }
+
+/* Room cards: clicking anywhere on the room drawing opens the room. The hover
+   spin redraws the drawing's shapes every frame, so a press and release
+   landed on two different (replaced) shapes and the browser never fired a
+   click. The shapes ignore the pointer; the <svg> itself, which stays put,
+   takes the click and it bubbles to the card. */
+.room-float-preview > svg * { pointer-events: none; }
