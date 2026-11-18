@@ -78,7 +78,7 @@ export default function FurniturePanel({
     <div className="shop-room__head">
       <div>
         <span className="shop-room__eyebrow">Shop the room</span>
-        <h2 id="shop-room-title" className="shop-room__title">Every piece, <em>ready to buy</em></h2>
+        <h2 id="shop-room-title" className="shop-room__title">Buy the pieces</h2>
       </div>
       <div className="shop-room__sort" role="group" aria-label="Order the pieces">
         <button type="button" className={sort === 'room' ? 'is-on' : ''} aria-pressed={sort === 'room'} onClick={() => setSort('room')}>Room order</button>

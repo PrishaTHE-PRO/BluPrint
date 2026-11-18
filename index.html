@@ -253,24 +253,7 @@
       border-bottom-color: rgba(232, 238, 244, .09);
       background: rgba(232, 238, 244, .045);
     }
-    html.dark-mode .window-title { color: var(--muted); }
-    html.dark-mode .canvas {
-      border-color: rgba(126, 168, 201, .16);
-      background: #131b24;
-    }
-    /* Hero 3D controls: the light versions are near-white glass, which on the
-       dark canvas (#131b24) would glare. Mirror them as dark glass instead. */
-    html.dark-mode .hero-3d-hint,
-    html.dark-mode .hero-styles {
-      border-color: rgba(126, 168, 201, .18);
-      background: rgba(19, 27, 36, .82);
-      box-shadow: 0 8px 22px rgba(0, 0, 0, .38);
-      color: var(--muted);
-    }
-    html.dark-mode .hero-chip { color: var(--muted); }
-    html.dark-mode .hero-chip:hover { background: rgba(126, 168, 201, .16); color: var(--ink); }
-    html.dark-mode .hero-chip.is-active { background: var(--blue-dark); color: #0f1720; }
-
+    html.dark-mode .window-title { color: var(--ink); }
     html.dark-mode .side-heading { color: var(--ink); }
     html.dark-mode .mini-card {
       border-color: rgba(232, 238, 244, .1);
@@ -289,6 +272,17 @@
       background: linear-gradient(145deg, rgba(138, 171, 130, .28), rgba(217, 195, 164, .22)) !important;
     }
     html.dark-mode .mini-line { background: rgba(232, 238, 244, .22); }
+    html.dark-mode .canvas {
+      border-color: rgba(126, 168, 201, .16);
+      background: #131b24;
+      box-shadow: none;
+    }
+    /* Hero 3D controls: the light versions are near-white glass, which on the
+       dark canvas (#131b24) would glare. Mirror them as dark glass instead. */
+    html.dark-mode .hero-chip { border-color: rgba(126, 168, 201, .18); background: rgba(19, 27, 36, .82); box-shadow: 0 8px 22px rgba(0, 0, 0, .38); color: var(--muted); }
+    html.dark-mode .hero-chip:hover { background: rgba(126, 168, 201, .16); color: var(--ink); }
+    html.dark-mode .hero-chip.is-active { background: var(--blue-dark); color: #0f1720; }
+
 
     /* The plan drawing is a light-mode SVG with baked-in fills; remap them so
        it reads as a blueprint on dark rather than a sheet of white paper. */
@@ -314,7 +308,7 @@
     html.dark-mode .floating-note {
       border-color: rgba(232, 238, 244, .14);
       color: var(--ink);
-      background: rgba(22, 30, 40, .92);
+      background: rgba(22, 30, 40, .72);
       box-shadow: 0 15px 35px rgba(0, 0, 0, .5);
     }
 
@@ -449,32 +443,43 @@
       overflow: hidden;
       border: 1px solid rgba(255,255,255,.8);
       border-radius: 28px;
-      background: rgba(255,255,255,.68);
+      background: rgba(255,255,255,.5);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      transform: rotateY(-4deg) rotateX(2deg);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+      /* Resting lean, plus whatever the cursor adds (see the tilt script). */
+      transform: rotateY(calc(-4deg + var(--tilt-y, 0deg))) rotateX(calc(2deg + var(--tilt-x, 0deg)));
+      transition: transform .6s cubic-bezier(.22,1,.36,1);
       animation: app-float 7s ease-in-out infinite;
     }
-    .window-bar { display: flex; align-items: center; gap: 7px; height: 48px; padding: 0 18px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.48); }
-    .window-dot { width: 8px; height: 8px; border-radius: 50%; background: #d6dbe2; }
-    .window-dot:nth-child(2) { background: #c4d5df; }
-    .window-dot:nth-child(3) { background: #bacdbd; }
-    .window-title { margin-left: auto; color: #858d98; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    .planner { display: grid; grid-template-columns: 1fr 148px; height: calc(100% - 48px); padding: 22px; gap: 17px; }
+    /* While the cursor steers it the float pauses and the card follows quickly. */
+    .app-window.is-tilting { animation: none; transition: transform .16s ease-out; }
+    /* Card header: a green dot, the title, and a mono hint on the right. */
+    .window-bar { display: flex; align-items: center; gap: 10px; padding: 20px 26px 14px; }
+    .window-dot { width: 9px; height: 9px; border-radius: 50%; background: #a9c4ab; box-shadow: 0 0 0 4px rgba(169,196,171,.25); }
+    .window-title { color: var(--ink); font-size: 16px; font-weight: 600; }
+    .window-hint { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+    .window-hint iconify-icon { font-size: 15px; }
+    .planner { display: grid; grid-template-columns: 1fr 148px; grid-template-rows: 1fr auto; height: calc(100% - 58px); padding: 0 18px 18px; gap: 16px; }
+    .planner .side-list { grid-column: 2; grid-row: 1 / span 2; }
+    .planner .hero-styles { grid-column: 1; grid-row: 2; }
     .canvas {
       position: relative;
       display: grid;
       place-items: center;
       overflow: hidden;
-      border: 1px solid rgba(47, 111, 143,.09);
+      border: 1px solid rgba(255,255,255,.75);
       border-radius: 20px;
-      background: #f7f3ec;
+      background: rgba(255,255,255,.5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
     }
+    /* Grid paper behind the room, like the sheet: the scene itself is
+       transparent, so these lines show through under the furniture. */
     .canvas::before {
       position: absolute; inset: 0; content: "";
-      opacity: .45;
-      background-image: linear-gradient(rgba(47, 111, 143,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 111, 143,.08) 1px, transparent 1px);
-      background-size: 22px 22px;
+      opacity: .8;
+      background-image: linear-gradient(rgba(41, 79, 125,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(41, 79, 125,.12) 1px, transparent 1px);
+      background-size: 26px 26px;
     }
     .floor-plan { position: relative; width: 82%; filter: drop-shadow(0 14px 20px rgba(40,49,55,.08)); transition: opacity .5s ease; }
     .floor-plan.is-faded { opacity: 0; }
@@ -491,48 +496,24 @@
     .hero-3d canvas { width: 100% !important; height: 100% !important; border-radius: 20px; cursor: grab; }
     .hero-3d canvas:active { cursor: grabbing; }
 
-    .hero-3d-hint, .hero-styles { opacity: 0; transition: opacity .45s ease .2s; pointer-events: none; }
-    .hero-3d.is-live ~ .hero-3d-hint, .hero-3d.is-live ~ .hero-styles { opacity: 1; }
-    .hero-3d.is-live ~ .hero-styles { pointer-events: auto; }
-    /* Once they have grabbed the room, the instruction has done its job. */
-    .hero-3d.has-interacted ~ .hero-3d-hint { opacity: 0; }
+    .hero-styles { opacity: 0; transition: opacity .45s ease .2s; pointer-events: none; }
+    .app-window.is-live .hero-styles { opacity: 1; pointer-events: auto; }
 
-    .hero-3d-hint {
-      position: absolute; top: 12px; left: 50%; z-index: 2;
-      display: flex; align-items: center; gap: 6px;
-      margin: 0; padding: 6px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.82);
-      box-shadow: 0 6px 16px rgba(46,58,68,.1);
-      color: #646c77; font-size: 11px; font-weight: 700; white-space: nowrap;
-      transform: translateX(-50%);
-      backdrop-filter: blur(6px);
-    }
-    /* Stretched across the card rather than centred in a pill: five equal
-       chips spread the full width, so the switcher reads as a toolbar instead
-       of a bubble crowded with labels. */
-    .hero-styles {
-      position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 2;
-      display: flex; align-items: center; gap: 4px;
-      padding: 5px;
-      border: 1px solid rgba(255,255,255,.7);
-      border-radius: 15px;
-      background: rgba(255,255,255,.78);
-      box-shadow: 0 8px 22px rgba(46,58,68,.12);
-      backdrop-filter: blur(10px);
-    }
+    /* Style chips: separate pills in a row under the room, the chosen one
+       filled with the page's dark blue. */
+    .hero-styles { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .hero-chip {
-      flex: 1 1 0;              /* equal widths — the "paced out" part */
-      padding: 7px 4px;
-      border: 0; border-radius: 11px;
-      background: transparent;
-      color: #646c77; font-family: inherit; font-size: 11px; font-weight: 700;
+      padding: 8px 14px;
+      border: 1px solid rgba(255,255,255,.8); border-radius: 999px;
+      background: rgba(255,255,255,.6);
+      box-shadow: 0 6px 16px rgba(46,58,68,.06);
+      color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 500;
       white-space: nowrap;
       cursor: pointer;
-      transition: background .2s ease, color .2s ease;
+      transition: background .2s ease, color .2s ease, border-color .2s ease;
     }
-    .hero-chip:hover { background: rgba(47, 111, 143,.09); color: var(--blue-dark); }
-    .hero-chip.is-active { background: var(--blue-dark); color: #fff; }
+    .hero-chip:hover { background: rgba(255,255,255,.9); border-color: rgba(47, 111, 143,.25); }
+    .hero-chip.is-active { border-color: var(--blue-dark); background: var(--blue-dark); color: #fff; }
     .hero-chip:focus-visible { outline: 2px solid var(--blue-dark); outline-offset: 2px; }
 
     /* Compositing a blurred, animated, 3D-transformed panel on top of a live
@@ -541,7 +522,7 @@
     .app-window.is-live { animation: none; }
 
     @media (prefers-reduced-motion: reduce) {
-      .hero-3d, .floor-plan, .hero-3d-hint, .hero-styles { transition: none; }
+      .hero-3d, .floor-plan, .hero-styles { transition: none; }
     }
     .side-list { display: flex; flex-direction: column; gap: 11px; }
     .side-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; font-size: 11px; font-weight: 800; }
@@ -555,20 +536,21 @@
       z-index: 3;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 15px;
-      border: 1px solid rgba(255,255,255,.85);
+      gap: 12px;
+      padding: 14px 18px;
+      border: 1px solid rgba(255,255,255,.7);
       border-radius: 15px;
-      background: rgba(255,255,255,.83);
+      background: rgba(255,255,255,.58);
       box-shadow: 0 15px 35px rgba(44,55,63,.13);
-      backdrop-filter: blur(16px);
-      font-size: 12px;
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      font-size: 13.5px;
       font-weight: 700;
       animation: note-float 5s ease-in-out infinite;
     }
-    .floating-note iconify-icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; color: var(--blue); background: var(--sky-soft); font-size: 18px; }
-    .note-one { top: 4px; right: -20px; }
-    .note-two { bottom: 8px; left: -18px; animation-delay: -2.4s; }
+    .floating-note iconify-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; color: var(--blue); background: var(--sky-soft); font-size: 21px; }
+    .note-one { top: -10px; right: -26px; }
+    .note-two { bottom: -4px; left: -24px; animation-delay: -2.4s; }
 
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 120px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.48); box-shadow: 0 14px 42px rgba(43,54,61,.08); backdrop-filter: blur(18px); transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease; }
     .stats:hover { transform: translateY(-7px); box-shadow: 0 24px 60px rgba(43,54,61,.14); }
@@ -897,18 +879,17 @@
       .hero h1 { font-size: 52px; }
       .product-stage { min-height: 440px; margin-top: 10px; }
       .app-window { inset: 20px 0; transform: none; animation: none; }
-      .planner { grid-template-columns: 1fr; padding: 14px; }
+      .planner { grid-template-columns: 1fr; padding: 0 12px 12px; gap: 10px; }
       .side-list { display: none; }
+      .planner .hero-styles { grid-column: 1; }
       /* "Industrial" is the long one — it stops fitting five-across once the
          canvas is only a phone wide. */
-      .hero-styles { bottom: 8px; left: 8px; right: 8px; gap: 2px; padding: 4px; }
+      .hero-styles { gap: 6px; }
+      .hero-chip { padding: 8px 12px; font-size: 13px; }
+      .window-hint { display: none; }
       .hero-chip { padding: 7px 2px; font-size: 10px; letter-spacing: -.01em; }
       .floating-note { font-size: 10px; }
       .note-one { right: -8px; }
-      /* The style switcher now occupies the bottom of the card, and this note
-         sits above it in z-order — left at bottom:8px it would cover the chips
-         and swallow their clicks. Anchor it to the top instead, below the
-         drag hint. */
       .note-two { top: 96px; bottom: auto; left: -8px; }
       .stats { grid-template-columns: 1fr; margin-bottom: 84px; }
       .stat + .stat { border-top: 1px solid var(--line); border-left: 0; }
@@ -965,12 +946,13 @@
       </div>
 
       <div class="product-stage" aria-label="BluPrint room planner preview">
-        <div class="floating-note note-one"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon><span>Style matched<br><small>Warm modern</small></span></div>
-        <div class="floating-note note-two"><iconify-icon icon="ph:wallet-duotone"></iconify-icon><span>On budget<br><small>$4,920 of $5,000</small></span></div>
+        <div class="floating-note note-one"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon><span>Style matched<br><small data-hero-style-name>Warm modern</small></span></div>
+        <div class="floating-note note-two"><iconify-icon icon="ph:wallet-duotone"></iconify-icon><span>On budget<br><small><span data-hero-budget>$4,920</span> of $5,000</small></span></div>
         <div class="app-window">
           <div class="window-bar">
-            <span class="window-dot"></span><span class="window-dot"></span><span class="window-dot"></span>
+            <span class="window-dot"></span>
             <span class="window-title">Your room plan</span>
+            <span class="window-hint"><iconify-icon icon="ph:hand-grabbing"></iconify-icon> Move to look around</span>
           </div>
           <div class="planner">
             <div class="canvas">
@@ -986,31 +968,28 @@
                 <path d="M32 280Q70 280 70 328" stroke="#2f6f8f" stroke-width="3" stroke-dasharray="5 4"/>
                 <path d="M145 28h105" stroke="#8FC5E7" stroke-width="9" stroke-linecap="round"/>
                 <text x="210" y="350" text-anchor="middle" fill="#6b7480" font-family="DM Sans" font-size="12">14 ft × 12 ft</text>
-      </svg>
+              </svg>
 
               <!-- Live 3D room. Empty until src/landing-hero3d.js lazily mounts
                    the viewer; the SVG plan above is what shows until then, and
                    permanently on reduced-motion or no-WebGL. -->
               <div class="hero-3d" data-hero-3d></div>
-              <p class="hero-3d-hint" aria-hidden="true">
-                <iconify-icon icon="ph:hand-grabbing-duotone"></iconify-icon> Drag to look around
-              </p>
-              <div class="hero-styles" data-hero-styles role="group" aria-label="Preview room style">
-                <button type="button" class="hero-chip is-active" data-style="modern" aria-pressed="true">Modern</button>
-                <button type="button" class="hero-chip" data-style="scandinavian" aria-pressed="false">Scandi</button>
-                <button type="button" class="hero-chip" data-style="bohemian" aria-pressed="false">Boho</button>
-                <button type="button" class="hero-chip" data-style="industrial" aria-pressed="false">Industrial</button>
-                <button type="button" class="hero-chip" data-style="minimalist" aria-pressed="false">Minimal</button>
-              </div>
             </div>
             <aside class="side-list" aria-hidden="true">
-              <div class="side-heading"><span>Furniture</span><span>$4,920</span></div>
+              <div class="side-heading"><span>Furniture</span><span data-hero-budget-side>$4,920</span></div>
               <!-- Icons match the pieces actually standing in the 3D room, so
                    the list reads as that room's furniture rather than stock art. -->
               <div class="mini-card"><div class="mini-image"><iconify-icon icon="ph:armchair-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
               <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#e6dbce,#dce8ed)"><iconify-icon icon="ph:lamp-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
               <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#dce7dc,#e8ded2)"><iconify-icon icon="ph:plant-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
             </aside>
+            <div class="hero-styles" data-hero-styles role="group" aria-label="Preview room style">
+              <button type="button" class="hero-chip is-active" data-style="modern" aria-pressed="true">Modern</button>
+              <button type="button" class="hero-chip" data-style="scandinavian" aria-pressed="false">Scandi</button>
+              <button type="button" class="hero-chip" data-style="bohemian" aria-pressed="false">Boho</button>
+              <button type="button" class="hero-chip" data-style="industrial" aria-pressed="false">Industrial</button>
+              <button type="button" class="hero-chip" data-style="minimalist" aria-pressed="false">Minimal</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1021,16 +1000,6 @@
       <div class="stat"><strong>Real products</strong><span>Recommendations you can buy</span></div>
       <div class="stat"><strong>Your budget</strong><span>Optimized across the whole room</span></div>
     </section>
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee-track">
-        <div class="marquee-group">
-          <span>Measure</span><span>Inspire</span><span>Analyze</span><span>Arrange</span><span>Resize</span><span>Shop</span><span>Save</span>
-        </div>
-        <div class="marquee-group">
-          <span>Measure</span><span>Inspire</span><span>Analyze</span><span>Arrange</span><span>Resize</span><span>Shop</span><span>Save</span>
-        </div>
-      </div>
-          </div>
 
     <section class="section shell" id="features">
       <div class="section-heading reveal">
@@ -1186,6 +1155,38 @@
       });
     }, { threshold: 0.14 });
     document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
+
+    // The hero card leans toward the cursor, a few degrees at most, and
+    // settles back when the cursor leaves. Only for pointers that hover, and
+    // never while the room itself is being dragged.
+    (() => {
+      const stage = document.querySelector('.product-stage');
+      const card = stage && stage.querySelector('.app-window');
+      if (!stage || !card) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(hover: hover)').matches) return;
+      const MAX_DEG = 7;
+      let tiltX = 0, tiltY = 0, frame = 0;
+      const apply = () => {
+        frame = 0;
+        card.style.setProperty('--tilt-x', tiltX.toFixed(2) + 'deg');
+        card.style.setProperty('--tilt-y', tiltY.toFixed(2) + 'deg');
+      };
+      stage.addEventListener('pointermove', (event) => {
+        if (event.buttons) return;
+        const box = stage.getBoundingClientRect();
+        const dx = (event.clientX - box.left) / box.width - 0.5;
+        const dy = (event.clientY - box.top) / box.height - 0.5;
+        tiltY = dx * MAX_DEG * 2;
+        tiltX = -dy * MAX_DEG * 2;
+        card.classList.add('is-tilting');
+        if (!frame) frame = requestAnimationFrame(apply);
+      });
+      stage.addEventListener('pointerleave', () => {
+        tiltX = 0; tiltY = 0;
+        card.classList.remove('is-tilting');
+        apply();
+      });
+    })();
 
     // Keeps the copyright year current. The markup carries a real year as a
     // fallback, so this going missing degrades to a stale year, not a blank.

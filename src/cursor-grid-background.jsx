@@ -5,9 +5,11 @@ import blueprintPattern from './assets/architectural-blueprint-generated.png';
 import './cursor-grid-background.css';
 
 // Cursor ripple strength. Dark mode gets a softer glow so it doesn't glare.
+// gridOpacity is the resting linework; dark mode dims it to half. Hovered
+// cells still rise to maxOpacity, so the hover spots look the same.
 const RIPPLE = {
-  light: { maxOpacity: 0.85, spotlight: 0.6 },
-  dark: { maxOpacity: 0.35, spotlight: 0.25 },
+  light: { maxOpacity: 0.85, spotlight: 0.6, gridOpacity: 0.24 },
+  dark: { maxOpacity: 0.35, spotlight: 0.25, gridOpacity: 0.09 },
 };
 
 const isDark = () => document.documentElement.classList.contains('dark-mode');
@@ -38,7 +40,7 @@ function BlueprintBackground() {
       radius={140}
       holdTime={400}
       fadeDuration={800}
-      gridOpacity={0.24}
+      gridOpacity={ripple.gridOpacity}
       maxOpacity={ripple.maxOpacity}
       fillOpacity={0}
       spotlight={ripple.spotlight}

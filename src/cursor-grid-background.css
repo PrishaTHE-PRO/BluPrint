@@ -17,3 +17,9 @@ body.has-cursor-grid > .ambient-orb {
   pointer-events: none;
   overflow: hidden;
 }
+
+/* Dark mode: the whole background (blueprint linework and the cursor hover
+   spots) at 90%, i.e. 10% fainter across the board. */
+html.dark-mode #cursor-grid-background {
+  opacity: .9;
+}
