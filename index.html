@@ -254,13 +254,29 @@
       background: rgba(232, 238, 244, .045);
     }
     html.dark-mode .window-title { color: var(--ink); }
+    html.dark-mode .side-heading { color: var(--ink); }
+    html.dark-mode .mini-card {
+      border-color: rgba(232, 238, 244, .1);
+      background: rgba(232, 238, 244, .055);
+      box-shadow: none;
+    }
+    /* !important: cards 2 and 3 carry inline `style` backgrounds in the
+       markup, which nothing short of !important can override. */
+    html.dark-mode .mini-image {
+      background: linear-gradient(145deg, rgba(126, 168, 201, .34), rgba(95, 143, 184, .16)) !important;
+    }
+    html.dark-mode .mini-card:nth-child(2) .mini-image {
+      background: linear-gradient(145deg, rgba(217, 195, 164, .3), rgba(126, 168, 201, .22)) !important;
+    }
+    html.dark-mode .mini-card:nth-child(3) .mini-image {
+      background: linear-gradient(145deg, rgba(138, 171, 130, .28), rgba(217, 195, 164, .22)) !important;
+    }
+    html.dark-mode .mini-line { background: rgba(232, 238, 244, .22); }
     html.dark-mode .canvas {
       border-color: rgba(126, 168, 201, .16);
       background: #131b24;
       box-shadow: none;
     }
-    html.dark-mode .floating-note > iconify-icon { color: var(--blue); background: rgba(126, 168, 201, .16); }
-    html.dark-mode .note-bar { background: rgba(126, 168, 201, .18); }
     /* Hero 3D controls: the light versions are near-white glass, which on the
        dark canvas (#131b24) would glare. Mirror them as dark glass instead. */
     html.dark-mode .hero-chip { border-color: rgba(126, 168, 201, .18); background: rgba(19, 27, 36, .82); box-shadow: 0 8px 22px rgba(0, 0, 0, .38); color: var(--muted); }
@@ -292,7 +308,7 @@
     html.dark-mode .floating-note {
       border-color: rgba(232, 238, 244, .14);
       color: var(--ink);
-      background: rgba(22, 30, 40, .92);
+      background: rgba(22, 30, 40, .72);
       box-shadow: 0 15px 35px rgba(0, 0, 0, .5);
     }
 
@@ -444,7 +460,9 @@
     .window-title { color: var(--ink); font-size: 16px; font-weight: 600; }
     .window-hint { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
     .window-hint iconify-icon { font-size: 15px; }
-    .planner { display: grid; grid-template-rows: 1fr auto; height: calc(100% - 58px); padding: 0 18px 18px; gap: 16px; }
+    .planner { display: grid; grid-template-columns: 1fr 148px; grid-template-rows: 1fr auto; height: calc(100% - 58px); padding: 0 18px 18px; gap: 16px; }
+    .planner .side-list { grid-column: 2; grid-row: 1 / span 2; }
+    .planner .hero-styles { grid-column: 1; grid-row: 2; }
     .canvas {
       position: relative;
       display: grid;
@@ -481,13 +499,13 @@
 
     /* Style chips: separate pills in a row under the room, the chosen one
        filled with the page's dark blue. */
-    .hero-styles { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .hero-styles { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .hero-chip {
-      padding: 11px 20px;
+      padding: 8px 14px;
       border: 1px solid rgba(255,255,255,.8); border-radius: 999px;
       background: rgba(255,255,255,.6);
       box-shadow: 0 6px 16px rgba(46,58,68,.06);
-      color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 500;
+      color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 500;
       white-space: nowrap;
       cursor: pointer;
       transition: background .2s ease, color .2s ease, border-color .2s ease;
@@ -504,35 +522,33 @@
     @media (prefers-reduced-motion: reduce) {
       .hero-3d, .floor-plan, .hero-styles { transition: none; }
     }
-    /* Bubbles over the card: a small label and a big serif value. */
+    .side-list { display: flex; flex-direction: column; gap: 11px; }
+    .side-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; font-size: 11px; font-weight: 800; }
+    .mini-card { padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.86); box-shadow: 0 7px 16px rgba(46,58,68,.05); }
+    .mini-image { display: grid; place-items: center; height: 55px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(145deg, #d8e8f1, #e8ded2); }
+    .mini-image iconify-icon { color: var(--blue-dark); font-size: 26px; opacity: .78; }
+    .mini-line { width: 74%; height: 5px; margin-bottom: 5px; border-radius: 999px; background: #cdd3db; }
+    .mini-line.short { width: 42%; background: #97acbe; }
     .floating-note {
       position: absolute;
       z-index: 3;
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 14px 20px 14px 16px;
-      border: 1px solid rgba(255,255,255,.85);
-      border-radius: 18px;
-      background: rgba(255,255,255,.86);
+      gap: 10px;
+      padding: 12px 15px;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 15px;
+      background: rgba(255,255,255,.58);
       box-shadow: 0 15px 35px rgba(44,55,63,.13);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      font-size: 12px;
+      font-weight: 700;
       animation: note-float 5s ease-in-out infinite;
     }
-    .floating-note > iconify-icon { display: grid; flex: none; width: 46px; height: 46px; place-items: center; border-radius: 13px; color: var(--blue); background: var(--sky-soft); font-size: 24px; }
-    .note-body { display: flex; flex-direction: column; gap: 2px; }
-    .note-label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; font-weight: 500; }
-    .note-label iconify-icon { color: var(--green); font-size: 16px; }
-    .note-value { color: var(--ink); font-family: "Fraunces", serif; font-size: 28px; line-height: 1.05; letter-spacing: -.02em; }
-    .note-row { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
-    .note-cap { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
-    .note-bar { display: block; width: 100%; height: 7px; border-radius: 999px; background: rgba(47, 111, 143,.14); overflow: hidden; }
-    .note-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--sky), var(--blue-dark)); transition: width .5s cubic-bezier(.22,1,.36,1); }
-    .note-one { top: 92px; left: 10px; }
-    .note-two { right: 6px; bottom: 112px; flex-direction: column; align-items: stretch; gap: 6px; min-width: 240px; padding: 16px 20px 18px; animation-delay: -2.4s; }
-    .note-two .note-value { font-size: 34px; }
-    .note-two .note-bar { margin-top: 6px; }
+    .floating-note iconify-icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; color: var(--blue); background: var(--sky-soft); font-size: 18px; }
+    .note-one { top: -10px; right: -26px; }
+    .note-two { bottom: -4px; left: -24px; animation-delay: -2.4s; }
 
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 120px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.48); box-shadow: 0 14px 42px rgba(43,54,61,.08); backdrop-filter: blur(18px); transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease; }
     .stats:hover { transform: translateY(-7px); box-shadow: 0 24px 60px rgba(43,54,61,.14); }
@@ -861,20 +877,18 @@
       .hero h1 { font-size: 52px; }
       .product-stage { min-height: 440px; margin-top: 10px; }
       .app-window { inset: 20px 0; transform: none; animation: none; }
-      .planner { padding: 0 12px 12px; gap: 10px; }
+      .planner { grid-template-columns: 1fr; padding: 0 12px 12px; gap: 10px; }
+      .side-list { display: none; }
+      .planner .hero-styles { grid-column: 1; }
       /* "Industrial" is the long one — it stops fitting five-across once the
          canvas is only a phone wide. */
       .hero-styles { gap: 6px; }
       .hero-chip { padding: 8px 12px; font-size: 13px; }
       .window-hint { display: none; }
       .hero-chip { padding: 7px 2px; font-size: 10px; letter-spacing: -.01em; }
-      .floating-note { gap: 10px; padding: 8px 12px; border-radius: 14px; }
-      .floating-note > iconify-icon { width: 34px; height: 34px; font-size: 18px; }
-      .note-label { font-size: 12px; }
-      .note-value { font-size: 18px; }
-      .note-one { top: 66px; left: 4px; }
-      .note-two { right: 4px; bottom: 86px; min-width: 150px; gap: 4px; padding: 10px 12px; }
-      .note-two .note-value { font-size: 20px; }
+      .floating-note { font-size: 10px; }
+      .note-one { right: -8px; }
+      .note-two { top: 96px; bottom: auto; left: -8px; }
       .stats { grid-template-columns: 1fr; margin-bottom: 84px; }
       .stat + .stat { border-top: 1px solid var(--line); border-left: 0; }
       .section { padding-bottom: 84px; }
@@ -930,21 +944,8 @@
       </div>
 
       <div class="product-stage" aria-label="BluPrint room planner preview">
-        <div class="floating-note note-one">
-          <iconify-icon icon="ph:sparkle-duotone"></iconify-icon>
-          <span class="note-body">
-            <span class="note-label">Style matched</span>
-            <span class="note-value" data-hero-style-name>Warm modern</span>
-          </span>
-        </div>
-        <div class="floating-note note-two">
-          <span class="note-row">
-            <span class="note-label"><iconify-icon icon="ph:wallet-duotone"></iconify-icon> On budget</span>
-            <span class="note-cap">$5,000</span>
-          </span>
-          <span class="note-value" data-hero-budget>$4,920</span>
-          <span class="note-bar" aria-hidden="true"><i data-hero-budget-bar style="width: 98%"></i></span>
-        </div>
+        <div class="floating-note note-one"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon><span>Style matched<br><small data-hero-style-name>Warm modern</small></span></div>
+        <div class="floating-note note-two"><iconify-icon icon="ph:wallet-duotone"></iconify-icon><span>On budget<br><small><span data-hero-budget>$4,920</span> of $5,000</small></span></div>
         <div class="app-window">
           <div class="window-bar">
             <span class="window-dot"></span>
@@ -972,6 +973,14 @@
                    permanently on reduced-motion or no-WebGL. -->
               <div class="hero-3d" data-hero-3d></div>
             </div>
+            <aside class="side-list" aria-hidden="true">
+              <div class="side-heading"><span>Furniture</span><span data-hero-budget-side>$4,920</span></div>
+              <!-- Icons match the pieces actually standing in the 3D room, so
+                   the list reads as that room's furniture rather than stock art. -->
+              <div class="mini-card"><div class="mini-image"><iconify-icon icon="ph:armchair-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#e6dbce,#dce8ed)"><iconify-icon icon="ph:lamp-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+              <div class="mini-card"><div class="mini-image" style="background:linear-gradient(145deg,#dce7dc,#e8ded2)"><iconify-icon icon="ph:plant-duotone"></iconify-icon></div><div class="mini-line"></div><div class="mini-line short"></div></div>
+            </aside>
             <div class="hero-styles" data-hero-styles role="group" aria-label="Preview room style">
               <button type="button" class="hero-chip is-active" data-style="modern" aria-pressed="true">Modern</button>
               <button type="button" class="hero-chip" data-style="scandinavian" aria-pressed="false">Scandi</button>

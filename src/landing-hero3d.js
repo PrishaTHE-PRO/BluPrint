@@ -21,18 +21,32 @@ const STYLES = [
   { key: 'industrial', label: 'Industrial', name: 'Raw industrial', spend: 4460 },
   { key: 'minimalist', label: 'Minimal', name: 'Clean minimal', spend: 3550 },
 ];
-const DEMO_BUDGET = 5000;
 
-/** Keeps the two bubbles over the card in step with the chosen style. */
+/** Keeps the two bubbles and the side list in step with the chosen style.
+ *  The amount counts up or down to the new total over 600 ms, easing out,
+ *  the same way the estimate does on the results sheet. */
+let shownSpend = STYLES[0].spend;
+let spendFrame = 0;
 function syncNotes(styleKey) {
   const style = STYLES.find((s) => s.key === styleKey);
   if (!style) return;
   const name = document.querySelector('[data-hero-style-name]');
-  const spend = document.querySelector('[data-hero-budget]');
-  const bar = document.querySelector('[data-hero-budget-bar]');
   if (name) name.textContent = style.name;
-  if (spend) spend.textContent = '$' + style.spend.toLocaleString();
-  if (bar) bar.style.width = Math.round((style.spend / DEMO_BUDGET) * 100) + '%';
+  const amounts = document.querySelectorAll('[data-hero-budget], [data-hero-budget-side]');
+  const from = shownSpend;
+  const to = style.spend;
+  const startedAt = performance.now();
+  cancelAnimationFrame(spendFrame);
+  const step = (now) => {
+    // A frame's timestamp can sit a hair before performance.now() did, so
+    // clamp both ends or the first frame overshoots the wrong way.
+    const k = Math.max(0, Math.min(1, (now - startedAt) / 600));
+    const eased = 1 - Math.pow(1 - k, 3);
+    shownSpend = Math.round(from + (to - from) * eased);
+    for (const el of amounts) el.textContent = '$' + shownSpend.toLocaleString();
+    if (k < 1) spendFrame = requestAnimationFrame(step);
+  };
+  spendFrame = requestAnimationFrame(step);
 }
 
 // A small, believable living room. x/y are FEET from the room's top-left, the
