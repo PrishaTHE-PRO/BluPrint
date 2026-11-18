@@ -904,11 +904,12 @@ export default function RoomResult() {
       <main className="relative z-0 max-w-[1600px] mx-auto p-8 lg:p-12">
 
         <header className="mb-8 animate-reveal" style={{ animationDelay: '0.3s' }}>
-          <div className="flex items-baseline gap-4 mb-2">
-            <span className="text-[#D3968C] font-bold tracking-widest uppercase text-sm">{s.styleTag} Style</span>
-          </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-2">
+            <div className="min-w-0">
+              <div className="result-chips">
+                <span className="result-chip result-chip--style"><i aria-hidden="true" />{s.styleTag}</span>
+                {s.roomType && <span className="result-chip result-chip--room">{s.roomType}</span>}
+              </div>
               {editingName ? (
                 <input
                   autoFocus
@@ -920,26 +921,29 @@ export default function RoomResult() {
                     if (e.key === 'Enter') commitRename(roomName);
                     if (e.key === 'Escape') setEditingName(false);
                   }}
-                  className="text-5xl md:text-6xl font-bold text-[#F7F4D5] tracking-tight bg-transparent border-b-2 border-[#D3968C] outline-none w-full max-w-2xl"
+                  className="result-title result-title--input room-name-input"
                   aria-label="Room name"
                 />
               ) : (
-                <h1 className="group flex items-center gap-3 text-5xl md:text-6xl font-bold text-[#F7F4D5] tracking-tight">
+                <h1 className="result-title" title="Rename room" onClick={() => { setNameDraft(roomName); setEditingName(true); }}>
                   {roomName}
                   <button
                     type="button"
-                    onClick={() => { setNameDraft(roomName); setEditingName(true); }}
+                    onClick={(e) => { e.stopPropagation(); setNameDraft(roomName); setEditingName(true); }}
                     aria-label="Rename room"
                     title="Rename room"
-                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-2xl text-[#F7F4D5]"
+                    className="result-title__edit"
                   >
-                    <iconify-icon icon="ph:pencil-simple-duotone" />
+                    <iconify-icon icon="ph:pencil-simple-line" />
                   </button>
                 </h1>
               )}
-              <p className="text-lg text-[#F7F4D5] font-medium">
-                {layoutRoom.widthFt}' x {layoutRoom.lengthFt}' <span className="mx-2 opacity-30">|</span> {layoutRoom.sqft} sqft
-              </p>
+              <div className="result-stats" aria-label="Room facts">
+                <span className="result-stat">{layoutRoom.widthFt}\u2032 \u00d7 {layoutRoom.lengthFt}\u2032</span>
+                <span className="result-stat">{layoutRoom.sqft} sq ft</span>
+                <span className="result-stat">{layoutRoom.heightFt || room?.heightFt || 8}\u2032 ceiling</span>
+                <span className="result-stat">{layoutFurniture.length} {layoutFurniture.length === 1 ? 'piece' : 'pieces'}</span>
+              </div>
             </div>
             <div className="flex gap-3">
               <button
@@ -953,28 +957,29 @@ export default function RoomResult() {
               </button>
               <a
                 href="/dashboard.html"
-                className="result-action no-underline"
+                className="result-action result-action--icon no-underline"
+                title="Return to homepage"
+                aria-label="Return to homepage"
               >
-                <iconify-icon icon="ph:house-duotone" />
-                Return to Homepage
+                <iconify-icon icon="ph:house-bold" />
               </a>
               <button
                 onClick={handleSaveLayout}
                 disabled={saveStatus === 'saving'}
                 className={[
-                  'result-action',
+                  'result-action result-action--primary',
                   saveStatus === 'saving' ? 'opacity-70 cursor-wait' : '',
                 ].join(' ')}
               >
                 <iconify-icon icon={
                   saveStatus === 'saved' ? 'ph:check-circle-duotone'
                   : saveStatus === 'error' ? 'ph:warning-circle-duotone'
-                  : 'ph:floppy-disk-duotone'
+                  : 'ph:floppy-disk-bold'
                 } />
                 {saveStatus === 'saving' ? 'Saving...'
                   : saveStatus === 'saved' ? 'Auto-saved'
                   : saveStatus === 'error' ? 'Retry Save'
-                  : 'Save Layout'}
+                  : 'Save layout'}
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FurnitureItem, RenderItem, Room, RoomRender } from '../types';
 import type { Placement } from './RoomSVG';
 import { BuyButton } from './FurnitureCard';
@@ -87,22 +87,6 @@ export function buildLayoutHints(
   });
 }
 
-/** Where an object-fit: contain image actually paints inside its box. */
-function contentBoxFor(boxW: number, boxH: number, natW: number, natH: number): ContentBox {
-  if (!boxW || !boxH || !natW || !natH) return { left: 0, top: 0, width: boxW, height: boxH };
-  const scale = Math.min(boxW / natW, boxH / natH);
-  const width = natW * scale;
-  const height = natH * scale;
-  return { left: (boxW - width) / 2, top: (boxH - height) / 2, width, height };
-}
-
-function sameIds(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false;
-  const sa = [...a].sort();
-  const sb = [...b].sort();
-  return sa.every((v, i) => v === sb[i]);
-}
-
 export default function RoomRenderView({
   room,
   items,
@@ -118,17 +102,17 @@ export default function RoomRenderView({
   const [pct, setPct] = useState(0);
   const [line, setLine] = useState(0);
   const [box, setBox] = useState<ContentBox | null>(null);
-  // The picture's own width/height ratio. The image area takes this shape so
-  // the photo fills it edge to edge, with no dark bars beside it.
-  const [aspect, setAspect] = useState<number | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const startedAt = useRef(0);
 
   const render = room.render ?? null;
-  const shownUrl = render?.url ?? room.photoUrl ?? '';
-  const visibleIds = useMemo(() => items.map((i) => i.id), [items]);
-  const stale = Boolean(render) && !sameIds(render!.itemIds, visibleIds);
+  // Original / Rendered switch. Only offered once a render exists, and it
+  // snaps back to the render whenever a new picture arrives.
+  const [showOriginal, setShowOriginal] = useState(false);
+  const canCompare = Boolean(render && room.photoUrl);
+  const showingOriginal = canCompare && showOriginal;
+  const shownUrl = showingOriginal ? room.photoUrl! : (render?.url ?? room.photoUrl ?? '');
 
   // Hover cards read from the render's stored items first: on a revisit they
   // exist before the furniture search has finished.
@@ -138,17 +122,15 @@ export default function RoomRenderView({
       ?? items.find((i) => i.category === category);
   }, [render, items]);
 
-  // Track the painted image box so percentage hotspots stay aligned under
-  // object-fit: contain, whatever the pane's aspect ratio does.
+  // Where the picture sits inside the stage, for the hover layer. The image
+  // is centred and capped in height, so it is measured directly.
   const measure = useCallback(() => {
     const stage = stageRef.current;
     const img = imgRef.current;
     if (!stage || !img) return;
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-      const next = img.naturalWidth / img.naturalHeight;
-      setAspect((prev) => (prev !== null && Math.abs(prev - next) < 0.001 ? prev : next));
-    }
-    setBox(contentBoxFor(stage.clientWidth, stage.clientHeight, img.naturalWidth, img.naturalHeight));
+    const sr = stage.getBoundingClientRect();
+    const ir = img.getBoundingClientRect();
+    setBox({ left: ir.left - sr.left, top: ir.top - sr.top, width: ir.width, height: ir.height });
   }, []);
 
   useEffect(() => {
@@ -158,6 +140,8 @@ export default function RoomRenderView({
     ro.observe(stage);
     return () => ro.disconnect();
   }, [measure]);
+
+  useEffect(() => { setShowOriginal(false); }, [render?.url]);
 
   // Progress is deliberately honest: it eases toward 90% and waits there.
   useEffect(() => {
@@ -227,15 +211,36 @@ export default function RoomRenderView({
 
   return (
     <div
-      className={`room-render-view${aspect ? ' room-render-view--fit' : ''}`}
+      className="room-render-view"
       aria-busy={rendering}
       onMouseLeave={() => link(null)}
     >
-      <div className="room-render-view__toolbar">
-        {render && stale && !rendering && (
-          <span className="room-render-view__badge" title="The pieces in the room no longer match this picture">
-            Furniture changed since last render
-          </span>
+      <div className="room-render-view__head">
+        <h3 className="text-base font-bold flex items-center gap-2 shrink-0">
+          <iconify-icon icon="ph:image" class="text-[#D3968C]" />
+          Your room
+        </h3>
+        <div className="room-render-view__toolbar">
+        {canCompare && !rendering && (
+          <div className="room-render-view__toggle" role="group" aria-label="Which picture to show">
+            <button
+              type="button"
+              className={`room-render-view__toggle-btn${showingOriginal ? '' : ' is-on'}`}
+              aria-pressed={!showingOriginal}
+              onClick={() => setShowOriginal(false)}
+            >
+              Rendered
+            </button>
+            <button
+              type="button"
+              className={`room-render-view__toggle-btn${showingOriginal ? ' is-on' : ''}`}
+              aria-pressed={showingOriginal}
+              onClick={() => setShowOriginal(true)}
+              title="Show the photo you uploaded, without the recommended pieces"
+            >
+              Original
+            </button>
+          </div>
         )}
         {render && (
           <button
@@ -259,25 +264,22 @@ export default function RoomRenderView({
             <iconify-icon icon="ph:arrows-clockwise-bold" /> Re-render
           </button>
         )}
+        </div>
       </div>
 
-      <div
-        className="room-render-view__stage"
-        ref={stageRef}
-        style={aspect ? { aspectRatio: String(aspect) } : undefined}
-      >
+      <div className="room-render-view__stage" ref={stageRef}>
         {shownUrl && (
           <img
             ref={imgRef}
             src={shownUrl}
-            alt={render ? 'Your room with the recommended furniture' : 'Your room'}
+            alt={showingOriginal ? 'Your room as photographed' : render ? 'Your room with the recommended furniture' : 'Your room'}
             className={`room-render-view__img${!render || rendering ? ' is-dimmed' : ''}`}
             onLoad={measure}
             draggable={false}
           />
         )}
 
-        {SHOW_HOTSPOTS && render && box && !rendering && !relocating && (
+        {SHOW_HOTSPOTS && render && box && !rendering && !relocating && !showingOriginal && (
           <div
             className="room-render-view__layer"
             style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
@@ -360,7 +362,9 @@ export default function RoomRenderView({
 
       {render && !rendering && (
         <p className="room-render-view__caption">
-          {SHOW_HOTSPOTS
+          {showingOriginal
+            ? 'Your room as you photographed it. Switch to Rendered to see the recommended pieces in place.'
+            : SHOW_HOTSPOTS
             ? 'Hover a piece to see the product. The plan is matched to this picture; move furniture in the plan, then re-render to update.'
             : 'Your room with the recommended pieces. The plan is matched to this picture; move furniture in the plan, then re-render to update.'}
         </p>
