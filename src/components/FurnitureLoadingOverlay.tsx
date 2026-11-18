@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import MascotLoader from './MascotLoader';
 
 /**
  * Shown while furniture is being fetched — on a revisit, or after Regenerate.
@@ -74,9 +75,7 @@ export default function FurnitureLoadingOverlay({ open, label = 'Rebuilding your
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <span className="fl-spin" style={{ display: 'grid', placeItems: 'center', fontSize: 20, color: 'var(--bp-primary, #2f6f8f)' }}>
-            <iconify-icon icon="ph:armchair-duotone" />
-          </span>
+          <MascotLoader size={72} className="furniture-loading__mascot" />
           <strong style={{ font: '600 15px "DM Sans", system-ui, sans-serif' }}>{label}</strong>
         </div>
 

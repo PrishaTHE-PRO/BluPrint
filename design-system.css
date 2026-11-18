@@ -5534,3 +5534,76 @@ html.dark-mode .page-result main > header .result-chip--style { background: rgba
 html.dark-mode .page-result main > header .result-chip--room { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .12); color: #b7c4d3 !important; }
 html.dark-mode .page-result main > header .result-stat { background: rgba(255, 255, 255, .08); color: #d5dee8 !important; }
 html.dark-mode .page-result main > header .result-title__edit { color: #9fb0c3; }
+
+/* ==================================================================
+   Mascot variations
+   ================================================================== */
+/* Squishy jelly wobble, pivoting from the feet so the character stays put. */
+.mascot-wobble {
+  transform-origin: center bottom;
+  animation: mascot-wobble 1.6s ease-in-out infinite;
+  will-change: transform;
+  filter: drop-shadow(0 10px 14px rgba(47, 111, 143, .18));
+}
+@keyframes mascot-wobble {
+  0%, 100% { transform: rotate(0deg)  scale(1, 1); }
+  20%      { transform: rotate(-4deg) scale(1.04, .96); }
+  40%      { transform: rotate(3deg)  scale(.97, 1.03); }
+  60%      { transform: rotate(-2deg) scale(1.02, .98); }
+  80%      { transform: rotate(1deg)  scale(.99, 1.01); }
+}
+/* Tired mascot: a slow breath layered on the wobble. It animates the
+   separate `scale` property, so it composes with the wobble's transform. */
+.mascot-wobble.mascot-tired {
+  animation: mascot-wobble 1.6s ease-in-out infinite, mascot-breathe 2.4s ease-in-out infinite;
+}
+@keyframes mascot-breathe {
+  0%, 100% { scale: 1; }
+  50%      { scale: 1.035; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-wobble,
+  .mascot-wobble.mascot-tired { animation: none; }
+}
+
+/* Loader: tired mascot plus caption (Results page). */
+.mascot-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+.mascot-loader--fill { width: 100%; height: 100%; min-height: 320px; padding: 16px; }
+.mascot-loader__img { display: block; height: auto; max-width: 100%; }
+.mascot-loader__label {
+  margin: 0;
+  color: var(--bp-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.page-result .room-render-view__mascot,
+.furniture-loading__mascot { flex: 0 0 auto; }
+.mascot-loader--page .mascot-loader__label { font-size: 18px; }
+
+/* Hard-hat mascot beside the photo tip on room-dimensions (Image Upload). */
+.page-dimensions .photo-blurb__card--mascot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.page-dimensions .photo-blurb__card--mascot p { flex: 1 1 auto; min-width: 0; }
+.page-dimensions .dimensions-mascot {
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  height: 84px;
+  margin: -6px 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+@media (max-width: 600px) {
+  .page-dimensions .dimensions-mascot { height: 64px; }
+}

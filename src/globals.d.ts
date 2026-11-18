@@ -5,3 +5,9 @@ declare module '*.css';
 
 // roughjs ships no types for its bundled ESM entry point.
 declare module 'roughjs/bundled/rough.esm.js';
+
+// Image imports resolve to their fingerprinted URL.
+declare module '*.png' {
+  const src: string;
+  export default src;
+}

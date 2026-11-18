@@ -7,6 +7,7 @@ import FurnitureLoadingOverlay from '../components/FurnitureLoadingOverlay';
 import type { Placement } from '../components/RoomSVG';
 import FurniturePanel from '../components/FurniturePanel';
 import RoomRenderView from '../components/RoomRenderView';
+import MascotLoader from '../components/MascotLoader';
 import type { IsoFurnitureEntry, IsoRoomInput } from '../utils/isoRoomRender';
 import { Link000 } from '@/components/ui/skiper-ui/skiper40';
 import SwitchMode from '../components/SwitchMode';
@@ -831,7 +832,7 @@ export default function RoomResult() {
   if (loading) {
     return (
       <div className="min-h-screen grid-background flex items-center justify-center">
-        <p className="text-[#F7F4D5]/60 text-xl font-medium animate-pulse">Loading your room...</p>
+        <MascotLoader size={140} label="Loading your room…" className="mascot-loader--page" />
       </div>
     );
   }
@@ -1055,7 +1056,7 @@ export default function RoomResult() {
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ flex: 1, minHeight: 320 }}>
-                  <Suspense fallback={<div style={{ padding: 16, color: '#888', font: '14px system-ui' }}>Loading 3D…</div>}>
+                  <Suspense fallback={<MascotLoader size={120} label="Building your room in 3D…" className="mascot-loader--fill" />}>
                     <Room3DView isoRoom={isoRoom} heightFt={layoutRoomPreview.heightFt} styleTag={s?.styleTag} />
                   </Suspense>
                 </div>

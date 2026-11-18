@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FurnitureItem, RenderItem, Room, RoomRender } from '../types';
 import type { Placement } from './RoomSVG';
 import { BuyButton } from './FurnitureCard';
+import MascotLoader from './MascotLoader';
 import { authedFetch } from '../../firebase.mjs';
 
 /**
@@ -358,9 +359,7 @@ export default function RoomRenderView({
           <div className="room-render-view__progress" role="status" aria-live="polite">
             <div className="room-render-view__progress-card">
               <div className="room-render-view__progress-head">
-                <span className="room-render-view__spin">
-                  <iconify-icon icon="ph:armchair-duotone" />
-                </span>
+                <MascotLoader size={72} className="room-render-view__mascot" />
                 <strong>Rendering your room</strong>
               </div>
               <p key={line} className="room-render-view__progress-line">{LINES[line]}</p>
