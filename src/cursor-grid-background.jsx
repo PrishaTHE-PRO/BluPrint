@@ -8,7 +8,7 @@ import './cursor-grid-background.css';
 // gridOpacity is the resting linework; dark mode dims it to half. Hovered
 // cells still rise to maxOpacity, so the hover spots look the same.
 const RIPPLE = {
-  light: { maxOpacity: 0.85, spotlight: 0.6, gridOpacity: 0.18 },
+  light: { maxOpacity: 0.85, spotlight: 0.6, gridOpacity: 0.24 },
   dark: { maxOpacity: 0.35, spotlight: 0.25, gridOpacity: 0.09 },
 };
 

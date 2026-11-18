@@ -46,9 +46,9 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 92% 8%, rgba(110, 165, 205, .46), transparent 34rem),
-    radial-gradient(circle at 5% 88%, rgba(145, 181, 210, .38), transparent 30rem),
-    linear-gradient(135deg, #eeeae5 0%, #dce7ef 48%, #c8ddeb 100%) fixed !important;
+    radial-gradient(circle at 92% 8%, rgba(92, 150, 196, .56), transparent 34rem),
+    radial-gradient(circle at 5% 88%, rgba(128, 170, 206, .46), transparent 30rem),
+    linear-gradient(135deg, #eeeae5 0%, #d9e5ee 48%, #c0d8ea 100%) fixed !important;
   color: var(--bp-ink) !important;
   font-family: "DM Sans", sans-serif !important;
   overflow-x: hidden;
