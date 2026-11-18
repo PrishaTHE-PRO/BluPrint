@@ -126,7 +126,12 @@ export default function RoomRenderView({
   const startedAt = useRef(0);
 
   const render = room.render ?? null;
-  const shownUrl = render?.url ?? room.photoUrl ?? '';
+  // Original / Rendered switch. Only offered once a render exists, and it
+  // snaps back to the render whenever a new picture arrives.
+  const [showOriginal, setShowOriginal] = useState(false);
+  const canCompare = Boolean(render && room.photoUrl);
+  const showingOriginal = canCompare && showOriginal;
+  const shownUrl = showingOriginal ? room.photoUrl! : (render?.url ?? room.photoUrl ?? '');
   const visibleIds = useMemo(() => items.map((i) => i.id), [items]);
   const stale = Boolean(render) && !sameIds(render!.itemIds, visibleIds);
 
@@ -158,6 +163,8 @@ export default function RoomRenderView({
     ro.observe(stage);
     return () => ro.disconnect();
   }, [measure]);
+
+  useEffect(() => { setShowOriginal(false); }, [render?.url]);
 
   // Progress is deliberately honest: it eases toward 90% and waits there.
   useEffect(() => {
@@ -232,6 +239,27 @@ export default function RoomRenderView({
       onMouseLeave={() => link(null)}
     >
       <div className="room-render-view__toolbar">
+        {canCompare && !rendering && (
+          <div className="room-render-view__toggle" role="group" aria-label="Which picture to show">
+            <button
+              type="button"
+              className={`room-render-view__toggle-btn${showingOriginal ? '' : ' is-on'}`}
+              aria-pressed={!showingOriginal}
+              onClick={() => setShowOriginal(false)}
+            >
+              Rendered
+            </button>
+            <button
+              type="button"
+              className={`room-render-view__toggle-btn${showingOriginal ? ' is-on' : ''}`}
+              aria-pressed={showingOriginal}
+              onClick={() => setShowOriginal(true)}
+              title="Show the photo you uploaded, without the recommended pieces"
+            >
+              Original
+            </button>
+          </div>
+        )}
         {render && stale && !rendering && (
           <span className="room-render-view__badge" title="The pieces in the room no longer match this picture">
             Furniture changed since last render
@@ -270,14 +298,14 @@ export default function RoomRenderView({
           <img
             ref={imgRef}
             src={shownUrl}
-            alt={render ? 'Your room with the recommended furniture' : 'Your room'}
+            alt={showingOriginal ? 'Your room as photographed' : render ? 'Your room with the recommended furniture' : 'Your room'}
             className={`room-render-view__img${!render || rendering ? ' is-dimmed' : ''}`}
             onLoad={measure}
             draggable={false}
           />
         )}
 
-        {SHOW_HOTSPOTS && render && box && !rendering && !relocating && (
+        {SHOW_HOTSPOTS && render && box && !rendering && !relocating && !showingOriginal && (
           <div
             className="room-render-view__layer"
             style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
@@ -360,7 +388,9 @@ export default function RoomRenderView({
 
       {render && !rendering && (
         <p className="room-render-view__caption">
-          {SHOW_HOTSPOTS
+          {showingOriginal
+            ? 'Your room as you photographed it. Switch to Rendered to see the recommended pieces in place.'
+            : SHOW_HOTSPOTS
             ? 'Hover a piece to see the product. The plan is matched to this picture; move furniture in the plan, then re-render to update.'
             : 'Your room with the recommended pieces. The plan is matched to this picture; move furniture in the plan, then re-render to update.'}
         </p>
