@@ -152,7 +152,7 @@
         <!-- Room type -->
         <div class="garden-card ghibli-border p-8 md:p-10 space-y-4 inspo-card inspo-card--rooms">
           <h2 class="text-3xl font-bold">What room are you designing?</h2>
-          <p class="text-[#F7F4D5]/60">Pick one. Choose Other to type your own.</p>
+          <p class="text-[#F7F4D5]/60">Choose Other to type your own.</p>
           <div class="inspo-rooms" id="room-type-grid"></div>
           <input type="text" id="room-type-other" placeholder="Describe your room type..."
             class="hidden w-full px-6 py-4 bg-[#0A3323]/40 border-2 border-[#F7F4D5]/10 rounded-2xl text-[#F7F4D5] placeholder:text-[#F7F4D5]/20 focus:outline-none focus:border-[#D3968C]/50 transition-all text-lg">
@@ -173,7 +173,6 @@
               <input type="text" id="budget-input" inputmode="numeric" autocomplete="off"
                 placeholder="No limit" aria-label="Furniture budget in dollars">
             </label>
-            <p id="budget-note" class="inspo-budget__note">A bigger budget buys better pieces, not more of them.</p>
             <input type="range" id="budget-slider" min="500" max="25000" step="250" value="3000"
               aria-label="Furniture budget" class="inspo-budget__slider">
             <div class="inspo-budget__scale budget-scale" aria-hidden="true"><span>$500</span><span>$25,000</span></div>
@@ -181,13 +180,12 @@
           </div>
 
           <button type="button" id="wild-card-btn" class="garden-card ghibli-border inspo-wild" disabled>
-            <span class="inspo-wild__icon" aria-hidden="true"><iconify-icon id="wild-card-dice" icon="ph:dice-five-duotone"></iconify-icon></span>
             <span class="inspo-wild__title">Wild card</span>
             <span class="inspo-wild__copy" id="wild-card-copy">Choose a room first, then let BluPrint randomly pick the style, mood, colours and features.</span>
           </button>
         </div>
 
-        <div class="garden-card ghibli-border p-8 md:p-12 space-y-8">
+        <div class="garden-card ghibli-border inspo-card p-8 md:p-12 space-y-8">
           <h2 class="text-3xl font-bold">Visual inspiration</h2>
           <p class="text-lg text-[#F7F4D5]/60">Up to 3 photos that capture your vision. PNG, JPG or WebP, up to 5 MB each.</p>
 
@@ -211,7 +209,7 @@
           <div id="vision-status" class="hidden p-6 rounded-2xl text-lg font-medium"></div>
 
           <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-4">
-            <div id="step1-error" class="hidden text-sm font-bold px-4 py-3 rounded-2xl pointer-events-none text-center sm:text-left w-full sm:w-auto order-1 sm:order-none"
+            <div id="step1-error" class="hidden px-4 py-3 rounded-2xl pointer-events-none text-center sm:text-left w-full sm:w-auto order-1 sm:order-none"
                  style="background: rgba(211,150,140,0.15); border: 1px solid rgba(211,150,140,0.5); color: #D3968C;">
             </div>
             <button id="step1-next"
@@ -224,12 +222,6 @@
 
       <!-- ── STEP 2: Your Picks ── -->
       <div id="step-2" class="hidden animate-reveal space-y-8">
-
-        <!-- Intro -->
-        <div class="garden-card ghibli-border p-8 md:p-10">
-          <h2 class="text-3xl font-bold mb-2">Step 2: Refine Your Picks</h2>
-          <p class="text-[#F7F4D5]/60">Manually select the details that will guide our AI analysis.</p>
-        </div>
 
         <!-- Style Profile -->
         <div class="garden-card ghibli-border p-8 md:p-10 space-y-4">
@@ -265,7 +257,7 @@
         </div>
 
         <!-- Nav buttons (no card — sits on the background) -->
-        <div class="pt-4 flex justify-between items-center">
+        <div class="inspo-step2-nav pt-4 flex justify-between items-center">
           <button id="step2-back" class="px-8 py-3 bg-white/5 text-[#F7F4D5] rounded-2xl font-bold border border-[#F7F4D5]/10 hover:bg-white/10 transition-all">
             <iconify-icon icon="ph:arrow-left-bold" class="mr-2"></iconify-icon> Back
           </button>
@@ -583,8 +575,11 @@
     }
 
     function checkStep1Valid() {
-      document.getElementById('step1-next').disabled =
-        state.uploadedFiles.length === 0 || !state.selectedRoomType;
+      // Not `disabled`: a disabled button swallows the click, so the
+      // "choose a room" / "upload an image" message in the click handler
+      // below could never show. aria-disabled still tells screen readers.
+      document.getElementById('step1-next').setAttribute('aria-disabled',
+        String(state.uploadedFiles.length === 0 || !state.selectedRoomType));
       document.getElementById('wild-card-btn').disabled = !state.selectedRoomType;
       document.getElementById('wild-card-copy').textContent = state.selectedRoomType
         ? 'Let BluPrint randomly choose the style, mood, colours and features.'
@@ -1181,23 +1176,13 @@
     }
 
     // ── Wild Card ─────────────────────────────────────────────────────
-    // Spin the dice through its faces and turn the card rose before leaving,
-    // so the click visibly did something during the second the page needs.
-    const DICE_FACES = ['ph:dice-one-duotone', 'ph:dice-two-duotone', 'ph:dice-three-duotone',
-      'ph:dice-four-duotone', 'ph:dice-five-duotone', 'ph:dice-six-duotone'];
+    // Turn the card teal for a moment before leaving, so the click visibly
+    // did something while the page gets ready.
     function rollDice(btn) {
-      const dice = document.getElementById('wild-card-dice');
       btn.classList.add('is-rolling', 'is-on');
       btn.disabled = true;
       return new Promise((resolve) => {
-        let ticks = 0;
-        const timer = setInterval(() => {
-          dice.setAttribute('icon', DICE_FACES[Math.floor(Math.random() * DICE_FACES.length)]);
-          if (++ticks >= 9) {
-            clearInterval(timer);
-            setTimeout(() => { btn.classList.remove('is-rolling'); resolve(); }, 150);
-          }
-        }, 110);
+        setTimeout(() => { btn.classList.remove('is-rolling'); resolve(); }, 450);
       });
     }
 
