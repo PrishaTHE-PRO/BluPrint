@@ -38,7 +38,7 @@ function BlueprintBackground() {
       radius={140}
       holdTime={400}
       fadeDuration={800}
-      gridOpacity={0.18}
+      gridOpacity={0.24}
       maxOpacity={ripple.maxOpacity}
       fillOpacity={0}
       spotlight={ripple.spotlight}
