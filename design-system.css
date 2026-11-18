@@ -5236,3 +5236,80 @@ html.dark-mode .page-result .room-render-view__toggle-btn.is-on { background: rg
 html.dark-mode .page-result .room-render-view__badge { background: rgba(211, 150, 140, .18); color: #e8b3a9; border-color: rgba(211, 150, 140, .35); }
 html.dark-mode .page-result .room-render-view__btn--ghost { background: rgba(255, 255, 255, .06); color: #e6edf5; border-color: rgba(255, 255, 255, .14); }
 html.dark-mode .page-result .room-render-view__btn--ghost:hover { background: rgba(255, 255, 255, .12); }
+
+/* Results title block: style and room chips, the big serif name with its
+   pencil, and mono fact pills underneath. Fraunces stays the display face. */
+.page-result main > header .result-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.page-result main > header .result-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.page-result main > header .result-chip--style { background: #f5e5e2; color: #8a4e45 !important; padding-left: 9px; }
+.page-result main > header .result-chip--style i { width: 7px; height: 7px; border-radius: 50%; background: #d3968c; }
+.page-result main > header .result-chip--room {
+  background: rgba(255, 255, 255, .6);
+  border: 1px solid rgba(20, 32, 46, .06);
+  color: #5d6b7b !important;
+  font-weight: 500;
+}
+.page-result main > header h1.result-title,
+.page-result main > header input.result-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: "Fraunces", serif !important;
+  font-weight: 400 !important;
+  font-size: clamp(44px, 6vw, 68px) !important;
+  line-height: 1 !important;
+  letter-spacing: -.02em;
+  color: var(--bp-ink) !important;
+  cursor: text;
+}
+.page-result main > header input.result-title {
+  display: block;
+  width: min(640px, 90vw);
+  padding: 0 0 4px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid #d3968c;
+  outline: none;
+}
+.page-result main > header .result-title__edit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8a97a6;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .2s ease;
+}
+.page-result main > header .result-title__edit:hover { color: var(--bp-ink); }
+.page-result main > header .result-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.page-result main > header .result-stat {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .55);
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #33475e !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+html.dark-mode .page-result main > header .result-chip--style { background: rgba(211, 150, 140, .18); color: #e8b3a9 !important; }
+html.dark-mode .page-result main > header .result-chip--room { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .12); color: #b7c4d3 !important; }
+html.dark-mode .page-result main > header .result-stat { background: rgba(255, 255, 255, .08); color: #d5dee8 !important; }
+html.dark-mode .page-result main > header .result-title__edit { color: #9fb0c3; }
