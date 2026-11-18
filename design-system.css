@@ -5015,11 +5015,31 @@ html body .bp-wordmark-rest {
 }
 .page-inspo #room-type-grid > .inspo-room.selected * { color: #fff !important; }
 
-.page-inspo .inspo-row { display: flex; flex-wrap: wrap; gap: 16px; }
-.page-inspo .inspo-row > .inspo-card--budget { flex: 1 1 320px; min-width: 0; }
-.page-inspo .inspo-row > .inspo-wild { flex: 1 1 240px; min-width: 0; }
+/* Budget above Wild card, each the full width of the column. On wide screens
+   the Budget card runs in two columns (title and switch on the left, the
+   amount and slider on the right) and the Wild card is one horizontal strip. */
+.page-inspo .inspo-row { display: flex; flex-direction: column; gap: 16px; }
+.page-inspo .inspo-row > .inspo-card--budget,
+.page-inspo .inspo-row > .inspo-wild { flex: none; width: 100%; min-width: 0; }
 .page-inspo .inspo-card--budget { padding: clamp(24px, 3vw, 32px) !important; }
 .page-inspo .inspo-budget__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+@media (min-width: 720px) {
+  .page-inspo .inspo-card--budget {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    grid-template-areas:
+      "head   amount"
+      "note   slider"
+      "note   scale";
+    column-gap: clamp(28px, 5vw, 72px);
+    align-items: center;
+  }
+  .page-inspo .inspo-budget__head { grid-area: head; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .page-inspo .inspo-budget__amount { grid-area: amount; margin: 0 !important; }
+  .page-inspo .inspo-budget__note { grid-area: note; margin: 0 !important; align-self: start; }
+  .page-inspo .inspo-budget__slider { grid-area: slider; margin-top: 14px; }
+  .page-inspo .inspo-budget__scale { grid-area: scale; }
+}
 .page-inspo .inspo-switch {
   display: inline-flex;
   align-items: center;
@@ -5119,6 +5139,12 @@ html body .bp-wordmark-rest {
 }
 .page-inspo .inspo-wild__title { font-family: "Fraunces", serif; font-size: 30px; line-height: 1; color: inherit !important; }
 .page-inspo .inspo-wild__copy { font-size: 13px; line-height: 1.45; color: var(--bp-muted) !important; }
+@media (min-width: 720px) {
+  .page-inspo .inspo-wild { flex-direction: row; align-items: center; gap: clamp(18px, 2.5vw, 32px); }
+  .page-inspo .inspo-wild__icon { flex: none; width: 56px; height: 56px; font-size: 30px; }
+  .page-inspo .inspo-wild__title { flex: none; min-width: 170px; }
+  .page-inspo .inspo-wild__copy { flex: 1; max-width: 560px; }
+}
 .page-inspo .inspo-wild.is-on,
 .page-inspo .inspo-wild.is-on:hover {
   background: #d3968c !important;
