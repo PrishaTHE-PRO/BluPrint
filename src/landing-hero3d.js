@@ -12,28 +12,13 @@
 import rough from 'roughjs';
 import { renderIsoRoom } from '../iso-preview.js';
 
-// `name` is what the "Style matched" bubble shows; `spend` is the demo
-// room's total for the "On budget" bubble, against a $5,000 budget.
 const STYLES = [
-  { key: 'modern', label: 'Modern', name: 'Warm modern', spend: 4920 },
-  { key: 'scandinavian', label: 'Scandi', name: 'Soft scandi', spend: 4180 },
-  { key: 'bohemian', label: 'Boho', name: 'Earthy boho', spend: 3880 },
-  { key: 'industrial', label: 'Industrial', name: 'Raw industrial', spend: 4460 },
-  { key: 'minimalist', label: 'Minimal', name: 'Clean minimal', spend: 3550 },
+  { key: 'modern', label: 'Modern' },
+  { key: 'scandinavian', label: 'Scandi' },
+  { key: 'bohemian', label: 'Boho' },
+  { key: 'industrial', label: 'Industrial' },
+  { key: 'minimalist', label: 'Minimal' },
 ];
-const DEMO_BUDGET = 5000;
-
-/** Keeps the two bubbles over the card in step with the chosen style. */
-function syncNotes(styleKey) {
-  const style = STYLES.find((s) => s.key === styleKey);
-  if (!style) return;
-  const name = document.querySelector('[data-hero-style-name]');
-  const spend = document.querySelector('[data-hero-budget]');
-  const bar = document.querySelector('[data-hero-budget-bar]');
-  if (name) name.textContent = style.name;
-  if (spend) spend.textContent = '$' + style.spend.toLocaleString();
-  if (bar) bar.style.width = Math.round((style.spend / DEMO_BUDGET) * 100) + '%';
-}
 
 // A small, believable living room. x/y are FEET from the room's top-left, the
 // same convention as PlacementPos in the app, so this goes through the exact
@@ -143,7 +128,7 @@ export function initHero3D() {
   // a cream room floating in a dark page reads as a bug. Matches the
   // html.dark-mode .canvas background in index.html.
   const sceneBackground = () =>
-    document.documentElement.classList.contains('dark-mode') ? 0x131b24 : 0xf7f9fb;
+    document.documentElement.classList.contains('dark-mode') ? 0x131b24 : 0xf6f2ec;
 
   function mount(style) {
     currentStyle = style;
@@ -186,7 +171,6 @@ export function initHero3D() {
           el.classList.toggle('is-active', active);
           el.setAttribute('aria-pressed', active ? 'true' : 'false');
         }
-        syncNotes(button.dataset.style);
         // The palette is baked in at construction, so swap the whole viewer
         // rather than trying to repaint every material in place.
         mount(button.dataset.style);
