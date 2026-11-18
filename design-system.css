@@ -4978,17 +4978,18 @@ html body .bp-wordmark-rest {
   background: #fff;
   box-shadow: 0 2px 8px rgba(41, 79, 125, .16);
 }
+/* At most five cards across; below that width they grow to fill the row. */
 .page-result .shop-room__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(max(250px, calc((100% - 4 * 22px) / 5)), 1fr));
+  gap: 22px;
 }
 
 .page-result .shop-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 10px;
   border-radius: 22px;
   background: rgba(255, 255, 255, .62);
   border: 1px solid rgba(255, 255, 255, .85);
@@ -5065,7 +5066,7 @@ html body .bp-wordmark-rest {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 12px 8px 6px;
+  padding: 14px 8px 6px;
 }
 .page-result .shop-card__brand {
   font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -5078,10 +5079,10 @@ html body .bp-wordmark-rest {
   text-overflow: ellipsis;
 }
 .page-result .shop-card__name {
-  margin: 4px 0 14px;
+  margin: 4px 0 16px;
   flex: 1;
   font-family: "DM Sans", sans-serif !important;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500 !important;
   line-height: 1.3;
   letter-spacing: 0;
@@ -5095,7 +5096,7 @@ html body .bp-wordmark-rest {
 .page-result .shop-card__price {
   flex: 1;
   font-family: 'Instrument Serif', 'Fraunces', serif;
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1;
   color: var(--bp-ink);
 }

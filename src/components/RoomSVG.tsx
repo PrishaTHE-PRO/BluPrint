@@ -1170,7 +1170,9 @@ export default function RoomSVG({
         ref={svgRef}
         viewBox={`0 0 ${vbW} ${vbH}`}
         className="w-full rounded-xl room-layout-canvas__svg"
-        style={{ maxHeight: '78vh', display: 'block', touchAction: 'none', userSelect: 'none' }}
+        // Capped so a deep room's portrait plan stays about the height of the
+        // picture beside it; the sheet centres itself in the leftover width.
+        style={{ maxHeight: 'min(64vh, 620px)', display: 'block', touchAction: 'none', userSelect: 'none' }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
