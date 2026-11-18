@@ -32,9 +32,15 @@
 * { box-sizing: border-box; }
 
 html {
-  background: var(--bp-bg);
+  /* The body paints the page gradient, fixed to the viewport. When the page
+     is pulled past its top (the rubber-band bounce on a trackpad), the strip
+     that appears above it is this element's colour, so it is set to the
+     gradient's top edge rather than the cream card colour, which showed as
+     a white band over the menu bar. Dark mode sets its own below. */
+  background: #e6e9ec;
   color: var(--bp-ink);
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
 }
 
 body {
