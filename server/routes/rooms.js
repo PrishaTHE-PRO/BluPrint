@@ -111,6 +111,9 @@ function sanitizeFurnitureLayout(layout) {
     return {
         version: typeof layout.version === 'number' ? layout.version : 1,
         ...(typeof layout.styleTag === 'string' ? { styleTag: layout.styleTag } : {}),
+        ...(typeof layout.roomType === 'string' && layout.roomType
+            ? { roomType: layout.roomType.slice(0, 80) }
+            : {}),
         ...(layout.budgetTotal !== undefined
             ? { budgetTotal: Math.max(0, toNumber(layout.budgetTotal)) }
             : {}),

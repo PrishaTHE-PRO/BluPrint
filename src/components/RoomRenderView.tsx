@@ -23,6 +23,12 @@ interface Props {
   linkedCategory?: string | null;
   onLinkCategory?: (category: string | null) => void;
   onRenderSaved: (render: RoomRender) => void;
+  /**
+   * Changes when the results page wants a render started on its own, e.g.
+   * after the furniture set was replaced for a room that already had a
+   * picture. Each new value starts one render if none is running.
+   */
+  autoRenderToken?: number;
 }
 
 interface ContentBox { left: number; top: number; width: number; height: number }
@@ -95,6 +101,7 @@ export default function RoomRenderView({
   linkedCategory,
   onLinkCategory,
   onRenderSaved,
+  autoRenderToken = 0,
 }: Props) {
   const [rendering, setRendering] = useState(false);
   const [relocating, setRelocating] = useState(false);
@@ -142,6 +149,15 @@ export default function RoomRenderView({
   }, [measure]);
 
   useEffect(() => { setShowOriginal(false); }, [render?.url]);
+
+  // Render on request from the page. The latest runRender is read through a
+  // ref so only a new token starts a render, not every re-creation of it.
+  const runRenderRef = useRef<() => Promise<void>>(async () => {});
+  useEffect(() => { runRenderRef.current = runRender; });
+  useEffect(() => {
+    if (!autoRenderToken) return;
+    void runRenderRef.current();
+  }, [autoRenderToken]);
 
   // Progress is deliberately honest: it eases toward 90% and waits there.
   useEffect(() => {

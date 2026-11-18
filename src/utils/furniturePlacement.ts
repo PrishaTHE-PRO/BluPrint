@@ -34,6 +34,11 @@ export interface FurniturePlacement {
    * fresh search shows through.
    */
   styleTag?: string;
+  /**
+   * The room type this set was chosen for. A bedroom's bed and nightstands
+   * have no place in a living room, so a change here also retires the layout.
+   */
+  roomType?: string;
   /** Budget used when these products were selected. */
   budgetTotal?: number;
   /** Required room features used to build this recommendation set. */
@@ -116,6 +121,7 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
     version: typeof layout.version === 'number' ? layout.version : FURNITURE_PLACEMENT_VERSION,
     ...(typeof layout.roomId === 'string' ? { roomId: layout.roomId } : {}),
     ...(typeof layout.styleTag === 'string' ? { styleTag: layout.styleTag } : {}),
+    ...(typeof layout.roomType === 'string' && layout.roomType ? { roomType: layout.roomType } : {}),
     ...(layout.budgetTotal !== undefined ? { budgetTotal: Math.max(0, toNumber(layout.budgetTotal)) } : {}),
     ...(Array.isArray(layout.roomFeatures)
       ? { roomFeatures: layout.roomFeatures.map(String).map((feature) => feature.trim()).filter(Boolean) }
@@ -128,6 +134,7 @@ export function normalizeFurniturePlacement(value: unknown): FurniturePlacement 
 export function buildFurniturePlacement(args: {
   roomId?:   string | null;
   styleTag?: string | null;
+  roomType?: string | null;
   budgetTotal?: number | null;
   roomFeatures?: string[];
   slots:     Record<string, FurnitureItem>;
@@ -139,12 +146,13 @@ export function buildFurniturePlacement(args: {
 }): FurniturePlacement {
   // `scales` is still accepted by the type for call-site compatibility, but is
   // no longer read — every piece is written at scale 1.
-  const { roomId, styleTag, budgetTotal, roomFeatures, slots, hidden, positions, rotations, colors } = args;
+  const { roomId, styleTag, roomType, budgetTotal, roomFeatures, slots, hidden, positions, rotations, colors } = args;
 
   return {
     version: FURNITURE_PLACEMENT_VERSION,
     ...(roomId ? { roomId } : {}),
     ...(styleTag ? { styleTag } : {}),
+    ...(roomType ? { roomType } : {}),
     ...(budgetTotal !== null && budgetTotal !== undefined
       ? { budgetTotal: Math.max(0, toNumber(budgetTotal)) }
       : {}),
