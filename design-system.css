@@ -4291,8 +4291,40 @@ html.dark-mode input.room-name-input {
   z-index: 6;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
+  max-width: calc(100% - 20px);
 }
+/* Original / Rendered switch on the picture. Same dark glass as the buttons
+   beside it; the chosen side is the light pill. */
+.page-result .room-render-view__toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(23, 20, 15, .78);
+  border: 1px solid rgba(247, 244, 213, .25);
+  backdrop-filter: blur(6px);
+}
+.page-result .room-render-view__toggle-btn {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(247, 244, 213, .78);
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.page-result .room-render-view__toggle-btn:hover { color: #fff; }
+.page-result .room-render-view__toggle-btn.is-on {
+  background: rgba(247, 244, 213, .94);
+  color: #1f2f45;
+}
+.page-result .room-render-view__toggle-btn.is-on:hover { color: #1f2f45; }
 .page-result .room-render-view__badge {
   padding: 6px 10px;
   border-radius: 999px;
