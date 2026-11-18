@@ -2696,7 +2696,9 @@ const photoMode = (() => {
       form.append("photo", upload, upload.name || "room.jpg");
       const res = await authedFetch("/api/rooms/photo-analyze", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not analyze that photo.");
+      // A reply without our JSON error did not come from the API (a static host
+      // or a proxy page). Say so, with the status, instead of a bare generic line.
+      if (!res.ok) throw new Error(data.error || "Could not analyze that photo. The server answered " + res.status + " instead of a result, so the API may not be reachable from this site.");
       applyEstimate(data);
     } catch (err) {
       const message = (err && err.message) || "Could not analyze that photo.";
