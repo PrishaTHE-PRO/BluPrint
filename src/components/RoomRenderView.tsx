@@ -30,6 +30,12 @@ interface Props {
    * picture. Each new value starts one render if none is running.
    */
   autoRenderToken?: number;
+  /**
+   * True while the results page is matching the floor plan to this picture
+   * (its button lives on the floor plan panel). Holds off re-renders and
+   * hides the hover layer meanwhile.
+   */
+  relocating?: boolean;
 }
 
 interface ContentBox { left: number; top: number; width: number; height: number }
@@ -103,9 +109,9 @@ export default function RoomRenderView({
   onLinkCategory,
   onRenderSaved,
   autoRenderToken = 0,
+  relocating = false,
 }: Props) {
   const [rendering, setRendering] = useState(false);
-  const [relocating, setRelocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pct, setPct] = useState(0);
   const [line, setLine] = useState(0);
@@ -206,24 +212,6 @@ export default function RoomRenderView({
     }
   }, [rendering, items, placement, roomDims, room.roomId, onRenderSaved]);
 
-  // Re-runs only the locate passes on the existing picture. Two Vision calls
-  // rather than a new image edit, so it is the cheap way to fix the boxes.
-  const refreshHotspots = useCallback(async () => {
-    if (relocating || rendering || !render) return;
-    setRelocating(true);
-    setError(null);
-    try {
-      const res = await authedFetch(`/api/rooms/${room.roomId}/render/hotspots`, { method: 'POST' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || `Could not locate furniture (${res.status})`);
-      onRenderSaved(data as RoomRender);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not locate furniture');
-    } finally {
-      setRelocating(false);
-    }
-  }, [relocating, rendering, render, room.roomId, onRenderSaved]);
-
   const link = (category: string | null) => onLinkCategory?.(category);
 
   return (
@@ -258,18 +246,6 @@ export default function RoomRenderView({
               Original
             </button>
           </div>
-        )}
-        {render && (
-          <button
-            type="button"
-            className="room-render-view__btn room-render-view__btn--small room-render-view__btn--ghost"
-            onClick={refreshHotspots}
-            disabled={relocating || rendering}
-            title="Find each piece in this picture and move the floor plan to match, without generating a new picture"
-          >
-            <iconify-icon icon={relocating ? 'ph:circle-notch-bold' : 'ph:crosshair-simple-bold'} />
-            {relocating ? 'Matching plan...' : 'Match plan to picture'}
-          </button>
         )}
         {render && (
           <button

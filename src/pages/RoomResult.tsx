@@ -718,6 +718,29 @@ export default function RoomResult() {
     setPlanOverride({ key: Date.now(), positions, rotations, walls });
   }, []);
 
+  // Match plan to picture: re-runs only the locate passes on the existing
+  // picture (two Vision calls, no new image) and moves the floor plan to
+  // match. Its button sits on the floor plan panel; the picture panel just
+  // holds off re-renders while it runs.
+  const [matchingPlan, setMatchingPlan] = useState(false);
+  const [matchError, setMatchError] = useState<string | null>(null);
+  const handleMatchPlan = useCallback(async () => {
+    const roomId = room?.roomId;
+    if (matchingPlan || !roomId || !room?.render) return;
+    setMatchingPlan(true);
+    setMatchError(null);
+    try {
+      const res = await authedFetch(`/api/rooms/${roomId}/render/hotspots`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `Could not locate furniture (${res.status})`);
+      handleRenderSaved(data as RoomRender);
+    } catch (err) {
+      setMatchError(err instanceof Error ? err.message : 'Could not locate furniture');
+    } finally {
+      setMatchingPlan(false);
+    }
+  }, [matchingPlan, room?.roomId, room?.render, handleRenderSaved]);
+
   // Hooks must stay above any conditional returns.
   const layoutRoomPreview = useMemo(
     () => buildRoomFromLayout(savedLayout, room ?? FALLBACK_ROOM),
@@ -1086,6 +1109,23 @@ export default function RoomResult() {
               ghostFurniture={room?.existingFurniture ?? []}
               onPlacementChange={handlePlacementChange}
               colorByCategory={colorByCategory}
+              headerAction={room?.photoUrl && room?.render ? (
+                <div className="room-plan-match">
+                  {matchError && !matchingPlan && (
+                    <span className="room-plan-match__error" role="alert">{matchError}</span>
+                  )}
+                  <button
+                    type="button"
+                    className="room-render-view__btn room-render-view__btn--small room-render-view__btn--ghost"
+                    onClick={handleMatchPlan}
+                    disabled={matchingPlan}
+                    title="Find each piece in the picture and move the floor plan to match, without generating a new picture"
+                  >
+                    <iconify-icon icon={matchingPlan ? 'ph:circle-notch-bold' : 'ph:crosshair-simple-bold'} />
+                    {matchingPlan ? 'Matching plan...' : 'Match plan to picture'}
+                  </button>
+                </div>
+              ) : null}
             />
           }
           isoContent={
@@ -1101,6 +1141,7 @@ export default function RoomResult() {
                 onLinkCategory={setLinkedCategory}
                 onRenderSaved={handleRenderSaved}
                 autoRenderToken={autoRenderToken}
+                relocating={matchingPlan}
               />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>

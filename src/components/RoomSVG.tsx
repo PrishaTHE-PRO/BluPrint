@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import type { Room, Style, FurnitureItem, RoomLayout , ExistingPlacement } from '../types';
 import {
   CATEGORY_LABELS,
@@ -129,6 +130,8 @@ interface Props {
   onPlacementChange?: (placement: Placement) => void;
   /** Dominant / palette color per furniture category for 2D fills. */
   colorByCategory?: Record<string, string>;
+  /** Shown at the right of the "Floor plan" header, e.g. Match plan to picture. */
+  headerAction?: ReactNode;
 }
 
 export interface Placement {
@@ -633,6 +636,7 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 export default function RoomSVG({
   room, furniture, roomLayout, linkedCategory, onLinkCategory, onRemove,
   initialPlacement, applyPlacement, ghostFurniture = [], onPlacementChange, colorByCategory,
+  headerAction,
 }: Props) {
   const svgRef  = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{
@@ -1166,6 +1170,7 @@ export default function RoomSVG({
           <iconify-icon icon="ph:blueprint" class="text-[#D3968C]" />
           Floor plan
         </h3>
+        {headerAction}
       </div>
 
       {/* Floor plan SVG */}

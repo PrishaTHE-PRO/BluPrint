@@ -5592,9 +5592,14 @@ html.dark-mode .page-result .room-render-view__btn--ghost:hover { background: rg
   text-transform: none;
   letter-spacing: 0;
 }
-/* Style and room tags: both plain light green, no dot. */
+/* Style and room tags: the Est. pill's see-through green (no dot), so the
+   page's light shows through instead of a solid fill. */
 .page-result main > header .result-chip--style,
-.page-result main > header .result-chip--room { background: #e3eed6; border: 0; color: #4c6630 !important; }
+.page-result main > header .result-chip--room {
+  background: rgba(131, 153, 88, .2);
+  border: 1px solid rgba(131, 153, 88, .3);
+  color: var(--bp-ink) !important;
+}
 .page-result main > header h1.result-title,
 .page-result main > header input.result-title {
   margin: 0;
@@ -5643,8 +5648,8 @@ html.dark-mode .page-result .room-render-view__btn--ghost:hover { background: rg
   text-transform: none;
   letter-spacing: 0;
 }
-html.dark-mode .page-result main > header .result-chip--style { background: rgba(131, 153, 88, .24); color: #c6d9a6 !important; }
-html.dark-mode .page-result main > header .result-chip--room { background: rgba(131, 153, 88, .24); color: #c6d9a6 !important; }
+html.dark-mode .page-result main > header .result-chip--style { background: rgba(131, 153, 88, .2); color: var(--bp-ink) !important; }
+html.dark-mode .page-result main > header .result-chip--room { background: rgba(131, 153, 88, .2); color: var(--bp-ink) !important; }
 html.dark-mode .page-result main > header .result-stat { background: rgba(255, 255, 255, .08); color: #d5dee8 !important; }
 html.dark-mode .page-result main > header .result-title__edit { color: #9fb0c3; }
 
@@ -6419,3 +6424,19 @@ html.dark-mode .page-inspo .inspo-budget__unlimited[aria-pressed="true"] {
 .about-sketch-slot { aspect-ratio: 623 / 494; }
 .about-sketch-slot > svg { animation: about-sketch-in .35s ease both; }
 @keyframes about-sketch-in { from { opacity: 0; } }
+
+/* Results: Match plan to picture sits at the right of the Floor plan header. */
+.page-result .room-plan-match {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.page-result .room-plan-match__error {
+  color: #b5524a;
+  font-size: 12px;
+  line-height: 1.3;
+}
+html.dark-mode .page-result .room-plan-match__error { color: #ff9a8f; }
