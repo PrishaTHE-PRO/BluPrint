@@ -5,7 +5,7 @@ const Style   = require('../models/Style');
 const { requireAuth, requireRoomOwner } = require('../middleware/auth');
 const multer  = require('multer');
 const { uploadToCloudinary } = require('../utils/cloudinary');
-const { estimateRoom, normalizeExistingFurniture, isRoomFull } = require('../services/roomPhotoAnalyzer');
+const { estimateRoom, notARoomMessage, normalizeExistingFurniture, isRoomFull } = require('../services/roomPhotoAnalyzer');
 
 // Every room route is owner-only. Ownership comes from the verified token, not
 // from anything the client sends.
@@ -235,6 +235,18 @@ router.post('/photo-analyze', (req, res, next) => {
     try {
         const photoUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'bluprint/rooms');
         const estimate = await estimateRoom(photoUrl);
+        // A floor plan, a building, a screenshot: nothing to estimate and
+        // nothing to render furniture into. The page keeps the Continue
+        // button blocked until a real room photo comes in, or the user
+        // switches to Draw Room.
+        if (!estimate.fallback && estimate.isRoomPhoto === false) {
+            console.warn('[photo-analyze] rejected: not a room photo,', estimate.subject);
+            return res.status(422).json({
+                error: notARoomMessage(estimate.subject),
+                code: 'not_a_room',
+                subject: estimate.subject,
+            });
+        }
         res.json({ photoUrl, estimate });
     } catch (error) {
         console.error('Photo upload error:', error.message);
