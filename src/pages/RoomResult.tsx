@@ -975,7 +975,7 @@ export default function RoomResult() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="min-w-0">
               <div className="result-chips">
-                <span className="result-chip result-chip--style"><i aria-hidden="true" />{s.styleTag}</span>
+                <span className="result-chip result-chip--style">{s.styleTag}</span>
                 {s.roomType && <span className="result-chip result-chip--room">{s.roomType}</span>}
               </div>
               {editingName ? (

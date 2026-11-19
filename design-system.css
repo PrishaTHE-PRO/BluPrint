@@ -5589,14 +5589,9 @@ html.dark-mode .page-result .room-render-view__btn--ghost:hover { background: rg
   text-transform: none;
   letter-spacing: 0;
 }
-.page-result main > header .result-chip--style { background: #f5e5e2; color: #8a4e45 !important; padding-left: 9px; }
-.page-result main > header .result-chip--style i { width: 7px; height: 7px; border-radius: 50%; background: #d3968c; }
-.page-result main > header .result-chip--room {
-  background: rgba(255, 255, 255, .6);
-  border: 1px solid rgba(20, 32, 46, .06);
-  color: #5d6b7b !important;
-  font-weight: 500;
-}
+/* Style and room tags: both plain light green, no dot. */
+.page-result main > header .result-chip--style,
+.page-result main > header .result-chip--room { background: #e3eed6; border: 0; color: #4c6630 !important; }
 .page-result main > header h1.result-title,
 .page-result main > header input.result-title {
   margin: 0;
@@ -5645,8 +5640,8 @@ html.dark-mode .page-result .room-render-view__btn--ghost:hover { background: rg
   text-transform: none;
   letter-spacing: 0;
 }
-html.dark-mode .page-result main > header .result-chip--style { background: rgba(211, 150, 140, .18); color: #e8b3a9 !important; }
-html.dark-mode .page-result main > header .result-chip--room { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .12); color: #b7c4d3 !important; }
+html.dark-mode .page-result main > header .result-chip--style { background: rgba(131, 153, 88, .24); color: #c6d9a6 !important; }
+html.dark-mode .page-result main > header .result-chip--room { background: rgba(131, 153, 88, .24); color: #c6d9a6 !important; }
 html.dark-mode .page-result main > header .result-stat { background: rgba(255, 255, 255, .08); color: #d5dee8 !important; }
 html.dark-mode .page-result main > header .result-title__edit { color: #9fb0c3; }
 

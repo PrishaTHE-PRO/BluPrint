@@ -1217,9 +1217,8 @@
   .m-stat-bar > i { animation: none; transform: none; }
 }
 
-/* Results header on phones: the title runs the full width, the style tags
-   fill the rows beneath it, and the three actions sit in one row in the
-   order Save layout, Home, Regenerate. */
+/* Results header on phones: Home sits top right by the tags, the title runs
+   the full width, and Save layout and Regenerate share one row beneath it. */
 @media (max-width: 600px) {
   html body.page-result main > header .min-w-0 { width: 100%; }
   html body.page-result main > header h1.result-title {
@@ -1242,18 +1241,27 @@
     color: #8a97a6 !important;
     font-size: 20px !important;
   }
-  html body.page-result main > header .result-stats { width: 100%; }
-  html body.page-result main > header .result-stat {
-    flex: 1 1 auto;
-    text-align: center;
-  }
-  html body.page-result main > header .result-stat--palette {
-    display: inline-flex;
-    justify-content: center;
+  /* Phones skip the palette and style tags; the title leads straight into
+     the actions. */
+  html body.page-result main > header .result-stats { display: none !important; }
+  /* Home sits top right, level with the style and room tags. */
+  html body.page-result main > header { position: relative; }
+  html body.page-result main > header .result-chips { padding-right: 48px; }
+  html body.page-result main > header .flex.gap-3 > .result-action--icon {
+    position: absolute;
+    /* Header padding (18px) + the row's top margin (18px), centred on the
+       30px tags. */
+    top: 32px;
+    right: 24px;
+    width: 38px !important;
+    height: 38px;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
   }
   html body.page-result main > header .flex.gap-3 {
     display: grid !important;
-    grid-template-columns: 1fr 52px 1fr !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 8px !important;
     width: 100%;
   }
@@ -1265,6 +1273,5 @@
     white-space: nowrap;
   }
   html body.page-result main > header .flex.gap-3 > .result-action--primary { order: 0 !important; }
-  html body.page-result main > header .flex.gap-3 > .result-action--icon { order: 1 !important; padding: 12px 0 !important; }
   html body.page-result main > header .flex.gap-3 > :first-child { order: 2 !important; }
 }
