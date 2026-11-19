@@ -34,6 +34,7 @@ const { httpAgent, httpsAgent } = require("../utils/safeRequest");
 const { uploadToCloudinary } = require("../utils/cloudinary");
 const { locateOnGrid } = require("./gridLocator");
 const { describeLayout } = require("./planFromPicture");
+const { isFurnitureLabel } = require("./roomPhotoAnalyzer");
 
 const IMAGE_EDIT_URL = "https://api.openai.com/v1/images/edits";
 const CHAT_URL = "https://api.openai.com/v1/chat/completions";
@@ -194,7 +195,7 @@ function buildEditPrompt({ products, layoutHints, existingFurniture }) {
   // category, and only that one.
   const existing = (Array.isArray(existingFurniture) ? existingFurniture : [])
     .map((f) => (f && typeof f === "object" ? f : { label: String(f || ""), category: "other", keep: true }))
-    .filter((f) => f.label);
+    .filter((f) => f.label && isFurnitureLabel(f.label));
   const kept = existing.filter((f) => f.keep !== false);
   const toReplace = existing.filter((f) => f.keep === false);
   const replacementFor = new Map(toReplace.map((f) => [String(f.category).toLowerCase(), f.label]));
@@ -607,6 +608,13 @@ const COMPANION_OF = {
   desk_lamp: ["desk", "workspace_desk"],
   floor_lamp: ["sofa", "accent_chair", "reading_nook", "bed"],
 };
+// Small pieces that stand ON another: when that piece is in the plan and
+// close by, the lamp takes its centre rather than a spot on the floor.
+const SITS_ON = {
+  bedside_lamp: ["nightstand"],
+  desk_lamp: ["desk", "workspace_desk"],
+  monitor_stand: ["desk", "workspace_desk"],
+};
 
 /**
  * Second pass over the plan: a companion whose reading named a different
@@ -622,13 +630,33 @@ function keepCompanionsOnTheirWall({ placed, hotspots, products, layout, W, L, y
     return String(product.kind || category).toLowerCase();
   };
   const wallOf = new Map();
-  placed.forEach((pl) => { if (pl.touching && pl.touching !== "none") wallOf.set(kindOf(pl.category), pl.touching); });
+  const placedOf = new Map();
+  placed.forEach((pl) => {
+    if (pl.touching && pl.touching !== "none") wallOf.set(kindOf(pl.category), pl.touching);
+    placedOf.set(kindOf(pl.category), pl);
+  });
 
   return placed.map((pl, i) => {
     const kind = kindOf(pl.category);
-    const anchors = COMPANION_OF[kind];
     const read = layout.get(pl.category);
-    if (!anchors || !read) return pl;
+    if (!read) return pl;
+    const surface = (SITS_ON[kind] || []).map((a) => placedOf.get(a)).find(Boolean);
+    if (surface && Math.hypot(surface.cx - pl.cx, surface.cy - pl.cy) <= 3) {
+      console.log(`[plan] ${pl.category}: placed on the ${kindOf(surface.category)}`);
+      const product = byCategory.get(pl.category) || {};
+      const wFt = Math.max(0.5, (Number(product.widthIn) || 30) / 12);
+      const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
+      return {
+        ...pl,
+        cx: surface.cx, cy: surface.cy,
+        x: Math.round(Math.max(0, surface.cx - wFt / 2) * 10) / 10,
+        y: Math.round(Math.max(0, surface.cy - dFt / 2) * 10) / 10,
+        rotation: surface.rotation ?? pl.rotation,
+        touching: surface.touching,
+      };
+    }
+    const anchors = COMPANION_OF[kind];
+    if (!anchors) return pl;
     const anchorWall = anchors.map((a) => wallOf.get(a)).find(Boolean);
     if (!anchorWall || pl.touching === anchorWall) return pl;
     const product = byCategory.get(pl.category) || {};
@@ -669,7 +697,7 @@ const EXISTING_SIZES_IN = {
 /** The kept pieces from a photo estimate, as locator products. */
 function existingProducts(existingFurniture) {
   const kept = (Array.isArray(existingFurniture) ? existingFurniture : [])
-    .filter((f) => f && typeof f === "object" && f.label && f.keep !== false);
+    .filter((f) => f && typeof f === "object" && f.label && f.keep !== false && isFurnitureLabel(f.label));
   // One locator key per piece, so two chairs do not collapse into one box.
   return kept.map((f, i) => {
     const kind = String(f.category || "other").toLowerCase();

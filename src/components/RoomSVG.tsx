@@ -24,6 +24,7 @@ import {
   type ForbiddenRect,
   type PosFt,
 } from '../utils/furnitureConstraints';
+import { settlePicturePlacement } from '../utils/picturePlacement';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -117,7 +118,7 @@ interface Props {
    * rendered picture. Applied whenever `key` changes; validated the same way
    * the seed is so nothing lands in a cutout or outside the room.
    */
-  applyPlacement?: { key: number; positions: Record<string, PosFt>; rotations?: Record<string, number> } | null;
+  applyPlacement?: { key: number; positions: Record<string, PosFt>; rotations?: Record<string, number>; walls?: Record<string, string> } | null;
   /**
    * Furniture already in the user's photo. Drawn as translucent, fixed
    * footprints that cannot be dragged, and treated as occupied floor so
@@ -505,7 +506,7 @@ function preferredFurniturePosition(
   }
 }
 
-function placedFurnitureZones(
+export function placedFurnitureZones(
   positions: Record<string, PosFt>,
   furniture: FurnitureItem[],
   rotations: Record<string, number>,
@@ -685,10 +686,17 @@ export default function RoomSVG({
       return { ...g, x, y, wFt: w, dFt: d };
     });
   }, [ghostFurniture, room, roomLayout]);
-  const ghostZones = useMemo<ForbiddenRect[]>(
-    () => ghostRects.map((g) => ({ minX: g.x, minY: g.y, maxX: g.x + g.wFt, maxY: g.y + g.dFt })),
-    [ghostRects],
-  );
+  // The existing pieces as no-go zones, with the same exceptions as placed
+  // furniture: a rug runs under the bed that is already there, art hangs
+  // above the dresser that is already there, a lamp sits on the nightstand.
+  // Treating every ghost as solid for everything pushed the rug out from
+  // under the bed and the dresser out of its corner.
+  const ghostZonesFor = useCallback((category: string): ForbiddenRect[] => {
+    if (isFloorCovering(category)) return [];
+    return ghostRects
+      .filter((g) => !isFloorCovering(g.category) && !canStackTogether(category, g.category))
+      .map((g) => ({ minX: g.x, minY: g.y, maxX: g.x + g.wFt, maxY: g.y + g.dFt }));
+  }, [ghostRects]);
 
   // Seed from a saved layout exactly once — re-validate against room/cutouts
   // so restored placements cannot sit in holes or outside the room.
@@ -741,7 +749,7 @@ export default function RoomSVG({
         rotation,
         widthFt,
         lengthFt,
-        [...archZones, ...ghostZones, ...occupied],
+        [...archZones, ...ghostZonesFor(item.category), ...occupied],
         scale,
       );
       nextPositions[item.category] = resolved.position;
@@ -751,7 +759,7 @@ export default function RoomSVG({
     setPositions(nextPositions);
     setRotations(nextRotations);
     setScales(nextScales);
-  }, [initialPlacement, furniture, room, roomLayout, ghostZones]);
+  }, [initialPlacement, furniture, room, roomLayout, ghostZonesFor]);
 
   // Apply positions pushed in from outside (the plan matching a render).
   // Unlike the seed this runs every time the key changes, and only for the
@@ -764,29 +772,24 @@ export default function RoomSVG({
     const zones = architectureForbiddenZonesFromLayout(roomLayout);
     const bedZones = bedArchitectureZones(roomLayout);
     setPositions((prevPositions) => {
-      const nextPositions: Record<string, PosFt> = { ...prevPositions };
-      const nextRotations = { ...rotations, ...(applyPlacement.rotations || {}) };
-      // Pushed pieces go first so they claim their spot; the rest are only
-      // re-validated against them.
-      const pushed = furniture.filter((item) => applyPlacement.positions[item.category]);
-      for (const item of pushed) {
-        const occupied = placedFurnitureZones(nextPositions, furniture, nextRotations, {}, item.category);
-        const archZones = isBedLikeCategory(item.category) ? bedZones : zones;
-        const resolved = resolveFurniturePlacement(
-          applyPlacement.positions[item.category],
-          item,
-          nextRotations[item.category] ?? defaultRotation(item.category),
-          widthFt,
-          lengthFt,
-          [...archZones, ...ghostZones, ...occupied],
-          1,
-        );
-        nextPositions[item.category] = resolved.position;
-      }
-      if (applyPlacement.rotations) setRotations(nextRotations);
-      return nextPositions;
+      const settled = settlePicturePlacement({
+        furniture,
+        prevPositions,
+        rotations,
+        placement: applyPlacement,
+        widthFt,
+        lengthFt,
+        zonesFor: (item, positions, nextRotations) => [
+          ...(isBedLikeCategory(item.category) ? bedZones : zones),
+          ...ghostZonesFor(item.category),
+          ...placedFurnitureZones(positions, furniture, nextRotations, {}, item.category),
+        ],
+        defaultRotation,
+      });
+      if (applyPlacement.rotations) setRotations(settled.rotations);
+      return settled.positions;
     });
-  }, [applyPlacement, furniture, room, roomLayout, rotations, ghostZones]);
+  }, [applyPlacement, furniture, room, roomLayout, rotations, ghostZonesFor]);
 
   // Report placement upward so Save Layout can capture it.
   useEffect(() => {
