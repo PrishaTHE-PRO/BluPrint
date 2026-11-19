@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('blueprintTheme') === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Meet the team behind BluPrint.">
+  <title>BluPrint | About Us</title>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="./design-system.css">
+  <style>
+    /* Nav uses the signed-in .app-nav from design-system.css; these cover the logged-out extras. */
+    body.page-about .app-nav-actions > a.app-nav-signin { padding: 7px 12px; border-radius: 9px; }
+    body.page-about .app-nav-actions > a.app-nav-cta {
+      display: inline-flex; align-items: center; min-height: 36px; padding: 0 16px; border-radius: 999px;
+      color: #fff !important; background: var(--bp-primary); font-weight: 600 !important; white-space: nowrap;
+      box-shadow: 0 8px 20px color-mix(in srgb, var(--bp-primary) 22%, transparent);
+      transition: transform .22s cubic-bezier(.2, .8, .2, 1), background .2s ease;
+    }
+    body.page-about .app-nav-actions > a.app-nav-cta:hover { background: #245a72; color: #fff !important; transform: translateY(-2px) scale(1.04); }
+    html.dark-mode body.page-about .app-nav-actions > a.app-nav-cta,
+    html.dark-mode body.page-about .app-nav-actions > a.app-nav-cta:hover { color: #0f1720 !important; background: var(--bp-primary); }
+    body.page-about .app-nav-cta__short { display: none; }
+    @media (max-width: 980px) {
+      body.page-about .app-nav-links > a > .app-nav-label { display: none !important; }
+      body.page-about .app-nav-links > a { padding: 8px 10px; gap: 0; }
+      body.page-about .app-nav-links > a > iconify-icon { font-size: 18px; }
+    }
+    @media (max-width: 600px) {
+      body.page-about .app-nav-links { gap: 0 !important; }
+      body.page-about .app-nav-links > a { padding-inline: 7px; }
+      body.page-about .app-nav-actions > a.app-nav-signin { display: none; }
+      body.page-about .app-nav-actions > a.app-nav-cta { min-height: 32px; margin-left: 4px; padding: 0 12px; font-size: 13px !important; }
+      body.page-about .app-nav .nav-theme-switch { width: auto !important; min-width: 0 !important; }
+      body.page-about .app-nav .nav-theme-switch button.theme-switch-btn { width: 56px !important; min-width: 56px !important; height: 28px !important; min-height: 28px !important; }
+      body.page-about .app-nav-cta__full { display: none; }
+      body.page-about .app-nav-cta__short { display: inline; }
+    }
+    @media (max-width: 400px) {
+      body.page-about .app-nav-links > a:not([href="about.html"]) { display: none; }
+    }
+  </style>
+</head>
+<body class="page-about">
+  <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
+
+  <nav class="app-nav" aria-label="Main navigation">
+    <a href="index.html" class="app-brand" aria-label="BluPrint home"><span>BluPrint</span></a>
+    <div class="app-nav-links">
+      <a href="index.html#features" aria-label="What it does"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon><span class="app-nav-label">What it does</span></a>
+      <a href="index.html#how-it-works" aria-label="How it works"><iconify-icon icon="ph:path-duotone"></iconify-icon><span class="app-nav-label">How it works</span></a>
+      <a href="index.html#start" aria-label="Why BluPrint"><iconify-icon icon="ph:star-duotone"></iconify-icon><span class="app-nav-label">Why BluPrint</span></a>
+      <a href="about.html" class="active" aria-label="About us" aria-current="page"><iconify-icon icon="ph:users-three-duotone"></iconify-icon><span class="app-nav-label">About us</span></a>
+    </div>
+    <div class="app-nav-actions">
+      <div data-theme-switch class="nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
+      <a class="app-nav-signin" href="login.html">Sign in</a>
+      <a class="app-nav-cta" href="login.html" aria-label="Design my room"><span class="app-nav-cta__full">Design my room</span><span class="app-nav-cta__short">Design</span></a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="about-hero animate-reveal">
+        <div class="about-hero-copy">
+          <p class="about-eyebrow">About BluPrint</p>
+          <h1>Four students, one <em>better way</em> to plan a <em>room</em>.</h1>
+          <p>BluPrint turns your room dimensions, inspiration, and budget into a shoppable 2D interior plan.</p>
+          <div class="about-actions">
+            <a class="about-btn about-btn-primary" href="login.html">Start designing</a>
+            <a class="about-btn" href="#team">Meet the team</a>
+          </div>
+        </div>
+        <div class="about-plan-card">
+        <svg viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path stroke-width="4" d="M20 20H180M216 20H300V220H130M94 220H20V20"/>
+          <path d="M180 20a36 36 0 0 1-36 36M144 20v36M94 220a36 36 0 0 1 36-36M130 220v-36"/>
+          <path d="M190 20v80h110M20 130h90v90"/>
+          <rect x="214" y="124" width="66" height="76" rx="6"/>
+          <path d="M214 148h66"/>
+          <rect x="38" y="38" width="84" height="56" rx="6"/>
+          <circle cx="66" cy="175" r="24"/>
+          <rect x="214" y="40" width="66" height="26" rx="4"/>
+          <circle cx="150" cy="130" r="8"/>
+        </svg>
+        </div>
+    </header>
+
+    <section class="about-team-section" id="team" aria-labelledby="about-team-heading">
+      <h2 id="about-team-heading">We&rsquo;re building <strong>beautiful</strong> &amp; <strong>functional</strong> room plans that fit your space, style, and budget. Meet the team:</h2>
+      <div class="about-team">
+        <article class="about-member">
+          <img class="about-photo" src="/team/prisha.jpg" alt="Prisha Agarwalla" width="208" height="208">
+          <h3>Prisha Agarwalla</h3>
+          <p>Prisha studies Computer Science and Data Science at UW&ndash;Madison and is an AI/Technical Builder at the Tech Exploration Lab. A YC Startup School 2026 participant, Prisha also won the Notability Track at Cal Hacks 13.0.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/prisha-agarwalla-126a15285/" target="_blank" rel="noopener noreferrer" aria-label="Prisha Agarwalla on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+
+        <article class="about-member">
+          <img class="about-photo" src="/team/aditi.jpg" alt="Aditi Amarnath" width="208" height="208">
+          <h3>Aditi Amarnath</h3>
+          <p>Aditi studies Computer Science and Statistics at UW&ndash;Madison and is an undergraduate researcher in Industrial and Systems Engineering, working on optimization and probabilistic models. Aditi was previously a Cloud Analytics Intern at HGS.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/aditi-amarnath/" target="_blank" rel="noopener noreferrer" aria-label="Aditi Amarnath on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+
+        <article class="about-member">
+          <img class="about-photo" src="/team/nidhi.jpg" alt="Nidhi Gandhi" width="208" height="208">
+          <h3>Nidhi Gandhi</h3>
+          <p>Nidhi studies Computer Science at UW&ndash;Madison, with a background in data science volunteering and university research. Nidhi is part of Design Interactive and the Product Management Club, and won 1st place at the Badgers for Good Design-a-thon.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/nidhi-gandhi1/" target="_blank" rel="noopener noreferrer" aria-label="Nidhi Gandhi on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+
+        <article class="about-member">
+          <img class="about-photo" src="/team/saanvi.jpg" alt="Saanvi Gandhari" width="208" height="208">
+          <h3>Saanvi Gandhari</h3>
+          <p>Saanvi studies Computer Science and Data Science at UW&ndash;Madison and is a Lab Associate and AI/Tech Builder at the Tech Exploration Lab. Saanvi is also a Project Manager at Design Interactive and won 1st place at the Badgers for Good Design-a-thon.</p>
+          <a class="about-link" href="https://www.linkedin.com/in/saanvi-gandhari/" target="_blank" rel="noopener noreferrer" aria-label="Saanvi Gandhari on LinkedIn"><iconify-icon icon="ph:linkedin-logo-duotone"></iconify-icon>LinkedIn</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="about-split" aria-labelledby="about-stage-heading">
+      <div>
+        <ul class="about-notes">
+          <li><iconify-icon icon="ph:map-trifold-duotone"></iconify-icon>Sharpening our market</li>
+          <li><iconify-icon icon="ph:diamond-duotone"></iconify-icon>Strengthening our value proposition</li>
+          <li><iconify-icon icon="ph:path-duotone"></iconify-icon>Shaping our go-to-market strategy</li>
+          <li><iconify-icon icon="ph:handshake-duotone"></iconify-icon>Preparing for early customers</li>
+        </ul>
+      </div>
+      <div class="about-split-panel">
+        <p class="about-eyebrow">Where we are now</p>
+        <h2 id="about-stage-heading">Stage 2: <em>Venture Build</em></h2>
+        <p>We&rsquo;re currently in the Venture Build stage at the UW&ndash;Madison Tech Exploration Lab, where we&rsquo;re working to make BluPrint better.</p>
+        <p>This semester, we&rsquo;re collaborating with MBA students in the Wisconsin School of Business&rsquo;s New Product Innovation course, alongside industry mentors and alumni advisors. Together, we&rsquo;re sharpening our market and value proposition, shaping our go-to-market strategy, and preparing for early customers.</p>
+      </div>
+    </section>
+
+    <section class="about-closing">
+      <p>Your room, <em>thoughtfully</em> planned.</p>
+      <div class="about-actions"><a class="about-btn about-btn-primary" href="login.html">Start designing <iconify-icon icon="ph:arrow-up-right-bold" aria-hidden="true"></iconify-icon></a></div>
+    </section>
+  </main>
+
+  <script src="./theme-toggle.js" defer></script>
+  <script type="module" src="/src/theme-switch.tsx"></script>
+  <script type="module" src="/src/cursor-grid-background.jsx"></script>
+</body>
+</html>
