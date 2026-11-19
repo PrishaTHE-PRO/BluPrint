@@ -694,6 +694,7 @@ export default function RoomResult() {
     key: number;
     positions: Record<string, { x: number; y: number }>;
     rotations: Record<string, number>;
+    walls: Record<string, string>;
   } | null>(null);
 
   const handleRenderSaved = useCallback((render: RoomRender) => {
@@ -707,12 +708,14 @@ export default function RoomResult() {
     if (placements.length === 0) return;
     const positions: Record<string, { x: number; y: number }> = {};
     const rotations: Record<string, number> = {};
+    const walls: Record<string, string> = {};
     for (const p of placements) {
       if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
       positions[p.category] = { x: p.x, y: p.y };
       if (Number.isFinite(p.rotation)) rotations[p.category] = p.rotation as number;
+      if (p.touching && p.touching !== 'none') walls[p.category] = p.touching;
     }
-    setPlanOverride({ key: Date.now(), positions, rotations });
+    setPlanOverride({ key: Date.now(), positions, rotations, walls });
   }, []);
 
   // Hooks must stay above any conditional returns.

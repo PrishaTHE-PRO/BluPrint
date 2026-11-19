@@ -33,6 +33,8 @@ export interface RenderPlacement {
   approx?:   boolean;
   /** "picture" when the vision model read the position off the render itself. */
   source?:   'picture';
+  /** The wall the piece stands against in the picture, when it does. */
+  touching?: 'back wall' | 'front wall' | 'left wall' | 'right wall' | 'none';
 }
 
 export interface RoomRender {
