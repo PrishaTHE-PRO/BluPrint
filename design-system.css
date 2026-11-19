@@ -4991,7 +4991,10 @@ html body .bp-wordmark-rest {
 .page-inspo .inspo-card h2 { font-size: 28px !important; }
 .page-inspo #room-type-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  /* Eight tiles. Never more than four to a row, so wide screens get 4 + 4
+     instead of 5 + 3 with a hole at the end; narrow ones still drop to
+     fewer columns at the 150px minimum. */
+  grid-template-columns: repeat(auto-fill, minmax(max(150px, calc(25% - 7.5px)), 1fr));
   gap: 10px !important;
 }
 .page-inspo #room-type-grid > .inspo-room {
