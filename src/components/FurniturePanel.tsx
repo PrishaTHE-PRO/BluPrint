@@ -23,6 +23,8 @@ interface Props {
   underBudgetTried?: boolean;
   /** Photo rooms: what the picture already holds, and what that changed. */
   notice?: FurnitureNotice | null;
+  /** The live shopping search failed and the server sent its stand-in catalog. */
+  placeholderPicks?: boolean;
 }
 
 export default function FurniturePanel({
@@ -39,6 +41,7 @@ export default function FurniturePanel({
   onToggleInRoom,
   pickedCategory = null,
   notice = null,
+  placeholderPicks = false,
 }: Props) {
   // Room order follows the plan (big pieces first); Price is cheapest first.
   const [sort, setSort] = useState<'room' | 'price'>('room');
@@ -126,6 +129,28 @@ export default function FurniturePanel({
   // For photo rooms. Amber when the room is full and only accents are
   // offered; neutral when we simply skipped what the picture already has.
   // The "we kept what is already in your photo" variant is intentionally not shown.
+  // The stand-in catalog looks like real picks but is not: swapping only
+  // changes the finish in the name, and Buy opens a search. Say so.
+  const placeholderNotice = placeholderPicks && (
+    <div
+      role="status"
+      className="animate-reveal mb-4 rounded-2xl border px-4 py-3 border-[#D3968C]/30 bg-[#D3968C]/10"
+      style={{ animationDelay: '0.4s' }}
+    >
+      <div className="flex items-start gap-3">
+        <span className="text-lg leading-none mt-0.5 shrink-0 text-[#D3968C]">
+          <iconify-icon icon="ph:warning-circle-duotone" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-[#F7F4D5]">Live shopping results are unavailable right now</p>
+          <p className="text-xs text-[#F7F4D5]/60 mt-1 leading-relaxed">
+            These are placeholder picks. Swap changes the style note rather than the product, and Buy opens a search for it. Real products return once the shopping search is back.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   const photoNotice = notice && notice.kind === 'full' && (
     <div
       role="status"
@@ -190,6 +215,7 @@ export default function FurniturePanel({
     return (
       <section className="mb-10 result-furniture-section">
         {header}
+        {placeholderNotice}
         {photoNotice}
         {views}
         <p className="text-[#F7F4D5]/40 text-center py-8">
@@ -202,7 +228,8 @@ export default function FurniturePanel({
   return (
     <section className="mb-10 result-furniture-section">
       {header}
-      {photoNotice}
+      {placeholderNotice}
+        {photoNotice}
       {views}
       <section className="shop-room animate-reveal" style={{ animationDelay: '0.5s' }} aria-labelledby="shop-room-title">
         {shopHeader}

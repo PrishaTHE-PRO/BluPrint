@@ -1381,13 +1381,20 @@ router.get("/:roomId/furniture", async (req, res) => {
     }
   });
 
+  // Categories the live search could not fill: the page says so, since the
+  // stand-ins look like real picks but swap and buy like search results.
+  let placeholderCount = 0;
   const categoryGroups = results
     .map((result, index) => {
       if (result.status === "fulfilled" && result.value.length > 0) return result.value;
       // Guaranteed local stand-ins so the planner never renders an empty room.
+      placeholderCount += 1;
       return fallbackItemsForCategory(categories[index], styleTag);
     })
     .filter((group) => group.length > 0);
+  if (placeholderCount > 0) {
+    console.warn(`[furniture] ${placeholderCount} of ${categories.length} categories served from the fallback catalog`);
+  }
   // Price fit is stamped here, after the fallback catalog has filled any
   // gaps, so every candidate carries it whichever path produced it.
   const furniture = orderFurnitureForBudget(
@@ -1401,7 +1408,7 @@ router.get("/:roomId/furniture", async (req, res) => {
   }
 
   // The client accepts either a bare array (older shape) or this object.
-  const payload = { items: furniture, notice: scope.notice, excluded: scope.exclude, existingPlacements: existingPlacements || [] };
+  const payload = { items: furniture, notice: scope.notice, excluded: scope.exclude, existingPlacements: existingPlacements || [], placeholder: placeholderCount > 0 };
   cacheSet(cacheKey, payload);
   res.json(payload);
 });
