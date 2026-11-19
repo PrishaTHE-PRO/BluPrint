@@ -6197,3 +6197,110 @@ html.dark-mode body.page-dimensions #draggable-window > div:first-child {
    rule when it meets the other's pseudo-element. */
 html.dark-mode .page-inspo .inspo-budget__slider::-webkit-slider-thumb { background: #1b2632; }
 html.dark-mode .page-inspo .inspo-budget__slider::-moz-range-thumb { background: #1b2632; }
+
+/* Room dimensions: undo / redo stand out from the page instead of blending in.
+   White tiles with a primary outline and icon; filled primary on hover. Disabled
+   ones stay visible (just faded) so people know the controls are there. */
+.page-dimensions #btn-undo,
+.page-dimensions #btn-redo {
+  background: var(--bp-surface) !important;
+  border: 1.5px solid rgba(47, 111, 143, .45) !important;
+  color: var(--dimension-primary) !important;
+  box-shadow: 0 4px 12px rgba(28, 23, 20, .08) !important;
+  cursor: pointer;
+}
+.page-dimensions #btn-undo iconify-icon,
+.page-dimensions #btn-redo iconify-icon { font-size: 22px; }
+.page-dimensions #btn-undo:hover:not(:disabled),
+.page-dimensions #btn-redo:hover:not(:disabled) {
+  background: var(--dimension-primary) !important;
+  border-color: var(--dimension-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(47, 111, 143, .28) !important;
+  transform: translateY(-1px);
+}
+.page-dimensions #btn-undo:disabled,
+.page-dimensions #btn-redo:disabled { opacity: .55 !important; cursor: default; box-shadow: none !important; }
+html.dark-mode body.page-dimensions #btn-undo,
+html.dark-mode body.page-dimensions #btn-redo {
+  background: rgba(126, 168, 201, .16) !important;
+  border-color: rgba(126, 168, 201, .55) !important;
+  color: var(--bp-primary) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3) !important;
+}
+html.dark-mode body.page-dimensions #btn-undo:hover:not(:disabled),
+html.dark-mode body.page-dimensions #btn-redo:hover:not(:disabled) {
+  background: var(--bp-primary) !important;
+  border-color: var(--bp-primary) !important;
+  color: #16202b !important;
+}
+
+/* Results header: the style tags (from the Analyze Style page) in place of
+   the size line. Palette swatches sit in the first chip. */
+.page-result main > header .result-stat { font-family: "DM Sans", sans-serif; font-weight: 600; text-transform: capitalize; }
+.page-result main > header .result-stat--palette { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; }
+.page-result main > header .result-stat--palette i {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(28, 23, 20, .12);
+}
+html.dark-mode .page-result main > header .result-stat--palette i { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
+
+/* Room dimensions: a door, window or cutout lifts while it is dragged and
+   the lift fades as it settles. */
+.page-dimensions .placed-element-group,
+.page-dimensions .cutout-group { transition: filter .22s ease; }
+.page-dimensions .placed-element-group.is-lifted,
+.page-dimensions .cutout-group.is-lifted {
+  filter: drop-shadow(0 6px 10px rgba(47, 111, 143, .35)) drop-shadow(0 1px 2px rgba(47, 111, 143, .25)) !important;
+}
+html.dark-mode body.page-dimensions .placed-element-group.is-lifted,
+html.dark-mode body.page-dimensions .cutout-group.is-lifted {
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .55)) drop-shadow(0 0 4px rgba(126, 168, 201, .35)) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-dimensions .placed-element-group,
+  .page-dimensions .cutout-group { transition: none; }
+}
+
+/* Room dimensions plan: windows are light blue (like the Window card in the
+   Element Library) and doors are gray. Only the shapes on the plan; the
+   library cards keep their own colours. */
+.page-dimensions {
+  --plan-window: #a9d0ec;
+  --plan-window-edge: #5f9cc4;
+  --plan-door: #7d8894;
+}
+html.dark-mode body.page-dimensions {
+  --plan-window: #8fbadb;
+  --plan-window-edge: #b8d4e8;
+  --plan-door: #a7b2be;
+}
+.page-dimensions #window-template rect {
+  fill: var(--plan-window) !important;
+  stroke: var(--plan-window-edge) !important;
+}
+.page-dimensions .window-resize-handle,
+.page-dimensions .window-resize-handle:hover,
+.page-dimensions .window-resize-handle.dragging {
+  fill: var(--plan-window-edge) !important;
+}
+.page-dimensions #door-template path,
+.page-dimensions #door-flip-tooltip .door-flip-arrow { stroke: var(--plan-door) !important; }
+.page-dimensions #door-template circle,
+.page-dimensions #door-flip-tooltip .door-flip-arrow-head { fill: var(--plan-door) !important; }
+.page-dimensions .door-hit-area,
+html.dark-mode body.page-dimensions .door-hit-area {
+  fill: color-mix(in srgb, var(--plan-door) 10%, transparent) !important;
+  stroke: color-mix(in srgb, var(--plan-door) 32%, transparent) !important;
+}
+.page-dimensions #door-template path:first-child,
+.page-dimensions #door-template path:nth-child(2),
+.page-dimensions #door-template path:last-child,
+html.dark-mode body.page-dimensions #door-template path:first-child,
+html.dark-mode body.page-dimensions #door-template path:nth-child(2),
+html.dark-mode body.page-dimensions #door-template path:last-child { stroke: var(--plan-door) !important; }
+.page-dimensions #door-template circle,
+html.dark-mode body.page-dimensions #door-template circle { fill: var(--plan-door) !important; }

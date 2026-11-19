@@ -348,10 +348,10 @@
               <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(247,244,213,0.08)" stroke-width="1.5"></path>
             </pattern>
             <symbol id="door-template">
-              <path d="M 0 0 L 40 0" stroke="#D3968D" stroke-width="6" stroke-linecap="round"></path>
-              <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#D3968D" stroke-width="3.6" stroke-dasharray="5 2.5" stroke-linecap="round" fill="none"></path>
-              <path d="M 0 0 L 0 40" stroke="#D3968D" stroke-width="7.5" stroke-linecap="round"></path>
-              <circle cx="0" cy="0" r="4.5" fill="#D3968D"></circle>
+              <path d="M 0 0 L 40 0" stroke="#7d8894" style="stroke: var(--plan-door, #7d8894)" stroke-width="6" stroke-linecap="round"></path>
+              <path d="M 40 0 A 40 40 0 0 1 0 40" stroke="#7d8894" style="stroke: var(--plan-door, #7d8894)" stroke-width="3.6" stroke-dasharray="5 2.5" stroke-linecap="round" fill="none"></path>
+              <path d="M 0 0 L 0 40" stroke="#7d8894" style="stroke: var(--plan-door, #7d8894)" stroke-width="7.5" stroke-linecap="round"></path>
+              <circle cx="0" cy="0" r="4.5" fill="#7d8894" style="fill: var(--plan-door, #7d8894)"></circle>
             </symbol>
             <mask id="room-mask"></mask>
             <clipPath id="room-clip"><path id="room-clip-path"></path></clipPath>
@@ -597,6 +597,168 @@ let state = createDefaultState();
 let history = [];
 let historyIndex = -1;
 let draggingFromToolbar = null;
+/** Pointer travel (screen px) before a press counts as a drag rather than a tap. */
+const DRAG_START_PX = 4;
+/** Two taps on the same door within this window flip its swing. */
+const DOUBLE_TAP_MS = 400;
+let lastDoorTap = null;
+
+/* ---- Motion ------------------------------------------------------------
+   Typed room sizes glide to the new size (timing from the redesign
+   artifact), and doors, windows and cutouts ease after the pointer while
+   dragged, round corners smoothly and lift while held.
+   Only what is drawn moves smoothly: the saved state is always the snapped
+   value, so undo, autosave and collisions behave exactly as before. */
+const MOTION_REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)");
+const ROOM_GLIDE_MS = 450;     // artifact: .45s cubic-bezier(.2, .8, .2, 1)
+const FOLLOW_TAU_MS = 20;      // how quickly a dragged piece catches the pointer
+
+function motionCubicBezier(x1, y1, x2, y2) {
+  const bez = (t, a, b) => 3 * a * t * (1 - t) ** 2 + 3 * b * t * t * (1 - t) + t ** 3;
+  const slope = (t, a, b) => 3 * a * (1 - t) ** 2 + 6 * (b - a) * t * (1 - t) + 3 * (1 - b) * t * t;
+  return (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 8; i++) {
+      const err = bez(t, x1, x2) - x;
+      if (Math.abs(err) < 1e-5) break;
+      const d = slope(t, x1, x2);
+      if (Math.abs(d) < 1e-6) break;
+      t -= err / d;
+    }
+    return bez(Math.min(1, Math.max(0, t)), y1, y2);
+  };
+}
+const motionEase = motionCubicBezier(0.2, 0.8, 0.2, 1);
+function motionLerp(a, b, t) { return a + (b - a) * t; }
+function motionLerpAngle(a, b, t) { const d = ((((b - a) % 360) + 540) % 360) - 180; return a + d * t; }
+function motionLerpPoints(a, b, t) { return b.map((p, i) => ({ ...p, x: motionLerp(a[i].x, p.x, t), y: motionLerp(a[i].y, p.y, t) })); }
+function motionPose(el) { return { x: el.x, y: el.y, angle: el.angle || 0 }; }
+function motionMixPose(a, b, t) { return { x: motionLerp(a.x, b.x, t), y: motionLerp(a.y, b.y, t), angle: motionLerpAngle(a.angle, b.angle, t) }; }
+function motionPoseGap(a, b) { return Math.max(Math.hypot(a.x - b.x, a.y - b.y), Math.abs(((((a.angle - b.angle) % 360) + 540) % 360) - 180) / 10); }
+function motionPointsGap(a, b) { return a.length !== b.length ? Infinity : Math.max(...a.map((p, i) => Math.hypot(p.x - b[i].x, p.y - b[i].y))); }
+
+/**
+ * Draws a dragged piece easing after its snapped target. set() moves the
+ * target; release(done) lets it finish the last stretch, then calls
+ * onSettled and done.
+ */
+function createFollower(start, { mix, gap, write, onSettled }) {
+  let shown = start;
+  let target = start;
+  let raf = 0;
+  let last = 0;
+  let released = false;
+  let finished = false;
+  let afterRelease = null;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    shown = target;
+    write(target);
+    onSettled?.();
+    afterRelease?.();
+  };
+  const tick = (now) => {
+    const dt = Math.min(64, Math.max(1, now - last));
+    last = now;
+    shown = mix(shown, target, 1 - Math.exp(-dt / FOLLOW_TAU_MS));
+    if (gap(shown, target) < 0.25) {
+      if (released) { finish(); return; }
+      shown = target;
+      write(shown);
+      raf = 0;
+      return;
+    }
+    write(shown);
+    raf = requestAnimationFrame(tick);
+  };
+  return {
+    set(next) {
+      target = next;
+      if (MOTION_REDUCED.matches) { shown = next; write(next); return; }
+      if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); }
+    },
+    release(done) {
+      released = true;
+      afterRelease = done || null;
+      if (MOTION_REDUCED.matches || (!raf && gap(shown, target) < 0.25)) finish();
+    },
+  };
+}
+
+/** Geometry the plan draws from, for the typed-size glide. */
+function roomGeometrySnapshot() {
+  return cloneObj({
+    roomPoints: state.roomPoints,
+    elements: state.elements,
+    cutouts: state.cutouts,
+    finalizedCutouts: state.finalizedCutouts || [],
+  });
+}
+function roomGeometrySameShape(a, b) {
+  const same = (x, y, pts) => x.length === y.length && x.every((item, i) =>
+    item.id === y[i].id && (!pts || item.points.length === y[i].points.length));
+  return a.roomPoints.length === b.roomPoints.length
+    && same(a.elements, b.elements, false)
+    && same(a.cutouts, b.cutouts, true)
+    && same(a.finalizedCutouts, b.finalizedCutouts, true);
+}
+let roomGlide = null;
+/**
+ * Animate the plan from `from` to the (already saved) current state. Each
+ * frame draws an in-between copy and puts the real state straight back, so
+ * autosave and undo never see a half-way room. Typing again mid-glide
+ * carries on from wherever the plan is on screen.
+ */
+function glideRoomFrom(from) {
+  if (MOTION_REDUCED.matches) return false;
+  const to = roomGeometrySnapshot();
+  if (roomGlide) {
+    cancelAnimationFrame(roomGlide.raf);
+    if (roomGlide.current) from = roomGlide.current;
+  }
+  if (!from || !roomGeometrySameShape(from, to)) { roomGlide = null; return false; }
+  const glide = { raf: 0, current: from };
+  roomGlide = glide;
+  const start = performance.now();
+  const frame = (now) => {
+    if (roomGlide !== glide) return;
+    const t = Math.min(1, (now - start) / ROOM_GLIDE_MS);
+    if (t >= 1) { roomGlide = null; renderAll(); return; }
+    const k = motionEase(t);
+    const mid = {
+      roomPoints: motionLerpPoints(from.roomPoints, to.roomPoints, k),
+      elements: to.elements.map((el, i) => {
+        const f = from.elements[i];
+        return {
+          ...el,
+          x: motionLerp(f.x, el.x, k),
+          y: motionLerp(f.y, el.y, k),
+          angle: motionLerpAngle(f.angle || 0, el.angle || 0, k),
+          width: Number.isFinite(f.width) && Number.isFinite(el.width) ? motionLerp(f.width, el.width, k) : el.width,
+        };
+      }),
+      cutouts: to.cutouts.map((c, i) => ({ ...c, points: motionLerpPoints(from.cutouts[i].points, c.points, k) })),
+      finalizedCutouts: to.finalizedCutouts.map((c, i) => ({ ...c, points: motionLerpPoints(from.finalizedCutouts[i].points, c.points, k) })),
+    };
+    glide.current = mid;
+    const real = state;
+    state = { ...real, ...mid };
+    try { renderAll(); } finally { state = real; }
+    glide.raf = requestAnimationFrame(frame);
+  };
+  frame(start);
+  return true;
+}
+
+/** Where the cutout drag preview currently sits, so the drop lands in the same spot. */
+let lastGhostCutout = null;
+/** Within this many SVG px of a corner, cutouts snap flush into it. */
+const CORNER_LATCH_PX = 10;
 let hoveredElementId = null;
 let hoveredElementType = null;
 let selectedResizeId = null;
@@ -1071,8 +1233,8 @@ function constrainCutoutVertex(cutout, pIdx, svgP) {
     if (pIdx === 2) rightAlong = Math.max(along, leftAlong + 16);
   }
 
-  leftAlong = Math.max(2, Math.min(frame.len - 18, leftAlong));
-  rightAlong = Math.max(leftAlong + 16, Math.min(frame.len - 2, rightAlong));
+  leftAlong = latchToCorner(Math.max(0, Math.min(frame.len - 16, leftAlong)), frame.len);
+  rightAlong = latchToCorner(Math.max(leftAlong + 16, Math.min(frame.len, rightAlong)), frame.len);
   const pts = buildCutoutRect(frame, leftAlong, rightAlong, depth);
   if (!isCutoutValid(pts)) return false;
   cutout.edgeIndex = edgeIndex;
@@ -1084,7 +1246,7 @@ function placeCutoutOnEdge(edgeIndex, centerAlong, width, depth) {
   const frame = getEdgeFrame(edgeIndex);
   const half = Math.max(8, width / 2);
   let center = centerAlong;
-  center = Math.max(half + 2, Math.min(frame.len - half - 2, center));
+  center = Math.max(half, Math.min(frame.len - half, center));
   const left = center - half;
   const right = center + half;
   const clampedDepth = Math.min(Math.max(12, depth), maxCutoutDepthForSpan(frame, left, right));
@@ -1094,8 +1256,52 @@ function placeCutoutOnEdge(edgeIndex, centerAlong, width, depth) {
   };
 }
 
+/**
+ * Place a wall cutout as close as possible to centerAlong on this wall. If that exact
+ * spot is blocked (another cutout, a door, the wall end), slide outward to the nearest
+ * free spot instead of refusing, so a drag glides up against obstacles and latches
+ * there rather than freezing a few pixels short.
+ */
+function resolveCutoutPlacement(edgeIndex, centerAlong, width, depth, excludeId = null, maxSlide = 120) {
+  const frame = getEdgeFrame(edgeIndex);
+  const half = Math.max(8, width / 2);
+  const minC = half;
+  const maxC = frame.len - half;
+  if (maxC < minC) return null;
+  let desired = Math.max(minC, Math.min(maxC, centerAlong));
+  // Latch flush into a corner once the cutout gets close to the wall's end.
+  if (desired - minC < CORNER_LATCH_PX) desired = minC;
+  else if (maxC - desired < CORNER_LATCH_PX) desired = maxC;
+  const tryAt = (center) => {
+    if (center < minC || center > maxC) return null;
+    const placed = placeCutoutOnEdge(frame.edgeIndex, center, width, depth);
+    if (!isCutoutValid(placed.points)) return null;
+    if (checkCollision({ type: "cutout", id: excludeId, points: placed.points }, excludeId)) return null;
+    return { ...placed, centerAlong: center };
+  };
+  const direct = tryAt(desired);
+  if (direct) return direct;
+  for (let step = 2; step <= maxSlide; step += 2) {
+    const hit = tryAt(desired - step) || tryAt(desired + step);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/** Snap an along-wall position to the wall's end when it is within reach of a corner. */
+function latchToCorner(along, len) {
+  if (along < CORNER_LATCH_PX) return 0;
+  if (len - along < CORNER_LATCH_PX) return len;
+  return along;
+}
+
+/** Along-wall position of a point on the given wall frame. */
+function alongEdge(frame, p) {
+  return (p.x - frame.p1.x) * frame.tx + (p.y - frame.p1.y) * frame.ty;
+}
+
 /** Prefer staying on the current wall near corners so cutouts don't flicker between edges. */
-function pickStickyEdge(x, y, preferredEdgeIndex, stickyPx = 28) {
+function pickStickyEdge(x, y, preferredEdgeIndex, stickyPx = 36) {
   const snap = getClosestPointOnPerimeter(x, y);
   if (!Number.isInteger(preferredEdgeIndex) || preferredEdgeIndex < 0) return snap;
   if (preferredEdgeIndex === snap.edgeIndex) return snap;
@@ -1368,17 +1574,17 @@ function renderAll() {
   updateDimensionsDisplay();
 }
 
-function renderRoom() {
-  let d = pointsToPath(state.roomPoints);
-  roomPath.setAttribute("d", d);
-  roomClipPath.setAttribute("d", d);
-
+/**
+ * The floor's mask: one hole per wall cutout. `override` draws one cutout at
+ * in-between points so its hole moves with it while it is being dragged.
+ */
+function renderRoomMask(override) {
   const mask = document.getElementById("room-mask");
   mask.innerHTML = '<rect width="100%" height="100%" fill="white" />';
   const punchedCutouts = [
     ...(state.finalizedCutouts || []),
     ...(state.cutouts || []),
-  ];
+  ].map((c) => (override && c.id === override.id ? { ...c, points: override.points } : c));
   punchedCutouts.forEach((cutout) => {
     const maskPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     maskPath.setAttribute("d", pointsToPath(cutout.points));
@@ -1402,6 +1608,14 @@ function renderRoom() {
     });
   });
   roomPath.setAttribute("mask", "url(#room-mask)");
+}
+
+function renderRoom() {
+  let d = pointsToPath(state.roomPoints);
+  roomPath.setAttribute("d", d);
+  roomClipPath.setAttribute("d", d);
+
+  renderRoomMask();
 
   finalizedCutoutsGroup.innerHTML = "";
   (state.finalizedCutouts || []).forEach((cutout) => {
@@ -1483,7 +1697,7 @@ function renderElements() {
       const w = el.width || 50;
       const offset = -w/2;
       g.innerHTML = `<g transform="translate(${el.x},${el.y}) rotate(${el.angle})">
-           <rect x="${offset}" y="-4" width="${w}" height="8" fill="var(--dimension-window, #d3968d)" stroke="var(--dimension-window, #d3968d)" stroke-width="1.5" />
+           <rect x="${offset}" y="-4" width="${w}" height="8" fill="var(--plan-window, #a9d0ec)" stroke="var(--plan-window-edge, #5f9cc4)" stroke-width="1.5" />
            <line x1="${offset + 5}" y1="-1.5" x2="${offset + w - 5}" y2="-1.5" stroke="#fff7f5" stroke-width="1" />
            <line x1="${offset + 5}" y1="1.5" x2="${offset + w - 5}" y2="1.5" stroke="#fff7f5" stroke-width="1" />
          </g>`;
@@ -1555,21 +1769,38 @@ function renderElements() {
         document.getElementById("door-flip-tooltip").classList.add("hidden");
       });
     }
-    g.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      if (el.type === "door") {
-        el.isMirrored = !el.isMirrored; saveState(); renderAll(); showToast("Door swing mirrored");
-      }
-    });
     itemGroup.addEventListener("mouseenter", () => { hoveredElementId = el.id; hoveredElementType = "element"; });
     itemGroup.addEventListener("mouseleave", () => { if (hoveredElementId === el.id) { hoveredElementId = null; hoveredElementType = null; } });
     let hasMoved = false;
+    let pressStart = null;
+    let follower = null;
+    // Draw the piece (and its delete button) at an in-between pose.
+    const drawPose = (pose) => {
+      if (el.type === "door") {
+        const doorG = g.querySelector(".door-graphic");
+        if (doorG) {
+          doorG.setAttribute(
+            "transform",
+            `translate(${pose.x},${pose.y}) rotate(${pose.angle}) scale(${el.isMirrored ? -1 : 1}, 1) translate(-20, 0)`
+          );
+        }
+      } else {
+        const gInner = g.querySelector("g");
+        if (gInner) gInner.setAttribute("transform", `translate(${pose.x},${pose.y}) rotate(${pose.angle})`);
+      }
+      const p = getElementDeletePosition({ ...el, ...pose });
+      delBtn.setAttribute("transform", `translate(${p.x},${p.y})`);
+    };
     bindPointerDrag(g, {
-      onStart: () => {
+      onStart: (e) => {
         hasMoved = false;
+        pressStart = { x: e.clientX, y: e.clientY };
         g.setAttribute("style", "cursor: grabbing; touch-action: none");
+        follower = null;
       },
       onMove: (mv) => {
+        // Ignore hand jitter so a tap (or the first half of a double tap) never nudges the door.
+        if (!hasMoved && Math.hypot(mv.clientX - pressStart.x, mv.clientY - pressStart.y) < DRAG_START_PX) return;
         hasMoved = true;
         const svgP = getSVGPoint(mv);
         const snap = getClosestPointOnPerimeter(svgP.x, svgP.y);
@@ -1578,27 +1809,39 @@ function renderElements() {
         document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
         const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
         if (edgeEl) edgeEl.classList.add("active");
-        el.x = snap.point.x; el.y = snap.point.y; el.angle = snap.point.angle;
-        if (el.type === 'door') {
-          const doorG = g.querySelector(".door-graphic");
-          const moveMirror = el.isMirrored ? -1 : 1;
-          if (doorG) {
-            doorG.setAttribute(
-              "transform",
-              `translate(${el.x},${el.y}) rotate(${el.angle}) scale(${moveMirror}, 1) translate(-20, 0)`
-            );
-          }
-        } else {
-          const gInner = g.querySelector('g');
-          if (gInner) gInner.setAttribute("transform", `translate(${el.x},${el.y}) rotate(${el.angle})`);
+        if (!follower) {
+          // First real move: lift the piece and start easing it after the pointer.
+          follower = createFollower(motionPose(el), {
+            mix: motionMixPose, gap: motionPoseGap, write: drawPose,
+            onSettled: () => itemGroup.classList.remove("is-settling"),
+          });
+          itemGroup.classList.add("is-lifted");
         }
-        const nextDeletePosition = getElementDeletePosition(el);
-        delBtn.setAttribute("transform", `translate(${nextDeletePosition.x},${nextDeletePosition.y})`);
+        el.x = snap.point.x; el.y = snap.point.y; el.angle = snap.point.angle;
+        follower.set(motionPose(el));
       },
       onEnd: () => {
         document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
         g.setAttribute("style", "cursor: grab; touch-action: none");
-        if (hasMoved) { saveState(); showToast(`${el.type} repositioned`); }
+        if (follower) {
+          // Let go: the lift fades and the piece eases the last bit into place.
+          itemGroup.classList.remove("is-lifted");
+          itemGroup.classList.add("is-settling");
+          follower.release();
+          follower = null;
+        }
+        if (hasMoved) { lastDoorTap = null; saveState(); showToast(`${el.type} repositioned`); return; }
+        // The drag captures the pointer on the svg, so the browser's dblclick never reaches
+        // the door. Count taps here instead: two quick taps on the same door flip its swing.
+        if (el.type !== "door") return;
+        const now = performance.now();
+        if (lastDoorTap && lastDoorTap.id === el.id && now - lastDoorTap.time < DOUBLE_TAP_MS) {
+          lastDoorTap = null;
+          el.isMirrored = !el.isMirrored;
+          saveState(); renderAll(); showToast("Door swing mirrored");
+        } else {
+          lastDoorTap = { id: el.id, time: now };
+        }
       },
     });
 
@@ -1653,6 +1896,11 @@ function renderCutouts() {
     let originalEdge = 0;
     let metrics = null;
     let activeEdge = 0;
+    let startClient = null;
+    let grabOffset = 0;
+    let cutoutFollower = null;
+    // Selecting re-renders the group, so look it up by id each time.
+    const cutoutGroupNode = () => placedGroup.querySelector(`[data-cutout-id="${c.id}"]`);
     // Look the hit path up by id rather than capturing it: selecting re-renders
     // the group, so the node captured at bind time may already be detached.
     const setGrabCursor = (value) => {
@@ -1666,15 +1914,34 @@ function renderCutouts() {
         cutoutInteractionActive = true;
         setGrabCursor("grabbing");
         startSvgP = getSVGPoint(e);
+        startClient = { x: e.clientX, y: e.clientY };
         originalPoints = c.points.map((p) => ({ ...p }));
         originalEdge = Number.isInteger(c.edgeIndex)
           ? c.edgeIndex
           : getClosestPointOnPerimeter(originalPoints[0].x, originalPoints[0].y).edgeIndex;
         metrics = getCutoutMetrics({ ...c, points: originalPoints, edgeIndex: originalEdge });
         activeEdge = originalEdge;
+        // Remember where along the cutout it was grabbed, so it doesn't jump to
+        // centre itself under the pointer on the first move.
+        grabOffset = alongEdge(metrics.frame, startSvgP) - (metrics.leftAlong + metrics.rightAlong) / 2;
+        cutoutFollower = null;
       },
       onMove: (mv) => {
+        if (!hasMoved && Math.hypot(mv.clientX - startClient.x, mv.clientY - startClient.y) < DRAG_START_PX) return;
         hasMoved = true;
+        if (!cutoutFollower) {
+          // First real move: lift it and ease the outline, handles and the
+          // hole in the floor after the pointer.
+          cutoutFollower = createFollower(cloneObj(c.points), {
+            mix: motionLerpPoints,
+            gap: motionPointsGap,
+            write: (pts) => {
+              syncCutoutDom({ ...c, points: pts });
+              renderRoomMask({ id: c.id, points: pts });
+            },
+          });
+          cutoutGroupNode()?.classList.add("is-lifted");
+        }
         const currentSvgP = getSVGPoint(mv);
         if (c.source === "drawn") {
           const dx = currentSvgP.x - startSvgP.x;
@@ -1682,31 +1949,37 @@ function renderCutouts() {
           const testPoints = originalPoints.map((p) => ({ x: p.x + dx, y: p.y + dy }));
           if (!isCutoutValid(testPoints)) return;
           c.points.forEach((p, idx) => { p.x = testPoints[idx].x; p.y = testPoints[idx].y; });
-          syncCutoutDom(c);
+          cutoutFollower.set(cloneObj(c.points));
           return;
         }
         const snap = pickStickyEdge(currentSvgP.x, currentSvgP.y, activeEdge);
         const frame = getEdgeFrame(snap.edgeIndex);
-        const centerAlong =
-          (snap.point.x - frame.p1.x) * frame.tx +
-          (snap.point.y - frame.p1.y) * frame.ty;
-        const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, metrics.width, metrics.depth);
-        if (!isCutoutValid(placed.points)) return;
-        const testCutout = { ...c, ...placed };
-        if (checkCollision(testCutout, c.id)) return;
+        // Keep the grab offset while on the starting wall; on another wall, centre it.
+        const offset = snap.edgeIndex === originalEdge ? grabOffset : 0;
+        const centerAlong = alongEdge(frame, snap.point) - offset;
+        const placed = resolveCutoutPlacement(snap.edgeIndex, centerAlong, metrics.width, metrics.depth, c.id, 60);
+        if (!placed) return;
         document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
         const edgeEl = document.getElementById(`edge-${snap.edgeIndex}`);
         if (edgeEl) edgeEl.classList.add("active");
         c.points = placed.points;
         c.edgeIndex = placed.edgeIndex;
         activeEdge = placed.edgeIndex;
-        syncCutoutDom(c);
+        cutoutFollower.set(cloneObj(c.points));
       },
       onEnd: () => {
         cutoutInteractionActive = false;
         document.querySelectorAll(".edge-highlight").forEach((h) => h.classList.remove("active"));
         setGrabCursor("grab");
-        if (hasMoved) { saveState(); renderAll(); showToast("Cutout repositioned"); }
+        if (!hasMoved) return;
+        saveState();
+        showToast("Cutout repositioned");
+        const follower = cutoutFollower;
+        cutoutFollower = null;
+        cutoutGroupNode()?.classList.remove("is-lifted");
+        if (!follower) { renderAll(); return; }
+        // Ease the last stretch into place, then redraw for real.
+        follower.release(() => renderAll());
       },
     };
 
@@ -1815,8 +2088,8 @@ function renderCutouts() {
             else if (resizeKind === "end") rightAlong = Math.max(along, leftAlong + 16);
             else depth = Math.max(12, into);
 
-            leftAlong = Math.max(2, Math.min(frame.len - 18, leftAlong));
-            rightAlong = Math.max(leftAlong + 16, Math.min(frame.len - 2, rightAlong));
+            leftAlong = latchToCorner(Math.max(0, Math.min(frame.len - 16, leftAlong)), frame.len);
+            rightAlong = latchToCorner(Math.max(leftAlong + 16, Math.min(frame.len, rightAlong)), frame.len);
             const nextPoints = buildCutoutRect(frame, leftAlong, rightAlong, depth);
             if (!isRectCutoutSizeValid(nextPoints) || !isCutoutValid(nextPoints)) return;
             if (checkCollision({ ...c, points: nextPoints, type: "cutout" }, c.id)) return;
@@ -1994,6 +2267,7 @@ document.querySelectorAll('[draggable="true"]').forEach((btn) => {
   btn.addEventListener("dragstart", (e) => {
     draggingFromToolbar = btn.getAttribute("data-type");
     lastDragSvgPoint = null;
+    lastGhostCutout = null;
     e.dataTransfer.setData("text/plain", draggingFromToolbar);
     e.dataTransfer.effectAllowed = "copy";
     btn.style.opacity = "0.45";
@@ -2121,11 +2395,18 @@ svg.addEventListener("dragover", (e) => {
     if (edgeEl) edgeEl.classList.add("active");
     ghost.classList.remove("hidden");
     if (draggingFromToolbar === "cutout") {
-      const pts = createSnappingCutout(svgP.x, svgP.y, 40);
-      if (!pts || pts.length < 4) {
+      const sticky = pickStickyEdge(svgP.x, svgP.y, lastGhostCutout ? lastGhostCutout.edgeIndex : -1);
+      const frame = getEdgeFrame(sticky.edgeIndex);
+      const placed = resolveCutoutPlacement(sticky.edgeIndex, alongEdge(frame, sticky.point), 40, 40);
+      if (!placed) {
+        lastGhostCutout = null;
         ghost.classList.add("hidden");
         return;
       }
+      lastGhostCutout = placed;
+      document.querySelectorAll(".edge-highlight").forEach((el) => el.classList.remove("active"));
+      document.getElementById(`edge-${placed.edgeIndex}`)?.classList.add("active");
+      const pts = placed.points;
       ghost.innerHTML = `<path d="M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y} L ${pts[2].x} ${pts[2].y} L ${pts[3].x} ${pts[3].y} Z" fill="rgba(108, 143, 98, 0.45)" stroke="white" stroke-width="2" stroke-dasharray="4 3" />`;
     } else {
       const offset = draggingFromToolbar === "door" ? -20 : -25;
@@ -2211,12 +2492,14 @@ svg.addEventListener("drop", (e) => {
       // Commit any currently editable cutout so a second (third, …) notch can be placed.
       bakeActiveCutouts();
 
-      const frame = getEdgeFrame(snap.edgeIndex);
-      const centerAlong =
-        (snap.point.x - frame.p1.x) * frame.tx +
-        (snap.point.y - frame.p1.y) * frame.ty;
-      const placed = placeCutoutOnEdge(snap.edgeIndex, centerAlong, 40, 40);
-      if (isCutoutValid(placed.points)) {
+      // Land exactly where the preview showed it; fall back to resolving from the drop point.
+      let placed = lastGhostCutout;
+      if (!placed) {
+        const frame = getEdgeFrame(snap.edgeIndex);
+        placed = resolveCutoutPlacement(snap.edgeIndex, alongEdge(frame, snap.point), 40, 40);
+      }
+      lastGhostCutout = null;
+      if (placed && isCutoutValid(placed.points)) {
         const newCutout = {
           id: Date.now() + Math.floor(Math.random() * 1000),
           type: "cutout",
@@ -2255,7 +2538,8 @@ svg.addEventListener("drop", (e) => {
         return;
       }
       state.elements.push(newEl);
-      saveState(); renderAll(); showToast(`${dragType} added`);
+      saveState(); renderAll();
+      showToast(`${dragType} added`);
     }
   } else if (dragType === "cutout") {
     showToast("Drop the cutout onto a wall");
@@ -2310,6 +2594,8 @@ widthInput.oninput = lengthInput.oninput = () => {
 
   const newWidth = wVal * 20; const newLength = lVal * 20;
   const cx = 400; const cy = 250;
+  // Where the plan starts from, so it can glide to the typed size.
+  const glideFrom = roomGeometrySnapshot();
 
   // For complex polygons, dimension scaling just scales all points from center
   const minX = Math.min(...state.roomPoints.map(p=>p.x));
@@ -2345,10 +2631,12 @@ widthInput.oninput = lengthInput.oninput = () => {
     });
   }
 
+  saveState();
+  if (glideRoomFrom(glideFrom)) return;
   roomPath.classList.remove("flip-anim");
   void roomPath.offsetWidth;
   roomPath.classList.add("flip-anim");
-  renderAll(); saveState();
+  renderAll();
 };
 
 function isIncompleteDimensionDraft(raw) {

@@ -872,6 +872,24 @@ export default function RoomResult() {
 
   const s = style!;
   const layoutRoom = layoutRoomPreview;
+  // Mood tags and room features from the style analysis (same as the chips
+  // on the Analyze Style page), without repeats or the style already shown.
+  // Plain values, not hooks: this runs after the loading/error early returns.
+  const styleTags = (() => {
+    const seen = new Set<string>([String(style?.styleTag ?? '').toLowerCase(), String(style?.roomType ?? '').toLowerCase()]);
+    const out: string[] = [];
+    [...(style?.moodTags ?? []), ...(style?.roomFeatures ?? [])].forEach((raw) => {
+      const label = String(raw ?? '').trim();
+      if (!label || seen.has(label.toLowerCase())) return;
+      seen.add(label.toLowerCase());
+      out.push(label);
+    });
+    return out.slice(0, 8);
+  })();
+  const stylePalette = (style?.colorPalette ?? [])
+    .map((c: any) => (typeof c === 'string' ? c : c?.hex))
+    .filter((c: any): c is string => typeof c === 'string' && c.length > 0)
+    .slice(0, 6);
   const roomName = renamedName ?? layoutRoom.name;
   const layoutFurniture = layoutFurniturePreview;
   // Feet, from the drawn polygon when there is one so hints share the plan's
@@ -985,12 +1003,18 @@ export default function RoomResult() {
                   </button>
                 </h1>
               )}
-              <div className="result-stats" aria-label="Room facts">
-                <span className="result-stat">{layoutRoom.widthFt}\u2032 \u00d7 {layoutRoom.lengthFt}\u2032</span>
-                <span className="result-stat">{layoutRoom.sqft} sq ft</span>
-                <span className="result-stat">{layoutRoom.heightFt || room?.heightFt || 8}\u2032 ceiling</span>
-                <span className="result-stat">{layoutFurniture.length} {layoutFurniture.length === 1 ? 'piece' : 'pieces'}</span>
-              </div>
+              {/* Tags from the style analysis on the Analyze Style page: the
+                  palette, then the mood tags and room features. */}
+              {(styleTags.length > 0 || stylePalette.length > 0) && (
+                <div className="result-stats" aria-label="Your style">
+                  {stylePalette.length > 0 && (
+                    <span className="result-stat result-stat--palette" aria-label="Colour palette">
+                      {stylePalette.map((c) => <i key={c} style={{ background: c }} title={c} />)}
+                    </span>
+                  )}
+                  {styleTags.map((t) => <span key={t} className="result-stat">{t}</span>)}
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button
