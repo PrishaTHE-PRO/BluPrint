@@ -17,108 +17,53 @@
   <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
   <link rel="stylesheet" href="./design-system.css">
   <style>
-    /* Same nav bar as the landing page (index.html), so it doesn't change between the two. */
-    @font-face {
-      font-family: 'Nippo';
-      src: url('/fonts/Nippo-Medium.woff2') format('woff2'), url('/fonts/Nippo-Medium.woff') format('woff');
-      font-weight: 500;
-      font-style: normal;
-      font-display: swap;
+    /* Nav uses the signed-in .app-nav from design-system.css; these cover the logged-out extras. */
+    body.page-about .app-nav-actions > a.app-nav-signin { padding: 7px 12px; border-radius: 9px; }
+    body.page-about .app-nav-actions > a.app-nav-cta {
+      display: inline-flex; align-items: center; min-height: 36px; padding: 0 16px; border-radius: 999px;
+      color: #fff !important; background: var(--bp-primary); font-weight: 600 !important; white-space: nowrap;
+      box-shadow: 0 8px 20px color-mix(in srgb, var(--bp-primary) 22%, transparent);
+      transition: transform .22s cubic-bezier(.2, .8, .2, 1), background .2s ease;
     }
-    .site-nav {
-      --ln-ink: #1c1714; --ln-muted: #6b7480; --ln-blue: #2f6f8f; --ln-blue-dark: #245a72;
-      position: fixed; z-index: 50; top: 16px; left: 50%;
-      display: flex; align-items: center;
-      width: min(calc(100% - 32px), 1180px); min-height: 68px;
-      padding: 10px 12px 10px 20px;
-      transform: translateX(-50%);
-      border: 1px solid rgba(255,255,255,.75); border-radius: 20px;
-      background: rgba(251, 249, 246, .76);
-      box-shadow: 0 12px 38px rgba(42, 53, 61, .08);
-      backdrop-filter: blur(22px);
-      font-family: "DM Sans", sans-serif;
-    }
-    .site-nav a { color: inherit; text-decoration: none; }
-    .site-nav .brand { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; }
-    .site-nav .brand-name { font-family: 'Nippo', "DM Sans", sans-serif; font-size: 22px; font-weight: 500; line-height: 1; color: var(--ln-ink); }
-    .site-nav .nav-links { display: flex; align-items: center; gap: 28px; margin-right: 30px; color: var(--ln-muted); font-size: 14px; font-weight: 600; }
-    .site-nav .nav-links a { position: relative; }
-    .site-nav .nav-links a::after {
-      position: absolute; right: 0; bottom: -5px; left: 0; height: 1.5px; content: "";
-      transform: scaleX(0); transform-origin: right; background: var(--ln-blue); transition: transform .25s ease;
-    }
-    .site-nav .nav-links a:hover::after,
-    .site-nav .nav-links a[aria-current="page"]::after { transform: scaleX(1); transform-origin: left; }
-    .site-nav .nav-links a[aria-current="page"] { color: var(--ln-blue); }
-    .site-nav .nav-actions { display: flex; align-items: center; gap: 9px; }
-    .site-nav .nav-theme-switch { display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; line-height: 0; cursor: pointer; }
-    .site-nav .nav-signin { padding: 11px 15px; color: var(--ln-blue-dark); font-size: 14px; font-weight: 700; }
-    .site-nav .nav-cta {
-      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-      min-height: 46px; padding: 0 20px; border-radius: 13px;
-      color: #fff; background: var(--ln-blue); box-shadow: 0 12px 26px rgba(47, 111, 143, .24);
-      font-size: 14px; font-weight: 700;
-      transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
-    }
-    .site-nav .nav-cta:hover { transform: translateY(-2px); background: var(--ln-blue-dark); box-shadow: 0 16px 34px rgba(47, 111, 143, .3); }
-    .site-nav .nav-cta__short { display: none; }
-    /* design-system.css styles every `nav > div:last-child > a` as a gray app-nav item with !important; undo that here. */
-    body.page-about nav.site-nav {
-      min-height: 68px; padding: 10px 12px 10px 20px !important;
-      background: rgba(251, 249, 246, .76) !important;
-      border: 1px solid rgba(255,255,255,.75) !important;
-      box-shadow: 0 12px 38px rgba(42, 53, 61, .08) !important;
-    }
-    html.dark-mode body.page-about nav.site-nav { background: rgba(16, 22, 29, .86) !important; border-color: rgba(232, 238, 244, .1) !important; }
-    body.page-about .site-nav .nav-actions { gap: 9px !important; color: inherit !important; }
-    body.page-about .site-nav .nav-actions > a.nav-signin { padding: 11px 15px; border-radius: 0; color: var(--ln-blue-dark) !important; font-size: 14px !important; font-weight: 700 !important; }
-    body.page-about .site-nav .nav-actions > a.nav-signin:hover { background: transparent; }
-    body.page-about .site-nav .nav-actions > a.nav-cta { padding: 0 20px; border-radius: 13px; color: #fff !important; font-size: 14px !important; font-weight: 700 !important; }
-    body.page-about .site-nav .nav-actions > a.nav-cta:hover { background: var(--ln-blue-dark); color: #fff !important; }
-    html.dark-mode .site-nav {
-      --ln-ink: #dbe7f3; --ln-muted: #8ea6bc; --ln-blue: #7ea8c9; --ln-blue-dark: #97bad4;
-      border-color: rgba(232, 238, 244, .1); background: rgba(16, 22, 29, .86);
-    }
-    body.page-about main { padding-top: 84px; }
-    @media (max-width: 900px) {
-      .site-nav { width: calc(100% - 24px); gap: 10px; }
-      body.page-about nav.site-nav { padding: 8px 10px 8px 14px !important; }
-      .site-nav .nav-links { display: none; }
-      .site-nav .nav-actions { gap: 8px; flex-shrink: 0; margin-left: auto; }
+    body.page-about .app-nav-actions > a.app-nav-cta:hover { background: #245a72; color: #fff !important; transform: translateY(-2px) scale(1.04); }
+    html.dark-mode body.page-about .app-nav-actions > a.app-nav-cta,
+    html.dark-mode body.page-about .app-nav-actions > a.app-nav-cta:hover { color: #0f1720 !important; background: var(--bp-primary); }
+    body.page-about .app-nav-cta__short { display: none; }
+    @media (max-width: 980px) {
+      body.page-about .app-nav-links > a > .app-nav-label { display: none !important; }
+      body.page-about .app-nav-links > a { padding: 8px 10px; gap: 0; }
+      body.page-about .app-nav-links > a > iconify-icon { font-size: 18px; }
     }
     @media (max-width: 600px) {
-      .site-nav { top: 10px; width: calc(100% - 16px); border-radius: 16px; gap: 8px; }
-      body.page-about nav.site-nav { min-height: 52px; padding: 6px 8px 6px 10px !important; }
-      .site-nav .brand { margin-right: 0; min-width: 0; flex-shrink: 1; }
-      .site-nav .nav-signin { display: none; }
-      .site-nav .nav-actions { gap: 6px; }
-      .site-nav .nav-cta { min-height: 40px; padding: 0 12px; font-size: 13px; border-radius: 11px; white-space: nowrap; }
-      .site-nav .nav-cta__full { display: none; }
-      .site-nav .nav-cta__short { display: inline; }
-      body.page-about main { padding-top: 60px; }
+      body.page-about .app-nav-links { gap: 0 !important; }
+      body.page-about .app-nav-links > a { padding-inline: 7px; }
+      body.page-about .app-nav-actions > a.app-nav-signin { display: none; }
+      body.page-about .app-nav-actions > a.app-nav-cta { min-height: 32px; margin-left: 4px; padding: 0 12px; font-size: 13px !important; }
+      body.page-about .app-nav .nav-theme-switch { width: auto !important; min-width: 0 !important; }
+      body.page-about .app-nav .nav-theme-switch button.theme-switch-btn { width: 56px !important; min-width: 56px !important; height: 28px !important; min-height: 28px !important; }
+      body.page-about .app-nav-cta__full { display: none; }
+      body.page-about .app-nav-cta__short { display: inline; }
+    }
+    @media (max-width: 400px) {
+      body.page-about .app-nav-links > a:not([href="about.html"]) { display: none; }
     }
   </style>
 </head>
 <body class="page-about">
   <script>if(document.documentElement.classList.contains('dark-mode'))document.body.classList.add('dark-mode');</script>
 
-  <nav class="site-nav" aria-label="Main navigation">
-    <a class="brand" href="index.html" aria-label="BluPrint home">
-      <span class="brand-name">BluPrint</span>
-    </a>
-    <div class="nav-links">
-      <a href="index.html#features">What it does</a>
-      <a href="index.html#how-it-works">How it works</a>
-      <a href="index.html#start">Why BluPrint</a>
-      <a class="nav-about" href="about.html" aria-current="page">About us</a>
+  <nav class="app-nav" aria-label="Main navigation">
+    <a href="index.html" class="app-brand" aria-label="BluPrint home"><span>BluPrint</span></a>
+    <div class="app-nav-links">
+      <a href="index.html#features" aria-label="What it does"><iconify-icon icon="ph:sparkle-duotone"></iconify-icon><span class="app-nav-label">What it does</span></a>
+      <a href="index.html#how-it-works" aria-label="How it works"><iconify-icon icon="ph:path-duotone"></iconify-icon><span class="app-nav-label">How it works</span></a>
+      <a href="index.html#start" aria-label="Why BluPrint"><iconify-icon icon="ph:star-duotone"></iconify-icon><span class="app-nav-label">Why BluPrint</span></a>
+      <a href="about.html" class="active" aria-label="About us" aria-current="page"><iconify-icon icon="ph:users-three-duotone"></iconify-icon><span class="app-nav-label">About us</span></a>
     </div>
-    <div class="nav-actions">
-      <div data-theme-switch class="nav-theme-btn nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
-      <a class="nav-signin" href="login.html">Sign in</a>
-      <a class="nav-cta" href="login.html" aria-label="Design my room">
-        <span class="nav-cta__full">Design my room</span>
-        <span class="nav-cta__short">Design</span>
-      </a>
+    <div class="app-nav-actions">
+      <div data-theme-switch class="nav-theme-switch" data-width="56" data-height="28" aria-label="Toggle dark mode"></div>
+      <a class="app-nav-signin" href="login.html">Sign in</a>
+      <a class="app-nav-cta" href="login.html" aria-label="Design my room"><span class="app-nav-cta__full">Design my room</span><span class="app-nav-cta__short">Design</span></a>
     </div>
   </nav>
 
