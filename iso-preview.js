@@ -1115,11 +1115,16 @@ const TILT = {
     spinTurnMs: 30690,   // one full turn, at a steady speed
     homeEaseMs: 260,     // how quickly it turns back to rest on leave
 };
-export function attachIsoTilt(card, room, opts = {}) {
+// motion.spin = false (the login page) skips the full turn: the room only
+// leans toward the pointer, up to about 20° either way, and settles back.
+export function attachIsoTilt(card, room, opts = {}, motion = {}) {
     if (!card || !window.rough) return;
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
     const rad = Math.PI / 180, TAU = Math.PI * 2;
+    const canSpin = motion.spin !== false;
+    const LEAN = 20 * rad;
     let hovered = false, hoverAt = 0, t = 0, spin = 0, raf = 0, last = 0;
+    let lean = 0, leanTarget = 0;
     const draw = (yaw, pitch) => {
         const svg = card.querySelector('.room-float-preview > svg');
         if (!svg) return false;
@@ -1138,22 +1143,27 @@ export function attachIsoTilt(card, room, opts = {}) {
         last = now;
         t = ease(t, hovered ? 1 : 0, dt, TILT.easeMs);
         // Steady speed the whole time it spins: no speeding up or slowing down.
-        const spinning = hovered && now - hoverAt > TILT.spinAfterMs;
-        if (hovered) {
+        const spinning = canSpin && hovered && now - hoverAt > TILT.spinAfterMs;
+        // No-spin cards lean toward the pointer instead, easing to it.
+        lean = ease(lean, hovered ? leanTarget : 0, dt, 180);
+        if (!canSpin) {
+            // nothing to turn
+        } else if (hovered) {
             if (spinning) spin += (TAU / TILT.spinTurnMs) * dt;
         } else {
             // Turn back the short way to the nearest full turn.
             spin = ease(spin, Math.round(spin / TAU) * TAU, dt, TILT.homeEaseMs);
         }
         const home = Math.abs(spin - Math.round(spin / TAU) * TAU);
-        if (!hovered && t < 0.003 && home < 0.002) {
-            t = 0; spin = 0; raf = 0;
+        if (!hovered && t < 0.003 && home < 0.002 && Math.abs(lean) < 0.002) {
+            t = 0; spin = 0; lean = 0; raf = 0;
             draw(0, 0); // the exact resting drawing
             return;
         }
         // Full size at every angle: the room may draw past its frame while it
         // turns (the <svg> and its card are overflow: visible).
-        if (!draw(TILT.yaw * t * rad + spin, TILT.pitch * t * rad)) { raf = 0; return; }
+        const yaw = canSpin ? TILT.yaw * t * rad + spin : lean;
+        if (!draw(yaw, TILT.pitch * t * rad)) { raf = 0; return; }
         raf = requestAnimationFrame(tick);
     };
     card.addEventListener('pointerenter', (e) => {
@@ -1162,7 +1172,14 @@ export function attachIsoTilt(card, room, opts = {}) {
         hoverAt = performance.now();
         if (!raf) { last = hoverAt; raf = requestAnimationFrame(tick); }
     });
-    card.addEventListener('pointerleave', () => { hovered = false; });
+    card.addEventListener('pointermove', (e) => {
+        if (canSpin || e.pointerType === 'touch') return;
+        const box = card.getBoundingClientRect();
+        const dx = (e.clientX - box.left) / box.width - 0.5;   // -0.5 … 0.5
+        // The room's near side turns toward the pointer.
+        leanTarget = -dx * 2 * LEAN;
+    });
+    card.addEventListener('pointerleave', () => { hovered = false; leanTarget = 0; });
 }
 
 export function renderProjectRoomPreview(room) {

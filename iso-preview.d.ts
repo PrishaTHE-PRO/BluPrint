@@ -7,4 +7,4 @@ export function renderRoomPreviewFlat(room: unknown, options?: unknown): string;
 export function renderProjectRoomPreview(room: unknown): string;
 export function getRoomPreviewLayout(room: unknown): unknown;
 export function escapeHtml(value: unknown): string;
-export function attachIsoTilt(card: Element, room: unknown, options?: unknown): void;
+export function attachIsoTilt(card: Element, room: unknown, options?: unknown, motion?: { spin?: boolean }): void;

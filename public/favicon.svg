@@ -1,7 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <rect width="32" height="32" rx="8" fill="#2f6f8f"/>
-  <g stroke="#ffffff" stroke-opacity="0.16" stroke-width="1">
-    <path d="M8 0v32M16 0v32M24 0v32M0 8h32M0 16h32M0 24h32"/>
+  <!-- BluPrint tab icon: light-mode light blue (#b8d4e8), deepening to a darker
+       blue toward the top right, under a teal
+       blueprint grid, with a white B in Supreme Bold on top (traced from the
+       font so it needs no font to render). -->
+  <defs>
+    <radialGradient id="ombre" cx="32" cy="0" r="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b8fbd"/>
+      <stop offset="1" stop-color="#b8d4e8" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="r"><rect width="32" height="32" rx="8"/></clipPath></defs>
+  <g clip-path="url(#r)">
+    <rect width="32" height="32" fill="#b8d4e8"/>
+    <rect width="32" height="32" fill="url(#ombre)"/>
+    <g stroke="#3f8fa3" fill="none">
+      <path stroke-opacity="0.22" stroke-width="0.5" d="M4 0v32M12 0v32M20 0v32M28 0v32M0 4h32M0 12h32M0 20h32M0 28h32"/>
+      <path stroke-opacity="0.5" stroke-width="0.75" d="M8 0v32M16 0v32M24 0v32M0 8h32M0 16h32M0 24h32"/>
+    </g>
   </g>
-  <path fill="#ffffff" fill-rule="evenodd" d="M9 7h4v18.5H9z M13 7h5.5a4.5 4.5 0 0 1 0 9H13z M13 10h5a1.5 1.5 0 0 1 0 3h-5z M13 16h6.5a4.75 4.75 0 0 1 0 9.5H13z M13 19h6a1.75 1.75 0 0 1 0 3.5h-6z"/>
+  <path fill="#ffffff" transform="translate(7.321 25.000) scale(0.02571 -0.02571)" d="M90 0H350C488 0 585 67 585 195V220C585 294 547 344 478 370C525 395 553 435 553 491V517C553 636 469 700 320 700H90ZM312 595C392 595 429 565 429 513V492C429 442 392 409 315 409H211V595ZM340 311C421 311 461 276 461 219V199C461 143 421 105 340 105H211V311Z"/>
 </svg>

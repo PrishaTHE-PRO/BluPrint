@@ -211,13 +211,15 @@ function renderLoginRoomMockups() {
 
     if (!room) return;
 
-    // Same sketch, floating glow and hover spin as the dashboard room cards:
+    // Same sketch and floating glow as the dashboard room cards:
     // attachIsoTilt redraws the <svg> inside .room-float-preview each frame.
     const sized = { ...room, _id: `${room._id}-${index}` };
     const opts = { floorLabel: `${room.widthFt * room.lengthFt} sq ft` };
     card.innerHTML = `<div class="room-float-preview">${renderRoomPreview(sized, opts)}</div>`;
     card.classList.add('is-rendered');
-    attachIsoTilt(card, sized, opts);
+    // No full spin here: on the sign-in page it pulled focus from the form.
+    // The room leans toward the pointer instead.
+    attachIsoTilt(card, sized, opts, { spin: false });
   });
 }
 

@@ -122,19 +122,19 @@
       color: var(--ink);
       line-height: 1;
     }
-    /* Logo in Nippo Medium, like the app pages' wordmark. */
+    /* Logo in Supreme Bold, like the app pages' wordmark. */
     @font-face {
-      font-family: 'Nippo';
-      src: url('/fonts/Nippo-Medium.woff2') format('woff2'),
-           url('/fonts/Nippo-Medium.woff') format('woff');
-      font-weight: 500;
+      font-family: 'Supreme';
+      src: url('/fonts/Supreme-Bold.woff2') format('woff2'),
+           url('/fonts/Supreme-Bold.woff') format('woff');
+      font-weight: 700;
       font-style: normal;
       font-display: swap;
     }
     .brand .brand-name {
-      font-family: 'Nippo', "DM Sans", sans-serif;
+      font-family: 'Supreme', "DM Sans", sans-serif;
       font-size: 22px;
-      font-weight: 500;
+      font-weight: 700;
       letter-spacing: 0;
       text-transform: none;
     }
@@ -934,6 +934,18 @@
        Nav bar: same look as the signed-in app nav (.app-nav in
        design-system.css), which this page doesn't load. Keep in sync.
        ------------------------------------------------------------------ */
+    /* Page transition: the same cross-fade the signed-in pages get from
+       design-system.css, so going to About us (or back) eases over instead
+       of cutting. Both pages must opt in. The nav carries the same
+       view-transition-name as the app nav, so it glides into place rather
+       than fading with the page. */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root) { animation: 180ms ease both bp-page-out; }
+    ::view-transition-new(root) { animation: 360ms cubic-bezier(.25, .46, .45, .94) both bp-page-in; }
+    @keyframes bp-page-out { to { opacity: 0; } }
+    @keyframes bp-page-in { from { opacity: 0; } }
+    .app-nav { view-transition-name: app-navigation; }
+
     .app-nav {
       --bp-surface: #fefcfa; --bp-ink: #1c1714; --bp-muted: #6b7480;
       --bp-primary: #2f6f8f; --bp-primary-dark: #245a72; --bp-soft: #e9ecf0; --bp-border: rgba(28, 23, 20, .08);
@@ -965,7 +977,7 @@
     .app-nav a { color: inherit; text-decoration: none; }
     .app-brand { display: flex; align-items: center; flex: 0 0 auto; transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
     .app-brand:hover { transform: translateY(-2px) scale(1.05); }
-    .app-brand > span { font-family: 'Nippo', "DM Sans", sans-serif; font-size: 22px; font-weight: 500; line-height: 1; color: var(--bp-ink); }
+    .app-brand > span { font-family: 'Supreme', "DM Sans", sans-serif; font-size: 22px; font-weight: 700; line-height: 1; color: var(--bp-ink); }
     .app-nav-links { display: flex; align-items: center; gap: 3px; }
     .app-nav-links > a {
       display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9px;

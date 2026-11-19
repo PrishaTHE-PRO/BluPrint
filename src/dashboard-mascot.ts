@@ -4,6 +4,9 @@
 
 // Teal shades from the site palette, light to deep.
 const COLORS = ['#2f6f8f', '#4b8dbf', '#7ea8c9', '#3f8fa3', '#5fb3c4'];
+// Dark mode: the same five, each a step lighter so they read on the dark page
+// (built around the #86c5d1 dark accent).
+const DARK_COLORS = ['#6fa9c8', '#8ab8de', '#b6d3ea', '#86c5d1', '#a6dbe5'];
 
 // page-mascot's squash: per-keyframe easing on a linear effect.
 const SQUASH: Keyframe[] = [
@@ -38,12 +41,13 @@ if (wrap && still) {
     const oy = box.top - host.top + box.height * 0.45;
     const n = big ? 26 : 14;
     const still_ = reduced();
+    const palette = document.documentElement.classList.contains('dark-mode') ? DARK_COLORS : COLORS;
 
     for (let i = 0; i < n; i++) {
       const el = document.createElement('iconify-icon');
       el.className = 'mascot-burst__icon';
       el.setAttribute('icon', 'ph:sparkle-fill');
-      el.style.color = COLORS[(i * 3) % COLORS.length];
+      el.style.color = palette[(i * 3) % palette.length];
       el.style.left = `${ox}px`;
       el.style.top = `${oy}px`;
       el.style.fontSize = `${14 + Math.random() * (big ? 16 : 10)}px`;

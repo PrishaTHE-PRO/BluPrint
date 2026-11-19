@@ -25,16 +25,22 @@ function useDarkMode() {
   return dark;
 }
 
+// Dark mode tints the linework slightly teal (a pale step of the #86c5d1
+// accent); light mode keeps it white.
+const LINE = { light: '#ffffff', dark: '#c6e7ed' };
+
 function BlueprintBackground() {
-  const ripple = useDarkMode() ? RIPPLE.dark : RIPPLE.light;
+  const dark = useDarkMode();
+  const ripple = dark ? RIPPLE.dark : RIPPLE.light;
+  const line = dark ? LINE.dark : LINE.light;
   return (
     <CursorGrid
       patternUrl={blueprintPattern}
       patternMask="white-on-blue"
       patternFit="cover"
       cellSize={60}
-      color="#ffffff"
-      gridColor="#ffffff"
+      color={line}
+      gridColor={line}
       highlight="area"
       gridStyle="lines"
       radius={140}

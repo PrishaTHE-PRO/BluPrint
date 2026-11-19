@@ -58,16 +58,19 @@ const DRAG_PITCH = 0.3 * RAD;        // per pixel dragged up or down
 const RESUME_AFTER_MS = 2200;        // idle turn picks back up this long after a drag
 
 function mount(card) {
+  // The slot is sized in CSS to the sketch's proportions before this runs, so
+  // nothing shifts (and no stale drawing shows) when the room appears.
+  const slot = card.querySelector('.about-sketch-slot') || card;
   const draw = (yaw, pitch) => {
     const tpl = document.createElement('template');
     tpl.innerHTML = (renderIsoRoom(ROOM, { ...OPTS, view: { yaw, pitch } }) || '').trim();
     const fresh = tpl.content.firstElementChild;
     if (!fresh) return;
-    let svg = card.querySelector('svg');
+    let svg = slot.querySelector('svg');
     if (!svg) {
       fresh.setAttribute('aria-hidden', 'true');
       fresh.removeAttribute('role');
-      card.replaceChildren(fresh);
+      slot.replaceChildren(fresh);
       return;
     }
     svg.setAttribute('viewBox', fresh.getAttribute('viewBox'));

@@ -4956,21 +4956,21 @@ html.dark-mode body.page-login .login-room-type-track span { color: #2f6f8f; }
 html.dark-mode body.page-login .login-room-copy-banner strong { color: #f3f7fa; }
 html.dark-mode body.page-login .login-room-copy-banner span { color: rgba(243, 247, 250, .78); }
 
-/* Logo: the top-left BluPrint wordmark is set in Nippo Medium
+/* Logo: the top-left BluPrint wordmark is set in Supreme Bold
    (self-hosted from public/fonts, ITF Free Font License). */
 @font-face {
-  font-family: 'Nippo';
-  src: url('/fonts/Nippo-Medium.woff2') format('woff2'),
-       url('/fonts/Nippo-Medium.woff') format('woff');
-  font-weight: 500;
+  font-family: 'Supreme';
+  src: url('/fonts/Supreme-Bold.woff2') format('woff2'),
+       url('/fonts/Supreme-Bold.woff') format('woff');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 html body .app-brand.app-brand > span,
 html body .bp-wordmark-rest {
-  font-family: 'Nippo', "DM Sans", sans-serif !important;
+  font-family: 'Supreme', "DM Sans", sans-serif !important;
   font-size: 22px !important;
-  font-weight: 500 !important;
+  font-weight: 700 !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
   line-height: 1;
@@ -6401,7 +6401,7 @@ html.dark-mode .page-inspo .inspo-budget__unlimited[aria-pressed="true"] {
 /* About hero: the plan card holds the interactive 3D room sketch
    (src/about-sketch.js). It sits level, so turning the room reads cleanly,
    and the drawing may swing past the card's edge while it turns. */
-.about-plan-card.is-sketch {
+.about-plan-card[data-about-sketch] {
   position: relative;
   transform: none;
   padding: 22px;
@@ -6411,6 +6411,11 @@ html.dark-mode .page-inspo .inspo-budget__unlimited[aria-pressed="true"] {
   user-select: none;
   -webkit-user-select: none;
 }
-.about-plan-card.is-sketch.is-dragging { cursor: grabbing; }
-.about-plan-card.is-sketch:focus-visible { outline: 2px solid var(--bp-primary); outline-offset: 4px; }
-.about-plan-card.is-sketch svg { overflow: visible; pointer-events: none; }
+.about-plan-card[data-about-sketch].is-dragging { cursor: grabbing; }
+.about-plan-card[data-about-sketch]:focus-visible { outline: 2px solid var(--bp-primary); outline-offset: 4px; }
+.about-plan-card[data-about-sketch] svg { width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+/* Holds the sketch's exact proportions (its viewBox is 623 × 494) from the
+   first paint, before the script draws into it. */
+.about-sketch-slot { aspect-ratio: 623 / 494; }
+.about-sketch-slot > svg { animation: about-sketch-in .35s ease both; }
+@keyframes about-sketch-in { from { opacity: 0; } }
