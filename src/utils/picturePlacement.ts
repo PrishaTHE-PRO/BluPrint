@@ -1,12 +1,25 @@
 import type { FurnitureItem } from '../types';
 import {
   clampFurniturePosition,
+  furnitureBounds,
   overlapsForbiddenZone,
   pieceSizeFt,
   resolveFurniturePlacement,
   type ForbiddenRect,
   type PosFt,
 } from './furnitureConstraints';
+
+/** Floor area, in square feet, that a piece at this spot shares with the zones. */
+function sharedArea(position: PosFt, item: FurnitureItem, rotation: number, zones: ForbiddenRect[]): number {
+  const b = furnitureBounds(position, item, rotation, 1);
+  let total = 0;
+  for (const z of zones) {
+    const w = Math.min(b.maxX, z.maxX) - Math.max(b.minX, z.minX);
+    const d = Math.min(b.maxY, z.maxY) - Math.max(b.minY, z.minY);
+    if (w > 0 && d > 0) total += w * d;
+  }
+  return total;
+}
 
 export interface PicturePlacement {
   positions: Record<string, PosFt>;
@@ -19,8 +32,14 @@ export interface PicturePlacement {
 
 /**
  * The nearest clear spot along the wall a piece stands against, up to a few
- * feet either way, or null when there is none. The coordinate across the
- * wall is left as the picture had it, so the piece stays flush.
+ * feet either way. The coordinate across the wall is left as the picture
+ * had it, so the piece stays flush. When nothing along the wall is fully
+ * clear (a bed, a nightstand and a dresser drawn at their default sizes can
+ * add up to more than the wall), the spot that overlaps least is returned
+ * as long as the overlap is small, since a dresser a few inches into the
+ * bed's footprint still reads as "on that wall, beside the bed", whereas
+ * the free-spot search sends it into the middle of the room. Null when even
+ * that is not on.
  */
 export function slideAlongWall(
   position: PosFt,
@@ -33,6 +52,9 @@ export function slideAlongWall(
 ): PosFt | null {
   const alongX = wall === 'back wall' || wall === 'front wall';
   const step = 0.2;
+  const { wFt, dFt } = pieceSizeFt(item, 1);
+  let best: PosFt | null = null;
+  let bestShared = sharedArea(position, item, rotation, zones);
   for (let offset = step; offset <= 8; offset += step) {
     for (const sign of [1, -1]) {
       const candidate = alongX
@@ -42,8 +64,12 @@ export function slideAlongWall(
       // Clamping may have pulled it back onto the same spot; skip those.
       if (Math.abs((alongX ? clamped.x : clamped.y) - (alongX ? position.x : position.y)) < step / 2) continue;
       if (!overlapsForbiddenZone(clamped, item, rotation, zones, 1)) return clamped;
+      const shared = sharedArea(clamped, item, rotation, zones);
+      if (shared < bestShared - 1e-6) { best = clamped; bestShared = shared; }
     }
   }
+  // Up to a fifth of the footprint shared is a tight fit, not a clash.
+  if (bestShared <= 0.2 * wFt * dFt) return best ?? position;
   return null;
 }
 
