@@ -608,6 +608,13 @@ const COMPANION_OF = {
   desk_lamp: ["desk", "workspace_desk"],
   floor_lamp: ["sofa", "accent_chair", "reading_nook", "bed"],
 };
+// Small pieces that stand ON another: when that piece is in the plan and
+// close by, the lamp takes its centre rather than a spot on the floor.
+const SITS_ON = {
+  bedside_lamp: ["nightstand"],
+  desk_lamp: ["desk", "workspace_desk"],
+  monitor_stand: ["desk", "workspace_desk"],
+};
 
 /**
  * Second pass over the plan: a companion whose reading named a different
@@ -623,13 +630,33 @@ function keepCompanionsOnTheirWall({ placed, hotspots, products, layout, W, L, y
     return String(product.kind || category).toLowerCase();
   };
   const wallOf = new Map();
-  placed.forEach((pl) => { if (pl.touching && pl.touching !== "none") wallOf.set(kindOf(pl.category), pl.touching); });
+  const placedOf = new Map();
+  placed.forEach((pl) => {
+    if (pl.touching && pl.touching !== "none") wallOf.set(kindOf(pl.category), pl.touching);
+    placedOf.set(kindOf(pl.category), pl);
+  });
 
   return placed.map((pl, i) => {
     const kind = kindOf(pl.category);
-    const anchors = COMPANION_OF[kind];
     const read = layout.get(pl.category);
-    if (!anchors || !read) return pl;
+    if (!read) return pl;
+    const surface = (SITS_ON[kind] || []).map((a) => placedOf.get(a)).find(Boolean);
+    if (surface && Math.hypot(surface.cx - pl.cx, surface.cy - pl.cy) <= 3) {
+      console.log(`[plan] ${pl.category}: placed on the ${kindOf(surface.category)}`);
+      const product = byCategory.get(pl.category) || {};
+      const wFt = Math.max(0.5, (Number(product.widthIn) || 30) / 12);
+      const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
+      return {
+        ...pl,
+        cx: surface.cx, cy: surface.cy,
+        x: Math.round(Math.max(0, surface.cx - wFt / 2) * 10) / 10,
+        y: Math.round(Math.max(0, surface.cy - dFt / 2) * 10) / 10,
+        rotation: surface.rotation ?? pl.rotation,
+        touching: surface.touching,
+      };
+    }
+    const anchors = COMPANION_OF[kind];
+    if (!anchors) return pl;
     const anchorWall = anchors.map((a) => wallOf.get(a)).find(Boolean);
     if (!anchorWall || pl.touching === anchorWall) return pl;
     const product = byCategory.get(pl.category) || {};

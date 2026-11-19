@@ -685,10 +685,17 @@ export default function RoomSVG({
       return { ...g, x, y, wFt: w, dFt: d };
     });
   }, [ghostFurniture, room, roomLayout]);
-  const ghostZones = useMemo<ForbiddenRect[]>(
-    () => ghostRects.map((g) => ({ minX: g.x, minY: g.y, maxX: g.x + g.wFt, maxY: g.y + g.dFt })),
-    [ghostRects],
-  );
+  // The existing pieces as no-go zones, with the same exceptions as placed
+  // furniture: a rug runs under the bed that is already there, art hangs
+  // above the dresser that is already there, a lamp sits on the nightstand.
+  // Treating every ghost as solid for everything pushed the rug out from
+  // under the bed and the dresser out of its corner.
+  const ghostZonesFor = useCallback((category: string): ForbiddenRect[] => {
+    if (isFloorCovering(category)) return [];
+    return ghostRects
+      .filter((g) => !isFloorCovering(g.category) && !canStackTogether(category, g.category))
+      .map((g) => ({ minX: g.x, minY: g.y, maxX: g.x + g.wFt, maxY: g.y + g.dFt }));
+  }, [ghostRects]);
 
   // Seed from a saved layout exactly once — re-validate against room/cutouts
   // so restored placements cannot sit in holes or outside the room.
@@ -741,7 +748,7 @@ export default function RoomSVG({
         rotation,
         widthFt,
         lengthFt,
-        [...archZones, ...ghostZones, ...occupied],
+        [...archZones, ...ghostZonesFor(item.category), ...occupied],
         scale,
       );
       nextPositions[item.category] = resolved.position;
@@ -751,7 +758,7 @@ export default function RoomSVG({
     setPositions(nextPositions);
     setRotations(nextRotations);
     setScales(nextScales);
-  }, [initialPlacement, furniture, room, roomLayout, ghostZones]);
+  }, [initialPlacement, furniture, room, roomLayout, ghostZonesFor]);
 
   // Apply positions pushed in from outside (the plan matching a render).
   // Unlike the seed this runs every time the key changes, and only for the
@@ -778,7 +785,7 @@ export default function RoomSVG({
           nextRotations[item.category] ?? defaultRotation(item.category),
           widthFt,
           lengthFt,
-          [...archZones, ...ghostZones, ...occupied],
+          [...archZones, ...ghostZonesFor(item.category), ...occupied],
           1,
         );
         nextPositions[item.category] = resolved.position;
@@ -786,7 +793,7 @@ export default function RoomSVG({
       if (applyPlacement.rotations) setRotations(nextRotations);
       return nextPositions;
     });
-  }, [applyPlacement, furniture, room, roomLayout, rotations, ghostZones]);
+  }, [applyPlacement, furniture, room, roomLayout, rotations, ghostZonesFor]);
 
   // Report placement upward so Save Layout can capture it.
   useEffect(() => {
