@@ -5478,8 +5478,11 @@ html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { backgro
 .page-result .shop-card__row { display: flex; align-items: center; gap: 6px; }
 .page-result .shop-card__price {
   flex: 1;
-  font-family: 'Instrument Serif', 'Fraunces', serif;
-  font-size: 28px;
+  /* Same face as the dashboard's "sq ft drawn" number. */
+  font-family: "DM Sans", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -.02em;
   line-height: 1;
   color: var(--bp-ink);
 }
