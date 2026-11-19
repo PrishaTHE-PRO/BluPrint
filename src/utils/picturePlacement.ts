@@ -10,6 +10,8 @@ import {
 
 export interface PicturePlacement {
   positions: Record<string, PosFt>;
+  /** Centres in feet; when given, the corner is worked out from the plan's own piece size. */
+  centers?: Record<string, PosFt>;
   rotations?: Record<string, number>;
   /** The wall each piece stands against in the picture, when it does. */
   walls?: Record<string, string>;
@@ -72,8 +74,16 @@ export function settlePicturePlacement(args: {
   const positions: Record<string, PosFt> = { ...prevPositions };
   const rotations = { ...args.rotations, ...(placement.rotations || {}) };
 
-  const pushed = furniture.filter((item) => placement.positions[item.category]);
-  for (const item of pushed) positions[item.category] = placement.positions[item.category];
+  const pushed = furniture.filter((item) => placement.positions[item.category] || placement.centers?.[item.category]);
+  for (const item of pushed) {
+    const center = placement.centers?.[item.category];
+    if (center) {
+      const { wFt, dFt } = pieceSizeFt(item, 1);
+      positions[item.category] = { x: center.x - wFt / 2, y: center.y - dFt / 2 };
+    } else {
+      positions[item.category] = placement.positions[item.category];
+    }
+  }
 
   const area = (item: FurnitureItem) => { const { wFt, dFt } = pieceSizeFt(item, 1); return wFt * dFt; };
   for (const item of [...pushed].sort((a, b) => area(b) - area(a))) {

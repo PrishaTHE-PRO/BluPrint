@@ -561,9 +561,13 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
     const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
     const wall = WALL_MOUNTED.has(kind);
 
-    // The picture pass, when it placed this piece, wins over the geometry.
+    // The picture pass, when it placed this piece, wins over the geometry,
+    // checked along the back wall against where its box is in the frame.
     const read = layout instanceof Map ? layout.get(h.category) : null;
-    if (read) return placementFromReading({ h, read, kind, wall, wFt, dFt, W, L, yBack: floor ? yBack : null });
+    if (read) {
+      const checked = reconcileWithFrame({ h, read, wall, f, W });
+      return placementFromReading({ h, read: checked, kind, wall, wFt, dFt, W, L, yBack: floor ? yBack : null });
+    }
 
     const px = h.x + h.w / 2;
     // Floor contact: the bottom of the box, unless the piece hangs on a wall.
@@ -596,6 +600,35 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
   });
 
   return keepCompanionsOnTheirWall({ placed, hotspots, products, layout, W, L, yBack: floor ? yBack : null });
+}
+
+/**
+ * The layout pass reads absolute feet off the picture and gets the wall and
+ * the order right far more often than the number: a bookcase plainly left
+ * of the TV in the frame came back as 12 ft from the left of a 14 ft wall.
+ * Along the back wall the frame is the better witness. A piece on the back
+ * wall whose reading is far from where its box sits in the frame takes the
+ * frame's x, and a hung piece called "on the right wall" while its box is
+ * inside the back wall's span hangs on the back wall.
+ */
+function reconcileWithFrame({ h, read, wall, f, W }) {
+  const px = h.x + h.w / 2;
+  const span = f.backRight.x - f.backLeft.x;
+  // A floor line covering under half the frame was read only where it shows
+  // between the furniture; the back wall itself runs on to the picture's edges.
+  const [xl, xr] = span >= 0.5 ? [f.backLeft.x, f.backRight.x] : [0.03, 0.97];
+  const frameCx = Math.min(W, Math.max(0, ((px - xl) / Math.max(0.05, xr - xl)) * W));
+  let out = read;
+  if (wall && read.touching === "right wall" && px < xr - 0.04) out = { ...out, touching: "back wall", facing: "camera" };
+  else if (wall && read.touching === "left wall" && px > xl + 0.04) out = { ...out, touching: "back wall", facing: "camera" };
+  if (out.touching !== read.touching) {
+    console.log(`[plan] ${h.category}: hangs inside the back wall's span, so on the back wall rather than the ${read.touching}`);
+  }
+  if ((out.touching === "back wall" || wall) && Number.isFinite(out.cx) && Math.abs(out.cx - frameCx) > 0.25 * W) {
+    console.log(`[plan] ${h.category}: read ${Number(out.cx).toFixed(1)} ft from left but sits ${frameCx.toFixed(1)} ft along the frame; using the frame`);
+    out = { ...out, cx: Math.round(frameCx * 10) / 10 };
+  }
+  return out;
 }
 
 // A piece that stands beside another: the wall it is on is the wall its

@@ -127,6 +127,19 @@ export default function RoomResult() {
   // stops offering a button that has nothing further to trim.
   const [underBudgetTried, setUnderBudgetTried] = useState(false);
   const [linkedCategory,   setLinkedCategory]   = useState<string | null>(null);
+  // Set by a click on a floor plan piece: its card scrolls into view and
+  // pulses, then the pulse is cleared so the next click can play it again.
+  const [pickedCategory,   setPickedCategory]   = useState<string | null>(null);
+  const pickTimer = useRef<number | null>(null);
+  const revealFurnitureCard = useCallback((category: string) => {
+    const card = document.querySelector<HTMLElement>(`.shop-card[data-furniture-card="${CSS.escape(category)}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    if (pickTimer.current) window.clearTimeout(pickTimer.current);
+    setPickedCategory(null);
+    window.requestAnimationFrame(() => setPickedCategory(category));
+    pickTimer.current = window.setTimeout(() => setPickedCategory(null), 1600);
+  }, []);
   const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const [loading,          setLoading]          = useState(true);
   // Step 3 needs a room with a style. gateWorkflow() sends the visitor back
@@ -693,6 +706,7 @@ export default function RoomResult() {
   const [planOverride, setPlanOverride] = useState<{
     key: number;
     positions: Record<string, { x: number; y: number }>;
+    centers: Record<string, { x: number; y: number }>;
     rotations: Record<string, number>;
     walls: Record<string, string>;
   } | null>(null);
@@ -707,15 +721,23 @@ export default function RoomResult() {
     const placements = Array.isArray(render.placements) ? render.placements : [];
     if (placements.length === 0) return;
     const positions: Record<string, { x: number; y: number }> = {};
+    const centers: Record<string, { x: number; y: number }> = {};
     const rotations: Record<string, number> = {};
     const walls: Record<string, string> = {};
     for (const p of placements) {
       if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
       positions[p.category] = { x: p.x, y: p.y };
+      // The server's corner assumes its own idea of the piece's size. The
+      // plan draws the piece at its own size, so it places the centre and
+      // works the corner out itself; a rug landed a half room to the right
+      // when the corner was taken as given.
+      if (typeof p.cx === 'number' && typeof p.cy === 'number' && Number.isFinite(p.cx) && Number.isFinite(p.cy)) {
+        centers[p.category] = { x: p.cx, y: p.cy };
+      }
       if (Number.isFinite(p.rotation)) rotations[p.category] = p.rotation as number;
       if (p.touching && p.touching !== 'none') walls[p.category] = p.touching;
     }
-    setPlanOverride({ key: Date.now(), positions, rotations, walls });
+    setPlanOverride({ key: Date.now(), positions, centers, rotations, walls });
   }, []);
 
   // Match plan to picture: re-runs only the locate passes on the existing
@@ -1092,6 +1114,7 @@ export default function RoomResult() {
           onLinkCategory={setLinkedCategory}
           hiddenCategories={hiddenCategories}
           onToggleInRoom={handleToggleInRoom}
+          pickedCategory={pickedCategory}
           onGenerateUnderBudget={handleGenerateUnderBudget}
           underBudgetTried={underBudgetTried}
           notice={furnitureNotice}
@@ -1103,6 +1126,7 @@ export default function RoomResult() {
               roomLayout={savedLayout}
               linkedCategory={linkedCategory}
               onLinkCategory={setLinkedCategory}
+              onPick={revealFurnitureCard}
               onRemove={handleRemoveFromRoom}
               initialPlacement={initialPlacement}
               applyPlacement={planOverride}

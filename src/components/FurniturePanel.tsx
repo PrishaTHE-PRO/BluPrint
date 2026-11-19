@@ -15,6 +15,8 @@ interface Props {
   onLinkCategory?:  (category: string | null) => void;
   hiddenCategories: Set<string>;
   onToggleInRoom:   (category: string) => void;
+  /** The piece just clicked on the floor plan; its card pulses. */
+  pickedCategory?:  string | null;
   /** Re-runs the search, trimming pieces until the set actually fits. */
   onGenerateUnderBudget?: () => void;
   /** True once a trim-to-fit run has already been tried for this room. */
@@ -35,6 +37,7 @@ export default function FurniturePanel({
   onLinkCategory,
   hiddenCategories,
   onToggleInRoom,
+  pickedCategory = null,
   notice = null,
 }: Props) {
   // Room order follows the plan (big pieces first); Price is cheapest first.
@@ -55,7 +58,9 @@ export default function FurniturePanel({
   const overBudget = budget > 0 && total > budget;
   const overBy = overBudget ? total - budget : 0;
 
-  // Selecting a piece on the floor plan deliberately does NOT scroll the grid.
+  // Hovering a piece on the floor plan only highlights its card; a click on
+  // a piece scrolls the page to the card and pulses it (see RoomResult).
+  // Hover itself deliberately does NOT scroll the grid.
   // scrollIntoView walks up every scrollable ancestor and yanked the page; the
   // selected card is highlighted through `linkedCategory` where it stands.
 
@@ -70,6 +75,7 @@ export default function FurniturePanel({
       onLinkCategory={onLinkCategory}
       inRoom={!hiddenCategories.has(item.category)}
       onToggleInRoom={() => onToggleInRoom(item.category)}
+      picked={pickedCategory === item.category}
       accent={accentFor.get(item.category)}
     />
   ));
