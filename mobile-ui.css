@@ -830,6 +830,33 @@
     font: 600 14px "DM Sans", sans-serif !important;
     text-align: left !important;
   }
+  /* Room types sit in an even two-column grid so every button is the same
+     size, instead of each chip shrinking to fit its label. */
+  .page-inspo #room-type-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  /* Same selector as the desktop tile rule in design-system.css so these
+     win on phones; the larger desktop label size stays on desktop. */
+  .page-inspo #room-type-grid > .inspo-room {
+    width: 100% !important;
+    font-size: 14px !important;
+  }
+  /* Wild card title follows the 20px section titles on phones. */
+  /* Budget sits in a row wrapper. The wrapper takes the same side and top
+     margins as every other card and the card inside drops its own; a 100%
+     wide card plus 24px side margins would run off the right edge. */
+  .page-inspo .inspo-row {
+    margin: 22px 24px 0 !important;
+    gap: 22px;
+  }
+  .page-inspo .inspo-row > .inspo-card--budget {
+    width: auto !important;
+    margin: 0 !important;
+    padding: 18px 20px !important;
+  }
+  .page-inspo .inspo-wild { gap: 10px; }
+  .page-inspo .inspo-wild__title { font-size: 20px; min-height: 48px; padding: 10px 56px; }
   /* Style chips carry a name and a description: stack them instead of
      running them together on one line. */
   .page-inspo #style-grid > * {
@@ -839,6 +866,33 @@
     gap: 2px;
     padding: 9px 16px !important;
   }
+  /* Style, mood, feature and bath fixture options: an even two-column grid
+     with rows of equal height, so a long label ("Wall Art / Gallery Wall")
+     wraps inside its button instead of making it wider than its
+     neighbours. */
+  .page-inspo #style-grid,
+  .page-inspo #mood-grid,
+  .page-inspo #feature-grid,
+  .page-inspo #bath-fixture-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: 1fr;
+  }
+  .page-inspo #step-2 #style-grid > .option-btn,
+  .page-inspo #step-2 #mood-grid > .option-btn,
+  .page-inspo #step-2 #feature-grid > .option-btn,
+  .page-inspo #step-2 #bath-fixture-grid > .option-btn {
+    width: 100% !important;
+    min-width: 0;
+    min-height: 52px;
+    padding: 10px 14px !important;
+    line-height: 1.25;
+  }
+  /* Back and Analyze: same side margins as the cards above them. */
+  /* Step 1 Next and step 2 Back/Analyze sit on the background, outside the
+     cards: same side margins as the cards so they line up. */
+  .page-inspo .inspo-step1-nav,
+  .page-inspo .inspo-step2-nav { margin: 22px 24px 0 !important; gap: 12px; }
   /* Colour swatches: equal columns so every button is the same size. */
   .page-inspo #color-grid {
     display: grid !important;

@@ -249,9 +249,13 @@ const CEIL_ITEMS = new Set(['pendant']);
 export function createRoomViewer(container, opts = {}) {
   const P = pal(opts.style);
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(opts.background || 0xf2efe9);
+  // background: 'transparent' leaves the page showing through behind the
+  // room (the landing hero draws its grid there); anything else is a colour.
+  const transparent = opts.background === 'transparent';
+  scene.background = transparent ? null : new THREE.Color(opts.background || 0xf2efe9);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: transparent });
+  if (transparent) renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;

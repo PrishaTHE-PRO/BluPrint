@@ -12,13 +12,42 @@
 import rough from 'roughjs';
 import { renderIsoRoom } from '../iso-preview.js';
 
+// `name` is what the "Style matched" bubble shows; `spend` is the demo
+// room's total for the "On budget" bubble, against a $5,000 budget.
 const STYLES = [
-  { key: 'modern', label: 'Modern' },
-  { key: 'scandinavian', label: 'Scandi' },
-  { key: 'bohemian', label: 'Boho' },
-  { key: 'industrial', label: 'Industrial' },
-  { key: 'minimalist', label: 'Minimal' },
+  { key: 'modern', label: 'Modern', name: 'Warm modern', spend: 4920 },
+  { key: 'scandinavian', label: 'Scandi', name: 'Soft scandi', spend: 4180 },
+  { key: 'bohemian', label: 'Boho', name: 'Earthy boho', spend: 3880 },
+  { key: 'industrial', label: 'Industrial', name: 'Raw industrial', spend: 4460 },
+  { key: 'minimalist', label: 'Minimal', name: 'Clean minimal', spend: 3550 },
 ];
+
+/** Keeps the two bubbles and the side list in step with the chosen style.
+ *  The amount counts up or down to the new total over 600 ms, easing out,
+ *  the same way the estimate does on the results sheet. */
+let shownSpend = STYLES[0].spend;
+let spendFrame = 0;
+function syncNotes(styleKey) {
+  const style = STYLES.find((s) => s.key === styleKey);
+  if (!style) return;
+  const name = document.querySelector('[data-hero-style-name]');
+  if (name) name.textContent = style.name;
+  const amounts = document.querySelectorAll('[data-hero-budget], [data-hero-budget-side]');
+  const from = shownSpend;
+  const to = style.spend;
+  const startedAt = performance.now();
+  cancelAnimationFrame(spendFrame);
+  const step = (now) => {
+    // A frame's timestamp can sit a hair before performance.now() did, so
+    // clamp both ends or the first frame overshoots the wrong way.
+    const k = Math.max(0, Math.min(1, (now - startedAt) / 600));
+    const eased = 1 - Math.pow(1 - k, 3);
+    shownSpend = Math.round(from + (to - from) * eased);
+    for (const el of amounts) el.textContent = '$' + shownSpend.toLocaleString();
+    if (k < 1) spendFrame = requestAnimationFrame(step);
+  };
+  spendFrame = requestAnimationFrame(step);
+}
 
 // A small, believable living room. x/y are FEET from the room's top-left, the
 // same convention as PlacementPos in the app, so this goes through the exact
@@ -124,16 +153,12 @@ export function initHero3D() {
     if (shouldSpin) viewer.requestFrame();
   }
 
-  // The scene clears to a solid colour, so it has to follow the page theme —
-  // a cream room floating in a dark page reads as a bug. Matches the
-  // html.dark-mode .canvas background in index.html.
-  const sceneBackground = () =>
-    document.documentElement.classList.contains('dark-mode') ? 0x131b24 : 0xf6f2ec;
-
   function mount(style) {
     currentStyle = style;
     viewer?.dispose?.();
-    viewer = mod.createRoomViewer(stage, { style, background: sceneBackground() });
+    // No scene colour: the canvas behind it carries the grid paper, which
+    // already follows the page theme in CSS.
+    viewer = mod.createRoomViewer(stage, { style, background: 'transparent' });
     viewer.controls.autoRotateSpeed = 0.55;
     viewer.controls.enableZoom = false;   // the hero must never eat page scroll
     viewer.controls.addEventListener('start', () => {
@@ -171,18 +196,11 @@ export function initHero3D() {
           el.classList.toggle('is-active', active);
           el.setAttribute('aria-pressed', active ? 'true' : 'false');
         }
+        syncNotes(button.dataset.style);
         // The palette is baked in at construction, so swap the whole viewer
         // rather than trying to repaint every material in place.
         mount(button.dataset.style);
       });
-
-      // Re-mount on a theme toggle so the scene background tracks the page.
-      // Toggling is rare enough that rebuilding the scene is cheaper than
-      // wiring a live background setter through the viewer.
-      new MutationObserver(() => {
-        const wanted = sceneBackground();
-        if (viewer?.scene?.background?.getHex() !== wanted) mount(currentStyle);
-      }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     });
   };
 
