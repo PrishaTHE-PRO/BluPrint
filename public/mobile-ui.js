@@ -257,6 +257,10 @@
         // turned by the same angle. offsetLeft ignores the translate/rotate we
         // apply, so measuring never feeds back into itself.
         var STEP_DEG = 38;          // how far round the cylinder each room sits
+        // Past this angle the curve folds back on itself: sin() stops growing,
+        // so the third, fourth and fifth rooms all landed on the same spot and
+        // their names piled up. Rooms beyond it keep stepping outward instead.
+        var MAX_DEG = 64;
         var middle = grid.scrollLeft + grid.clientWidth / 2;
         var gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
         cards.forEach(function (card, i) {
@@ -264,10 +268,15 @@
           var d = (card.offsetLeft + card.offsetWidth / 2 - middle) / (step || 1);
           // Smaller radius pulls the side rooms in so they tuck behind the front one.
           var radius = card.offsetWidth * 0.78;
-          var angle = Math.max(-100, Math.min(100, d * STEP_DEG)) * Math.PI / 180;
-          var x = radius * Math.sin(angle) - d * step;   // pull towards the curve
-          var z = -radius * (1 - Math.cos(angle));        // and back into the page
           var a = Math.abs(d);
+          var sign = d < 0 ? -1 : 1;
+          var onCurve = Math.min(a * STEP_DEG, MAX_DEG);
+          var angle = sign * onCurve * Math.PI / 180;
+          // Beyond the curve's end each further room peeks out another fifth
+          // of a card, so they fan out rather than stack.
+          var beyond = Math.max(0, a - MAX_DEG / STEP_DEG) * step * 0.2;
+          var x = radius * Math.sin(angle) + sign * beyond - d * step;   // pull towards the curve
+          var z = -radius * (1 - Math.cos(angle)) - beyond;              // and back into the page
           card.style.setProperty('--deck-x', x.toFixed(1) + 'px');
           card.style.setProperty('--deck-z', z.toFixed(1) + 'px');
           // Negative: the outer edge turns away, so the deck reads as the
@@ -279,13 +288,18 @@
           // faint darkening.
           card.style.setProperty('--deck-scale-y', Math.max(0.84, 1 - 0.1 * a).toFixed(3));
           card.style.setProperty('--deck-dim', Math.max(0.95, 1 - 0.04 * a).toFixed(3));
-          card.style.setProperty('--deck-fade', Math.max(0, Math.min(1, 1.9 - 0.75 * a)).toFixed(3));
+          // Neighbours show, the room after them only faintly, the rest not at all.
+          card.style.setProperty('--deck-fade', Math.max(0, Math.min(1, 1.75 - 0.75 * a)).toFixed(3));
+          // Only the room in front carries its name; a neighbour's name sits
+          // a hand's width away and ran into it. It fades in as the room
+          // swings round to the front.
+          card.style.setProperty('--deck-label', Math.max(0, Math.min(1, 1.3 - 1.3 * a)).toFixed(3));
           card.style.zIndex = String(100 - Math.round(a * 10));
           if (a < best) { best = a; index = i; }
         });
       } else {
         cards.forEach(function (card) {
-          ['--deck-x', '--deck-z', '--deck-turn', '--deck-scale-y', '--deck-dim', '--deck-fade'].forEach(function (p) {
+          ['--deck-x', '--deck-z', '--deck-turn', '--deck-scale-y', '--deck-dim', '--deck-fade', '--deck-label'].forEach(function (p) {
             card.style.removeProperty(p);
           });
           card.style.removeProperty('z-index');

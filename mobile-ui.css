@@ -414,6 +414,8 @@
     will-change: translate, rotate;
   }
   .page-dashboard #projects-grid .garden-card:hover { transform: none; }
+  /* The name belongs to the room in front; mobile-ui.js fades the others out. */
+  .page-dashboard #projects-grid > .garden-card .room-float-label { opacity: var(--deck-label, 1); }
   .page-dashboard #projects-grid .room-float-preview { aspect-ratio: 3 / 2; }
   .page-dashboard #projects-grid h3 {
     font-family: "Fraunces", serif !important;
