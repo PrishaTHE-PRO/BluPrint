@@ -5,6 +5,24 @@ function localToday() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+const BIRTHDAY_MIN = '1900-01-01';
+/** "YYYY-MM-DD" (or a longer year) as a sortable number. Compared as numbers,
+ *  not text: a date input accepts years past 9999, and "12026-01-01" < "2026-11-18" as text. */
+function dateNum(value: string) {
+  const m = /^(\d{4,})-(\d{2})-(\d{2})$/.exec(value);
+  return m ? Number(m[1]) * 10000 + Number(m[2]) * 100 + Number(m[3]) : NaN;
+}
+/** What's wrong with the birthday field, or '' when it's fine (empty is fine).
+ *  Same rules and wording as public/birthday-guard.js. Checked on Save only. */
+function birthdayProblem(input: HTMLInputElement | null, value: string) {
+  if (input?.validity.badInput) return 'Not a valid birthday. Please enter the full date (MM/DD/YYYY).';
+  if (!value) return '';
+  const n = dateNum(value);
+  if (Number.isNaN(n) || n > dateNum(localToday()) || n < dateNum(BIRTHDAY_MIN)) {
+    return 'Not a valid birthday. Please enter a date between 01/01/1900 and today.';
+  }
+  return '';
+}
 import { createPortal } from 'react-dom';
 
 function readStoredName() {
@@ -21,6 +39,8 @@ export default function ProfileMenu() {
     () => localStorage.getItem('blueprintUserBirthday') || '',
   );
   const [saveStatus, setSaveStatus] = useState('');
+  const [birthdayError, setBirthdayError] = useState('');
+  const birthdayRef = useRef<HTMLInputElement>(null);
   const [popupPos, setPopupPos] = useState({ top: 64, right: 12 });
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -89,16 +109,21 @@ export default function ProfileMenu() {
     setNameDraft(localStorage.getItem('blueprintUserName') || name || '');
     setBirthdayDraft(localStorage.getItem('blueprintUserBirthday') || '');
     setSaveStatus('');
+    setBirthdayError('');
     setOpen(false);
     setSettingsOpen(true);
   };
 
   const saveSettings = async () => {
-    // The birthday can't be in the future.
-    if (birthdayDraft && birthdayDraft > localToday()) {
-      setSaveStatus("Birthday can't be in the future.");
+    // The birthday has to be a complete date between 1900 and today.
+    const problem = birthdayProblem(birthdayRef.current, birthdayDraft);
+    if (problem) {
+      setBirthdayError(problem);
+      setSaveStatus('');
+      birthdayRef.current?.focus();
       return;
     }
+    setBirthdayError('');
     const next = nameDraft.trim();
     try {
       if (next) {
@@ -203,12 +228,27 @@ export default function ProfileMenu() {
         <div className="settings-field">
           <label htmlFor="result-settings-birthday">Birthday</label>
           <input
+            ref={birthdayRef}
             id="result-settings-birthday"
             type="date"
             value={birthdayDraft}
+            min={BIRTHDAY_MIN}
             max={localToday()}
+            aria-invalid={birthdayError ? true : undefined}
+            aria-describedby={birthdayError ? 'result-settings-birthday-error' : undefined}
+            style={birthdayError ? { borderColor: '#c0392b' } : undefined}
+            onInput={() => setBirthdayError('')}
             onChange={(e) => setBirthdayDraft(e.target.value)}
           />
+          {birthdayError && (
+            <p
+              id="result-settings-birthday-error"
+              role="alert"
+              style={{ margin: '8px 2px 0', color: '#c0392b', fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}
+            >
+              {birthdayError}
+            </p>
+          )}
         </div>
         <button type="button" className="settings-save-btn" onClick={saveSettings}>
           Save changes
