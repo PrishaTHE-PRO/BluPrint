@@ -5108,7 +5108,51 @@ html body .bp-wordmark-rest {
 }
 .page-inspo .inspo-card--budget.is-off .inspo-budget__amount { color: var(--bp-muted); }
 .page-inspo .inspo-card--budget.is-off .inspo-budget__dollar { opacity: .5; }
-.page-inspo .inspo-budget__slider { width: 100%; accent-color: var(--bp-primary); cursor: pointer; transition: opacity .25s ease; }
+/* Custom slider: a slim rounded track, teal up to the value (--fill, set
+   from the page script) and a pale teal tint after it, with a white knob
+   ringed in teal. The input itself stays tall for an easy touch target. */
+.page-inspo .inspo-budget__slider {
+  --track: color-mix(in srgb, var(--bp-primary) 14%, transparent);
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  cursor: pointer;
+  transition: opacity .25s ease;
+}
+.page-inspo .inspo-budget__slider:focus { outline: none; background: transparent !important; border: 0 !important; }
+.page-inspo .inspo-budget__slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--bp-primary) 0 var(--fill, 10%), var(--track) var(--fill, 10%) 100%);
+}
+.page-inspo .inspo-budget__slider::-moz-range-track { height: 6px; border-radius: 999px; background: var(--track); }
+.page-inspo .inspo-budget__slider::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--bp-primary); }
+.page-inspo .inspo-budget__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border: 2px solid var(--bp-primary);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(28, 23, 20, .18);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.page-inspo .inspo-budget__slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--bp-primary);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(28, 23, 20, .18);
+}
+.page-inspo .inspo-budget__slider:not(:disabled):hover::-webkit-slider-thumb,
+.page-inspo .inspo-budget__slider:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--bp-primary) 16%, transparent), 0 2px 8px rgba(28, 23, 20, .18);
+}
 .page-inspo .inspo-card--budget.is-off .inspo-budget__slider { opacity: .4; cursor: default; }
 .page-inspo .inspo-budget__scale {
   display: flex;
@@ -5807,3 +5851,25 @@ html.dark-mode body.page-dimensions #draggable-window > div:first-child {
   /* Phones drop the icon tile behind every library card's icon. */
   html body.page-dimensions #draggable-window > div:first-child { background: none !important; }
 }
+
+/* Budget card decor: a faint teal glow in the top corner and a teal icon
+   tile beside the title. */
+.page-inspo .inspo-card--budget {
+  background-image: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--bp-primary) 9%, transparent), transparent 60%) !important;
+}
+.page-inspo .inspo-budget__title { display: flex; align-items: center; gap: 12px; }
+.page-inspo .inspo-budget__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bp-primary) 10%, transparent);
+  color: var(--bp-primary);
+  font-size: 22px;
+}
+/* Chrome and Firefox knobs in separate rules: one browser drops a whole
+   rule when it meets the other's pseudo-element. */
+html.dark-mode .page-inspo .inspo-budget__slider::-webkit-slider-thumb { background: #1b2632; }
+html.dark-mode .page-inspo .inspo-budget__slider::-moz-range-thumb { background: #1b2632; }

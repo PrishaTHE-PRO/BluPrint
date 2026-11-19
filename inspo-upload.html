@@ -162,7 +162,10 @@
         <div class="inspo-row">
           <div class="garden-card ghibli-border inspo-card inspo-card--budget budget-zone">
             <div class="inspo-budget__head">
-              <h2 class="text-3xl font-bold">Budget</h2>
+              <div class="inspo-budget__title">
+                <span class="inspo-budget__icon" aria-hidden="true"><iconify-icon icon="ph:wallet"></iconify-icon></span>
+                <h2 class="text-3xl font-bold">Budget</h2>
+              </div>
               <button type="button" id="budget-switch" class="inspo-switch" role="switch" aria-checked="false">
                 <span>Set a budget</span>
                 <i class="inspo-switch__track" aria-hidden="true"><b class="inspo-switch__knob"></b></i>
@@ -529,8 +532,49 @@
         state.selectedFeatures = saved.selectedFeatures.filter(f => typeof f === 'string').slice(0, 3);
       if (typeof saved.selectedBathFixture === 'string') state.selectedBathFixture = saved.selectedBathFixture;
     }
-    // Restore the "Other" room-type field into the DOM. Local image files
-    // cannot be restored after navigation and must be selected again.
+    // Uploaded images live in IndexedDB (it stores File objects as-is, and
+    // three 5 MB photos would blow localStorage's quota). Tagged with the
+    // room id like the picks above, so another room never shows them.
+    const IMG_DB = 'blueprintInspo', IMG_STORE = 'images', IMG_KEY = 'current';
+    function openImgDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IMG_DB, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(IMG_STORE);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function persistImages() {
+      try {
+        const db = await openImgDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IMG_STORE, 'readwrite');
+          tx.objectStore(IMG_STORE).put({ roomId: ROOM_ID || null, files: state.uploadedFiles.slice() }, IMG_KEY);
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } catch (e) { console.warn('[inspo images] save failed', e); }
+    }
+    async function restoreImages() {
+      try {
+        const db = await openImgDb();
+        const saved = await new Promise((resolve, reject) => {
+          const req = db.transaction(IMG_STORE, 'readonly').objectStore(IMG_STORE).get(IMG_KEY);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        db.close();
+        if (!saved || (saved.roomId || null) !== (ROOM_ID || null)) return;
+        if (state.uploadedFiles.length || !Array.isArray(saved.files) || !saved.files.length) return;
+        state.uploadedFiles = saved.files.filter(f => f instanceof Blob).slice(0, 3);
+        if (!state.uploadedFiles.length) return;
+        renderImagePreviews();
+        checkStep1Valid();
+      } catch (e) { console.warn('[inspo images] restore failed', e); }
+    }
+
+    // Restore the "Other" room-type field into the DOM.
     function hydrateRestoredUi() {
       const other = document.getElementById('room-type-other');
       if (other && state.roomTypeIsOther) {
@@ -606,11 +650,50 @@
       budgetSwitch.setAttribute('aria-checked', on ? 'true' : 'false');
       budgetSlider.disabled = !on;
       budgetCard.classList.toggle('is-off', !on);
+      updateBudgetDecor(budgetSlider.value);
     }
 
     const digitsOf = (value) => Number(String(value).replace(/[^0-9.]/g, ''));
 
-    function setBudget(value) {
+    // The slider's teal fill follows the amount: --fill is the share of the
+    // track to colour, read by the custom track in design-system.css.
+    function updateBudgetDecor(value) {
+      const v = Math.min(25000, Math.max(500, Number(value) || 500));
+      budgetSlider.style.setProperty('--fill', ((v - 500) / (25000 - 500) * 100).toFixed(2) + '%');
+    }
+
+    // Glide the slider to a typed value instead of jumping there. The $250
+    // step would make the knob hop between notches, so it is lifted for the
+    // glide and put back at the end. A new target mid-glide starts from
+    // wherever the knob is now. Dragging the slider itself is not animated.
+    let sliderGlide = 0;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function glideSliderTo(target, ms = 350) {
+      cancelAnimationFrame(sliderGlide);
+      const to = Math.min(25000, Math.max(500, target));
+      const from = Number(budgetSlider.value);
+      if (reduceMotion.matches || from === to) {
+        budgetSlider.step = '250';
+        budgetSlider.value = String(to);
+        updateBudgetDecor(to);
+        return;
+      }
+      budgetSlider.step = 'any';
+      const start = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / ms);
+        const eased = 1 - Math.pow(1 - t, 3);
+        budgetSlider.value = String(from + (to - from) * eased);
+        updateBudgetDecor(budgetSlider.value);
+        if (t < 1) { sliderGlide = requestAnimationFrame(tick); return; }
+        budgetSlider.step = '250';
+        budgetSlider.value = String(to);
+        updateBudgetDecor(to);
+      };
+      sliderGlide = requestAnimationFrame(tick);
+    }
+
+    function setBudget(value, { glide = false } = {}) {
       const parsed = digitsOf(value);
       if (String(value).trim() === '' || !Number.isFinite(parsed) || parsed <= 0) {
         state.budgetTotal = null;
@@ -621,7 +704,8 @@
       }
       const budget = Math.min(25000, Math.max(500, Math.round(parsed / 250) * 250));
       state.budgetTotal = budget;
-      budgetSlider.value = String(budget);
+      if (glide) glideSliderTo(budget);
+      else { cancelAnimationFrame(sliderGlide); budgetSlider.step = '250'; budgetSlider.value = String(budget); }
       budgetInput.value = budget.toLocaleString();
       localStorage.setItem('blueprintBudgetTotal', String(budget));
       syncBudgetUi();
@@ -631,9 +715,10 @@
     // While typing, move the slider along; snap and store once the field is left.
     budgetInput.addEventListener('input', () => {
       const n = digitsOf(budgetInput.value);
-      if (Number.isFinite(n) && n >= 500) budgetSlider.value = String(Math.min(25000, n));
+      if (Number.isFinite(n) && n >= 500) glideSliderTo(n);
+      else updateBudgetDecor(budgetSlider.value);
     });
-    budgetInput.addEventListener('change', () => setBudget(budgetInput.value));
+    budgetInput.addEventListener('change', () => setBudget(budgetInput.value, { glide: true }));
     budgetInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') budgetInput.blur(); });
     budgetSwitch.addEventListener('click', () => {
       if (state.budgetTotal != null) { setBudget(''); return; }
@@ -684,6 +769,7 @@
 
       state.uploadedFiles.push(...selectedFiles);
       renderImagePreviews();
+      persistImages();
       const count = state.uploadedFiles.length;
       const skipped = Array.from(fileList).length - selectedFiles.length;
       setVisionStatus(
@@ -718,6 +804,7 @@
         remove.addEventListener('click', () => {
           state.uploadedFiles.splice(index, 1);
           renderImagePreviews();
+          persistImages();
           checkStep1Valid();
           if (state.uploadedFiles.length === 0) {
             document.getElementById('vision-status').classList.add('hidden');
@@ -747,7 +834,14 @@
       }
 
       errorBubble.classList.add('hidden');
+      // Give step 2 its own history entry so the browser's Back button
+      // returns to step 1 instead of leaving the page.
+      if (history.state?.inspoStep !== 2) history.pushState({ inspoStep: 2 }, '');
       showStep(2);
+    });
+
+    window.addEventListener('popstate', (e) => {
+      showStep(e.state?.inspoStep === 2 ? 2 : 1);
     });
 
     // ── Step 2 grids ──────────────────────────────────────────────────
@@ -941,7 +1035,10 @@
         state.selectedColors.length === 0 || state.selectedFeatures.length === 0 || !bathOk;
     }
 
-    document.getElementById('step2-back').addEventListener('click', () => showStep(1));
+    document.getElementById('step2-back').addEventListener('click', () => {
+      if (history.state?.inspoStep === 2) history.back(); // popstate shows step 1
+      else showStep(1);
+    });
 
     // ── Analyze ───────────────────────────────────────────────────────
     document.getElementById('step2-analyze').addEventListener('click', async () => {
@@ -1237,7 +1334,11 @@
     buildFeatureGrid();
     buildBathFixtureGrid();
     hydrateRestoredUi();
+    // A reload or forward-navigation can land on a step-2 history entry;
+    // the page always opens on step 1, so clear that marker.
+    if (history.state?.inspoStep === 2) history.replaceState(null, '');
     showStep(1);
+    restoreImages();
   
     // Sent back from View Design because this room has no style yet.
     if (takeMissingReason() === "style") {
