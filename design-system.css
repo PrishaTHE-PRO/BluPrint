@@ -5122,7 +5122,8 @@ html body .bp-wordmark-rest {
 .page-inspo .inspo-wild {
   display: flex !important;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 12px;
   padding: clamp(20px, 2.4vw, 26px) !important;
   text-align: left;
@@ -5137,10 +5138,10 @@ html body .bp-wordmark-rest {
   align-items: center;
   min-height: 60px;
   padding: 12px 72px;
-  /* Translucent green, the same shade as the Wall Cutout button on the
-     room dimensions page (--dimension-cutout, #6c8f62). */
-  border: 1.5px solid rgba(108, 143, 98, .45);
-  background: rgba(108, 143, 98, .08);
+  /* Translucent tint of the standard teal (--bp-primary), so dark mode,
+     where the teal is lighter, follows automatically. */
+  border: 1.5px solid color-mix(in srgb, var(--bp-primary) 45%, transparent);
+  background: color-mix(in srgb, var(--bp-primary) 8%, transparent);
   border-radius: 18px;
   /* Same face, weight and size as the section titles ("Visual inspiration",
      "Budget", "What room are you designing?"). */
@@ -5150,25 +5151,31 @@ html body .bp-wordmark-rest {
   letter-spacing: -.025em;
   line-height: 1.1;
   white-space: nowrap;
-  color: #5b7a52 !important;
+  color: var(--bp-primary) !important;
   transition: background .25s ease, color .25s ease, border-color .25s ease;
 }
-.page-inspo .inspo-wild:not(:disabled):hover .inspo-wild__title { background: rgba(108, 143, 98, .16); border-color: rgba(108, 143, 98, .65); }
-.page-inspo .inspo-wild__copy { font-size: 13px; line-height: 1.45; color: var(--bp-muted) !important; }
-@media (min-width: 720px) {
-  .page-inspo .inspo-wild { flex-direction: row; align-items: center; gap: clamp(18px, 2.5vw, 32px); }
-  .page-inspo .inspo-wild__title { flex: none; }
-  .page-inspo .inspo-wild__copy { flex: 1; max-width: 560px; }
+.page-inspo .inspo-wild:not(:disabled):hover .inspo-wild__title {
+  background: color-mix(in srgb, var(--bp-primary) 16%, transparent);
+  border-color: color-mix(in srgb, var(--bp-primary) 65%, transparent);
 }
-/* Pressed: only the "Wild card" button fills in (solid cutout green); the
+/* The explanation sits centred under the button. */
+.page-inspo .inspo-wild__copy {
+  max-width: 440px;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--bp-muted) !important;
+}
+html.dark-mode body.page-inspo #wild-card-btn .inspo-wild__copy { color: var(--bp-muted) !important; }
+/* Pressed: only the "Wild card" button fills in (solid teal); the
    card stays as is.
    The click also disables the card while the next page loads, so keep it at
    full strength instead of the faded disabled look. */
 .page-inspo .inspo-wild.is-on:disabled,
 html.dark-mode .page-inspo .inspo-wild.is-on:disabled { opacity: 1; cursor: default; }
 .page-inspo .inspo-wild.is-on .inspo-wild__title {
-  background: #6c8f62;
-  border-color: #6c8f62;
+  background: var(--bp-primary);
+  border-color: var(--bp-primary);
   color: #fff !important;
 }
 
@@ -5246,10 +5253,9 @@ html.dark-mode body.page-inspo #wild-card-btn:hover {
   color: var(--bp-ink) !important;
   box-shadow: none !important;
 }
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__title { background: rgba(108, 143, 98, .16); border-color: rgba(143, 180, 132, .5); color: #a3c497 !important; }
-html.dark-mode body.page-inspo #wild-card-btn:not(.is-on):not(:disabled):hover .inspo-wild__title { background: rgba(108, 143, 98, .26); }
-html.dark-mode body.page-inspo #wild-card-btn .inspo-wild__copy { color: var(--bp-muted) !important; }
-html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { background: #8fb484; border-color: #8fb484; color: #0d1218 !important; }
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on) .inspo-wild__title { background: color-mix(in srgb, var(--bp-primary) 14%, transparent); color: var(--bp-primary) !important; }
+html.dark-mode body.page-inspo #wild-card-btn:not(.is-on):not(:disabled):hover .inspo-wild__title { background: color-mix(in srgb, var(--bp-primary) 24%, transparent); }
+html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { background: var(--bp-primary); border-color: var(--bp-primary); color: #0d1218 !important; }
 /* ---------------------------------------------------------------------------
    Results page: "Shop the room" grid under the plan, and the floor plan's
    sheet legend. Serif display and mono labels follow the redesign mockups
