@@ -69,6 +69,75 @@ const DEMO_ROOM = {
   ],
 };
 
+// Each style chip shows its own furnished room, not just a recolour. Same
+// 15 × 13 ft shell (so the camera framing doesn't jump), different pieces and
+// arrangement. Modern is the demo room above. Every category is one the app
+// already knows, so each piece draws through the real catalog and builders.
+// `color` tints a piece the way a product colour does in the app.
+const piece = (category, x, y, rot, wIn, dIn, color) => ({ category, x, y, rot, wIn, dIn, ...(color ? { color } : {}) });
+const STYLE_ROOMS = {
+  modern: DEMO_ROOM,
+  // Light, airy, natural wood; plenty of open floor and green.
+  scandinavian: {
+    ...DEMO_ROOM,
+    furnitureLayout: [
+      piece('rug',              3.6, 4.6, 0,   96, 72, '#e9e1d3'),
+      piece('sofa',             3.4, 9.5, 180, 78, 34, '#d7d3cb'),
+      piece('coffee_table',     5.6, 6.2, 0,   40, 22, '#d8b892'),
+      piece('accent_chair',    10.6, 5.6, 250, 30, 32, '#c9d6d9'),
+      piece('side_table',       1.3, 9.6, 0,   18, 18, '#d8b892'),
+      piece('floating_shelves', 5.8, 0.2, 0,   48,  8, '#d8b892'),
+      piece('floor_lamp',      12.8, 1.2, 0,   14, 14),
+      piece('indoor_plants',    0.7, 0.7, 0,   24, 24),
+      piece('indoor_plants',   13.0, 10.6, 0,  22, 22),
+    ],
+  },
+  // Warm and layered: terracotta rug, a reading chair, low shelving, plants
+  // in every corner and art on the wall.
+  bohemian: {
+    ...DEMO_ROOM,
+    furnitureLayout: [
+      piece('rug',              2.6, 3.6, 0,  112, 84, '#b5653c'),
+      piece('sofa',             3.0, 9.2, 180, 84, 36, '#c08457'),
+      piece('coffee_table',     5.4, 5.9, 0,   42, 24, '#8b5a33'),
+      piece('reading_nook',    10.4, 4.6, 245, 34, 34, '#9c6b46'),
+      piece('kitchen_shelf',    0.6, 0.4, 0,   40, 12, '#a9713f'),
+      piece('wall_art',         6.4, 0.1, 0,   36,  2),
+      piece('floor_lamp',       9.0, 0.6, 0,   14, 14),
+      piece('indoor_plants',    0.6, 9.4, 0,   22, 22),
+      piece('indoor_plants',   13.1, 0.7, 0,   24, 24),
+      piece('indoor_plants',   13.1, 10.7, 0,  20, 20),
+    ],
+  },
+  // Darker and harder-edged: a cognac leather sofa, metal shelving, a tall
+  // cabinet and a pendant over the table.
+  industrial: {
+    ...DEMO_ROOM,
+    furnitureLayout: [
+      piece('rug',              3.4, 4.4, 0,   96, 60, '#6e6e73'),
+      piece('sofa',             3.0, 9.0, 180, 84, 36, '#7a4b33'),
+      piece('coffee_table',     5.6, 6.0, 0,   44, 24, '#3a3a3f'),
+      piece('accent_chair',    10.6, 5.2, 250, 32, 32, '#7a4b33'),
+      piece('bookcase',         0.8, 0.5, 0,   36, 13, '#3a3a3f'),
+      piece('storage_cabinet', 11.2, 0.5, 0,   36, 18, '#4f3826'),
+      piece('pendant_light',    6.3, 6.2, 0,   14, 14),
+      piece('floor_lamp',       0.6, 9.4, 0,   14, 14),
+    ],
+  },
+  // Only the essentials, with lots of empty floor.
+  minimalist: {
+    ...DEMO_ROOM,
+    furnitureLayout: [
+      piece('rug',              4.0, 5.0, 0,   84, 60, '#cbbfac'),
+      piece('sofa',             3.8, 9.4, 180, 78, 34, '#cfcfca'),
+      piece('coffee_table',     6.0, 6.5, 0,   36, 20, '#c9b79c'),
+      piece('floor_lamp',      12.8, 1.2, 0,   14, 14),
+      piece('indoor_plants',   13.2, 10.6, 0,  20, 20),
+    ],
+  },
+};
+const roomFor = (style) => STYLE_ROOMS[style] || DEMO_ROOM;
+
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }
@@ -166,7 +235,7 @@ export function initHero3D() {
       syncSpin();
       stage.classList.add('has-interacted');
     });
-    viewer.render(DEMO_ROOM);
+    viewer.render(roomFor(style));
     syncSpin();
   }
 
@@ -197,8 +266,8 @@ export function initHero3D() {
           el.setAttribute('aria-pressed', active ? 'true' : 'false');
         }
         syncNotes(button.dataset.style);
-        // The palette is baked in at construction, so swap the whole viewer
-        // rather than trying to repaint every material in place.
+        // Each style has its own room, and the palette is baked in at
+        // construction, so swap the whole viewer for the new style's room.
         mount(button.dataset.style);
       });
     });

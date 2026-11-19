@@ -466,8 +466,6 @@
     .window-bar { display: flex; align-items: center; gap: 10px; padding: 20px 26px 14px; }
     .window-dot { width: 9px; height: 9px; border-radius: 50%; background: #a9c4ab; box-shadow: 0 0 0 4px rgba(169,196,171,.25); }
     .window-title { color: var(--ink); font-size: 16px; font-weight: 600; }
-    .window-hint { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
-    .window-hint iconify-icon { font-size: 15px; }
     .planner { display: grid; grid-template-columns: 1fr 148px; grid-template-rows: 1fr auto; height: calc(100% - 58px); padding: 0 18px 18px; gap: 16px; }
     .planner .side-list { grid-column: 2; grid-row: 1 / span 2; }
     .planner .hero-styles { grid-column: 1; grid-row: 2; }
@@ -558,7 +556,7 @@
     }
     .floating-note iconify-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; color: var(--blue); background: var(--sky-soft); font-size: 21px; }
     .note-one { top: -10px; right: -26px; }
-    .note-two { bottom: -4px; left: -24px; animation-delay: -2.4s; }
+    .note-two { bottom: -18px; left: -40px; animation-delay: -2.4s; }
 
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 120px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.48); box-shadow: 0 14px 42px rgba(43,54,61,.08); backdrop-filter: blur(18px); transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease; }
     .stats:hover { transform: translateY(-7px); box-shadow: 0 24px 60px rgba(43,54,61,.14); }
@@ -905,14 +903,13 @@
          canvas is only a phone wide. */
       .hero-styles { gap: 6px; }
       .hero-chip { padding: 8px 12px; font-size: 13px; }
-      .window-hint { display: none; }
       .hero-chip { padding: 7px 2px; font-size: 10px; letter-spacing: -.01em; }
       /* Spread the five chips across the full width of the room preview. */
       .hero-styles { flex-wrap: nowrap; justify-content: space-between; gap: 6px; }
       .hero-chip { flex: 1 1 auto; padding: 7px 6px; font-size: 11px; text-align: center; }
       .floating-note { font-size: 10px; }
       .note-one { right: -8px; }
-      .note-two { top: 96px; bottom: auto; left: -8px; }
+      .note-two { top: 106px; bottom: auto; left: -12px; }
       .stats { grid-template-columns: 1fr; margin-bottom: 84px; }
       .stat + .stat { border-top: 1px solid var(--line); border-left: 0; }
       .section { padding-bottom: 84px; }
@@ -1060,7 +1057,6 @@
           <div class="window-bar">
             <span class="window-dot"></span>
             <span class="window-title">Your room plan</span>
-            <span class="window-hint"><iconify-icon icon="ph:hand-grabbing"></iconify-icon> Move to look around</span>
           </div>
           <div class="planner">
             <div class="canvas">
