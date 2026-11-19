@@ -54,7 +54,12 @@ const IMAGE_MODEL_CANDIDATES = [
 const DEFAULT_IMAGE_MODEL = IMAGE_MODEL_CANDIDATES[0];
 let workingImageModel = null;
 const DEFAULT_IMAGE_SIZE = "1536x1024";
-const DEFAULT_IMAGE_QUALITY = "medium";
+// High, not medium: on the same room photo, medium redrew the room (a
+// column and a radiator gone, a wider frame, the camera moved) while high
+// kept all of them. Holding the room is the whole point, so it is worth
+// the longer wait and the higher per-image cost. OPENAI_IMAGE_QUALITY still
+// overrides it.
+const DEFAULT_IMAGE_QUALITY = "high";
 // On by default: the whole point is to keep the user's room recognisably
 // theirs, and without this the model treats the photo as loose inspiration.
 const DEFAULT_INPUT_FIDELITY = "high";
@@ -123,6 +128,55 @@ async function pickSize(roomImage) {
 }
 
 /**
+ * Phone photos often carry their orientation in EXIF rather than in the
+ * pixels. Bake it in first so the size pick and the crop see the photo the
+ * way the user does. Falls back to the original bytes if that fails.
+ */
+async function uprightImage(roomImage) {
+  try {
+    const buffer = await sharp(roomImage.buffer).rotate().png().toBuffer();
+    return { buffer, contentType: "image/png" };
+  } catch (error) {
+    console.warn("[render] could not normalise the photo's orientation:", error?.message || "");
+    return roomImage;
+  }
+}
+
+/**
+ * Crops the photo, centred, to the exact aspect of the output size. The edit
+ * endpoint returns the output size whatever it is given, so a 4:3 photo sent
+ * to a 3:2 output had to be stretched or reframed by the model, and that
+ * alone changed the walls, the floor and the window positions before any
+ * furniture went in. With the input already at the output aspect the model
+ * has nothing to reframe. The trimmed strip is at most a few percent of one
+ * edge. Falls back to the original bytes if the crop fails.
+ */
+async function cropToSize(roomImage, size) {
+  const match = /^(\d+)x(\d+)$/.exec(String(size || ""));
+  if (!match) return roomImage;
+  const targetRatio = Number(match[1]) / Number(match[2]);
+  try {
+    const img = sharp(roomImage.buffer);
+    const { width, height } = await img.metadata();
+    if (!width || !height) return roomImage;
+    const ratio = width / height;
+    let cropW = width, cropH = height;
+    if (ratio > targetRatio + 0.005) cropW = Math.round(height * targetRatio);
+    else if (ratio < targetRatio - 0.005) cropH = Math.round(width / targetRatio);
+    const left = Math.floor((width - cropW) / 2);
+    const top = Math.floor((height - cropH) / 2);
+    const buffer = await img.extract({ left, top, width: cropW, height: cropH }).png().toBuffer();
+    if (cropW !== width || cropH !== height) {
+      console.log(`[render] photo ${width}x${height} cropped to ${cropW}x${cropH} to match the ${size} output`);
+    }
+    return { buffer, contentType: "image/png" };
+  } catch (error) {
+    console.warn("[render] could not crop the photo to the output aspect:", error?.message || "");
+    return roomImage;
+  }
+}
+
+/**
  * The instruction to the image model. Products are numbered to match the
  * order of the reference images that follow the room photo, so "reference 2"
  * is unambiguous.
@@ -160,13 +214,14 @@ function buildEditPrompt({ products, layoutHints, existingFurniture }) {
       : "Do not remove or move anything already in the room; the new products are added to it.");
 
   return [
-    "The first image is a photograph of the user's actual room. This is an edit of that photograph, not a new picture inspired by it.",
+    "The first image is a photograph of the user's actual room. The result must be that same photograph with the products listed below added into it, and nothing else changed. This is not a new picture inspired by the photo and not a redesign of the room.",
+    "The room itself is off limits. Reproduce it exactly as photographed: the same walls in the same places with the same colour and finish, the same floor with the same material and pattern, the same ceiling, the same windows and doors in the same positions and sizes with the same view through them, the same curtains, blinds, radiators, vents, outlets, switches, baseboards, trim, light fixtures, wall art, plants, rugs, decor and objects on surfaces, the same time of day and lighting, and the same camera position, angle, lens and framing. Do not add, remove, enlarge, shrink or move any window, door, wall or architectural feature. Do not repaint, restyle, clean up, brighten, crop, zoom or reframe the room. Do not change the room's size or proportions.",
     "Treat the camera as standing at the front of the room looking toward the back wall. Placement notes below are given from that viewpoint: left and right as seen in the photo, back meaning near the far wall, front meaning near the camera.",
-    "Keep everything that is not furniture exactly as it is in the photo: the walls and their colour, the floor and its material, the ceiling, every window and door and what is visible through them, curtains and blinds, radiators, light fixtures, wall art, the time of day and the lighting, and the camera position, angle and framing. Do not repaint, restyle, brighten, crop, or reframe the room.",
     removal,
-    "Place each of the following products in the room where there is space for it, matching its reference image as closely as possible in shape, colour, and material, at a realistic size for the room:",
+    "Place each of the following products in the room where there is floor space for it, matching its reference image as closely as possible in shape, colour, and material, at a realistic size for the room. A product may only cover what sits directly behind it from the camera's view; it must not alter anything around it:",
     ...lines,
     "Photorealistic result with perspective, shadows and lighting consistent with the original photo. No text, labels, or watermarks.",
+    "Final check: everything outside the newly added products must be identical to the first image, pixel for pixel wherever possible.",
   ].join("\n");
 }
 
@@ -625,8 +680,10 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
 
   const products = usable.map((f) => f.item);
   const prompt = buildEditPrompt({ products, layoutHints, existingFurniture });
-  const size = await pickSize(roomImage);
-  const png = await editImage({ roomImage, references: usable.map((f) => f.image), prompt, size });
+  const upright = await uprightImage(roomImage);
+  const size = await pickSize(upright);
+  const framed = await cropToSize(upright, size);
+  const png = await editImage({ roomImage: framed, references: usable.map((f) => f.image), prompt, size });
   const url = await uploadToCloudinary(png, "image/png", "bluprint/renders");
   console.log("[render] image ready in", Date.now() - startedAt, "ms");
 
