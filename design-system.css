@@ -6397,3 +6397,20 @@ html.dark-mode .page-inspo .inspo-budget__unlimited[aria-pressed="true"] {
   border-color: rgba(134, 197, 209, .55);
   color: var(--bp-primary);
 }
+
+/* About hero: the plan card holds the interactive 3D room sketch
+   (src/about-sketch.js). It sits level, so turning the room reads cleanly,
+   and the drawing may swing past the card's edge while it turns. */
+.about-plan-card.is-sketch {
+  position: relative;
+  transform: none;
+  padding: 22px;
+  overflow: visible;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.about-plan-card.is-sketch.is-dragging { cursor: grabbing; }
+.about-plan-card.is-sketch:focus-visible { outline: 2px solid var(--bp-primary); outline-offset: 4px; }
+.about-plan-card.is-sketch svg { overflow: visible; pointer-events: none; }

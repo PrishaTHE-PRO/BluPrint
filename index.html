@@ -610,6 +610,17 @@
       backdrop-filter: blur(16px);
       transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease, border-color .32s ease;
     }
+    /* The six feature cards drift gently, out of step with each other. The
+       float uses `translate`, separate from `transform`, so the scroll-in
+       reveal and the hover lift still work on top of it. */
+    .feature-card { animation: feature-float 6s ease-in-out infinite; }
+    .feature-card:nth-child(2) { animation-delay: -1s; animation-duration: 6.6s; }
+    .feature-card:nth-child(3) { animation-delay: -2s; animation-duration: 5.8s; }
+    .feature-card:nth-child(4) { animation-delay: -3s; animation-duration: 6.4s; }
+    .feature-card:nth-child(5) { animation-delay: -4s; animation-duration: 6.2s; }
+    .feature-card:nth-child(6) { animation-delay: -5s; animation-duration: 5.6s; }
+    @keyframes feature-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+    @media (prefers-reduced-motion: reduce) { .feature-card { animation: none; } }
     .feature-card:hover { transform: translateY(-10px); border-color: rgba(255,255,255,.98); box-shadow: 0 30px 68px rgba(43,54,61,.16); }
     .feature-card h3 { margin-bottom: 8px; font-size: 26px; }
     .feature-card p { margin-bottom: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
