@@ -123,6 +123,8 @@ export default function RoomResult() {
   // Set for photo rooms when the picture already holds furniture: explains
   // why the list is shorter, or why a full room only gets accents.
   const [furnitureNotice, setFurnitureNotice] = useState<FurnitureNotice | null>(null);
+  // True when the server filled in stand-in products because the live shopping search failed.
+  const [placeholderPicks, setPlaceholderPicks] = useState(false);
   // Whether a trim-to-fit run has already happened, so the over-budget notice
   // stops offering a button that has nothing further to trim.
   const [underBudgetTried, setUnderBudgetTried] = useState(false);
@@ -676,10 +678,11 @@ export default function RoomResult() {
     setFurnitureLoading(true);
     return authedFetch(url)
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
-      .then((data: FurnitureItem[] | { items: FurnitureItem[]; notice?: FurnitureNotice | null; existingPlacements?: ExistingPlacement[] }) => {
+      .then((data: FurnitureItem[] | { items: FurnitureItem[]; notice?: FurnitureNotice | null; existingPlacements?: ExistingPlacement[]; placeholder?: boolean }) => {
         // The route answers { items, notice } now; a bare array is the older shape.
         const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
         setFurnitureNotice(Array.isArray(data) ? null : (data?.notice ?? null));
+        setPlaceholderPicks(!Array.isArray(data) && data?.placeholder === true);
         // First visit to a photo room: the route has just located the kept
         // pieces and the room state loaded before they existed.
         if (!Array.isArray(data) && Array.isArray(data?.existingPlacements) && data.existingPlacements.length > 0) {
@@ -1118,6 +1121,7 @@ export default function RoomResult() {
           onGenerateUnderBudget={handleGenerateUnderBudget}
           underBudgetTried={underBudgetTried}
           notice={furnitureNotice}
+          placeholderPicks={placeholderPicks}
           centerContent={
             <RoomSVG
               room={layoutRoom}
