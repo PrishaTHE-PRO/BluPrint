@@ -565,7 +565,7 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
     // checked along the back wall against where its box is in the frame.
     const read = layout instanceof Map ? layout.get(h.category) : null;
     if (read) {
-      const checked = reconcileWithFrame({ h, read, wall, f, W });
+      const checked = reconcileWithFrame({ h, read, wall, f, W, wFt, dFt });
       return placementFromReading({ h, read: checked, kind, wall, wFt, dFt, W, L, yBack: floor ? yBack : null });
     }
 
@@ -599,7 +599,8 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
     return placement;
   });
 
-  return keepCompanionsOnTheirWall({ placed, hotspots, products, layout, W, L, yBack: floor ? yBack : null });
+  const withCompanions = keepCompanionsOnTheirWall({ placed, hotspots, products, layout, W, L, yBack: floor ? yBack : null });
+  return packAlongWalls({ placed: withCompanions, products, W, L });
 }
 
 /**
@@ -611,18 +612,23 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
  * frame's x, and a hung piece called "on the right wall" while its box is
  * inside the back wall's span hangs on the back wall.
  */
-function reconcileWithFrame({ h, read, wall, f, W }) {
+function reconcileWithFrame({ h, read, wall, f, W, wFt = 0, dFt = 0 }) {
   const px = h.x + h.w / 2;
   const span = f.backRight.x - f.backLeft.x;
   // A floor line covering under half the frame was read only where it shows
   // between the furniture; the back wall itself runs on to the picture's edges.
   const [xl, xr] = span >= 0.5 ? [f.backLeft.x, f.backRight.x] : [0.03, 0.97];
   const frameCx = Math.min(W, Math.max(0, ((px - xl) / Math.max(0.05, xr - xl)) * W));
+  // A long piece (dresser, sofa, bookcase) standing against a side wall is
+  // seen end-on from the doorway: its box is taller than it is wide. One seen
+  // broadside, wider than tall and inside the back wall's span, has its back
+  // to the back wall however the reading named the wall.
+  const broadside = !wall && wFt >= dFt * 1.6 && h.w >= h.h * 1.2;
   let out = read;
-  if (wall && read.touching === "right wall" && px < xr - 0.04) out = { ...out, touching: "back wall", facing: "camera" };
-  else if (wall && read.touching === "left wall" && px > xl + 0.04) out = { ...out, touching: "back wall", facing: "camera" };
+  if ((wall || broadside) && read.touching === "right wall" && px < xr - 0.04) out = { ...out, touching: "back wall", facing: "camera" };
+  else if ((wall || broadside) && read.touching === "left wall" && px > xl + 0.04) out = { ...out, touching: "back wall", facing: "camera" };
   if (out.touching !== read.touching) {
-    console.log(`[plan] ${h.category}: hangs inside the back wall's span, so on the back wall rather than the ${read.touching}`);
+    console.log(`[plan] ${h.category}: ${wall ? "hangs" : "stands broadside"} inside the back wall's span, so on the back wall rather than the ${read.touching}`);
   }
   if ((out.touching === "back wall" || wall) && Number.isFinite(out.cx) && Math.abs(out.cx - frameCx) > 0.25 * W) {
     console.log(`[plan] ${h.category}: read ${Number(out.cx).toFixed(1)} ft from left but sits ${frameCx.toFixed(1)} ft along the frame; using the frame`);
@@ -737,6 +743,87 @@ function existingProducts(existingFurniture) {
     const [widthIn, depthIn] = EXISTING_SIZES_IN[kind] || [36, 30];
     return { id: `existing-${i}`, category: `existing-${i}`, kind, name: f.label, widthIn, depthIn, existing: true };
   });
+}
+
+/**
+ * Pieces standing against one wall are each read with their own error, so
+ * neighbours overlap: a bed read at the middle of a 12 ft wall and a 5 ft
+ * dresser beside it left the dresser a foot and a half inside the bed, and
+ * the plan then had nowhere on the wall to put it. This pass lines up the
+ * pieces on each wall in the order the picture shows them and spreads them
+ * so none overlap, moving each as little as possible. Hung pieces stay put
+ * (they are above the furniture) and a lamp follows the nightstand it sits
+ * on. When the wall is shorter than the furniture, the pieces overlap
+ * evenly rather than one of them leaving the wall.
+ */
+function packAlongWalls({ placed, products, W, L }) {
+  const byCategory = new Map(products.map((p) => [String(p.category).toLowerCase(), p]));
+  const kindOf = (pl) => String((byCategory.get(pl.category) || {}).kind || pl.category).toLowerCase();
+  const round = (v) => Math.round(v * 10) / 10;
+  const footprint = (pl) => {
+    const product = byCategory.get(pl.category) || {};
+    const wFt = Math.max(0.5, (Number(product.widthIn) || 30) / 12);
+    const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
+    const sideways = pl.rotation === 90 || pl.rotation === 270;
+    return { wFt, dFt, xExtent: sideways ? dFt : wFt, yExtent: sideways ? wFt : dFt };
+  };
+  const out = placed.map((pl) => ({ ...pl }));
+  const moved = new Map();
+  for (const wall of ["back wall", "front wall", "left wall", "right wall"]) {
+    const alongX = wall === "back wall" || wall === "front wall";
+    const length = alongX ? W : L;
+    const run = out
+      .map((pl, i) => ({ pl, i }))
+      .filter(({ pl }) => pl.touching === wall && !WALL_MOUNTED.has(kindOf(pl)) && !SITS_ON[kindOf(pl)])
+      .map((e) => {
+        const f = footprint(e.pl);
+        const size = alongX ? f.xExtent : f.yExtent;
+        return { ...e, size, start: (alongX ? e.pl.cx : e.pl.cy) - size / 2 };
+      })
+      // Lamps, plants and the like sit on or beside the furniture; lining
+      // them up as if they stood on the floor pushed the bed along the wall.
+      .filter((e) => e.size >= 1.5)
+      .sort((a, b) => a.start - b.start);
+    if (run.length < 2) continue;
+    const starts = run.map((e) => e.start);
+    const total = run.reduce((sum, e) => sum + e.size, 0);
+    if (total > length + 1e-6) {
+      const overlap = (total - length) / (run.length - 1);
+      let s = 0;
+      run.forEach((e, k) => { starts[k] = s; s += e.size - overlap; });
+    } else {
+      for (let k = 1; k < run.length; k++) starts[k] = Math.max(starts[k], starts[k - 1] + run[k - 1].size);
+      const last = run.length - 1;
+      starts[last] = Math.min(starts[last], length - run[last].size);
+      for (let k = last - 1; k >= 0; k--) starts[k] = Math.min(starts[k], starts[k + 1] - run[k].size);
+    }
+    run.forEach((e, k) => {
+      const centre = starts[k] + e.size / 2;
+      const before = alongX ? e.pl.cx : e.pl.cy;
+      if (Math.abs(centre - before) < 0.05) return;
+      const pl = out[e.i];
+      const f = footprint(pl);
+      if (alongX) pl.cx = round(centre); else pl.cy = round(centre);
+      pl.x = round(Math.max(0, pl.cx - f.wFt / 2));
+      pl.y = round(Math.max(0, pl.cy - f.dFt / 2));
+      moved.set(pl.category, { delta: centre - before, alongX });
+      console.log(`[plan] ${pl.category}: moved ${(centre - before).toFixed(1)} ft along the ${wall} to clear its neighbours`);
+    });
+  }
+  // A lamp sits on its nightstand: it goes where the nightstand went.
+  const placedOf = new Map(out.map((pl) => [kindOf(pl), pl]));
+  out.forEach((pl) => {
+    const surface = (SITS_ON[kindOf(pl)] || []).map((a) => placedOf.get(a)).find((s) => s && moved.has(s.category));
+    if (!surface) return;
+    const { delta, alongX } = moved.get(surface.category);
+    const wasAt = { x: alongX ? surface.cx - delta : surface.cx, y: alongX ? surface.cy : surface.cy - delta };
+    if (Math.hypot(wasAt.x - pl.cx, wasAt.y - pl.cy) > 3) return;
+    const f = footprint(pl);
+    if (alongX) pl.cx = round(pl.cx + delta); else pl.cy = round(pl.cy + delta);
+    pl.x = round(Math.max(0, pl.cx - f.wFt / 2));
+    pl.y = round(Math.max(0, pl.cy - f.dFt / 2));
+  });
+  return out;
 }
 
 /** Plan positions of the existing pieces, in the shape the room stores. */
