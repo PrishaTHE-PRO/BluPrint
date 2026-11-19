@@ -53,6 +53,17 @@ const FALLBACK_ESTIMATE = Object.freeze({
   fallback: true,
 });
 
+// Parts of the room, not furniture. The model is asked not to list them,
+// and anything that slips through (or was saved before this rule) is
+// dropped here, so curtains never get a ghost on the plan or a "replace"
+// toggle on the room page.
+const NOT_FURNITURE = /\b(curtains?|drapes?|drapery|blinds?|shutters?|window shades?|roller shades?|valances?|radiators?|heaters?|vents?|thermostats?|outlets?|light switch(es)?|windows?|window ?sills?|doors?|doorways?|baseboards?|wallpaper|ceiling fans?|ceiling lights?|chandeliers?|flush mounts?|recessed lights?|sconces?|fireplaces?|mantels?|closets?|built-ins?|columns?|beams?|carpet(ing)?)\b/i;
+
+/** False for curtains, radiators, windows and other parts of the room. */
+function isFurnitureLabel(label) {
+  return !NOT_FURNITURE.test(String(label || ""));
+}
+
 /**
  * Existing furniture as { label, category, keep }. Accepts the old plain
  * string form too, so a room saved before this change still reads. `keep`
@@ -65,7 +76,7 @@ function normalizeExistingFurniture(list) {
   const out = [];
   for (const entry of list.slice(0, 16)) {
     const label = String((entry && typeof entry === "object" ? entry.label : entry) || "").trim().slice(0, 60);
-    if (!label) continue;
+    if (!label || !isFurnitureLabel(label)) continue;
     const rawCat = entry && typeof entry === "object" ? String(entry.category || "other").toLowerCase() : "other";
     out.push({
       label,
@@ -96,7 +107,7 @@ Use visible references to judge scale: an interior door is about 80 inches tall 
 
 Report the room's floor dimensions in FEET as width (left to right from the camera) and length (near to far), the ceiling height in feet, and the room type.
 
-List every piece of furniture already in the room. For each give a short label (for example "grey sofa", "wooden coffee table") and the closest category from the allowed list; use "other" for anything that is not on the list (a TV, curtains, a radiator). Then say whether the room already looks fully furnished (crowded): true when there is little floor or wall space left for more pieces.
+List every piece of furniture already in the room: things that stand on the floor or are hung as movable pieces (a sofa, a bed, a dresser, a rug, a lamp, a plant, a TV stand, wall art, a mirror). For each give a short label (for example "grey sofa", "wooden coffee table") and the closest category from the allowed list; use "other" for furniture that is not on the list (a TV stand, a bench). Do NOT list parts of the room: curtains, blinds, windows, doors, radiators, vents, ceiling lights, fans, fireplaces, closets or anything built in. Then say whether the room already looks fully furnished (crowded): true when there is little floor or wall space left for more pieces.
 
 Give a confidence from 0 to 1 for the dimension estimate; be honest when the camera angle or a partial view makes it a guess.
 
@@ -238,6 +249,7 @@ async function estimateRoom(photoUrl) {
 module.exports = {
   estimateRoom,
   notARoomMessage,
+  isFurnitureLabel,
   normalizeEstimate,
   normalizeExistingFurniture,
   isRoomFull,

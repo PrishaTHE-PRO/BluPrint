@@ -5,7 +5,7 @@ const Style   = require('../models/Style');
 const { requireAuth, requireRoomOwner } = require('../middleware/auth');
 const multer  = require('multer');
 const { uploadToCloudinary } = require('../utils/cloudinary');
-const { estimateRoom, notARoomMessage, normalizeExistingFurniture, isRoomFull } = require('../services/roomPhotoAnalyzer');
+const { estimateRoom, notARoomMessage, normalizeExistingFurniture, isRoomFull, isFurnitureLabel } = require('../services/roomPhotoAnalyzer');
 
 // Every room route is owner-only. Ownership comes from the verified token, not
 // from anything the client sends.
@@ -174,7 +174,7 @@ function sanitizePhotoEstimate(value) {
     // after locating them in the photo. Carried through when present.
     const existingPlacements = Array.isArray(value.existingPlacements)
         ? value.existingPlacements
-            .filter((e) => e && typeof e === 'object' && e.label && Number.isFinite(Number(e.cx)) && Number.isFinite(Number(e.cy)))
+            .filter((e) => e && typeof e === 'object' && e.label && isFurnitureLabel(e.label) && Number.isFinite(Number(e.cx)) && Number.isFinite(Number(e.cy)))
             .slice(0, 16)
             .map((e) => ({
                 label: String(e.label).slice(0, 60),
@@ -318,6 +318,9 @@ router.get('/', async (req, res) => {
 
         res.status(200).json(rooms.map((room) => ({
             ...room,
+            // Re-sanitised on the way out, so a room saved before curtains
+            // and the like stopped counting as furniture reads clean too.
+            ...(room.photoEstimate ? { photoEstimate: sanitizePhotoEstimate(room.photoEstimate) } : {}),
             style: stylesByRoom.get(String(room._id)) || null,
         })));
     } catch (error) {

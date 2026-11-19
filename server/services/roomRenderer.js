@@ -34,6 +34,7 @@ const { httpAgent, httpsAgent } = require("../utils/safeRequest");
 const { uploadToCloudinary } = require("../utils/cloudinary");
 const { locateOnGrid } = require("./gridLocator");
 const { describeLayout } = require("./planFromPicture");
+const { isFurnitureLabel } = require("./roomPhotoAnalyzer");
 
 const IMAGE_EDIT_URL = "https://api.openai.com/v1/images/edits";
 const CHAT_URL = "https://api.openai.com/v1/chat/completions";
@@ -194,7 +195,7 @@ function buildEditPrompt({ products, layoutHints, existingFurniture }) {
   // category, and only that one.
   const existing = (Array.isArray(existingFurniture) ? existingFurniture : [])
     .map((f) => (f && typeof f === "object" ? f : { label: String(f || ""), category: "other", keep: true }))
-    .filter((f) => f.label);
+    .filter((f) => f.label && isFurnitureLabel(f.label));
   const kept = existing.filter((f) => f.keep !== false);
   const toReplace = existing.filter((f) => f.keep === false);
   const replacementFor = new Map(toReplace.map((f) => [String(f.category).toLowerCase(), f.label]));
@@ -669,7 +670,7 @@ const EXISTING_SIZES_IN = {
 /** The kept pieces from a photo estimate, as locator products. */
 function existingProducts(existingFurniture) {
   const kept = (Array.isArray(existingFurniture) ? existingFurniture : [])
-    .filter((f) => f && typeof f === "object" && f.label && f.keep !== false);
+    .filter((f) => f && typeof f === "object" && f.label && f.keep !== false && isFurnitureLabel(f.label));
   // One locator key per piece, so two chairs do not collapse into one box.
   return kept.map((f, i) => {
     const kind = String(f.category || "other").toLowerCase();
