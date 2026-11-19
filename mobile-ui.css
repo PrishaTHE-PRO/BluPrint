@@ -942,7 +942,7 @@
   }
 
   /* Live budget readout: base styles above the media query. */
-  .page-inspo #budget-slider { height: 28px; accent-color: var(--bp-primary); }
+  .page-inspo #budget-slider { height: 28px; }
 
   .page-inspo .how-it-works-panel,
   .page-inspo .ai-analysis-panel { margin: 22px 24px 0 !important; width: auto !important; }
