@@ -185,7 +185,7 @@ For each requested product you may be shown its product photo; otherwise go by i
 
 Set found to false if the product is not visible in the room. Use the category key exactly as given. In "where", say in a few words where the product is (for example "left wall under the window").
 
-Also report the floor line of the back wall: the wall the camera faces. Give the cell where that wall meets the floor at the far left of the room (leftCol/leftRow) and at the far right (rightCol/rightRow). If a corner is hidden behind furniture, give the cell where the line would meet the floor. Set floor.found to false only if no back wall is visible at all.`;
+Also report the floor line of the back wall: the wall the camera faces. Give the cell where that wall meets the floor at the room's far left corner (leftCol/leftRow), where the left wall begins, and at the room's far right corner (rightCol/rightRow), where the right wall begins. Furniture usually hides parts of this line: continue it behind the furniture all the way to the corners instead of stopping where it disappears. If the back wall runs out of the picture on a side, that end is at the picture's edge (column A or L). Set floor.found to false only if no back wall is visible at all.`;
 
 /** The back wall's floor line as two points in image fractions, or null. */
 function floorFromCells(floor) {

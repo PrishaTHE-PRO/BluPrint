@@ -111,6 +111,8 @@ interface Props {
   roomLayout?:      RoomLayout | null;
   linkedCategory?:  string | null;
   onLinkCategory?:  (cat: string | null) => void;
+  /** A click (or tap) on a piece that did not turn into a drag. */
+  onPick?:          (cat: string) => void;
   onRemove?:        (cat: string) => void;
   /** Restored placement from a saved layout; applied once when it arrives. */
   initialPlacement?: Placement | null;
@@ -119,7 +121,7 @@ interface Props {
    * rendered picture. Applied whenever `key` changes; validated the same way
    * the seed is so nothing lands in a cutout or outside the room.
    */
-  applyPlacement?: { key: number; positions: Record<string, PosFt>; rotations?: Record<string, number>; walls?: Record<string, string> } | null;
+  applyPlacement?: { key: number; positions: Record<string, PosFt>; centers?: Record<string, PosFt>; rotations?: Record<string, number>; walls?: Record<string, string> } | null;
   /**
    * Furniture already in the user's photo. Drawn as translucent, fixed
    * footprints that cannot be dragged, and treated as occupied floor so
@@ -634,7 +636,7 @@ function WindowMark({ sizePx }: { sizePx: number }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function RoomSVG({
-  room, furniture, roomLayout, linkedCategory, onLinkCategory, onRemove,
+  room, furniture, roomLayout, linkedCategory, onLinkCategory, onPick, onRemove,
   initialPlacement, applyPlacement, ghostFurniture = [], onPlacementChange, colorByCategory,
   headerAction,
 }: Props) {
@@ -1047,6 +1049,8 @@ export default function RoomSVG({
     if (rotatingPiece && !rotatingPiece.moved) {
       applyRotation(rotatingPiece.category, (rotatingPiece.rotationStart + 90) % 360);
     }
+    const draggedPiece = dragRef.current;
+    if (draggedPiece && !draggedPiece.moved) onPick?.(draggedPiece.category);
 
     if (e) {
       e.preventDefault();
@@ -1059,7 +1063,7 @@ export default function RoomSVG({
     rotateRef.current = null;
     setDragging(null);
     setRotating(null);
-  }, [applyRotation]);
+  }, [applyRotation, onPick]);
 
   const handleContextMenu = useCallback((category: string, e: React.MouseEvent) => {
     e.preventDefault();

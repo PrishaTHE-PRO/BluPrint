@@ -21,6 +21,8 @@ interface Props {
   onLinkCategory?:  (category: string | null) => void;
   inRoom:           boolean;
   onToggleInRoom:   () => void;
+  /** Just clicked on the floor plan: pulse so the eye lands here. */
+  picked?:          boolean;
   /** Small square in the category chip, matched to the piece on the plan. */
   accent?:          string;
 }
@@ -122,6 +124,7 @@ export default function FurnitureCard({
   onLinkCategory,
   inRoom,
   onToggleInRoom,
+  picked = false,
   accent = CARD_ACCENTS[0],
 }: Props) {
   const categoryFallback = CATEGORY_FALLBACK[item.category] || '';
@@ -147,6 +150,7 @@ export default function FurnitureCard({
     inRoom ? '' : 'is-out',
     isLinked ? 'is-linked' : '',
     isDimmed ? 'is-dimmed' : '',
+    picked ? 'is-picked' : '',
   ].filter(Boolean).join(' ');
 
   return (

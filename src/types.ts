@@ -35,6 +35,9 @@ export interface RenderPlacement {
   source?:   'picture';
   /** The wall the piece stands against in the picture, when it does. */
   touching?: 'back wall' | 'front wall' | 'left wall' | 'right wall' | 'none';
+  /** Centre of the piece in feet from the left and back walls. */
+  cx?: number;
+  cy?: number;
 }
 
 export interface RoomRender {
