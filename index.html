@@ -36,6 +36,9 @@
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    /* The nav floats over the page, so an in-page link used to land with the
+       section's eyebrow hidden behind it. Leave room for the nav plus a breath. */
+    [id] { scroll-margin-top: 96px; }
     body {
       margin: 0;
       overflow-x: hidden;
