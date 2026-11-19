@@ -27,7 +27,21 @@ const MAX_HEIGHT_FT = 20;
 // Room keys the furniture planner understands (see roomKey in furniturePlanner).
 const ROOM_TYPES = ["living", "bedroom", "kitchen", "bathroom", "office", "dining", "nursery"];
 
+// What the picture actually shows. Only "room_interior" can be estimated;
+// the route turns anything else into a "please upload a photo of your room".
+const SUBJECTS = [
+  "room_interior",
+  "floor_plan",
+  "building_exterior",
+  "single_object",
+  "people",
+  "screenshot_or_document",
+  "other",
+];
+
 const FALLBACK_ESTIMATE = Object.freeze({
+  isRoomPhoto: true,
+  subject: "room_interior",
   roomType: "living",
   widthFt: 12,
   lengthFt: 12,
@@ -76,6 +90,8 @@ function isRoomFull({ widthFt, lengthFt, existingFurniture = [], crowded = false
 
 const SYSTEM_PROMPT = `You are an interior designer estimating a room from a single photograph.
 
+First decide what the image is. It counts as a room photo (isRoomPhoto true, subject "room_interior") only when it is a photograph or realistic rendering taken INSIDE a room, showing its floor and at least one wall as a person standing in it would see them. A floor plan, blueprint, sketch, drawing or diagram of a layout is "floor_plan". The outside of a house or building is "building_exterior". A close-up of one piece of furniture or decor with no sense of the room is "single_object". A photo mostly of people or pets is "people". A screenshot, web page, document or text is "screenshot_or_document". Anything else that is not a room interior is "other". When isRoomPhoto is false, still fill the remaining fields with sensible defaults and set confidence to 0.
+
 Use visible references to judge scale: an interior door is about 80 inches tall and 30 to 36 inches wide, ceilings in homes are usually 8 to 10 feet, a sofa seat is about 18 inches off the floor, a standard sofa is 80 to 90 inches wide, a dining chair is about 18 inches wide, a queen bed is 60 x 80 inches, and floor tiles or planks repeat at regular sizes.
 
 Report the room's floor dimensions in FEET as width (left to right from the camera) and length (near to far), the ceiling height in feet, and the room type.
@@ -92,8 +108,10 @@ const RESPONSE_SCHEMA = {
   schema: {
     type: "object",
     additionalProperties: false,
-    required: ["roomType", "widthFt", "lengthFt", "heightFt", "existingFurniture", "crowded", "confidence"],
+    required: ["isRoomPhoto", "subject", "roomType", "widthFt", "lengthFt", "heightFt", "existingFurniture", "crowded", "confidence"],
     properties: {
+      isRoomPhoto: { type: "boolean" },
+      subject: { type: "string", enum: SUBJECTS },
       roomType: { type: "string", enum: ROOM_TYPES },
       widthFt: { type: "number" },
       lengthFt: { type: "number" },
@@ -132,7 +150,12 @@ function normalizeEstimate(raw) {
   const widthFt = Math.round(clamp(raw?.widthFt, MIN_ROOM_FT, MAX_ROOM_FT, FALLBACK_ESTIMATE.widthFt) * 2) / 2;
   const lengthFt = Math.round(clamp(raw?.lengthFt, MIN_ROOM_FT, MAX_ROOM_FT, FALLBACK_ESTIMATE.lengthFt) * 2) / 2;
   const crowded = Boolean(raw?.crowded);
+  const subject = SUBJECTS.includes(raw?.subject) ? raw.subject : "room_interior";
+  // Only an explicit "no" rejects the picture; a missing flag reads as a room.
+  const isRoomPhoto = raw?.isRoomPhoto !== false && subject === "room_interior";
   return {
+    isRoomPhoto,
+    subject,
     roomType,
     widthFt,
     lengthFt,
@@ -143,6 +166,18 @@ function normalizeEstimate(raw) {
     confidence: clamp(raw?.confidence, 0, 1, 0),
     fallback: false,
   };
+}
+
+/** The message shown when the upload is not a photo taken inside a room. */
+function notARoomMessage(subject) {
+  const what = {
+    floor_plan: "That looks like a floor plan, not a photo of your room.",
+    building_exterior: "That looks like the outside of a building, not a photo of your room.",
+    single_object: "That looks like a close-up of one item, not a photo of your room.",
+    people: "That looks like a photo of people, not of your room.",
+    screenshot_or_document: "That looks like a screenshot or document, not a photo of your room.",
+  }[subject] || "That does not look like a photo of a room.";
+  return what + " Upload a picture taken inside the room, showing the floor and walls. To use a floor plan or measurements instead, switch to Draw Room.";
 }
 
 /**
@@ -185,7 +220,7 @@ async function estimateRoom(photoUrl) {
     if (!raw) return { ...FALLBACK_ESTIMATE };
     const estimate = normalizeEstimate(JSON.parse(raw));
     console.log(
-      "[photo-analyze] estimated", estimate.roomType,
+      "[photo-analyze] estimated", estimate.isRoomPhoto ? estimate.roomType : `NOT A ROOM (${estimate.subject})`,
       `${estimate.widthFt}x${estimate.lengthFt}x${estimate.heightFt} ft`,
       "confidence", estimate.confidence,
       "existing:", estimate.existingFurniture.map((f) => `${f.label} (${f.category})`).join(", ") || "none",
@@ -202,6 +237,7 @@ async function estimateRoom(photoUrl) {
 
 module.exports = {
   estimateRoom,
+  notARoomMessage,
   normalizeEstimate,
   normalizeExistingFurniture,
   isRoomFull,

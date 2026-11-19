@@ -2517,6 +2517,8 @@ const photoMode = (() => {
     photoUrl: null,
     estimate: null,
     analyzing: false,
+    // True while "upload a photo of your room" is the thing blocking Continue.
+    blockedOnPhoto: false,
   };
   // A saved photo is only meaningful for a saved room. If there is no room id
   // this is a fresh room, and any photo left in storage belongs to an old one.
@@ -2626,6 +2628,12 @@ const photoMode = (() => {
 
   function setMode(mode) {
     state.active = mode === "photo";
+    // The "upload a photo" block only applies to photo mode. Draw Room is
+    // always allowed through on its own dimensions.
+    if (!state.active && state.blockedOnPhoto) {
+      state.blockedOnPhoto = false;
+      setDimensionError("");
+    }
     document.body.dataset.inputMode = mode;
     btnPhoto.classList.toggle("is-active", state.active);
     btnDims.classList.toggle("is-active", !state.active);
@@ -2648,6 +2656,14 @@ const photoMode = (() => {
     if (replaceBtn) replaceBtn.hidden = false;
   }
 
+  /** Back to the empty drop area, or to the photo already saved with the room. */
+  function restorePreview() {
+    if (state.photoUrl) { showPreview(state.photoUrl); return; }
+    if (preview) { preview.removeAttribute("src"); preview.hidden = true; }
+    if (empty) empty.hidden = false;
+    if (replaceBtn) replaceBtn.hidden = true;
+  }
+
   function applyEstimatedDimensions() {
     const w = Number(state.estimate?.widthFt), l = Number(state.estimate?.lengthFt);
     if (!Number.isFinite(w) || !Number.isFinite(l) || w <= 0 || l <= 0) return;
@@ -2662,6 +2678,10 @@ const photoMode = (() => {
     const estimate = payload.estimate || {};
     state.photoUrl = payload.photoUrl;
     state.estimate = estimate;
+    if (state.blockedOnPhoto) {
+      state.blockedOnPhoto = false;
+      setDimensionError("");
+    }
     try {
       localStorage.setItem("blueprintCurrentRoomPhotoUrl", payload.photoUrl);
       // The inspo page owns the room type once the user picks one there;
@@ -2745,13 +2765,28 @@ const photoMode = (() => {
       const data = await res.json().catch(() => ({}));
       // A reply without our JSON error did not come from the API (a static host
       // or a proxy page). Say so, with the status, instead of a bare generic line.
-      if (!res.ok) throw new Error(data.error || "Could not analyze that photo. The server answered " + res.status + " instead of a result, so the API may not be reachable from this site.");
+      if (!res.ok) {
+        const err = new Error(data.error || "Could not analyze that photo. The server answered " + res.status + " instead of a result, so the API may not be reachable from this site.");
+        err.code = data.code;
+        throw err;
+      }
       applyEstimate(data);
     } catch (err) {
       const message = (err && err.message) || "Could not analyze that photo.";
-      // The preview stays so they can retry; Dimensions is always available.
-      setStatus(message + " Try another photo, or switch to Draw Room.", true);
-      showToast(message);
+      if (err && err.code === "not_a_room") {
+        // A floor plan or some other picture that is not the room. Drop the
+        // preview so the page is plainly waiting for a real photo; Continue
+        // stays blocked until one arrives or they switch to Draw Room.
+        restorePreview();
+        setStatus(message, true);
+        state.blockedOnPhoto = true;
+        setDimensionError("Upload a photo of your room to continue, or switch to Draw Room.");
+        showToast("Please upload a photo taken inside your room");
+      } else {
+        // The preview stays so they can retry; Dimensions is always available.
+        setStatus(message + " Try another photo, or switch to Draw Room.", true);
+        showToast(message);
+      }
     } finally {
       state.analyzing = false;
     }

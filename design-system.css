@@ -4011,10 +4011,11 @@ html.dark-mode body.page-inspo .analyze-hero::after {
   border: 0;
   box-shadow: none;
 }
+/* Plain text, as in light mode: no tinted pill behind it. */
 html.dark-mode body.page-inspo .analyze-eyebrow {
-  border-color: rgba(126, 168, 201, 0.28);
-  color: var(--bp-primary);
-  background: rgba(36, 49, 64, 0.85);
+  border: 0;
+  color: var(--bp-ink);
+  background: transparent;
   box-shadow: none;
 }
 html.dark-mode body.page-inspo .garden-card,

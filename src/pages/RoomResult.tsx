@@ -13,7 +13,7 @@ import { Link000 } from '@/components/ui/skiper-ui/skiper40';
 import SwitchMode from '../components/SwitchMode';
 import ProfileMenu from '../components/ProfileMenu';
 import { buildRoomFromLayout, readSavedRoomLayout, saveRoomLayout } from '../utils/roomLayout';
-import { orderedFurniture } from '../utils/furnitureLayout';
+import { getCategoryOrder, normalizeRoomType, orderedFurniture } from '../utils/furnitureLayout';
 import {
   buildFurniturePlacement,
   normalizeFurniturePlacement,
@@ -58,6 +58,19 @@ function readScopedSavedRoomLayout() {
   if (!layout) return null;
   if (layout.roomId && layout.roomId !== roomId) return null;
   return layout;
+}
+
+/**
+ * A layout saved for one room type must not carry into another. Layouts saved
+ * before the room type was recorded are judged by their pieces: if none of
+ * them belongs to the current room type's own set, it came from another room.
+ */
+function placementMatchesRoomType(placement: FurniturePlacement, roomType?: string) {
+  if (placement.roomType) {
+    return normalizeRoomType(placement.roomType) === normalizeRoomType(roomType);
+  }
+  const own = new Set(getCategoryOrder(roomType));
+  return placement.items.some((entry) => own.has(entry.category));
 }
 
 function readScopedSavedFurniturePlacement() {
@@ -256,20 +269,24 @@ export default function RoomResult() {
   // furniture no longer matches — drop it so the fresh search shows through.
   const activePlacement = useMemo<FurniturePlacement | null>(() => {
     if (!savedPlacement) return null;
-    if (savedPlacement.styleTag && style && savedPlacement.styleTag !== style.styleTag) {
+    // Until the style is parsed there is no way to tell whether the saved
+    // layout still belongs to this room. The checks below used to let it
+    // through while `style` was null, so the first render restored the old
+    // room's pieces into the slots and the new search then merged on top of
+    // them. That is how a bedroom kept its bed after becoming a living room.
+    if (!style) return null;
+    if (savedPlacement.styleTag && savedPlacement.styleTag !== style.styleTag) {
       return null;
     }
     // Same for the room type: a bedroom's set does not carry into a living room.
-    const norm = (v?: string | null) => String(v || '').trim().toLowerCase();
-    if (savedPlacement.roomType && style?.roomType && norm(savedPlacement.roomType) !== norm(style.roomType)) {
+    if (!placementMatchesRoomType(savedPlacement, style.roomType)) {
       return null;
     }
-    if (style && (savedPlacement.budgetTotal ?? 0) !== style.budgetTotal) {
+    if ((savedPlacement.budgetTotal ?? 0) !== style.budgetTotal) {
       return null;
     }
     if (
-      style
-      && roomFeatureSignature(savedPlacement.roomFeatures)
+      roomFeatureSignature(savedPlacement.roomFeatures)
         !== roomFeatureSignature(style.roomFeatures)
     ) {
       return null;
@@ -279,7 +296,7 @@ export default function RoomResult() {
 
   // The design was redone: a saved layout exists but no longer applies because
   // the room type, style, budget or features changed since it was arranged.
-  const designChanged = Boolean(savedPlacement) && !activePlacement;
+  const designChanged = Boolean(style) && Boolean(savedPlacement) && !activePlacement;
 
   // When that happens to a room that already has a rendered picture, the
   // picture shows the old furniture. Once the new set has landed and been
