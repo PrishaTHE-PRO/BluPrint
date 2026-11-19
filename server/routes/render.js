@@ -72,6 +72,17 @@ function validateBody(body) {
   return { items: cleanItems, layoutHints: cleanHints };
 }
 
+/**
+ * The kept pieces' plan positions, read off the render together with the
+ * products, replace the ones read off the bare photo so the ghosts on the
+ * plan sit in the same relation to the new furniture as in the picture.
+ */
+function rememberExistingPlacements(room, existingPlacements) {
+  if (!Array.isArray(existingPlacements) || existingPlacements.length === 0) return;
+  room.photoEstimate = { ...(room.photoEstimate || {}), existingPlacements };
+  room.markModified("photoEstimate");
+}
+
 router.post("/:roomId/render", requireRoomOwner, async (req, res) => {
   let payload;
   try {
@@ -97,6 +108,7 @@ router.post("/:roomId/render", requireRoomOwner, async (req, res) => {
     });
     room.render = render;
     room.markModified("render");
+    rememberExistingPlacements(room, render.existingPlacements);
     await room.save();
     res.json(render);
   } catch (error) {
@@ -116,9 +128,14 @@ router.post("/:roomId/render/hotspots", requireRoomOwner, async (req, res) => {
     return res.status(400).json({ error: "This room has no render to locate furniture in." });
   }
   try {
-    const located = await relocateRender(room.render, { widthFt: room.widthFt, lengthFt: room.lengthFt });
+    const located = await relocateRender(
+      room.render,
+      { widthFt: room.widthFt, lengthFt: room.lengthFt },
+      room.photoEstimate?.existingFurniture,
+    );
     room.render = { ...room.render, ...located };
     room.markModified("render");
+    rememberExistingPlacements(room, located.existingPlacements);
     await room.save();
     res.json(room.render);
   } catch (error) {
