@@ -140,9 +140,9 @@
     .photo-tips iconify-icon { flex-shrink: 0; color: var(--bp-primary); font-size: 20px; }
     /* Once a photo is in, the notes make way for the status bar. */
     #photo-panel:has(#photo-empty[hidden]) .photo-tips { display: none; }
-    html.dark-mode .photo-dropzone { border-color: rgba(126, 168, 201, .4); background: rgba(126, 168, 201, .1); }
+    html.dark-mode .photo-dropzone { border-color: rgba(134, 197, 209, .4); background: rgba(134, 197, 209, .1); }
     html.dark-mode .photo-dropzone:hover,
-    html.dark-mode .photo-dropzone.is-over { background: rgba(126, 168, 201, .18); border-color: var(--bp-primary); }
+    html.dark-mode .photo-dropzone.is-over { background: rgba(134, 197, 209, .18); border-color: var(--bp-primary); }
     html.dark-mode .photo-dropzone__icon { background: #1a232e; box-shadow: 0 10px 26px rgba(0, 0, 0, .35); }
     html.dark-mode .photo-tips > div { background: rgba(26, 35, 46, .82); }
     .photo-panel__bar {
@@ -190,6 +190,38 @@
       color: var(--bp-muted);
     }
     .page-dimensions .dimension-estimate-note[hidden] { display: none; }
+    /* Above the width/length boxes while the photo is being analyzed. */
+    .page-dimensions .dimension-loading-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 -4px !important;
+      padding: 7px 12px;
+      border-radius: 10px;
+      background: rgba(47, 111, 143, .08);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--bp-primary) !important;
+    }
+    .page-dimensions .dimension-loading-note[hidden] { display: none; }
+    .dimension-loading-note__spinner {
+      flex: none;
+      width: 12px;
+      height: 12px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: dimension-loading-spin .8s linear infinite;
+    }
+    @keyframes dimension-loading-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .dimension-loading-note__spinner { animation-duration: 2.4s; }
+    }
+    html.dark-mode body.page-dimensions main > section:last-child .dimension-loading-note {
+      background: rgba(134, 197, 209, .12);
+      color: var(--bp-primary) !important;
+    }
 
     /* Detected furniture, with a per-piece "replace" toggle. */
     .photo-existing {
@@ -489,6 +521,11 @@
               <p id="photo-existing-note" class="photo-existing__note"></p>
               <ul id="photo-existing-list" class="photo-existing__list"></ul>
             </div>
+            <!-- Shown while a photo is being analyzed, so the empty boxes read as "on the way". -->
+            <p id="dimension-loading-note" class="dimension-loading-note" role="status" aria-live="polite" hidden>
+              <span class="dimension-loading-note__spinner" aria-hidden="true"></span>
+              Estimating your room's size from the photo…
+            </p>
             <div id="dimension-fields" class="grid grid-cols-2 gap-5" data-sd-id="68">
               <div class="space-y-3" data-sd-id="69">
                 <label for="room-width" class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F7F4D5]/40" data-sd-id="70">WIDTH</label>
@@ -2786,6 +2823,7 @@ const photoMode = (() => {
     userEditedDims = true;
     syncAwaiting();
     updateEstimateNote();
+    if (typeof updateLoadingNote === "function") updateLoadingNote();
     // The other box was empty a moment ago; re-run the editor's handler now
     // that both hold a value so the size and any error message are current.
     if (typeof widthInput.oninput === "function") widthInput.oninput();
@@ -2849,6 +2887,13 @@ const photoMode = (() => {
   // the photo's estimate, hidden once the user types their own size or
   // switches to Draw Room.
   const estimateNote = document.getElementById("dimension-estimate-note");
+  // "Estimating your room's size..." above the boxes while a photo is analyzed.
+  // Not needed once the user has typed their own size, or in Draw Room.
+  const loadingNote = document.getElementById("dimension-loading-note");
+  function updateLoadingNote() {
+    if (!loadingNote) return;
+    loadingNote.hidden = !(state.analyzing && state.active && !userEditedDims);
+  }
   function updateEstimateNote() {
     if (!estimateNote) return;
     // A fallback size is not a prediction; its own message says so.
@@ -2928,6 +2973,7 @@ const photoMode = (() => {
       setDimensionError("");
     }
     document.body.dataset.inputMode = mode;
+    updateLoadingNote();
     btnPhoto.classList.toggle("is-active", state.active);
     btnDims.classList.toggle("is-active", !state.active);
     btnPhoto.setAttribute("aria-selected", state.active ? "true" : "false");
@@ -3046,6 +3092,7 @@ const photoMode = (() => {
     if (estimateNote) estimateNote.hidden = true;
     setStatus("Preparing your photo...");
     state.analyzing = true;
+    updateLoadingNote();
     try {
       const upload = await shrinkForUpload(file);
       if (upload.size > MAX_BYTES) {
@@ -3082,6 +3129,7 @@ const photoMode = (() => {
       }
     } finally {
       state.analyzing = false;
+      updateLoadingNote();
     }
   }
 

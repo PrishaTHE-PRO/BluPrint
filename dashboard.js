@@ -249,22 +249,27 @@ async function loadProjects(userId) {
                         } else {
                             alert('Delete failed (' + res.status + ')');
                             deleteBtn.disabled = false;
+                            delete deleteBtn.dataset.confirming;
+                            deleteBtn.classList.remove('is-confirming');
                             deleteBtn.innerHTML = '<iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>';
                         }
                     } catch (err) {
                         alert('Delete failed: ' + err.message);
                         deleteBtn.disabled = false;
+                        delete deleteBtn.dataset.confirming;
+                        deleteBtn.classList.remove('is-confirming');
                         deleteBtn.innerHTML = '<iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>';
                     }
                 } else {
                     deleteBtn.dataset.confirming = '1';
-                    deleteBtn.style.background = '#D3968C';
+                    // Red trash can: the next click deletes (styles in design-system.css).
+                    deleteBtn.classList.add('is-confirming');
                     deleteBtn.title = 'Click again to confirm delete';
                     deleteBtn.innerHTML = '<iconify-icon icon="ph:trash-duotone" class="text-lg"></iconify-icon>';
                     setTimeout(() => {
                         if (deleteBtn.dataset.confirming) {
                             delete deleteBtn.dataset.confirming;
-                            deleteBtn.style.background = '';
+                            deleteBtn.classList.remove('is-confirming');
                             deleteBtn.title = 'Delete room';
                             deleteBtn.innerHTML = '<iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>';
                         }

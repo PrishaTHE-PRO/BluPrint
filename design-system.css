@@ -3555,8 +3555,8 @@ html.dark-mode {
   --bp-surface: #1a232e;
   --bp-ink: #e8eef4;
   --bp-muted: #9aabb8;
-  --bp-primary: #7ea8c9;
-  --bp-primary-hover: #97bad4;
+  --bp-primary: #86c5d1;
+  --bp-primary-hover: #a3d5de;
   --bp-soft: #243140;
   --bp-secondary: #2c3a4a;
   --bp-blue-soft: #1f3345;
@@ -3674,7 +3674,7 @@ html.dark-mode .settings-modal-close {
   color: var(--bp-muted);
 }
 html.dark-mode .project-card-skeleton {
-  border-color: rgba(126, 168, 201, 0.12);
+  border-color: rgba(134, 197, 209, 0.12);
   background:
     linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.06) 48%, transparent 61%),
     linear-gradient(#1a232e 68%, #212c3a 68%);
@@ -3686,14 +3686,14 @@ html.dark-mode .page-result .furniture-strip,
 html.dark-mode .page-result .furniture-h-strip,
 html.dark-mode .page-result .furniture-scroll-panel {
   background: linear-gradient(155deg, rgba(42, 58, 78, 0.96), rgba(33, 46, 62, 0.94)) !important;
-  border: 1px solid rgba(126, 168, 201, 0.16) !important;
+  border: 1px solid rgba(134, 197, 209, 0.16) !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
   backdrop-filter: blur(18px);
 }
 /* Keep the iso sketch on warm paper so its ink stays legible */
 html.dark-mode .page-result .iso-room-preview {
   background: linear-gradient(165deg, #efe8dc 0%, #e6dfd2 55%, #ddd5c6 100%) !important;
-  border: 1px solid rgba(126, 168, 201, 0.22) !important;
+  border: 1px solid rgba(134, 197, 209, 0.22) !important;
   box-shadow:
     0 20px 52px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
@@ -3703,7 +3703,7 @@ html.dark-mode .page-result .iso-room-preview {
 html.dark-mode .page-result .room-layout-canvas,
 html.dark-mode .page-result .furniture-h-strip {
   background: rgba(30, 44, 62, 0.6) !important;
-  border: 1px solid rgba(126, 168, 201, 0.22) !important;
+  border: 1px solid rgba(134, 197, 209, 0.22) !important;
   box-shadow: 0 20px 52px rgba(0, 0, 0, 0.35) !important;
   backdrop-filter: blur(18px);
 }
@@ -3717,7 +3717,7 @@ html.dark-mode .page-result .room-layout-canvas svg text[fill="#14202e"] {
 }
 html.dark-mode .page-result .room-layout-canvas:hover,
 html.dark-mode .page-result .iso-room-preview:hover {
-  border-color: rgba(126, 168, 201, 0.36) !important;
+  border-color: rgba(134, 197, 209, 0.36) !important;
   transform: none !important;
 }
 html.dark-mode .page-result .result-dual-pane__caption,
@@ -3731,16 +3731,16 @@ html.dark-mode .page-result .iso-room-preview__view-hint {
 }
 html.dark-mode .page-result .iso-room-preview__view-btn {
   background: rgba(42, 58, 78, 0.85);
-  border-color: rgba(126, 168, 201, 0.28);
+  border-color: rgba(134, 197, 209, 0.28);
   color: #e8eef5;
 }
 html.dark-mode .page-result .iso-room-preview__view-btn:hover {
-  border-color: rgba(126, 168, 201, 0.55);
+  border-color: rgba(134, 197, 209, 0.55);
   background: rgba(52, 72, 96, 0.95);
 }
 html.dark-mode .page-result .iso-room-preview__view-btn[aria-pressed="true"] {
-  background: rgba(126, 168, 201, 0.45);
-  border-color: rgba(126, 168, 201, 0.7);
+  background: rgba(134, 197, 209, 0.45);
+  border-color: rgba(134, 197, 209, 0.7);
   color: #f7f4d5;
 }
 html.dark-mode .page-result .furniture-scroll-panel {
@@ -3750,17 +3750,17 @@ html.dark-mode .page-result .furniture-scroll-panel {
 html.dark-mode .page-result .furniture-strip-card .garden-card,
 html.dark-mode .page-result .furniture-scroll-panel .garden-card {
   background: rgba(36, 49, 64, 0.92) !important;
-  border-color: rgba(126, 168, 201, 0.14) !important;
+  border-color: rgba(134, 197, 209, 0.14) !important;
   box-shadow: none !important;
   transform: none !important;
 }
 html.dark-mode .page-result .furniture-strip-card .garden-card:hover,
 html.dark-mode .page-result .furniture-scroll-panel .garden-card:hover {
   background: rgba(48, 66, 88, 0.98) !important;
-  border-color: rgba(126, 168, 201, 0.32) !important;
+  border-color: rgba(134, 197, 209, 0.32) !important;
 }
 html.dark-mode .page-result .furniture-h-strip__track::-webkit-scrollbar-thumb {
-  background: rgba(126, 168, 201, 0.35) !important;
+  background: rgba(134, 197, 209, 0.35) !important;
 }
 html.dark-mode .page-result main > header h1,
 html.dark-mode .page-result .room-name-display,
@@ -3776,7 +3776,7 @@ html.dark-mode .page-result [class*="text-[#D3968C]"] {
 }
 html.dark-mode .page-result input.room-name-input {
   background: rgba(36, 49, 64, 0.92) !important;
-  border-color: rgba(126, 168, 201, 0.28) !important;
+  border-color: rgba(134, 197, 209, 0.28) !important;
   border-radius: 10px !important;
   padding: 6px 10px !important;
 }
@@ -3798,7 +3798,7 @@ html.dark-mode .page-result a[class*="bg-[#D3968C]"] {
 html.dark-mode .page-result button[class*="bg-white"],
 html.dark-mode .page-result .bg-white\/5 {
   background: rgba(36, 49, 64, 0.9) !important;
-  border-color: rgba(126, 168, 201, 0.16) !important;
+  border-color: rgba(134, 197, 209, 0.16) !important;
   color: var(--bp-ink) !important;
 }
 html.dark-mode .page-result .workflow-step strong,
@@ -3814,19 +3814,19 @@ html.dark-mode .page-result .workflow-step.completed span {
 }
 html.dark-mode .page-result .workflow-connector,
 html.dark-mode .page-result .workflow-connector.completed {
-  background: rgba(126, 168, 201, 0.35) !important;
+  background: rgba(134, 197, 209, 0.35) !important;
 }
 html.dark-mode .page-result footer p {
   color: var(--bp-muted) !important;
 }
 html.dark-mode .page-result footer > div {
-  background: rgba(126, 168, 201, 0.14) !important;
+  background: rgba(134, 197, 209, 0.14) !important;
 }
 html.dark-mode .page-result [class*="bg-[#F7F4D5]"] {
-  background-color: rgba(126, 168, 201, 0.12) !important;
+  background-color: rgba(134, 197, 209, 0.12) !important;
 }
 html.dark-mode .page-result [class*="border-[#F7F4D5]"] {
-  border-color: rgba(126, 168, 201, 0.16) !important;
+  border-color: rgba(134, 197, 209, 0.16) !important;
 }
 html.dark-mode .page-result .ring-offset-\[\#0A3323\] {
   --tw-ring-offset-color: #121922 !important;
@@ -3860,7 +3860,7 @@ html.dark-mode body.page-result {
 /* Room dimensions — dusk page bg + lighter blue glass panels (match dashboard/inspo) */
 html.dark-mode body.page-dimensions {
   --dimension-primary: var(--bp-primary);
-  --dimension-blue: #7ea8c9;
+  --dimension-blue: #86c5d1;
 }
 html.dark-mode body.page-dimensions > .min-h-screen,
 html.dark-mode body.page-dimensions > div {
@@ -3869,7 +3869,7 @@ html.dark-mode body.page-dimensions > div {
 }
 html.dark-mode body.page-dimensions .garden-card {
   background: linear-gradient(155deg, rgba(42, 58, 78, 0.96), rgba(33, 46, 62, 0.94)) !important;
-  border: 1px solid rgba(126, 168, 201, 0.16) !important;
+  border: 1px solid rgba(134, 197, 209, 0.16) !important;
   border-radius: 18px !important;
   color: var(--bp-ink) !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
@@ -3877,13 +3877,13 @@ html.dark-mode body.page-dimensions .garden-card {
 }
 html.dark-mode body.page-dimensions .garden-card:hover {
   background: linear-gradient(155deg, rgba(48, 66, 88, 0.98), rgba(38, 52, 70, 0.96)) !important;
-  border-color: rgba(126, 168, 201, 0.28) !important;
+  border-color: rgba(134, 197, 209, 0.28) !important;
   transform: none !important;
 }
 html.dark-mode body.page-dimensions .canvas-area,
 html.dark-mode body.page-dimensions #photo-panel {
   background: linear-gradient(165deg, #334860 0%, #2a3d54 55%, #243447 100%) !important;
-  border: 1px solid rgba(126, 168, 201, 0.22) !important;
+  border: 1px solid rgba(134, 197, 209, 0.22) !important;
   border-radius: 18px !important;
   box-shadow:
     0 20px 52px rgba(0, 0, 0, 0.35),
@@ -3891,17 +3891,17 @@ html.dark-mode body.page-dimensions #photo-panel {
 }
 html.dark-mode body.page-dimensions .toolbar-btn {
   background: rgba(36, 49, 64, 0.9) !important;
-  border-color: rgba(126, 168, 201, 0.14) !important;
+  border-color: rgba(134, 197, 209, 0.14) !important;
   color: var(--bp-muted) !important;
 }
 html.dark-mode body.page-dimensions .toolbar-btn:hover:not(:disabled) {
-  background: rgba(126, 168, 201, 0.22) !important;
+  background: rgba(134, 197, 209, 0.22) !important;
   color: var(--bp-ink) !important;
 }
 html.dark-mode body.page-dimensions .dimension-input,
 html.dark-mode body.page-dimensions .dimension-input[class*="bg-black"] {
   background: rgba(36, 49, 64, 0.92) !important;
-  border-color: rgba(126, 168, 201, 0.16) !important;
+  border-color: rgba(134, 197, 209, 0.16) !important;
   color: var(--bp-ink) !important;
 }
 html.dark-mode body.page-dimensions .dimension-input:focus {
@@ -3919,7 +3919,7 @@ html.dark-mode body.page-dimensions .dimension-input.is-invalid {
 }
 html.dark-mode body.page-dimensions .unit-toggle {
   background: rgba(36, 49, 64, 0.9) !important;
-  border-color: rgba(126, 168, 201, 0.16) !important;
+  border-color: rgba(134, 197, 209, 0.16) !important;
 }
 html.dark-mode body.page-dimensions .unit-toggle button {
   color: var(--bp-muted) !important;
@@ -3941,34 +3941,34 @@ html.dark-mode body.page-dimensions main > section:last-child p {
   color: var(--bp-muted) !important;
 }
 html.dark-mode body.page-dimensions .room-path {
-  fill: rgba(126, 168, 201, 0.2) !important;
+  fill: rgba(134, 197, 209, 0.2) !important;
   stroke: var(--bp-primary) !important;
 }
 html.dark-mode body.page-dimensions #smallGrid path {
-  stroke: rgba(126, 168, 201, 0.12) !important;
+  stroke: rgba(134, 197, 209, 0.12) !important;
 }
 html.dark-mode body.page-dimensions #largeGrid > path {
-  stroke: rgba(126, 168, 201, 0.22) !important;
+  stroke: rgba(134, 197, 209, 0.22) !important;
 }
 html.dark-mode body.page-dimensions #area-badge {
   background: rgba(36, 49, 64, 0.92) !important;
-  border-color: rgba(126, 168, 201, 0.18) !important;
+  border-color: rgba(134, 197, 209, 0.18) !important;
   color: var(--bp-muted) !important;
 }
 html.dark-mode body.page-dimensions #draggable-door,
 html.dark-mode body.page-dimensions #draggable-window,
 html.dark-mode body.page-dimensions #draggable-cutout {
   background: rgba(36, 49, 64, 0.88) !important;
-  border-color: rgba(126, 168, 201, 0.16) !important;
+  border-color: rgba(134, 197, 209, 0.16) !important;
 }
 html.dark-mode body.page-dimensions #draggable-door > div:first-child,
 html.dark-mode body.page-dimensions #draggable-window > div:first-child,
 html.dark-mode body.page-dimensions #draggable-cutout > div:first-child {
-  background: rgba(126, 168, 201, 0.18) !important;
+  background: rgba(134, 197, 209, 0.18) !important;
 }
 html.dark-mode body.page-dimensions #custom-toast {
   background: #2a3d54 !important;
-  border-color: rgba(126, 168, 201, 0.28) !important;
+  border-color: rgba(134, 197, 209, 0.28) !important;
   color: var(--bp-ink) !important;
 }
 html.dark-mode body.page-dimensions #cta-save-continue {
@@ -3980,7 +3980,7 @@ html.dark-mode body.page-dimensions #cta-save-continue:hover {
 }
 html.dark-mode body.page-dimensions #door-flip-tooltip .door-flip-label {
   fill: rgba(36, 49, 64, 0.96) !important;
-  stroke: rgba(126, 168, 201, 0.28) !important;
+  stroke: rgba(134, 197, 209, 0.28) !important;
 }
 html.dark-mode body.page-dimensions #door-flip-tooltip text {
   fill: #e8eef4 !important;
@@ -3992,8 +3992,8 @@ html.dark-mode body.page-dimensions #door-flip-tooltip .door-flip-arrow-head {
   fill: var(--bp-primary) !important;
 }
 html.dark-mode body.page-dimensions .door-hit-area {
-  fill: rgba(126, 168, 201, 0.1) !important;
-  stroke: rgba(126, 168, 201, 0.28) !important;
+  fill: rgba(134, 197, 209, 0.1) !important;
+  stroke: rgba(134, 197, 209, 0.28) !important;
 }
 
 /* Analyze Style — dusk glass panels (match dimensions / results) */
@@ -4021,7 +4021,7 @@ html.dark-mode body.page-inspo .analyze-eyebrow {
 html.dark-mode body.page-inspo .garden-card,
 html.dark-mode body.page-inspo .garden-card:hover {
   background: linear-gradient(155deg, rgba(42, 58, 78, 0.96), rgba(33, 46, 62, 0.94)) !important;
-  border: 1px solid rgba(126, 168, 201, 0.16) !important;
+  border: 1px solid rgba(134, 197, 209, 0.16) !important;
   border-radius: 18px !important;
   color: var(--bp-ink) !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
@@ -4030,7 +4030,7 @@ html.dark-mode body.page-inspo .garden-card:hover {
 }
 html.dark-mode body.page-inspo .garden-card:hover {
   background: linear-gradient(155deg, rgba(48, 66, 88, 0.98), rgba(38, 52, 70, 0.96)) !important;
-  border-color: rgba(126, 168, 201, 0.28) !important;
+  border-color: rgba(134, 197, 209, 0.28) !important;
 }
 html.dark-mode body.page-inspo .garden-card h2,
 html.dark-mode body.page-inspo .garden-card h3,
@@ -4051,7 +4051,7 @@ html.dark-mode body.page-inspo .garden-card iconify-icon {
 html.dark-mode .how-it-works-panel,
 html.dark-mode .ai-analysis-panel {
   background: linear-gradient(155deg, rgba(42, 58, 78, 0.97), rgba(30, 42, 56, 0.94)) !important;
-  border: 1px solid rgba(126, 168, 201, 0.18) !important;
+  border: 1px solid rgba(134, 197, 209, 0.18) !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
   animation: bp-enter .45s cubic-bezier(.25, .46, .45, .94) both !important;
 }
@@ -4075,7 +4075,7 @@ html.dark-mode .ai-analysis-panel h2 {
   color: var(--bp-ink) !important;
 }
 html.dark-mode body.page-inspo #file-drop-area {
-  border-color: rgba(126, 168, 201, 0.28) !important;
+  border-color: rgba(134, 197, 209, 0.28) !important;
   background: rgba(36, 49, 64, 0.88) !important;
   color: var(--bp-muted) !important;
 }
@@ -4084,19 +4084,19 @@ html.dark-mode body.page-inspo #file-drop-area:hover {
   border-color: var(--bp-primary) !important;
 }
 html.dark-mode body.page-inspo .option-btn {
-  border: 1px solid rgba(126, 168, 201, 0.14) !important;
+  border: 1px solid rgba(134, 197, 209, 0.14) !important;
   background: rgba(36, 49, 64, 0.9) !important;
   color: var(--bp-ink) !important;
   box-shadow: none !important;
   transform: none !important;
 }
 html.dark-mode body.page-inspo .option-btn:hover {
-  border-color: rgba(126, 168, 201, 0.32) !important;
+  border-color: rgba(134, 197, 209, 0.32) !important;
   background: rgba(48, 66, 88, 0.98) !important;
   color: var(--bp-ink) !important;
 }
 html.dark-mode body.page-inspo .option-btn.selected {
-  border-color: rgba(126, 168, 201, 0.45) !important;
+  border-color: rgba(134, 197, 209, 0.45) !important;
   background: var(--bp-primary) !important;
   color: #0d1218 !important;
 }
@@ -4109,7 +4109,7 @@ html.dark-mode body.page-inspo input[type="text"],
 html.dark-mode body.page-inspo input[type="number"] {
   background: rgba(36, 49, 64, 0.92) !important;
   color: var(--bp-ink) !important;
-  border: 1px solid rgba(126, 168, 201, 0.16) !important;
+  border: 1px solid rgba(134, 197, 209, 0.16) !important;
 }
 html.dark-mode body.page-inspo #budget-input:focus,
 html.dark-mode body.page-inspo #room-type-other:focus,
@@ -4125,12 +4125,12 @@ html.dark-mode body.page-inspo input[type="range"] {
   accent-color: var(--bp-primary);
 }
 html.dark-mode body.page-inspo .budget-zone {
-  border-color: rgba(126, 168, 201, 0.14) !important;
+  border-color: rgba(134, 197, 209, 0.14) !important;
 }
 html.dark-mode body.page-inspo .step-circle {
   background: rgba(36, 49, 64, 0.9) !important;
   color: var(--bp-muted) !important;
-  border-color: rgba(126, 168, 201, 0.16) !important;
+  border-color: rgba(134, 197, 209, 0.16) !important;
 }
 html.dark-mode body.page-inspo .step-circle.active,
 html.dark-mode body.page-inspo .step-circle.done {
@@ -4151,7 +4151,7 @@ html.dark-mode body.page-inspo .workflow-step.completed span {
 }
 html.dark-mode body.page-inspo .workflow-connector,
 html.dark-mode body.page-inspo .workflow-connector.completed {
-  background: rgba(126, 168, 201, 0.35) !important;
+  background: rgba(134, 197, 209, 0.35) !important;
 }
 html.dark-mode body.page-inspo #analyze-btn,
 html.dark-mode body.page-inspo #continue-btn,
@@ -4180,7 +4180,7 @@ html.dark-mode body.page-inspo #clear-budget {
 html.dark-mode .ai-tags span {
   background: rgba(36, 49, 64, 0.9) !important;
   color: var(--bp-muted) !important;
-  border: 1px solid rgba(126, 168, 201, 0.12);
+  border: 1px solid rgba(134, 197, 209, 0.12);
 }
 html.dark-mode body.page-inspo #analyze-status,
 html.dark-mode body.page-inspo #analyze-status p {
@@ -4201,7 +4201,7 @@ html.dark-mode input.room-name-input {
 }
 html.dark-mode input.room-name-input {
   background: rgba(36, 49, 64, 0.92) !important;
-  border: 1px solid rgba(126, 168, 201, 0.16) !important;
+  border: 1px solid rgba(134, 197, 209, 0.16) !important;
   border-radius: 8px;
   padding: 4px 8px;
 }
@@ -4508,7 +4508,7 @@ html.dark-mode input.room-name-input {
   .page-result .render-hotspot__card { width: 190px; }
 }
 html.dark-mode .page-result .room-render-view {
-  border: 1px solid rgba(126, 168, 201, .22) !important;
+  border: 1px solid rgba(134, 197, 209, .22) !important;
   box-shadow: 0 20px 52px rgba(0, 0, 0, .35) !important;
 }
 
@@ -4522,9 +4522,9 @@ html.dark-mode .page-result .room-render-view {
   --bp-btn-soft-text: #1f2f45;
 }
 html.dark-mode {
-  --bp-btn-soft-bg: rgba(126, 168, 201, .36);
-  --bp-btn-soft-bg-hover: rgba(126, 168, 201, .48);
-  --bp-btn-soft-border: rgba(126, 168, 201, .52);
+  --bp-btn-soft-bg: rgba(134, 197, 209, .36);
+  --bp-btn-soft-bg-hover: rgba(134, 197, 209, .48);
+  --bp-btn-soft-border: rgba(134, 197, 209, .52);
   --bp-btn-soft-text: var(--bp-ink);
 }
 
@@ -4762,7 +4762,7 @@ html.dark-mode body.page-dimensions .garden-card:hover,
 html.dark-mode body.page-dimensions .canvas-area,
 html.dark-mode body.page-dimensions #photo-panel {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
-  border-color: rgba(126, 168, 201, 0.2) !important;
+  border-color: rgba(134, 197, 209, 0.2) !important;
 }
 
 /* Same frosted glass as the room dimensions panels (40% surface + blur) for
@@ -4784,7 +4784,7 @@ html.dark-mode body.page-result .room-layout-canvas:hover,
 html.dark-mode body.page-result .room-render-view,
 html.dark-mode body.page-result .furniture-h-strip {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
-  border-color: rgba(126, 168, 201, 0.2) !important;
+  border-color: rgba(134, 197, 209, 0.2) !important;
 }
 /* The left panel matches the right one: the right panel's slide-in leaves a
    transform on its section, which turns its backdrop blur off, so it reads
@@ -4808,7 +4808,7 @@ html body.page-inspo .ai-analysis-panel {
 html.dark-mode body.page-inspo .how-it-works-panel,
 html.dark-mode body.page-inspo .ai-analysis-panel {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
-  border-color: rgba(126, 168, 201, 0.2) !important;
+  border-color: rgba(134, 197, 209, 0.2) !important;
 }
 
 /* Sign in: the moving strip of rooms uses the dashboard room cards' look and
@@ -4941,7 +4941,7 @@ html body.page-login .login-room-type-track span {
 }
 html.dark-mode body.page-login .login-room-type-banner,
 html.dark-mode body.page-login .login-room-copy-banner {
-  border-color: rgba(126, 168, 201, .3);
+  border-color: rgba(134, 197, 209, .3);
   background: #2f6f8f;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
 }
@@ -6122,8 +6122,8 @@ html.dark-mode .page-inspo .inspo-or::after { background: rgba(255, 255, 255, .1
    View all button's look: translucent blue fill, blue border, no shadow or
    blur. Same values the dark View all button computes to. */
 html.dark-mode body.page-dashboard .m-stat {
-  background: rgba(126, 168, 201, .54) !important;
-  border-color: rgba(126, 168, 201, .52) !important;
+  background: rgba(134, 197, 209, .54) !important;
+  border-color: rgba(134, 197, 209, .52) !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -6165,11 +6165,11 @@ html body.page-dimensions #draggable-door iconify-icon[icon="ph:door-duotone"] {
   color: var(--bp-green) !important;
 }
 html.dark-mode body.page-dimensions #draggable-window {
-  background: rgba(126, 168, 201, .16) !important;
-  border-color: rgba(126, 168, 201, .36) !important;
+  background: rgba(134, 197, 209, .16) !important;
+  border-color: rgba(134, 197, 209, .36) !important;
 }
 html.dark-mode body.page-dimensions #draggable-window > div:first-child {
-  background: rgba(126, 168, 201, .24) !important;
+  background: rgba(134, 197, 209, .24) !important;
 }
 @media (max-width: 600px) {
   /* Phones drop the icon tile behind every library card's icon. */
@@ -6223,8 +6223,8 @@ html.dark-mode .page-inspo .inspo-budget__slider::-moz-range-thumb { background:
 .page-dimensions #btn-redo:disabled { opacity: .55 !important; cursor: default; box-shadow: none !important; }
 html.dark-mode body.page-dimensions #btn-undo,
 html.dark-mode body.page-dimensions #btn-redo {
-  background: rgba(126, 168, 201, .16) !important;
-  border-color: rgba(126, 168, 201, .55) !important;
+  background: rgba(134, 197, 209, .16) !important;
+  border-color: rgba(134, 197, 209, .55) !important;
   color: var(--bp-primary) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, .3) !important;
 }
@@ -6258,7 +6258,7 @@ html.dark-mode .page-result main > header .result-stat--palette i { box-shadow: 
 }
 html.dark-mode body.page-dimensions .placed-element-group.is-lifted,
 html.dark-mode body.page-dimensions .cutout-group.is-lifted {
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .55)) drop-shadow(0 0 4px rgba(126, 168, 201, .35)) !important;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .55)) drop-shadow(0 0 4px rgba(134, 197, 209, .35)) !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .page-dimensions .placed-element-group,
@@ -6304,3 +6304,29 @@ html.dark-mode body.page-dimensions #door-template path:nth-child(2),
 html.dark-mode body.page-dimensions #door-template path:last-child { stroke: var(--plan-door) !important; }
 .page-dimensions #door-template circle,
 html.dark-mode body.page-dimensions #door-template circle { fill: var(--plan-door) !important; }
+
+/* Dashboard room cards: once the x turns into a trash can, it goes red so
+   the second click clearly reads as "delete". */
+.page-dashboard #projects-grid .room-float .delete-btn.is-confirming {
+  opacity: 1;
+  background: #fff !important;
+  color: var(--bp-danger) !important;
+  box-shadow: 0 0 0 1.5px rgba(192, 64, 64, .55), 0 6px 14px rgba(192, 64, 64, .25);
+}
+.page-dashboard #projects-grid .room-float .delete-btn.is-confirming:hover {
+  background: var(--bp-danger) !important;
+  color: #fff !important;
+}
+html.dark-mode .page-dashboard #projects-grid .room-float .delete-btn.is-confirming {
+  background: #1a232e !important;
+  color: #ff8a8a !important;
+  box-shadow: 0 0 0 1.5px rgba(255, 138, 138, .6), 0 6px 14px rgba(0, 0, 0, .4);
+}
+html.dark-mode .page-dashboard #projects-grid .room-float .delete-btn.is-confirming:hover {
+  background: #e05a5a !important;
+  color: #fff !important;
+}
+.page-dashboard #projects-grid .room-float .delete-btn.is-confirming iconify-icon { color: var(--bp-danger) !important; }
+.page-dashboard #projects-grid .room-float .delete-btn.is-confirming:hover iconify-icon { color: #fff !important; }
+html.dark-mode .page-dashboard #projects-grid .room-float .delete-btn.is-confirming iconify-icon { color: #ff8a8a !important; }
+html.dark-mode .page-dashboard #projects-grid .room-float .delete-btn.is-confirming:hover iconify-icon { color: #fff !important; }
