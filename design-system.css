@@ -5397,13 +5397,21 @@ html.dark-mode body.page-inspo #wild-card-btn.is-on .inspo-wild__title { backgro
   border-color: rgba(41, 79, 125, .28);
 }
 .page-result .shop-card.is-dimmed { opacity: .5; }
-/* Clicked on the floor plan: a teal ring swells out of the card twice. */
+/* Clicked on the floor plan: a teal ring swells out of the card twice. The
+   ring is a pseudo-element with its own animation. Putting the pulse on the
+   card itself replaced its entrance animation and, when the pulse ended,
+   replayed it, so the card vanished and faded back in. */
 @keyframes shop-card-pick {
-  0%   { box-shadow: 0 0 0 0 rgba(47, 111, 143, .6), 0 18px 44px rgba(20, 32, 46, .14); }
-  100% { box-shadow: 0 0 0 16px rgba(47, 111, 143, 0), 0 18px 44px rgba(20, 32, 46, .14); }
+  0%   { box-shadow: 0 0 0 0 rgba(47, 111, 143, .6); }
+  100% { box-shadow: 0 0 0 16px rgba(47, 111, 143, 0); }
 }
-.page-result .shop-card.is-picked {
-  border-color: var(--bp-primary);
+.page-result .shop-card.is-picked { border-color: var(--bp-primary); }
+.page-result .shop-card.is-picked::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
   animation: shop-card-pick .7s ease-out 2;
 }
 .page-result .shop-card.is-out { opacity: .6; border-style: dashed; border-color: rgba(41, 79, 125, .25); }
