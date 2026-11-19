@@ -205,6 +205,36 @@
       color: var(--bp-primary) !important;
     }
     .page-dimensions .dimension-loading-note[hidden] { display: none; }
+    /* The boxes themselves while the estimate is on its way: emptied, with a
+       shimmer, "Estimating" as the placeholder and a spinner where the unit
+       goes, so it is plain they are being filled in rather than waiting on you.
+       Typing a size of your own ends it. */
+    .page-dimensions #dimension-fields.is-estimating .dimension-input {
+      background-image: linear-gradient(100deg, rgba(47, 111, 143, 0) 20%, rgba(47, 111, 143, .16) 50%, rgba(47, 111, 143, 0) 80%) !important;
+      background-size: 200% 100% !important;
+      animation: dimension-shimmer 1.6s linear infinite;
+    }
+    .page-dimensions #dimension-fields.is-estimating .dimension-input::placeholder { color: var(--bp-primary); opacity: .85; }
+    .page-dimensions #dimension-fields.is-estimating .unit-indicator { display: none; }
+    .page-dimensions #dimension-fields.is-estimating .dimension-spinner { display: block; }
+    .page-dimensions .dimension-spinner {
+      display: none;
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      margin-top: -7px;
+      border: 2px solid var(--bp-primary);
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: dimension-loading-spin .8s linear infinite;
+    }
+    @keyframes dimension-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .page-dimensions #dimension-fields.is-estimating .dimension-input { animation: none; }
+      .page-dimensions .dimension-spinner { animation-duration: 2.4s; }
+    }
     .dimension-loading-note__spinner {
       flex: none;
       width: 12px;
@@ -532,6 +562,7 @@
                 <div class="relative" data-sd-id="71">
                   <input type="text" id="room-width" value="15" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="72">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="73">ft</span>
+                  <span class="dimension-spinner" aria-hidden="true"></span>
                 </div>
               </div>
               <div class="space-y-3" data-sd-id="74">
@@ -539,6 +570,7 @@
                 <div class="relative" data-sd-id="76">
                   <input type="text" id="room-length" value="12" inputmode="decimal" autocomplete="off" class="dimension-input !bg-black/20 !border-white/5 !p-5 !rounded-2xl" data-sd-id="77">
                   <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#F7F4D5]/30 uppercase unit-indicator" data-sd-id="78">ft</span>
+                  <span class="dimension-spinner" aria-hidden="true"></span>
                 </div>
               </div>
             </div>
@@ -2890,9 +2922,31 @@ const photoMode = (() => {
   // "Estimating your room's size..." above the boxes while a photo is analyzed.
   // Not needed once the user has typed their own size, or in Draw Room.
   const loadingNote = document.getElementById("dimension-loading-note");
+  // The boxes empty out and shimmer for the same stretch (see .is-estimating),
+  // keeping the numbers they held so a failed analysis puts them back.
+  const dimensionFields = document.getElementById("dimension-fields");
+  let valuesBeforeEstimate = null;
   function updateLoadingNote() {
-    if (!loadingNote) return;
-    loadingNote.hidden = !(state.analyzing && state.active && !userEditedDims);
+    const estimating = Boolean(state.analyzing && state.active && !userEditedDims);
+    if (loadingNote) loadingNote.hidden = !estimating;
+    if (!dimensionFields) return;
+    dimensionFields.classList.toggle("is-estimating", estimating);
+    if (estimating) {
+      if (!valuesBeforeEstimate) valuesBeforeEstimate = { width: widthInput.value, length: lengthInput.value };
+      widthInput.value = "";
+      lengthInput.value = "";
+      widthInput.placeholder = "Estimating";
+      lengthInput.placeholder = "Estimating";
+      return;
+    }
+    widthInput.placeholder = "";
+    lengthInput.placeholder = "";
+    if (valuesBeforeEstimate) {
+      // Empty still: nothing arrived and nothing was typed, so the old size returns.
+      if (widthInput.value === "") widthInput.value = valuesBeforeEstimate.width;
+      if (lengthInput.value === "") lengthInput.value = valuesBeforeEstimate.length;
+      valuesBeforeEstimate = null;
+    }
   }
   function updateEstimateNote() {
     if (!estimateNote) return;

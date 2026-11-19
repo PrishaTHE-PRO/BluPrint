@@ -171,15 +171,12 @@
                 <span class="inspo-budget__icon" aria-hidden="true"><iconify-icon icon="ph:wallet"></iconify-icon></span>
                 <h2 class="text-3xl font-bold">Budget</h2>
               </div>
-              <button type="button" id="budget-unlimited" class="inspo-budget__unlimited" aria-pressed="true"
-                title="No spending cap">
-                <span aria-hidden="true">∞</span> Unlimited
-              </button>
+              <span class="inspo-budget__optional" title="Leave it empty for no spending cap">Optional</span>
             </div>
             <label class="inspo-budget__amount">
               <span class="inspo-budget__dollar" aria-hidden="true">$</span>
               <input type="text" id="budget-input" inputmode="numeric" autocomplete="off"
-                placeholder="Unlimited" aria-label="Furniture budget in dollars">
+                placeholder="No limit" aria-label="Furniture budget in dollars">
             </label>
             <input type="range" id="budget-slider" min="500" max="25000" step="250" value="3000"
               aria-label="Furniture budget" class="inspo-budget__slider">
@@ -647,12 +644,10 @@
     const budgetSlider = document.getElementById('budget-slider');
     const budgetInput = document.getElementById('budget-input');
     const budgetCard = document.querySelector('.inspo-card--budget');
-    const budgetUnlimited = document.getElementById('budget-unlimited');
 
     function syncBudgetUi() {
       const on = state.budgetTotal != null;
       budgetCard.classList.toggle('is-off', !on);
-      budgetUnlimited.setAttribute('aria-pressed', on ? 'false' : 'true');
       updateBudgetDecor(budgetSlider.value);
     }
 
@@ -723,8 +718,7 @@
     });
     budgetInput.addEventListener('change', () => setBudget(budgetInput.value, { glide: true }));
     budgetInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') budgetInput.blur(); });
-    // Unlimited clears the cap; the slider or the amount sets one again.
-    budgetUnlimited.addEventListener('click', () => setBudget(''));
+    // Clearing the amount removes the cap; the slider or the amount sets one again.
     const savedBudgetTotal = localStorage.getItem('blueprintBudgetTotal');
     if (savedBudgetTotal) setBudget(savedBudgetTotal); else syncBudgetUi();
 
