@@ -171,15 +171,15 @@
                 <span class="inspo-budget__icon" aria-hidden="true"><iconify-icon icon="ph:wallet"></iconify-icon></span>
                 <h2 class="text-3xl font-bold">Budget</h2>
               </div>
-              <button type="button" id="budget-switch" class="inspo-switch" role="switch" aria-checked="false">
-                <span>Set a budget</span>
-                <i class="inspo-switch__track" aria-hidden="true"><b class="inspo-switch__knob"></b></i>
+              <button type="button" id="budget-unlimited" class="inspo-budget__unlimited" aria-pressed="true"
+                title="No spending cap">
+                <span aria-hidden="true">∞</span> Unlimited
               </button>
             </div>
             <label class="inspo-budget__amount">
               <span class="inspo-budget__dollar" aria-hidden="true">$</span>
               <input type="text" id="budget-input" inputmode="numeric" autocomplete="off"
-                placeholder="No limit" aria-label="Furniture budget in dollars">
+                placeholder="Unlimited" aria-label="Furniture budget in dollars">
             </label>
             <input type="range" id="budget-slider" min="500" max="25000" step="250" value="3000"
               aria-label="Furniture budget" class="inspo-budget__slider">
@@ -641,20 +641,18 @@
     }
 
     // ── Optional budget ────────────────────────────────────────────────
-    // The switch turns the budget on and off. On, the big number is a real
-    // input (type a figure or drag the slider); off, nothing is sent and the
-    // picker spends freely. Values snap to $250 steps between $500 and $25,000.
+    // Drag the slider or type a figure; both are always live. An empty amount
+    // means no limit: nothing is sent and the picker spends freely. Values
+    // snap to $250 steps between $500 and $25,000.
     const budgetSlider = document.getElementById('budget-slider');
     const budgetInput = document.getElementById('budget-input');
-    const budgetSwitch = document.getElementById('budget-switch');
     const budgetCard = document.querySelector('.inspo-card--budget');
-    const DEFAULT_BUDGET = 3000;
+    const budgetUnlimited = document.getElementById('budget-unlimited');
 
     function syncBudgetUi() {
       const on = state.budgetTotal != null;
-      budgetSwitch.setAttribute('aria-checked', on ? 'true' : 'false');
-      budgetSlider.disabled = !on;
       budgetCard.classList.toggle('is-off', !on);
+      budgetUnlimited.setAttribute('aria-pressed', on ? 'false' : 'true');
       updateBudgetDecor(budgetSlider.value);
     }
 
@@ -725,12 +723,8 @@
     });
     budgetInput.addEventListener('change', () => setBudget(budgetInput.value, { glide: true }));
     budgetInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') budgetInput.blur(); });
-    budgetSwitch.addEventListener('click', () => {
-      if (state.budgetTotal != null) { setBudget(''); return; }
-      setBudget(localStorage.getItem('blueprintBudgetTotal') || DEFAULT_BUDGET);
-      budgetInput.focus();
-      budgetInput.select();
-    });
+    // Unlimited clears the cap; the slider or the amount sets one again.
+    budgetUnlimited.addEventListener('click', () => setBudget(''));
     const savedBudgetTotal = localStorage.getItem('blueprintBudgetTotal');
     if (savedBudgetTotal) setBudget(savedBudgetTotal); else syncBudgetUi();
 

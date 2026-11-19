@@ -155,14 +155,9 @@
     var copy = document.querySelector('.dashboard-welcome-copy');
     if (!copy) return;
 
-    // "Welcome back" → today's weekday. No clock: it was stamped once at load
-    // and never updated.
+    // "Welcome back" stays off on phones; the greeting below says it.
     var eyebrow = copy.querySelector('.dashboard-eyebrow');
-    if (eyebrow) {
-      eyebrow.classList.add('m-hidden');
-      var stamp = new Date().toLocaleDateString(undefined, { weekday: 'long' });
-      copy.insertBefore(el('p', 'dashboard-eyebrow m-eyebrow m-only', stamp), eyebrow);
-    }
+    if (eyebrow) eyebrow.classList.add('m-hidden');
 
     // "Prisha!" → "Hi, Prisha!"
     var h1 = copy.querySelector('h1');
@@ -433,6 +428,53 @@
     grip.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
     });
+
+    // Pull down anywhere on the sheet: once its content is scrolled to the
+    // top, a downward swipe drags the sheet itself, like the grip does.
+    // Inputs and the library cards (dragged onto the plan) keep their own
+    // gestures.
+    var scroller = sheet.querySelector('.garden-card') || sheet;
+    var body = { y: 0, h: 0, state: '' }; // state: '' | 'sheet' | 'scroll'
+    sheet.addEventListener('touchstart', function (e) {
+      body.state = '';
+      if (!MQ.matches || e.touches.length !== 1 || grip.contains(e.target)) { body.state = 'scroll'; return; }
+      if (e.target.closest('input, textarea, select, [draggable="true"]')) { body.state = 'scroll'; return; }
+      body.y = e.touches[0].clientY;
+      body.h = sheet.offsetHeight;
+    }, { passive: true });
+    sheet.addEventListener('touchmove', function (e) {
+      if (body.state === 'scroll') return;
+      var dy = e.touches[0].clientY - body.y;
+      if (!body.state) {
+        if (Math.abs(dy) < 6) return;
+        // Downward with the content at its top: the sheet moves. Anything
+        // else is an ordinary scroll for the rest of this touch.
+        if (dy > 0 && scroller.scrollTop <= 0) {
+          body.state = 'sheet';
+          body.y = e.touches[0].clientY;
+          dy = 0;
+          sheet.classList.add('is-dragging');
+        } else {
+          body.state = 'scroll';
+          return;
+        }
+      }
+      e.preventDefault();
+      setHeight(body.h - dy);
+    }, { passive: false });
+    function endBodyDrag() {
+      if (body.state !== 'sheet') { body.state = ''; return; }
+      body.state = '';
+      sheet.classList.remove('is-dragging');
+      // A deliberate pull (a fifth of the way, or 80px) collapses; a nudge
+      // springs back open.
+      var pulled = body.h - sheet.offsetHeight;
+      var collapse = pulled > Math.min(80, (body.h - COLLAPSED) / 5);
+      setHeight(collapse ? COLLAPSED : body.h);
+      grip.setAttribute('aria-label', collapse ? 'Expand element panel' : 'Collapse element panel');
+    }
+    sheet.addEventListener('touchend', endBodyDrag);
+    sheet.addEventListener('touchcancel', endBodyDrag);
 
     // A focused input inside the sheet needs the sheet open.
     sheet.addEventListener('focusin', function () {

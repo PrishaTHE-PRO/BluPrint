@@ -4786,6 +4786,12 @@ html.dark-mode body.page-result .furniture-h-strip {
   background: color-mix(in srgb, var(--bp-surface) 40%, transparent) !important;
   border-color: rgba(134, 197, 209, 0.2) !important;
 }
+/* Light mode: the dashboard stat tiles (sq ft drawn, rooms finished) carry a
+   light teal tint, 15% teal mixed into the frosted surface. */
+html:not(.dark-mode) body.page-dashboard .m-stat {
+  background: color-mix(in srgb, color-mix(in srgb, #86c5d1 15%, var(--bp-surface)) 55%, transparent) !important;
+  border-color: color-mix(in srgb, #86c5d1 35%, #fff) !important;
+}
 /* The left panel matches the right one: the right panel's slide-in leaves a
    transform on its section, which turns its backdrop blur off, so it reads
    as see-through glass with the blueprint showing. A real 22px blur on the
@@ -5108,7 +5114,7 @@ html body .bp-wordmark-rest {
   .page-inspo .inspo-budget__amount::after { transition: none; }
 }
 .page-inspo .inspo-card--budget.is-off .inspo-budget__amount { color: var(--bp-muted); }
-.page-inspo .inspo-card--budget.is-off .inspo-budget__dollar { opacity: .5; }
+.page-inspo .inspo-card--budget.is-off .inspo-budget__dollar { display: none; }
 /* Custom slider: a slim rounded track, teal up to the value (--fill, set
    from the page script) and a pale teal tint after it, with a white knob
    ringed in teal. The input itself stays tall for an easy touch target. */
@@ -5154,7 +5160,6 @@ html body .bp-wordmark-rest {
   transform: scale(1.1);
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--bp-primary) 16%, transparent), 0 2px 8px rgba(28, 23, 20, .18);
 }
-.page-inspo .inspo-card--budget.is-off .inspo-budget__slider { opacity: .4; cursor: default; }
 .page-inspo .inspo-budget__scale {
   display: flex;
   justify-content: space-between;
@@ -6330,3 +6335,67 @@ html.dark-mode .page-dashboard #projects-grid .room-float .delete-btn.is-confirm
 .page-dashboard #projects-grid .room-float .delete-btn.is-confirming:hover iconify-icon { color: #fff !important; }
 html.dark-mode .page-dashboard #projects-grid .room-float .delete-btn.is-confirming iconify-icon { color: #ff8a8a !important; }
 html.dark-mode .page-dashboard #projects-grid .room-float .delete-btn.is-confirming:hover iconify-icon { color: #fff !important; }
+
+/* Results: the Price tag beside "Buy the pieces". Off = room order (the
+   default); on = cheapest first. */
+.page-result .shop-room__price-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  background: rgba(255, 255, 255, .55);
+  color: var(--bp-ink);
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.page-result .shop-room__price-tag iconify-icon { font-size: 15px; color: inherit; }
+.page-result .shop-room__price-tag span { color: inherit; opacity: .8; }
+.page-result .shop-room__price-tag:hover { background: #fff; box-shadow: 0 2px 8px rgba(41, 79, 125, .16); }
+.page-result .shop-room__price-tag.is-on {
+  background: var(--bp-primary);
+  border-color: var(--bp-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(47, 111, 143, .25);
+}
+html.dark-mode .page-result .shop-room__price-tag { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .12); }
+html.dark-mode .page-result .shop-room__price-tag:hover { background: rgba(255, 255, 255, .16); box-shadow: none; }
+html.dark-mode .page-result .shop-room__price-tag.is-on { background: var(--bp-primary); border-color: var(--bp-primary); color: #10202a; }
+
+/* Analyze Style budget: the Unlimited button that clears the cap.
+   Pressed (teal) while no budget is set. */
+.page-inspo .inspo-budget__unlimited {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bp-border);
+  background: rgba(255, 255, 255, .6);
+  color: var(--bp-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.page-inspo .inspo-budget__unlimited span { font-size: 17px; line-height: 1; font-weight: 500; }
+.page-inspo .inspo-budget__unlimited:hover { color: var(--bp-ink); border-color: var(--bp-primary); }
+.page-inspo .inspo-budget__unlimited[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--bp-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--bp-primary) 45%, transparent);
+  color: var(--bp-primary);
+}
+html.dark-mode .page-inspo .inspo-budget__unlimited { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .14); color: #b7c4d3; }
+html.dark-mode .page-inspo .inspo-budget__unlimited[aria-pressed="true"] {
+  background: rgba(134, 197, 209, .16);
+  border-color: rgba(134, 197, 209, .55);
+  color: var(--bp-primary);
+}

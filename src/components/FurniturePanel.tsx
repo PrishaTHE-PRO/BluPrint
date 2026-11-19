@@ -80,10 +80,19 @@ export default function FurniturePanel({
         <span className="shop-room__eyebrow">Shop the room</span>
         <h2 id="shop-room-title" className="shop-room__title">Buy the pieces</h2>
       </div>
-      <div className="shop-room__sort" role="group" aria-label="Order the pieces">
-        <button type="button" className={sort === 'room' ? 'is-on' : ''} aria-pressed={sort === 'room'} onClick={() => setSort('room')}>Room order</button>
-        <button type="button" className={sort === 'price' ? 'is-on' : ''} aria-pressed={sort === 'price'} onClick={() => setSort('price')}>Price</button>
-      </div>
+      {/* Room order is the default; the Price tag sorts cheapest first and
+          a second tap returns to room order. */}
+      <button
+        type="button"
+        className={'shop-room__price-tag' + (sort === 'price' ? ' is-on' : '')}
+        aria-pressed={sort === 'price'}
+        title={sort === 'price' ? 'Back to room order' : 'Sort by price, lowest first'}
+        onClick={() => setSort(sort === 'price' ? 'room' : 'price')}
+      >
+        <iconify-icon icon={sort === 'price' ? 'ph:sort-ascending-bold' : 'ph:currency-dollar-bold'} />
+        Price
+        {sort === 'price' && <span aria-hidden="true">· Low to high</span>}
+      </button>
     </div>
   );
 
