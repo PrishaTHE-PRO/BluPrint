@@ -42,6 +42,8 @@ export interface RoomRender {
   hotspots:    RenderHotspot[];
   items?:      RenderItem[];
   placements?: RenderPlacement[];
+  /** The kept pieces from the photo, read off the render with the products. */
+  existingPlacements?: ExistingPlacement[];
 }
 
 /** A piece already in the user's photo, placed on the plan from the picture.

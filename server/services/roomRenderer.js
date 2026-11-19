@@ -519,6 +519,7 @@ function placementFromReading({ h, read, kind, wall, wFt, dFt, W, L, yBack = nul
     cy: Math.round(cy * 10) / 10,
     approx: false,
     source: "picture",
+    touching,
   };
   placement.rotation = rotation;
   return placement;
@@ -550,7 +551,7 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
   const byCategory = new Map(products.map((p) => [String(p.category).toLowerCase(), p]));
   const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
-  return hotspots.map((h) => {
+  const placed = hotspots.map((h) => {
     const product = byCategory.get(h.category) || {};
     // Existing pieces are located under a unique key (one per piece) and
     // carry their real category as `kind`; products use their category.
@@ -592,43 +593,128 @@ function projectToPlan({ hotspots, floor, products, room, layout = null }) {
     if (FACING.has(kind)) placement.rotation = cy > L / 2 ? 180 : 0;
     return placement;
   });
+
+  return keepCompanionsOnTheirWall({ placed, hotspots, products, layout, W, L, yBack: floor ? yBack : null });
+}
+
+// A piece that stands beside another: the wall it is on is the wall its
+// anchor is on. The layout pass reads a nightstand in a corner as "left
+// wall" often enough that the plan put it on a different wall from the bed.
+const COMPANION_OF = {
+  nightstand: ["bed"],
+  bedside_lamp: ["nightstand", "bed"],
+  side_table: ["sofa", "accent_chair", "reading_nook"],
+  desk_lamp: ["desk", "workspace_desk"],
+  floor_lamp: ["sofa", "accent_chair", "reading_nook", "bed"],
+};
+
+/**
+ * Second pass over the plan: a companion whose reading named a different
+ * wall from its anchor, or none, is moved onto the anchor's wall when it is
+ * already close to it (within its own depth plus a stride). The anchor may be
+ * a rendered product or a piece already in the photo; both carry a `kind`.
+ */
+function keepCompanionsOnTheirWall({ placed, hotspots, products, layout, W, L, yBack }) {
+  if (!(layout instanceof Map)) return placed;
+  const byCategory = new Map(products.map((p) => [String(p.category).toLowerCase(), p]));
+  const kindOf = (category) => {
+    const product = byCategory.get(category) || {};
+    return String(product.kind || category).toLowerCase();
+  };
+  const wallOf = new Map();
+  placed.forEach((pl) => { if (pl.touching && pl.touching !== "none") wallOf.set(kindOf(pl.category), pl.touching); });
+
+  return placed.map((pl, i) => {
+    const kind = kindOf(pl.category);
+    const anchors = COMPANION_OF[kind];
+    const read = layout.get(pl.category);
+    if (!anchors || !read) return pl;
+    const anchorWall = anchors.map((a) => wallOf.get(a)).find(Boolean);
+    if (!anchorWall || pl.touching === anchorWall) return pl;
+    const product = byCategory.get(pl.category) || {};
+    const wFt = Math.max(0.5, (Number(product.widthIn) || 30) / 12);
+    const dFt = Math.max(0.5, (Number(product.depthIn) || 30) / 12);
+    const reach = Math.max(wFt, dFt) + 1.5;
+    const distance = anchorWall === "back wall" ? pl.cy
+      : anchorWall === "front wall" ? L - pl.cy
+      : anchorWall === "left wall" ? pl.cx
+      : W - pl.cx;
+    if (distance > reach) return pl;
+    console.log(`[plan] ${pl.category}: moved onto the ${anchorWall} beside its ${anchors.join("/")}`);
+    const h = hotspots[i];
+    return placementFromReading({
+      h, read: { ...read, touching: anchorWall }, kind, wall: WALL_MOUNTED.has(kind), wFt, dFt, W, L, yBack,
+    });
+  });
+}
+
+// Footprints for the furniture already in a photo, in inches. The photo
+// gives no measurements, so these are the same per-category defaults the
+// plan draws the ghost footprints with (src/utils/furnitureConstraints.ts);
+// the two must agree or the layout pass measures one box and the plan
+// draws another.
+const EXISTING_SIZES_IN = {
+  sofa: [84, 36], accent_chair: [32, 32], coffee_table: [48, 24], rug: [96, 72], floor_lamp: [12, 12], side_table: [18, 18],
+  bed: [60, 80], nightstand: [20, 16], dresser: [48, 18], bedroom_rug: [96, 72], wardrobe: [36, 24], bedside_lamp: [10, 10],
+  bar_stool: [16, 16], pendant_light: [12, 12], kitchen_rug: [24, 60], kitchen_storage: [30, 14], island_cart: [48, 24], kitchen_shelf: [36, 12],
+  vanity: [36, 21], bath_mirror: [24, 4], bath_storage: [20, 12], bath_mat: [20, 30], bath_light: [24, 8], shower_curtain: [60, 3],
+  bathtub: [60, 30], standing_shower: [36, 36],
+  desk: [60, 30], office_chair: [24, 24], bookshelf: [36, 14], desk_lamp: [10, 10], storage_cabinet: [24, 18], monitor_stand: [24, 12],
+  dining_table: [60, 36], dining_chair: [18, 18], dining_rug: [96, 72], sideboard: [54, 18], dining_light: [18, 18], bar_cabinet: [36, 18],
+  crib: [52, 28], nursery_dresser: [36, 18], rocking_chair: [28, 30], nursery_rug: [72, 60], nursery_shelf: [30, 12], nursery_lamp: [10, 10],
+  reading_nook: [34, 34], smart_lighting: [12, 12], floating_shelves: [36, 10], indoor_plants: [18, 18],
+  full_length_mirror: [24, 6], wall_art: [36, 4], workspace_desk: [48, 24], vanity_station: [42, 20], bookcase: [36, 14],
+};
+
+/** The kept pieces from a photo estimate, as locator products. */
+function existingProducts(existingFurniture) {
+  const kept = (Array.isArray(existingFurniture) ? existingFurniture : [])
+    .filter((f) => f && typeof f === "object" && f.label && f.keep !== false);
+  // One locator key per piece, so two chairs do not collapse into one box.
+  return kept.map((f, i) => {
+    const kind = String(f.category || "other").toLowerCase();
+    const [widthIn, depthIn] = EXISTING_SIZES_IN[kind] || [36, 30];
+    return { id: `existing-${i}`, category: `existing-${i}`, kind, name: f.label, widthIn, depthIn, existing: true };
+  });
+}
+
+/** Plan positions of the existing pieces, in the shape the room stores. */
+function existingEntries(placements, products) {
+  const byId = new Map(products.map((p) => [p.id, p]));
+  return placements
+    .filter((pl) => byId.has(pl.itemId))
+    .map((pl) => {
+      const p = byId.get(pl.itemId);
+      const entry = { label: p.name, category: p.kind || "other", cx: pl.cx, cy: pl.cy, approx: pl.approx };
+      if (pl.rotation !== undefined) entry.rotation = pl.rotation;
+      return entry;
+    });
 }
 
 /**
- * Where the furniture already in the room sits on the floor plan. Locates
- * each kept piece in the ORIGINAL photo (the render keeps them where they
- * are, so the two agree) and projects it the same way rendered products
- * are. Pieces marked for replacement are skipped. Returns
+ * Where the furniture already in the room sits on the floor plan, before
+ * any render exists. Locates each kept piece in the ORIGINAL photo and runs
+ * the same layout pass rendered products get, so a bed with its head on
+ * the back wall lands against that wall instead of mid-room (the geometric
+ * fallback reads a bed's depth off the foot end, which is wrong by its whole
+ * length). Pieces marked for replacement are skipped. Returns
  * [{ label, category, cx, cy, rotation?, approx }] in feet, or [] when
  * there is nothing to locate.
  */
 async function locateExistingFurniture({ photoUrl, existingFurniture = [], room }) {
-  const kept = (Array.isArray(existingFurniture) ? existingFurniture : [])
-    .filter((f) => f && typeof f === "object" && f.label && f.keep !== false);
-  if (!photoUrl || kept.length === 0 || !room?.widthFt || !room?.lengthFt) return [];
+  const products = existingProducts(existingFurniture);
+  if (!photoUrl || products.length === 0 || !room?.widthFt || !room?.lengthFt) return [];
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
   const image = await downloadImage(photoUrl);
   if (!image) throw new Error("Could not fetch the room photo");
 
-  // One locator key per piece, so two chairs do not collapse into one box.
-  const products = kept.map((f, i) => ({
-    id: `existing-${i}`,
-    category: `existing-${i}`,
-    kind: f.category || "other",
-    name: f.label,
-  }));
   const startedAt = Date.now();
   const { hotspots, floor } = await locateProducts(image.buffer, photoUrl, products);
-  const placements = projectToPlan({ hotspots, floor, products, room });
-  const byId = new Map(products.map((p) => [p.id, p]));
-  const out = placements.map((pl) => {
-    const p = byId.get(pl.itemId) || {};
-    const entry = { label: p.name, category: p.kind || "other", cx: pl.cx, cy: pl.cy, approx: pl.approx };
-    if (pl.rotation !== undefined) entry.rotation = pl.rotation;
-    return entry;
-  });
-  console.log("[existing] located", out.length, "of", kept.length, "existing piece(s) in", Date.now() - startedAt, "ms");
+  const layout = await describeLayout({ image: image.buffer, products, hotspots, room });
+  const placements = projectToPlan({ hotspots, floor, products, room, layout });
+  const out = existingEntries(placements, products);
+  console.log("[existing] located", out.length, "of", products.length, "existing piece(s) in", Date.now() - startedAt, "ms");
   return out;
 }
 
@@ -687,20 +773,21 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
   const url = await uploadToCloudinary(png, "image/png", "bluprint/renders");
   console.log("[render] image ready in", Date.now() - startedAt, "ms");
 
-  const { hotspots, floor } = await locateProducts(png, url, products);
-  const layout = await describeLayout({ image: png, products, hotspots, room });
-  const placements = projectToPlan({ hotspots, floor, products, room, layout });
-  console.log("[render] done in", Date.now() - startedAt, "ms with", hotspots.length, "hotspot(s),", placements.length, "plan position(s)");
+  const located = await locateAll({ image: png, imageUrl: url, products, existingFurniture, room });
+  console.log("[render] done in", Date.now() - startedAt, "ms with", located.hotspots.length, "hotspot(s),", located.placements.length, "plan position(s)");
 
   return {
     url,
     createdAt: new Date().toISOString(),
     itemIds: products.map((p) => String(p.id)),
-    hotspots,
-    floor,
+    hotspots: located.hotspots,
+    floor: located.floor,
     // Where each product sits on the floor plan, projected from the picture,
     // so the 2D plan can be matched to what was actually rendered.
-    placements,
+    placements: located.placements,
+    // The kept pieces from the photo, read in the same pass so the plan
+    // keeps everything in the same relation it has in the picture.
+    existingPlacements: located.existingPlacements,
     // Stored so a revisit can show hover cards without refetching furniture.
     items: products.map((p) => ({
       id: String(p.id),
@@ -723,18 +810,38 @@ async function renderRoom({ photoUrl, items, layoutHints = [], existingFurniture
  * image back from Cloudinary (our own URL, still through the guarded agent)
  * and uses the product summaries stored with the render.
  */
-async function relocateRender(render, room = null) {
+async function relocateRender(render, room = null, existingFurniture = []) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
   const image = await downloadImage(render.url);
   if (!image) throw new Error("Could not fetch the saved render");
   const products = render.items.filter((p) => p && p.category && p.imageUrl);
   if (products.length === 0) throw new Error("The render has no products to locate");
   const startedAt = Date.now();
-  const { hotspots, floor } = await locateProducts(image.buffer, render.url, products);
-  const layout = await describeLayout({ image: image.buffer, products, hotspots, room });
-  const placements = projectToPlan({ hotspots, floor, products, room, layout });
-  console.log("[render] hotspots refreshed in", Date.now() - startedAt, "ms:", hotspots.length, "found,", placements.length, "plan position(s)");
-  return { hotspots, floor, placements };
+  const located = await locateAll({ image: image.buffer, imageUrl: render.url, products, existingFurniture, room });
+  console.log("[render] hotspots refreshed in", Date.now() - startedAt, "ms:", located.hotspots.length, "found,", located.placements.length, "plan position(s)");
+  return located;
+}
+
+/**
+ * The locate and layout passes over a render, for the rendered products and
+ * the pieces that were already in the photo together. One reading of the
+ * whole room is what keeps the nightstand beside the bed on the same wall;
+ * read apart, the two passes had no way to agree. Hover hotspots are
+ * returned for products only; existing pieces come back as plan entries.
+ */
+async function locateAll({ image, imageUrl, products, existingFurniture = [], room }) {
+  const existing = existingProducts(existingFurniture);
+  const everything = [...products, ...existing];
+  const { hotspots, floor } = await locateProducts(image, imageUrl, everything);
+  const layout = await describeLayout({ image, products: everything, hotspots, room });
+  const all = projectToPlan({ hotspots, floor, products: everything, room, layout });
+  const existingIds = new Set(existing.map((p) => p.id));
+  return {
+    hotspots: hotspots.filter((h) => !existingIds.has(h.itemId)),
+    floor,
+    placements: all.filter((pl) => !existingIds.has(pl.itemId)),
+    existingPlacements: existingEntries(all, existing),
+  };
 }
 
 module.exports = { renderRoom, relocateRender, projectToPlan, locateExistingFurniture, rejectsModel, imageModelsToTry, IMAGE_MODEL_CANDIDATES, buildEditPrompt, normalizeHotspots, pickSize, editImage, rejectsInputFidelity, MAX_REFERENCE_IMAGES, DEFAULT_FLOOR };

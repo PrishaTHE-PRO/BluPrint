@@ -697,7 +697,12 @@ export default function RoomResult() {
   } | null>(null);
 
   const handleRenderSaved = useCallback((render: RoomRender) => {
-    setRoom((prev) => (prev ? { ...prev, render } : prev));
+    // The ghosts of the pieces already in the photo move with the render's
+    // reading too, so they keep their relation to the new furniture.
+    const ghosts = Array.isArray(render.existingPlacements) && render.existingPlacements.length > 0
+      ? render.existingPlacements
+      : null;
+    setRoom((prev) => (prev ? { ...prev, render, ...(ghosts ? { existingFurniture: ghosts } : {}) } : prev));
     const placements = Array.isArray(render.placements) ? render.placements : [];
     if (placements.length === 0) return;
     const positions: Record<string, { x: number; y: number }> = {};
