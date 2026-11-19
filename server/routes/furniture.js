@@ -1409,7 +1409,9 @@ router.get("/:roomId/furniture", async (req, res) => {
 
   // The client accepts either a bare array (older shape) or this object.
   const payload = { items: furniture, notice: scope.notice, excluded: scope.exclude, existingPlacements: existingPlacements || [], placeholder: placeholderCount > 0 };
-  cacheSet(cacheKey, payload);
+  // A list with fillers in it is not worth keeping: the next visit should
+  // try the shopping search again rather than serve the fillers for 15 minutes.
+  if (!payload.placeholder) cacheSet(cacheKey, payload);
   res.json(payload);
 });
 

@@ -113,6 +113,11 @@ function roomFeatureSignature(features: string[] = []) {
     .join('|');
 }
 
+/** The server's catalog filler, served when the shopping search fails; ids end in "-fallback-N". */
+function isStandIn(item: FurnitureItem | undefined): boolean {
+  return Boolean(item && /-fallback-\d+$/.test(String(item.id)));
+}
+
 export default function RoomResult() {
   const [room,             setRoom]             = useState<Room | null>(null);
   const [savedLayout,      setSavedLayout]      = useState<RoomArchitectureLayout | null>(() => readScopedSavedRoomLayout());
@@ -340,7 +345,14 @@ export default function RoomResult() {
       const restored = readPlacement(activePlacement);
       // The saved product always wins over whatever the search returned this
       // time — search ids are positional, so "the same id" is a different sofa.
-      Object.assign(init, restored.slots);
+      // The one exception is a saved stand-in: the catalog filler used while
+      // the shopping search was down. Once the search has a real product for
+      // that category the filler gives way, or a room furnished during an
+      // outage would keep its fillers for good.
+      Object.entries(restored.slots).forEach(([category, item]) => {
+        if (isStandIn(item) && init[category] && !isStandIn(init[category])) return;
+        init[category] = item;
+      });
 
       // Removed pieces and placement only need seeding once; re-applying them
       // would undo edits the user made after the restore.
@@ -376,6 +388,10 @@ export default function RoomResult() {
         return init;
       }
       const merged = { ...init, ...prev };
+      // A stand-in already in the slots steps aside for a real product too.
+      Object.entries(prev).forEach(([category, item]) => {
+        if (isStandIn(item) && init[category] && !isStandIn(init[category])) merged[category] = init[category];
+      });
       // Bail out when nothing actually changed. This effect also runs on
       // `activePlacement`, so saving used to hand back a fresh object with
       // identical contents — and that identity change cascades: new slots ->
